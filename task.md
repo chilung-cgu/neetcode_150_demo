@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：59 題
--   **進度**：39.3%
+-   **已完成**：60 題
+-   **進度**：40.0%
 
 ---
 
@@ -105,7 +105,7 @@
 - [x] [Kth Smallest Element in a BST](07_Trees/12_Kth_Smallest_Element_BST.md) <!-- Medium -->
 - [x] [Construct Binary Tree from Preorder and Inorder](07_Trees/13_Construct_Binary_Tree.md) <!-- Medium -->
 - [x] [Binary Tree Maximum Path Sum](07_Trees/14_Binary_Tree_Maximum_Path_Sum.md) <!-- Hard ⭐ -->
-- [ ] [Serialize and Deserialize Binary Tree](07_Trees/15_Serialize_Deserialize_Binary_Tree.md) <!-- Hard -->
+- [x] [Serialize and Deserialize Binary Tree](07_Trees/15_Serialize_Deserialize_Binary_Tree.md) <!-- Hard -->
 
 ---
 
