@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：99 題
--   **進度**：66.0%
+-   **已完成**：100 題
+-   **進度**：66.7%
 
 ---
 
@@ -175,7 +175,7 @@
  - [x] [Interleaving String](12_2D_DP/06_Interleaving_String.md) <!-- Medium -->
  - [x] [Longest Increasing Path in a Matrix](12_2D_DP/07_Longest_Increasing_Path_Matrix.md) <!-- Hard ⭐ -->
  - [x] [Distinct Subsequences](12_2D_DP/08_Distinct_Subsequences.md) <!-- Hard -->
- - [ ] [Edit Distance](12_2D_DP/09_Edit_Distance.md) <!-- Medium -->
+ - [x] [Edit Distance](12_2D_DP/09_Edit_Distance.md) <!-- Medium -->
  - [ ] [Burst Balloons](12_2D_DP/10_Burst_Balloons.md) <!-- Hard -->
  - [ ] [Regular Expression Matching](12_2D_DP/11_Regular_Expression_Matching.md) <!-- Hard ⭐ -->
 
