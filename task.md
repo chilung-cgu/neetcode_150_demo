@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：36 題
--   **進度**：24.0%
+-   **已完成**：37 題
+-   **進度**：24.7%
 
 ---
 
@@ -76,7 +76,7 @@
 
 - [x] [Reverse Linked List](06_Linked_List/01_Reverse_Linked_List.md) <!-- Easy ⭐ -->
 - [x] [Merge Two Sorted Lists](06_Linked_List/02_Merge_Two_Sorted_Lists.md) <!-- Easy -->
-- [ ] [Reorder List](06_Linked_List/03_Reorder_List.md) <!-- Medium -->
+- [x] [Reorder List](06_Linked_List/03_Reorder_List.md) <!-- Medium -->
 - [ ] [Remove Nth Node From End of List](06_Linked_List/04_Remove_Nth_Node_From_End.md) <!-- Medium -->
 - [ ] [Copy List with Random Pointer](06_Linked_List/05_Copy_List_with_Random_Pointer.md) <!-- Medium -->
 - [ ] [Add Two Numbers](06_Linked_List/06_Add_Two_Numbers.md) <!-- Medium -->
