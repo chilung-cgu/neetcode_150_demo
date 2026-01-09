@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：70 題
--   **進度**：46.7%
+-   **已完成**：71 題
+-   **進度**：47.3%
 
 ---
 
@@ -127,7 +127,7 @@
 - [x] [Kth Largest Element in an Array](09_Heap/04_Kth_Largest_Element_Array.md) <!-- Medium -->
 - [x] [Task Scheduler](09_Heap/05_Task_Scheduler.md) <!-- Medium -->
 - [x] [Design Twitter](09_Heap/06_Design_Twitter.md) <!-- Medium -->
-- [ ] [Find Median from Data Stream](09_Heap/07_Find_Median_Data_Stream.md) <!-- Hard ⭐ -->
+- [x] [Find Median from Data Stream](09_Heap/07_Find_Median_Data_Stream.md) <!-- Hard ⭐ -->
 
 ---
 
