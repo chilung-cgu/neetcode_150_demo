@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：109 題
--   **進度**：72.7%
+-   **已完成**：110 題
+-   **進度**：73.3%
 
 ---
 
@@ -191,7 +191,7 @@
  - [x] [Hand of Straights](13_Greedy/05_Hand_of_Straights.md) <!-- Medium -->
  - [x] [Merge Triplets to Form Target Triplet](13_Greedy/06_Merge_Triplets.md) <!-- Medium -->
  - [x] [Partition Labels](13_Greedy/07_Partition_Labels.md) <!-- Medium -->
- - [ ] [Valid Parenthesis String](13_Greedy/08_Valid_Parenthesis_String.md) <!-- Medium ⭐ -->
+ - [x] [Valid Parenthesis String](13_Greedy/08_Valid_Parenthesis_String.md) <!-- Medium ⭐ -->
 ---
 
 ## 11. Graphs (13 題)
