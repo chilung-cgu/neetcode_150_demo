@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：35 題
--   **進度**：23.3%
+-   **已完成**：36 題
+-   **進度**：24.0%
 
 ---
 
@@ -75,7 +75,7 @@
 > 核心技巧：快慢指標、虛擬頭節點、反轉鏈表
 
 - [x] [Reverse Linked List](06_Linked_List/01_Reverse_Linked_List.md) <!-- Easy ⭐ -->
-- [ ] [Merge Two Sorted Lists](06_Linked_List/02_Merge_Two_Sorted_Lists.md) <!-- Easy -->
+- [x] [Merge Two Sorted Lists](06_Linked_List/02_Merge_Two_Sorted_Lists.md) <!-- Easy -->
 - [ ] [Reorder List](06_Linked_List/03_Reorder_List.md) <!-- Medium -->
 - [ ] [Remove Nth Node From End of List](06_Linked_List/04_Remove_Nth_Node_From_End.md) <!-- Medium -->
 - [ ] [Copy List with Random Pointer](06_Linked_List/05_Copy_List_with_Random_Pointer.md) <!-- Medium -->
