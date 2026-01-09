@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：39 題
--   **進度**：26.0%
+-   **已完成**：40 題
+-   **進度**：26.7%
 
 ---
 
@@ -79,7 +79,7 @@
 - [x] [Reorder List](06_Linked_List/03_Reorder_List.md) <!-- Medium -->
 - [x] [Remove Nth Node From End of List](06_Linked_List/04_Remove_Nth_Node_From_End.md) <!-- Medium -->
 - [x] [Copy List with Random Pointer](06_Linked_List/05_Copy_List_with_Random_Pointer.md) <!-- Medium -->
-- [ ] [Add Two Numbers](06_Linked_List/06_Add_Two_Numbers.md) <!-- Medium -->
+- [x] [Add Two Numbers](06_Linked_List/06_Add_Two_Numbers.md) <!-- Medium -->
 - [ ] [Linked List Cycle](06_Linked_List/07_Linked_List_Cycle.md) <!-- Easy -->
 - [ ] [Find the Duplicate Number](06_Linked_List/08_Find_the_Duplicate_Number.md) <!-- Medium -->
 - [ ] [LRU Cache](06_Linked_List/09_LRU_Cache.md) <!-- Medium ⭐ -->
