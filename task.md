@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：62 題
--   **進度**：41.3%
+-   **已完成**：63 題
+-   **進度**：42.0%
 
 ---
 
@@ -114,7 +114,7 @@
 
 - [x] [Implement Trie (Prefix Tree)](08_Tries/01_Implement_Trie_Prefix_Tree.md) <!-- Medium ⭐ -->
 - [x] [Design Add and Search Words Data Structure](08_Tries/02_Design_Add_Search_Words.md) <!-- Medium -->
-- [ ] [Word Search II](08_Tries/03_Word_Search_II.md) <!-- Hard -->
+- [x] [Word Search II](08_Tries/03_Word_Search_II.md) <!-- Hard -->
 
 ---
 
