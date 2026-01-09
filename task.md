@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：17 題
--   **進度**：11.3%
+-   **已完成**：18 題
+-   **進度**：12.0%
 
 ---
 
@@ -39,7 +39,7 @@
 - [x] [Best Time to Buy and Sell Stock](03_Sliding_Window/01_Best_Time_to_Buy_and_Sell_Stock.md) <!-- Easy -->
 - [x] [Longest Substring Without Repeating Characters](03_Sliding_Window/02_Longest_Substring_Without_Repeating.md) <!-- Medium ⭐ -->
 - [x] [Longest Repeating Character Replacement](03_Sliding_Window/03_Longest_Repeating_Character_Replacement.md) <!-- Medium -->
-- [ ] [Permutation in String](03_Sliding_Window/04_Permutation_in_String.md) <!-- Medium -->
+- [x] [Permutation in String](03_Sliding_Window/04_Permutation_in_String.md) <!-- Medium -->
 - [ ] [Minimum Window Substring](03_Sliding_Window/05_Minimum_Window_Substring.md) <!-- Hard ⭐ -->
 - [ ] [Sliding Window Maximum](03_Sliding_Window/06_Sliding_Window_Maximum.md) <!-- Hard -->
 
