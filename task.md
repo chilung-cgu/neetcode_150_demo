@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：102 題
--   **進度**：68.0%
+-   **已完成**：103 題
+-   **進度**：68.7%
 
 ---
 
@@ -178,7 +178,20 @@
  - [x] [Edit Distance](12_2D_DP/09_Edit_Distance.md) <!-- Medium -->
  - [x] [Burst Balloons](12_2D_DP/10_Burst_Balloons.md) <!-- Hard -->
  - [x] [Regular Expression Matching](12_2D_DP/11_Regular_Expression_Matching.md) <!-- Hard ⭐ -->
-
+ 
+ ---
+ 
+ ## 13. Greedy (8 題)
+ > 核心技巧：局部最優解、Interval Scheduling、Kadane's、Sort & Iterate
+ 
+ - [x] [Maximum Subarray](13_Greedy/01_Maximum_Subarray.md) <!-- Medium -->
+ - [ ] [Jump Game](13_Greedy/02_Jump_Game.md) <!-- Medium -->
+ - [ ] [Jump Game II](13_Greedy/03_Jump_Game_II.md) <!-- Medium -->
+ - [ ] [Gas Station](13_Greedy/04_Gas_Station.md) <!-- Medium -->
+ - [ ] [Hand of Straights](13_Greedy/05_Hand_of_Straights.md) <!-- Medium -->
+ - [ ] [Merge Triplets to Form Target Triplet](13_Greedy/06_Merge_Triplets.md) <!-- Medium -->
+ - [ ] [Partition Labels](13_Greedy/07_Partition_Labels.md) <!-- Medium -->
+ - [ ] [Valid Parenthesis String](13_Greedy/08_Valid_Parenthesis_String.md) <!-- Medium ⭐ -->
 ---
 
 ## 11. Graphs (13 題)
