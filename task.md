@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：91 題
--   **進度**：60.7%
+-   **已完成**：92 題
+-   **進度**：61.3%
 
 ---
 
@@ -161,6 +161,23 @@
  - [x] [Word Break](11_1D_DP/10_Word_Break.md) <!-- Medium -->
  - [x] [Longest Increasing Subsequence](11_1D_DP/11_Longest_Increasing_Subsequence.md) <!-- Medium -->
  - [x] [Partition Equal Subset Sum](11_1D_DP/12_Partition_Equal_Subset_Sum.md) <!-- Medium -->
+ 
+ ---
+ 
+ ## 12. 2-D Dynamic Programming (11 題)
+ > 核心技巧：二維狀態矩陣、Grid DP、LCS、Knapsack variations
+ 
+ - [x] [Unique Paths](12_2D_DP/01_Unique_Paths.md) <!-- Medium -->
+ - [ ] [Longest Common Subsequence](12_2D_DP/02_Longest_Common_Subsequence.md) <!-- Medium -->
+ - [ ] [Best Time to Buy and Sell Stock with Cooldown](12_2D_DP/03_Buy_Sell_Stock_Cooldown.md) <!-- Medium -->
+ - [ ] [Coin Change II](12_2D_DP/04_Coin_Change_II.md) <!-- Medium -->
+ - [ ] [Target Sum](12_2D_DP/05_Target_Sum.md) <!-- Medium -->
+ - [ ] [Interleaving String](12_2D_DP/06_Interleaving_String.md) <!-- Medium -->
+ - [ ] [Longest Increasing Path in a Matrix](12_2D_DP/07_Longest_Increasing_Path_Matrix.md) <!-- Hard ⭐ -->
+ - [ ] [Distinct Subsequences](12_2D_DP/08_Distinct_Subsequences.md) <!-- Hard -->
+ - [ ] [Edit Distance](12_2D_DP/09_Edit_Distance.md) <!-- Medium -->
+ - [ ] [Burst Balloons](12_2D_DP/10_Burst_Balloons.md) <!-- Hard -->
+ - [ ] [Regular Expression Matching](12_2D_DP/11_Regular_Expression_Matching.md) <!-- Hard ⭐ -->
 
 ---
 
