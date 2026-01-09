@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：60 題
--   **進度**：40.0%
+-   **已完成**：61 題
+-   **進度**：40.7%
 
 ---
 
@@ -112,7 +112,7 @@
 ## 08. Tries (3 題)
 > 核心技巧：前綴樹、字串前綴匹配
 
-- [ ] [Implement Trie (Prefix Tree)](08_Tries/01_Implement_Trie.md) <!-- Medium ⭐ -->
+- [x] [Implement Trie (Prefix Tree)](08_Tries/01_Implement_Trie_Prefix_Tree.md) <!-- Medium ⭐ -->
 - [ ] [Design Add and Search Words Data Structure](08_Tries/02_Design_Add_Search_Words.md) <!-- Medium -->
 - [ ] [Word Search II](08_Tries/03_Word_Search_II.md) <!-- Hard -->
 
