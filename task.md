@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：14 題
--   **進度**：9.3%
+-   **已完成**：15 題
+-   **進度**：10.0%
 
 ---
 
@@ -36,7 +36,7 @@
 ## 03. Sliding Window (6 題)
 > 核心技巧：動態窗口、字元頻率追蹤
 
-- [ ] [Best Time to Buy and Sell Stock](03_Sliding_Window/01_Best_Time_to_Buy_and_Sell_Stock.md) <!-- Easy -->
+- [x] [Best Time to Buy and Sell Stock](03_Sliding_Window/01_Best_Time_to_Buy_and_Sell_Stock.md) <!-- Easy -->
 - [ ] [Longest Substring Without Repeating Characters](03_Sliding_Window/02_Longest_Substring_Without_Repeating.md) <!-- Medium ⭐ -->
 - [ ] [Longest Repeating Character Replacement](03_Sliding_Window/03_Longest_Repeating_Character_Replacement.md) <!-- Medium -->
 - [ ] [Permutation in String](03_Sliding_Window/04_Permutation_in_String.md) <!-- Medium -->
