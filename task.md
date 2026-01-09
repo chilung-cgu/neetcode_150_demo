@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：104 題
--   **進度**：69.3%
+-   **已完成**：105 題
+-   **進度**：70.0%
 
 ---
 
@@ -186,7 +186,7 @@
  
  - [x] [Maximum Subarray](13_Greedy/01_Maximum_Subarray.md) <!-- Medium -->
  - [x] [Jump Game](13_Greedy/02_Jump_Game.md) <!-- Medium -->
- - [ ] [Jump Game II](13_Greedy/03_Jump_Game_II.md) <!-- Medium -->
+ - [x] [Jump Game II](13_Greedy/03_Jump_Game_II.md) <!-- Medium -->
  - [ ] [Gas Station](13_Greedy/04_Gas_Station.md) <!-- Medium -->
  - [ ] [Hand of Straights](13_Greedy/05_Hand_of_Straights.md) <!-- Medium -->
  - [ ] [Merge Triplets to Form Target Triplet](13_Greedy/06_Merge_Triplets.md) <!-- Medium -->
