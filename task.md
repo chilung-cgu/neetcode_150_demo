@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：81 題
--   **進度**：54.0%
+-   **已完成**：82 題
+-   **進度**：54.7%
 
 ---
 
@@ -151,7 +151,7 @@
  
  - [x] [Climbing Stairs](11_1D_DP/01_Climbing_Stairs.md) <!-- Easy -->
  - [x] [Min Cost Climbing Stairs](11_1D_DP/02_Min_Cost_Climbing_Stairs.md) <!-- Easy -->
- - [ ] [House Robber](11_1D_DP/03_House_Robber.md) <!-- Medium -->
+ - [x] [House Robber](11_1D_DP/03_House_Robber.md) <!-- Medium -->
  - [ ] [House Robber II](11_1D_DP/04_House_Robber_II.md) <!-- Medium -->
  - [ ] [Longest Palindromic Substring](11_1D_DP/05_Longest_Palindromic_Substring.md) <!-- Medium -->
  - [ ] [Palindromic Substrings](11_1D_DP/06_Palindromic_Substrings.md) <!-- Medium -->
