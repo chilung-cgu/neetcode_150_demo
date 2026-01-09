@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：72 題
--   **進度**：48.0%
+-   **已完成**：73 題
+-   **進度**：48.7%
 
 ---
 
@@ -136,7 +136,7 @@
 
 - [x] [Subsets](10_Backtracking/01_Subsets.md) <!-- Medium ⭐ -->
 - [x] [Combination Sum](10_Backtracking/02_Combination_Sum.md) <!-- Medium -->
-- [ ] [Permutations](10_Backtracking/03_Permutations.md) <!-- Medium -->
+- [x] [Permutations](10_Backtracking/03_Permutations.md) <!-- Medium -->
 - [ ] [Subsets II](10_Backtracking/04_Subsets_II.md) <!-- Medium -->
 - [ ] [Combination Sum II](10_Backtracking/05_Combination_Sum_II.md) <!-- Medium -->
 - [ ] [Word Search](10_Backtracking/06_Word_Search.md) <!-- Medium -->
