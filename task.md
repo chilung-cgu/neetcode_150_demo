@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：84 題
--   **進度**：56.0%
+-   **已完成**：85 題
+-   **進度**：56.7%
 
 ---
 
@@ -154,7 +154,7 @@
  - [x] [House Robber](11_1D_DP/03_House_Robber.md) <!-- Medium -->
  - [x] [House Robber II](11_1D_DP/04_House_Robber_II.md) <!-- Medium -->
  - [x] [Longest Palindromic Substring](11_1D_DP/05_Longest_Palindromic_Substring.md) <!-- Medium -->
- - [ ] [Palindromic Substrings](11_1D_DP/06_Palindromic_Substrings.md) <!-- Medium -->
+ - [x] [Palindromic Substrings](11_1D_DP/06_Palindromic_Substrings.md) <!-- Medium -->
  - [ ] [Decode Ways](11_1D_DP/07_Decode_Ways.md) <!-- Medium -->
  - [ ] [Coin Change](11_1D_DP/08_Coin_Change.md) <!-- Medium ⭐ -->
  - [ ] [Maximum Product Subarray](11_1D_DP/09_Maximum_Product_Subarray.md) <!-- Medium ⭐ -->
