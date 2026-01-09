@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：106 題
--   **進度**：70.7%
+-   **已完成**：107 題
+-   **進度**：71.3%
 
 ---
 
@@ -188,7 +188,7 @@
  - [x] [Jump Game](13_Greedy/02_Jump_Game.md) <!-- Medium -->
  - [x] [Jump Game II](13_Greedy/03_Jump_Game_II.md) <!-- Medium -->
  - [x] [Gas Station](13_Greedy/04_Gas_Station.md) <!-- Medium -->
- - [ ] [Hand of Straights](13_Greedy/05_Hand_of_Straights.md) <!-- Medium -->
+ - [x] [Hand of Straights](13_Greedy/05_Hand_of_Straights.md) <!-- Medium -->
  - [ ] [Merge Triplets to Form Target Triplet](13_Greedy/06_Merge_Triplets.md) <!-- Medium -->
  - [ ] [Partition Labels](13_Greedy/07_Partition_Labels.md) <!-- Medium -->
  - [ ] [Valid Parenthesis String](13_Greedy/08_Valid_Parenthesis_String.md) <!-- Medium ⭐ -->
