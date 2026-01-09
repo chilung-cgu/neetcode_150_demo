@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：42 題
--   **進度**：28.0%
+-   **已完成**：43 題
+-   **進度**：28.7%
 
 ---
 
@@ -82,7 +82,7 @@
 - [x] [Add Two Numbers](06_Linked_List/06_Add_Two_Numbers.md) <!-- Medium -->
 - [x] [Linked List Cycle](06_Linked_List/07_Linked_List_Cycle.md) <!-- Easy -->
 - [x] [Find the Duplicate Number](06_Linked_List/08_Find_the_Duplicate_Number.md) <!-- Medium -->
-- [ ] [LRU Cache](06_Linked_List/09_LRU_Cache.md) <!-- Medium ⭐ -->
+- [x] [LRU Cache](06_Linked_List/09_LRU_Cache.md) <!-- Medium ⭐ -->
 - [ ] [Merge k Sorted Lists](06_Linked_List/10_Merge_k_Sorted_Lists.md) <!-- Hard ⭐ -->
 - [ ] [Reverse Nodes in k-Group](06_Linked_List/11_Reverse_Nodes_in_k_Group.md) <!-- Hard -->
 
