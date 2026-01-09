@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：24 題
--   **進度**：16.0%
+-   **已完成**：25 題
+-   **進度**：16.7%
 
 ---
 
@@ -52,7 +52,7 @@
 - [x] [Min Stack](04_Stack/02_Min_Stack.md) <!-- Medium -->
 - [x] [Evaluate Reverse Polish Notation](04_Stack/03_Evaluate_Reverse_Polish_Notation.md) <!-- Medium -->
 - [x] [Generate Parentheses](04_Stack/04_Generate_Parentheses.md) <!-- Medium -->
-- [ ] [Daily Temperatures](04_Stack/05_Daily_Temperatures.md) <!-- Medium -->
+- [x] [Daily Temperatures](04_Stack/05_Daily_Temperatures.md) <!-- Medium -->
 - [ ] [Car Fleet](04_Stack/06_Car_Fleet.md) <!-- Medium -->
 - [ ] [Largest Rectangle in Histogram](04_Stack/07_Largest_Rectangle_in_Histogram.md) <!-- Hard ⭐ -->
 
