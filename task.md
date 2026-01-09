@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：9 題
--   **進度**：6.0%
+-   **已完成**：10 題
+-   **進度**：6.7%
 
 ---
 
@@ -25,7 +25,7 @@
 ## 02. Two Pointers (5 題)
 > 核心技巧：雙指標收縮、排序後遍歷
 
-- [ ] [Valid Palindrome](02_Two_Pointers/01_Valid_Palindrome.md) <!-- Easy -->
+- [x] [Valid Palindrome](02_Two_Pointers/01_Valid_Palindrome.md) <!-- Easy -->
 - [ ] [Two Sum II - Input Array Is Sorted](02_Two_Pointers/02_Two_Sum_II.md) <!-- Medium -->
 - [ ] [3Sum](02_Two_Pointers/03_3Sum.md) <!-- Medium ⭐ -->
 - [ ] [Container With Most Water](02_Two_Pointers/04_Container_With_Most_Water.md) <!-- Medium -->
