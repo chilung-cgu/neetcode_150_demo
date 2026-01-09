@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：57 題
--   **進度**：38.0%
+-   **已完成**：58 題
+-   **進度**：38.7%
 
 ---
 
@@ -103,7 +103,7 @@
 - [x] [Count Good Nodes in Binary Tree](07_Trees/10_Count_Good_Nodes.md) <!-- Medium -->
 - [x] [Validate Binary Search Tree](07_Trees/11_Validate_BST.md) <!-- Medium ⭐ -->
 - [x] [Kth Smallest Element in a BST](07_Trees/12_Kth_Smallest_Element_BST.md) <!-- Medium -->
-- [ ] [Construct Binary Tree from Preorder and Inorder](07_Trees/13_Construct_Binary_Tree.md) <!-- Medium -->
+- [x] [Construct Binary Tree from Preorder and Inorder](07_Trees/13_Construct_Binary_Tree.md) <!-- Medium -->
 - [ ] [Binary Tree Maximum Path Sum](07_Trees/14_Binary_Tree_Maximum_Path_Sum.md) <!-- Hard ⭐ -->
 - [ ] [Serialize and Deserialize Binary Tree](07_Trees/15_Serialize_Deserialize_Binary_Tree.md) <!-- Hard -->
 
