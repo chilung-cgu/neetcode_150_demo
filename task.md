@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：20 題
--   **進度**：13.3%
+-   **已完成**：21 題
+-   **進度**：14.0%
 
 ---
 
@@ -48,7 +48,7 @@
 ## 04. Stack (7 題)
 > 核心技巧：LIFO、單調棧、括號匹配
 
-- [ ] [Valid Parentheses](04_Stack/01_Valid_Parentheses.md) <!-- Easy -->
+- [x] [Valid Parentheses](04_Stack/01_Valid_Parentheses.md) <!-- Easy -->
 - [ ] [Min Stack](04_Stack/02_Min_Stack.md) <!-- Medium -->
 - [ ] [Evaluate Reverse Polish Notation](04_Stack/03_Evaluate_Reverse_Polish_Notation.md) <!-- Medium -->
 - [ ] [Generate Parentheses](04_Stack/04_Generate_Parentheses.md) <!-- Medium -->
