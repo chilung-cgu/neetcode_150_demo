@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：65 題
--   **進度**：43.3%
+-   **已完成**：66 題
+-   **進度**：44.0%
 
 ---
 
@@ -122,7 +122,7 @@
 > 核心技巧：最大/最小堆、Top-K 問題
 
 - [x] [Kth Largest Element in a Stream](09_Heap/01_Kth_Largest_Element_Stream.md) <!-- Easy -->
-- [ ] [Last Stone Weight](09_Heap/02_Last_Stone_Weight.md) <!-- Easy -->
+- [x] [Last Stone Weight](09_Heap/02_Last_Stone_Weight.md) <!-- Easy -->
 - [ ] [K Closest Points to Origin](09_Heap/03_K_Closest_Points.md) <!-- Medium -->
 - [ ] [Kth Largest Element in an Array](09_Heap/04_Kth_Largest_Element_Array.md) <!-- Medium -->
 - [ ] [Task Scheduler](09_Heap/05_Task_Scheduler.md) <!-- Medium -->
