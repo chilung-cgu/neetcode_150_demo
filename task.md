@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：63 題
--   **進度**：42.0%
+-   **已完成**：64 題
+-   **進度**：42.7%
 
 ---
 
@@ -134,7 +134,7 @@
 ## 10. Backtracking (9 題)
 > 核心技巧：決策樹、剪枝、狀態回溯
 
-- [ ] [Subsets](10_Backtracking/01_Subsets.md) <!-- Medium ⭐ -->
+- [x] [Subsets](10_Backtracking/01_Subsets.md) <!-- Medium ⭐ -->
 - [ ] [Combination Sum](10_Backtracking/02_Combination_Sum.md) <!-- Medium -->
 - [ ] [Permutations](10_Backtracking/03_Permutations.md) <!-- Medium -->
 - [ ] [Subsets II](10_Backtracking/04_Subsets_II.md) <!-- Medium -->
