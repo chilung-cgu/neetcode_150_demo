@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：30 題
--   **進度**：20.0%
+-   **已完成**：31 題
+-   **進度**：20.7%
 
 ---
 
@@ -64,7 +64,7 @@
 - [x] [Binary Search](05_Binary_Search/01_Binary_Search.md) <!-- Easy -->
 - [x] [Search a 2D Matrix](05_Binary_Search/02_Search_a_2D_Matrix.md) <!-- Medium -->
 - [x] [Koko Eating Bananas](05_Binary_Search/03_Koko_Eating_Bananas.md) <!-- Medium -->
-- [ ] [Find Minimum in Rotated Sorted Array](05_Binary_Search/04_Find_Minimum_in_Rotated_Sorted_Array.md) <!-- Medium -->
+- [x] [Find Minimum in Rotated Sorted Array](05_Binary_Search/04_Find_Minimum_in_Rotated_Sorted_Array.md) <!-- Medium -->
 - [ ] [Search in Rotated Sorted Array](05_Binary_Search/05_Search_in_Rotated_Sorted_Array.md) <!-- Medium -->
 - [ ] [Time Based Key-Value Store](05_Binary_Search/06_Time_Based_Key_Value_Store.md) <!-- Medium -->
 - [ ] [Median of Two Sorted Arrays](05_Binary_Search/07_Median_of_Two_Sorted_Arrays.md) <!-- Hard ⭐ -->
