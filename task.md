@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：79 題
--   **進度**：52.7%
+-   **已完成**：80 題
+-   **進度**：53.3%
 
 ---
 
@@ -143,6 +143,24 @@
 - [x] [Palindrome Partitioning](10_Backtracking/07_Palindrome_Partitioning.md) <!-- Medium -->
 - [x] [Letter Combinations of a Phone Number](10_Backtracking/08_Letter_Combinations.md) <!-- Medium -->
 - [x] [N-Queens](10_Backtracking/09_N_Queens.md) <!-- Hard ⭐ -->
+ 
+ ---
+ 
+ ## 11. 1-D Dynamic Programming (12 題)
+ > 核心技巧：子問題拆解、記憶化搜索 (Memoization)、狀態轉移方程
+ 
+ - [x] [Climbing Stairs](11_1D_DP/01_Climbing_Stairs.md) <!-- Easy -->
+ - [ ] [Min Cost Climbing Stairs](11_1D_DP/02_Min_Cost_Climbing_Stairs.md) <!-- Easy -->
+ - [ ] [House Robber](11_1D_DP/03_House_Robber.md) <!-- Medium -->
+ - [ ] [House Robber II](11_1D_DP/04_House_Robber_II.md) <!-- Medium -->
+ - [ ] [Longest Palindromic Substring](11_1D_DP/05_Longest_Palindromic_Substring.md) <!-- Medium -->
+ - [ ] [Palindromic Substrings](11_1D_DP/06_Palindromic_Substrings.md) <!-- Medium -->
+ - [ ] [Decode Ways](11_1D_DP/07_Decode_Ways.md) <!-- Medium -->
+ - [ ] [Coin Change](11_1D_DP/08_Coin_Change.md) <!-- Medium ⭐ -->
+ - [ ] [Maximum Product Subarray](11_1D_DP/09_Maximum_Product_Subarray.md) <!-- Medium ⭐ -->
+ - [ ] [Word Break](11_1D_DP/10_Word_Break.md) <!-- Medium -->
+ - [ ] [Longest Increasing Subsequence](11_1D_DP/11_Longest_Increasing_Subsequence.md) <!-- Medium -->
+ - [ ] [Partition Equal Subset Sum](11_1D_DP/12_Partition_Equal_Subset_Sum.md) <!-- Medium -->
 
 ---
 
