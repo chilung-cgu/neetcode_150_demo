@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：6 題
--   **進度**：4.0%
+-   **已完成**：7 題
+-   **進度**：4.7%
 
 ---
 
@@ -16,7 +16,7 @@
 - [x] [Group Anagrams](01_Arrays_and_Hashing/04_Group_Anagrams.md) <!-- Medium -->
 - [x] [Top K Frequent Elements](01_Arrays_and_Hashing/05_Top_K_Frequent_Elements.md) <!-- Medium -->
 - [x] [Product of Array Except Self](01_Arrays_and_Hashing/06_Product_of_Array_Except_Self.md) <!-- Medium -->
-- [ ] [Valid Sudoku](01_Arrays_and_Hashing/07_Valid_Sudoku.md) <!-- Medium -->
+- [x] [Valid Sudoku](01_Arrays_and_Hashing/07_Valid_Sudoku.md) <!-- Medium -->
 - [ ] [Encode and Decode Strings](01_Arrays_and_Hashing/08_Encode_and_Decode_Strings.md) <!-- Medium -->
 - [ ] [Longest Consecutive Sequence](01_Arrays_and_Hashing/09_Longest_Consecutive_Sequence.md) <!-- Medium -->
 
