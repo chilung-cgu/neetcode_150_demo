@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：80 題
--   **進度**：53.3%
+-   **已完成**：81 題
+-   **進度**：54.0%
 
 ---
 
@@ -150,7 +150,7 @@
  > 核心技巧：子問題拆解、記憶化搜索 (Memoization)、狀態轉移方程
  
  - [x] [Climbing Stairs](11_1D_DP/01_Climbing_Stairs.md) <!-- Easy -->
- - [ ] [Min Cost Climbing Stairs](11_1D_DP/02_Min_Cost_Climbing_Stairs.md) <!-- Easy -->
+ - [x] [Min Cost Climbing Stairs](11_1D_DP/02_Min_Cost_Climbing_Stairs.md) <!-- Easy -->
  - [ ] [House Robber](11_1D_DP/03_House_Robber.md) <!-- Medium -->
  - [ ] [House Robber II](11_1D_DP/04_House_Robber_II.md) <!-- Medium -->
  - [ ] [Longest Palindromic Substring](11_1D_DP/05_Longest_Palindromic_Substring.md) <!-- Medium -->
