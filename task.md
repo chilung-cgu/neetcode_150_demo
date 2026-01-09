@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：52 題
--   **進度**：34.7%
+-   **已完成**：53 題
+-   **進度**：35.3%
 
 ---
 
@@ -98,7 +98,7 @@
 - [x] [Same Tree](07_Trees/05_Same_Tree.md) <!-- Easy -->
 - [x] [Subtree of Another Tree](07_Trees/06_Subtree_of_Another_Tree.md) <!-- Easy -->
 - [x] [Lowest Common Ancestor of a BST](07_Trees/07_Lowest_Common_Ancestor_BST.md) <!-- Medium -->
-- [ ] [Binary Tree Level Order Traversal](07_Trees/08_Binary_Tree_Level_Order_Traversal.md) <!-- Medium -->
+- [x] [Binary Tree Level Order Traversal](07_Trees/08_Binary_Tree_Level_Order_Traversal.md) <!-- Medium -->
 - [ ] [Binary Tree Right Side View](07_Trees/09_Binary_Tree_Right_Side_View.md) <!-- Medium -->
 - [ ] [Count Good Nodes in Binary Tree](07_Trees/10_Count_Good_Nodes.md) <!-- Medium -->
 - [ ] [Validate Binary Search Tree](07_Trees/11_Validate_BST.md) <!-- Medium ⭐ -->
