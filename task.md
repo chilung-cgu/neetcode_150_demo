@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：2 題
--   **進度**：1.3%
+-   **已完成**：3 題
+-   **進度**：2.0%
 
 ---
 
@@ -12,7 +12,7 @@
 
 - [x] [Contains Duplicate](01_Arrays_and_Hashing/01_Contains_Duplicate.md) <!-- Easy -->
 - [x] [Valid Anagram](01_Arrays_and_Hashing/02_Valid_Anagram.md) <!-- Easy -->
-- [ ] [Two Sum](01_Arrays_and_Hashing/03_Two_Sum.md) <!-- Easy ⭐ -->
+- [x] [Two Sum](01_Arrays_and_Hashing/03_Two_Sum.md) <!-- Easy ⭐ -->
 - [ ] [Group Anagrams](01_Arrays_and_Hashing/04_Group_Anagrams.md) <!-- Medium -->
 - [ ] [Top K Frequent Elements](01_Arrays_and_Hashing/05_Top_K_Frequent_Elements.md) <!-- Medium -->
 - [ ] [Product of Array Except Self](01_Arrays_and_Hashing/06_Product_of_Array_Except_Self.md) <!-- Medium -->
