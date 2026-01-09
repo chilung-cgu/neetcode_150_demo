@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：88 題
--   **進度**：58.7%
+-   **已完成**：89 題
+-   **進度**：59.3%
 
 ---
 
@@ -158,7 +158,7 @@
  - [x] [Decode Ways](11_1D_DP/07_Decode_Ways.md) <!-- Medium -->
  - [x] [Coin Change](11_1D_DP/08_Coin_Change.md) <!-- Medium ⭐ -->
  - [x] [Maximum Product Subarray](11_1D_DP/09_Maximum_Product_Subarray.md) <!-- Medium ⭐ -->
- - [ ] [Word Break](11_1D_DP/10_Word_Break.md) <!-- Medium -->
+ - [x] [Word Break](11_1D_DP/10_Word_Break.md) <!-- Medium -->
  - [ ] [Longest Increasing Subsequence](11_1D_DP/11_Longest_Increasing_Subsequence.md) <!-- Medium -->
  - [ ] [Partition Equal Subset Sum](11_1D_DP/12_Partition_Equal_Subset_Sum.md) <!-- Medium -->
 
