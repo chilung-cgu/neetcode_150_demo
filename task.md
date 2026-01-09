@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：55 題
--   **進度**：36.7%
+-   **已完成**：56 題
+-   **進度**：37.3%
 
 ---
 
@@ -101,7 +101,7 @@
 - [x] [Binary Tree Level Order Traversal](07_Trees/08_Binary_Tree_Level_Order_Traversal.md) <!-- Medium -->
 - [x] [Binary Tree Right Side View](07_Trees/09_Binary_Tree_Right_Side_View.md) <!-- Medium -->
 - [x] [Count Good Nodes in Binary Tree](07_Trees/10_Count_Good_Nodes.md) <!-- Medium -->
-- [ ] [Validate Binary Search Tree](07_Trees/11_Validate_BST.md) <!-- Medium ⭐ -->
+- [x] [Validate Binary Search Tree](07_Trees/11_Validate_BST.md) <!-- Medium ⭐ -->
 - [ ] [Kth Smallest Element in a BST](07_Trees/12_Kth_Smallest_Element_BST.md) <!-- Medium -->
 - [ ] [Construct Binary Tree from Preorder and Inorder](07_Trees/13_Construct_Binary_Tree.md) <!-- Medium -->
 - [ ] [Binary Tree Maximum Path Sum](07_Trees/14_Binary_Tree_Maximum_Path_Sum.md) <!-- Hard ⭐ -->
