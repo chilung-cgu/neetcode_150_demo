@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：92 題
--   **進度**：61.3%
+-   **已完成**：93 題
+-   **進度**：62.0%
 
 ---
 
@@ -168,7 +168,7 @@
  > 核心技巧：二維狀態矩陣、Grid DP、LCS、Knapsack variations
  
  - [x] [Unique Paths](12_2D_DP/01_Unique_Paths.md) <!-- Medium -->
- - [ ] [Longest Common Subsequence](12_2D_DP/02_Longest_Common_Subsequence.md) <!-- Medium -->
+ - [x] [Longest Common Subsequence](12_2D_DP/02_Longest_Common_Subsequence.md) <!-- Medium -->
  - [ ] [Best Time to Buy and Sell Stock with Cooldown](12_2D_DP/03_Buy_Sell_Stock_Cooldown.md) <!-- Medium -->
  - [ ] [Coin Change II](12_2D_DP/04_Coin_Change_II.md) <!-- Medium -->
  - [ ] [Target Sum](12_2D_DP/05_Target_Sum.md) <!-- Medium -->
