@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：49 題
--   **進度**：32.7%
+-   **已完成**：50 題
+-   **進度**：33.3%
 
 ---
 
@@ -95,7 +95,7 @@
 - [x] [Maximum Depth of Binary Tree](07_Trees/02_Maximum_Depth_of_Binary_Tree.md) <!-- Easy -->
 - [x] [Diameter of Binary Tree](07_Trees/03_Diameter_of_Binary_Tree.md) <!-- Easy -->
 - [x] [Balanced Binary Tree](07_Trees/04_Balanced_Binary_Tree.md) <!-- Easy -->
-- [ ] [Same Tree](07_Trees/05_Same_Tree.md) <!-- Easy -->
+- [x] [Same Tree](07_Trees/05_Same_Tree.md) <!-- Easy -->
 - [ ] [Subtree of Another Tree](07_Trees/06_Subtree_of_Another_Tree.md) <!-- Easy -->
 - [ ] [Lowest Common Ancestor of a BST](07_Trees/07_Lowest_Common_Ancestor_BST.md) <!-- Medium -->
 - [ ] [Binary Tree Level Order Traversal](07_Trees/08_Binary_Tree_Level_Order_Traversal.md) <!-- Medium -->
