@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：74 題
--   **進度**：49.3%
+-   **已完成**：75 題
+-   **進度**：50.0%
 
 ---
 
@@ -138,7 +138,7 @@
 - [x] [Combination Sum](10_Backtracking/02_Combination_Sum.md) <!-- Medium -->
 - [x] [Permutations](10_Backtracking/03_Permutations.md) <!-- Medium -->
 - [x] [Subsets II](10_Backtracking/04_Subsets_II.md) <!-- Medium -->
-- [ ] [Combination Sum II](10_Backtracking/05_Combination_Sum_II.md) <!-- Medium -->
+- [x] [Combination Sum II](10_Backtracking/05_Combination_Sum_II.md) <!-- Medium -->
 - [ ] [Word Search](10_Backtracking/06_Word_Search.md) <!-- Medium -->
 - [ ] [Palindrome Partitioning](10_Backtracking/07_Palindrome_Partitioning.md) <!-- Medium -->
 - [ ] [Letter Combinations of a Phone Number](10_Backtracking/08_Letter_Combinations.md) <!-- Medium -->
