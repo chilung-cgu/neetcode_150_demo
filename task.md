@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：26 題
--   **進度**：17.3%
+-   **已完成**：27 題
+-   **進度**：18.0%
 
 ---
 
@@ -54,7 +54,7 @@
 - [x] [Generate Parentheses](04_Stack/04_Generate_Parentheses.md) <!-- Medium -->
 - [x] [Daily Temperatures](04_Stack/05_Daily_Temperatures.md) <!-- Medium -->
 - [x] [Car Fleet](04_Stack/06_Car_Fleet.md) <!-- Medium -->
-- [ ] [Largest Rectangle in Histogram](04_Stack/07_Largest_Rectangle_in_Histogram.md) <!-- Hard ⭐ -->
+- [x] [Largest Rectangle in Histogram](04_Stack/07_Largest_Rectangle_in_Histogram.md) <!-- Hard ⭐ -->
 
 ---
 
