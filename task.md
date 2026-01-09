@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：19 題
--   **進度**：12.7%
+-   **已完成**：20 題
+-   **進度**：13.3%
 
 ---
 
@@ -41,7 +41,7 @@
 - [x] [Longest Repeating Character Replacement](03_Sliding_Window/03_Longest_Repeating_Character_Replacement.md) <!-- Medium -->
 - [x] [Permutation in String](03_Sliding_Window/04_Permutation_in_String.md) <!-- Medium -->
 - [x] [Minimum Window Substring](03_Sliding_Window/05_Minimum_Window_Substring.md) <!-- Hard ⭐ -->
-- [ ] [Sliding Window Maximum](03_Sliding_Window/06_Sliding_Window_Maximum.md) <!-- Hard -->
+- [x] [Sliding Window Maximum](03_Sliding_Window/06_Sliding_Window_Maximum.md) <!-- Hard -->
 
 ---
 
