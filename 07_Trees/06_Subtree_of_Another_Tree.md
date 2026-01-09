@@ -1,0 +1,164 @@
+# Subtree of Another Tree (另一棵樹的子樹)
+
+## 1. 🧐 Problem Dissection (釐清問題)
+
+題目給兩棵 Binary Tree `root` 和 `subRoot`。
+判斷 `subRoot` 是否是 `root` 的 **Subtree**。
+Subtree 意味著：`root` 中的某個節點的所有後代結構与值都和 `subRoot` 完全相同。
+(必須是完全 match，不能只是部分 match)
+
+-   **Input**:
+    ```
+    root: [3,4,5,1,2]     subRoot: [4,1,2]
+         3                    4
+        / \                  / \
+       4   5                1   2
+      / \
+     1   2
+    ```
+-   **Output**: `true`
+-   **Input**: `root = [3,4,5,1,2,null,null,null,null,0]`, `subRoot = [4,1,2]`
+    (Node 2 has a child 0 in root, but Node 2 is leaf in subRoot)
+-   **Output**: `false`
+-   **Constraints**:
+    -   $0 <= nodes <= 2000$
+    -   $-10000 <= Node.val <= 10000$
+
+---
+
+## 2. 🐢 Brute Force Approach (暴力解)
+
+利用我們剛剛寫好的 `isSameTree`。
+遍歷 `root` 的每一個節點，檢查以該節點為根的子樹是否和 `subRoot` 相同。
+-   **Time**: $O(m \times n)$。 `m` 是 `root` 節點數，`n` 是 `subRoot` 節點數。
+-   **Result**: 這是最標準的解法，Given Constraints $N \le 2000$， $2000^2 = 4 \times 10^6$，是可以接受的。
+
+---
+
+## 3. 💡 The "Aha!" Moment (優化)
+
+雖然 $O(MN)$ 可以過，但可以用 **Merkle Tree / Serialize (Hash)** 技巧優化到 $O(M+N)$。
+不過這涉及字串處理或複雜的 Hash，面試中通常寫 $O(MN)$ 已經足夠好。
+
+**Logic (DFS)**:
+`isSubtree(root, subRoot)` is true IF:
+1.  `subRoot` is null -> Always true (empty tree is subtree of any tree).
+2.  `root` is null -> False (subRoot is not null).
+3.  `isSameTree(root, subRoot)` is true.
+4.  `isSubtree(root->left, subRoot)` is true.
+5.  `isSubtree(root->right, subRoot)` is true.
+
+---
+
+## 4. 💻 Implementation (程式碼)
+
+### Approach: Check Same Tree for Every Node
+
+```cpp
+struct TreeNode {
+    int val;
+    TreeNode *left;
+    TreeNode *right;
+    TreeNode() : val(0), left(nullptr), right(nullptr) {}
+    TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+    TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+};
+
+class Solution {
+public:
+    bool isSubtree(TreeNode* root, TreeNode* subRoot) {
+        if (!subRoot) return true; // Empty set is subset of any set
+        if (!root) return false;   // subRoot not null but root is null
+        
+        // 1. Check if current trees are identical
+        if (isSameTree(root, subRoot)) {
+            return true;
+        }
+        
+        // 2. Check if subRoot represents a subtree of left or right child
+        return isSubtree(root->left, subRoot) || isSubtree(root->right, subRoot);
+    }
+    
+private:
+    bool isSameTree(TreeNode* p, TreeNode* q) {
+        if (!p && !q) return true;
+        if (!p || !q) return false;
+        if (p->val != q->val) return false;
+        
+        return isSameTree(p->left, q->left) && isSameTree(p->right, q->right);
+    }
+};
+```
+
+### Python Reference
+
+```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def isSubtree(self, root: Optional[TreeNode], subRoot: Optional[TreeNode]) -> bool:
+        if not subRoot: return True
+        if not root: return False
+        
+        if self.isSameTree(root, subRoot):
+            return True
+            
+        return (self.isSubtree(root.left, subRoot) or 
+                self.isSubtree(root.right, subRoot))
+        
+    def isSameTree(self, p, q):
+        if not p and not q: return True
+        if not p or not q or p.val != q.val: return False
+        
+        return (self.isSameTree(p.left, q.left) and 
+                self.isSameTree(p.right, q.right))
+```
+
+---
+
+## 5. 📝 Detailed Code Comments (詳細註解)
+
+```cpp
+class Solution {
+public:
+    bool isSubtree(TreeNode* root, TreeNode* subRoot) {
+        // Base Cases
+        // 如果 subRoot 是空，它一定是任何樹的子樹
+        if (subRoot == nullptr) return true;
+        // 如果 root 已經空了 (但 subRoot 不空)，那就不可能是子樹
+        if (root == nullptr) return false;
+        
+        // Step 1: 檢查「當前這棵樹」是否跟 subRoot 完全一樣
+        if (isSameTree(root, subRoot)) {
+            return true;
+        }
+        
+        // Step 2: 如果不一樣，遞迴去 root 的左子樹和右子樹找看看
+        return isSubtree(root->left, subRoot) || isSubtree(root->right, subRoot);
+    }
+
+private:
+    // 這是上一題的 Helper Function，判斷兩棵樹是否完全相同
+    bool isSameTree(TreeNode* p, TreeNode* q) {
+        if (!p && !q) return true;
+        if (!p || !q) return false;
+        if (p->val != q->val) return false;
+        return isSameTree(p->left, q->left) && isSameTree(p->right, q->right);
+    }
+};
+```
+
+---
+
+## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
+
+-   **Time Complexity**: $O(M \times N)$
+    -   $M$ is `root` nodes, $N$ is `subRoot` nodes.
+    -   對於 `root` 中的每一個節點，我們最多可能花 $O(N)$ 時間去檢查 `isSameTree`。
+    -   如果樹是平衡的，或者 `subRoot` 很小，實際效能會接近 $O(M)$。
+-   **Space Complexity**: $O(M)$
+    -   DFS Stack Depth。
