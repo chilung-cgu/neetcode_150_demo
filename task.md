@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：45 題
--   **進度**：30.0%
+-   **已完成**：46 題
+-   **進度**：30.7%
 
 ---
 
@@ -91,7 +91,7 @@
 ## 07. Trees (15 題)
 > 核心技巧：DFS/BFS、遞迴思維、樹的性質
 
-- [ ] [Invert Binary Tree](07_Trees/01_Invert_Binary_Tree.md) <!-- Easy -->
+- [x] [Invert Binary Tree](07_Trees/01_Invert_Binary_Tree.md) <!-- Easy -->
 - [ ] [Maximum Depth of Binary Tree](07_Trees/02_Maximum_Depth_of_Binary_Tree.md) <!-- Easy -->
 - [ ] [Diameter of Binary Tree](07_Trees/03_Diameter_of_Binary_Tree.md) <!-- Easy -->
 - [ ] [Balanced Binary Tree](07_Trees/04_Balanced_Binary_Tree.md) <!-- Easy -->
