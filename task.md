@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：33 題
--   **進度**：22.0%
+-   **已完成**：34 題
+-   **進度**：22.7%
 
 ---
 
@@ -67,7 +67,7 @@
 - [x] [Find Minimum in Rotated Sorted Array](05_Binary_Search/04_Find_Minimum_in_Rotated_Sorted_Array.md) <!-- Medium -->
 - [x] [Search in Rotated Sorted Array](05_Binary_Search/05_Search_in_Rotated_Sorted_Array.md) <!-- Medium -->
 - [x] [Time Based Key-Value Store](05_Binary_Search/06_Time_Based_Key_Value_Store.md) <!-- Medium -->
-- [ ] [Median of Two Sorted Arrays](05_Binary_Search/07_Median_of_Two_Sorted_Arrays.md) <!-- Hard ⭐ -->
+- [x] [Median of Two Sorted Arrays](05_Binary_Search/07_Median_of_Two_Sorted_Arrays.md) <!-- Hard ⭐ -->
 
 ---
 
