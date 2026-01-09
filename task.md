@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：28 題
--   **進度**：18.7%
+-   **已完成**：29 題
+-   **進度**：19.3%
 
 ---
 
@@ -62,7 +62,7 @@
 > 核心技巧：二分搜尋變形、搜尋空間壓縮
 
 - [x] [Binary Search](05_Binary_Search/01_Binary_Search.md) <!-- Easy -->
-- [ ] [Search a 2D Matrix](05_Binary_Search/02_Search_a_2D_Matrix.md) <!-- Medium -->
+- [x] [Search a 2D Matrix](05_Binary_Search/02_Search_a_2D_Matrix.md) <!-- Medium -->
 - [ ] [Koko Eating Bananas](05_Binary_Search/03_Koko_Eating_Bananas.md) <!-- Medium -->
 - [ ] [Find Minimum in Rotated Sorted Array](05_Binary_Search/04_Find_Minimum_in_Rotated_Sorted_Array.md) <!-- Medium -->
 - [ ] [Search in Rotated Sorted Array](05_Binary_Search/05_Search_in_Rotated_Sorted_Array.md) <!-- Medium -->
