@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：124 題
--   **進度**：82.7%
+-   **已完成**：125 題
+-   **進度**：83.3%
 
 ---
 
@@ -217,7 +217,7 @@
 - [x] [Rotting Oranges](15_Graphs/06_Rotting_Oranges.md) <!-- Medium -->
 - [x] [Walls and Gates](15_Graphs/07_Walls_and_Gates.md) <!-- Medium -->
 - [x] [Course Schedule](15_Graphs/08_Course_Schedule.md) <!-- Medium ⭐ -->
-- [ ] [Course Schedule II](15_Graphs/09_Course_Schedule_II.md) <!-- Medium -->
+- [x] [Course Schedule II](15_Graphs/09_Course_Schedule_II.md) <!-- Medium -->
 - [ ] [Redundant Connection](15_Graphs/10_Redundant_Connection.md) <!-- Medium -->
 - [ ] [Number of Connected Components in an Undirected Graph](15_Graphs/11_Number_of_Connected_Components.md) <!-- Medium -->
 - [ ] [Graph Valid Tree](15_Graphs/12_Graph_Valid_Tree.md) <!-- Medium -->
