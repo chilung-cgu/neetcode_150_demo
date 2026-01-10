@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：143 題
--   **進度**：95.3%
+-   **已完成**：144 題
+-   **進度**：96.0%
 
 ---
 
@@ -255,7 +255,7 @@
 ## 18. Bit Manipulation (7 題)
 > 核心技巧：XOR 性質、位移操作、位元計數
 
-- [ ] [Single Number](18_Bit_Manipulation/01_Single_Number.md) <!-- Easy ⭐ -->
+- [x] [Single Number](18_Bit_Manipulation/01_Single_Number.md) <!-- Easy ⭐ -->
 - [ ] [Number of 1 Bits](18_Bit_Manipulation/02_Number_of_1_Bits.md) <!-- Easy -->
 - [ ] [Counting Bits](18_Bit_Manipulation/03_Counting_Bits.md) <!-- Easy -->
 - [ ] [Reverse Bits](18_Bit_Manipulation/04_Reverse_Bits.md) <!-- Easy -->
