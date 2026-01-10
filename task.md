@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：138 題
--   **進度**：92.0%
+-   **已完成**：139 題
+-   **進度**：92.7%
 
 ---
 
@@ -244,7 +244,7 @@
 - [x] [Rotate Image](17_Math_Geometry/01_Rotate_Image.md) <!-- Medium -->
 - [x] [Spiral Matrix](17_Math_Geometry/02_Spiral_Matrix.md) <!-- Medium -->
 - [x] [Set Matrix Zeroes](17_Math_Geometry/03_Set_Matrix_Zeroes.md) <!-- Medium -->
-- [ ] [Happy Number](17_Math_Geometry/04_Happy_Number.md) <!-- Easy -->
+- [x] [Happy Number](17_Math_Geometry/04_Happy_Number.md) <!-- Easy -->
 - [ ] [Plus One](17_Math_Geometry/05_Plus_One.md) <!-- Easy -->
 - [ ] [Pow(x, n)](17_Math_Geometry/06_Pow.md) <!-- Medium -->
 - [ ] [Multiply Strings](17_Math_Geometry/07_Multiply_Strings.md) <!-- Medium -->
