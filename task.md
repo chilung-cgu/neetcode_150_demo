@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：130 題
--   **進度**：86.7%
+-   **已完成**：131 題
+-   **進度**：87.3%
 
 ---
 
@@ -229,7 +229,7 @@
 > 核心技巧：Dijkstra、Bellman-Ford、最小生成樹
 
 - [x] [Reconstruct Itinerary](16_Advanced_Graphs/01_Reconstruct_Itinerary.md) <!-- Hard -->
-- [ ] [Min Cost to Connect All Points](16_Advanced_Graphs/02_Min_Cost_Connect_Points.md) <!-- Medium -->
+- [x] [Min Cost to Connect All Points](16_Advanced_Graphs/02_Min_Cost_Connect_Points.md) <!-- Medium -->
 - [ ] [Network Delay Time](16_Advanced_Graphs/03_Network_Delay_Time.md) <!-- Medium -->
 - [ ] [Swim in Rising Water](16_Advanced_Graphs/04_Swim_in_Rising_Water.md) <!-- Hard -->
 - [ ] [Alien Dictionary](16_Advanced_Graphs/05_Alien_Dictionary.md) <!-- Hard ⭐ -->
