@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：142 題
--   **進度**：94.7%
+-   **已完成**：143 題
+-   **進度**：95.3%
 
 ---
 
@@ -248,7 +248,7 @@
 - [x] [Plus One](17_Math_Geometry/05_Plus_One.md) <!-- Easy -->
 - [x] [Pow(x, n)](17_Math_Geometry/06_Pow.md) <!-- Medium -->
 - [x] [Multiply Strings](17_Math_Geometry/07_Multiply_Strings.md) <!-- Medium -->
-- [ ] [Detect Squares](17_Math_Geometry/08_Detect_Squares.md) <!-- Medium -->
+- [x] [Detect Squares](17_Math_Geometry/08_Detect_Squares.md) <!-- Medium -->
 
 ---
 
