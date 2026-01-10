@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：121 題
--   **進度**：80.7%
+-   **已完成**：122 題
+-   **進度**：81.3%
 
 ---
 
@@ -214,7 +214,7 @@
 - [x] [Max Area of Island](15_Graphs/03_Max_Area_of_Island.md) <!-- Medium -->
 - [x] [Pacific Atlantic Water Flow](15_Graphs/04_Pacific_Atlantic_Water_Flow.md) <!-- Medium -->
 - [x] [Surrounded Regions](15_Graphs/05_Surrounded_Regions.md) <!-- Medium -->
-- [ ] [Rotting Oranges](15_Graphs/06_Rotting_Oranges.md) <!-- Medium -->
+- [x] [Rotting Oranges](15_Graphs/06_Rotting_Oranges.md) <!-- Medium -->
 - [ ] [Walls and Gates](15_Graphs/07_Walls_and_Gates.md) <!-- Medium -->
 - [ ] [Course Schedule](15_Graphs/08_Course_Schedule.md) <!-- Medium ⭐ -->
 - [ ] [Course Schedule II](15_Graphs/09_Course_Schedule_II.md) <!-- Medium -->
