@@ -1,0 +1,214 @@
+# Network Delay Time (網絡延遲時間)
+
+## 1. 🧐 Problem Dissection (釐清問題)
+
+給定一個網絡，包含 $n$ 個節點（標記為 1 到 n）。
+給定一個時間列表 `times`，其中 `times[i] = (u, v, w)` 表示從節點 `u` 到節點 `v` 的信號傳遞需要時間 `w`。
+現在我們從某個節點 `k` 發出一個信號。
+請問所有 $n$ 個節點都收到信號需要多久？
+如果不可能所有節點都收到信號，回傳 -1。
+
+在這個問題中，「所有節點都收到信號需要的時間」等於 **從起點 k 到所有其他節點的最短路徑中的最大值**。
+
+-   **Input**: `times = [[2,1,1],[2,3,1],[3,4,1]], n = 4, k = 2`
+-   **Output**: `2`
+    -   2->1 (time 1), 2->3 (time 1), 3->4 (time 1 => total 2 from source). Max(1, 1, 2) = 2.
+-   **Constraints**:
+    -   $1 <= n <= 100$
+    -   $1 <= times.length <= 6000$
+
+---
+
+## 2. 🐢 Brute Force Approach (暴力解)
+
+這是單源最短路徑問題。
+-   **Bellman-Ford**: $O(V \times E)$。可行，因為 $V$ 很小 ($100$)。
+-   **Floyd-Warshall**: $O(V^3)$。計算任意兩點最短路徑。也可行。
+-   **BFS (Queue)**: 僅適用於無權圖。這裡有權重且不為 1，不能直接用簡單 BFS (除非改造成 SPFA，但 SPFA 最壞情況是指數級)。
+
+---
+
+## 3. 💡 The "Aha!" Moment (優化)
+
+**Dijkstra's Algorithm**:
+這是解決非負權重圖的中單源最短路徑的最標準、最高效算法。
+因為邊權重代表時間，一定是非負的。
+
+**Algorithm**:
+1.  **Graph**: 建立鄰接表 `adj[u] -> [(v, w)]`。
+2.  **Priority Queue**: Min-Heap 儲存 `(time_from_source, node)`。
+3.  **Distances**: 記錄從 k 到每個節點的最短時間。也可以只用一個 `visited` 集合來記錄。
+4.  **Process**:
+    -   Push `(0, k)`。
+    -   Loop while PQ not empty:
+        -   Pop `(time, u)`。
+        -   如果 `u` 已訪問，跳過。
+        -   標記 `u` 為已訪問，更新最大時間 `res = max(res, time)`。
+        -   對於鄰居 `v`，Push `(time + w, v)`。
+5.  **Result**:
+    -   如果訪問過的節點數等於 $n$，回傳 `res`。
+    -   否則回傳 -1。
+
+---
+
+## 4. 💻 Implementation (程式碼)
+
+### Approach: Dijkstra's Algorithm
+
+```cpp
+#include <vector>
+#include <queue>
+#include <unordered_map>
+#include <algorithm>
+
+using namespace std;
+
+class Solution {
+public:
+    int networkDelayTime(vector<vector<int>>& times, int n, int k) {
+        // Build Graph
+        unordered_map<int, vector<pair<int, int>>> adj;
+        for (const auto& t : times) {
+            adj[t[0]].push_back({t[1], t[2]});
+        }
+        
+        // Min-Heap: {time, node}
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+        pq.push({0, k});
+        
+        // Track visited nodes and minimum time found
+        vector<int> dist(n + 1, -1);
+        int visitedCount = 0;
+        int maxTime = 0;
+        
+        while (!pq.empty()) {
+            pair<int, int> top = pq.top();
+            pq.pop();
+            
+            int time = top.first;
+            int u = top.second;
+            
+            if (dist[u] != -1) continue; // Already visited
+            
+            dist[u] = time;
+            visitedCount++;
+            maxTime = max(maxTime, time);
+            
+            if (visitedCount == n) return maxTime; // Optimization
+            
+            for (const auto& edge : adj[u]) {
+                int v = edge.first;
+                int w = edge.second;
+                if (dist[v] == -1) {
+                    pq.push({time + w, v});
+                }
+            }
+        }
+        
+        return visitedCount == n ? maxTime : -1;
+    }
+};
+```
+
+### Python Reference
+
+```python
+import heapq
+
+class Solution:
+    def networkDelayTime(self, times: List[List[int]], n: int, k: int) -> int:
+        adj = collections.defaultdict(list)
+        for u, v, w in times:
+            adj[u].append((v, w))
+            
+        minHeap = [(0, k)]
+        visit = set()
+        t = 0
+        
+        while minHeap:
+            time, u = heapq.heappop(minHeap)
+            if u in visit:
+                continue
+            
+            visit.add(u)
+            t = max(t, time)
+            
+            if len(visit) == n:
+                return t
+            
+            for v, w in adj[u]:
+                if v not in visit:
+                    heapq.heappush(minHeap, (time + w, v))
+                    
+        return -1
+```
+
+---
+
+## 5. 📝 Detailed Code Comments (詳細註解)
+
+```cpp
+class Solution {
+public:
+    int networkDelayTime(vector<vector<int>>& times, int n, int k) {
+        // 1. 建圖
+        // adj[u] 包含所有從 u 出發的邊 {v, weight}
+        unordered_map<int, vector<pair<int, int>>> adj;
+        for (const auto& t : times) {
+            adj[t[0]].push_back({t[1], t[2]});
+        }
+        
+        // 2. Dijkstra 初始化
+        // Min-Heap 存儲 {當前總耗時, 節點編號}
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+        pq.push({0, k}); // 起點 k，耗時 0
+        
+        // 記錄每個節點是否已確定最短路徑
+        // 使用 vector 來記錄最短時間，初始化為 -1 代表未訪問
+        vector<int> dist(n + 1, -1);
+        int visitedCount = 0;
+        int maxTime = 0;
+        
+        // 3. 處理 Heap
+        while (!pq.empty()) {
+            pair<int, int> top = pq.top();
+            pq.pop();
+            
+            int time = top.first;
+            int u = top.second;
+            
+            // 如果已經找到該節點的最短路徑，跳過
+            if (dist[u] != -1) continue; 
+            
+            // 標記該節點已訪問，並記錄其最短時間
+            dist[u] = time;
+            visitedCount++;
+            maxTime = max(maxTime, time); // 答案是所有最短時間中的最大值
+            
+            // 優化：如果所有節點都已訪問，可以提早結束
+            if (visitedCount == n) return maxTime;
+            
+            // 擴展鄰居
+            for (const auto& edge : adj[u]) {
+                int v = edge.first;
+                int w = edge.second;
+                // 只將未確定最短路徑的鄰居加入 Heap
+                if (dist[v] == -1) {
+                    pq.push({time + w, v});
+                }
+            }
+        }
+        
+        return visitedCount == n ? maxTime : -1;
+    }
+};
+```
+
+---
+
+## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
+
+-   **Time Complexity**: $O(E \log E)$
+    -   Standard Dijkstra with Heap. In worst case we push all edges to heap.
+-   **Space Complexity**: $O(V + E)$
+    -   Adjacency list. Heap size.
