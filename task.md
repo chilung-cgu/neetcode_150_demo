@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：129 題
--   **進度**：86.0%
+-   **已完成**：130 題
+-   **進度**：86.7%
 
 ---
 
@@ -228,7 +228,7 @@
 ## 16. Advanced Graphs (6 題)
 > 核心技巧：Dijkstra、Bellman-Ford、最小生成樹
 
-- [ ] [Reconstruct Itinerary](16_Advanced_Graphs/01_Reconstruct_Itinerary.md) <!-- Hard -->
+- [x] [Reconstruct Itinerary](16_Advanced_Graphs/01_Reconstruct_Itinerary.md) <!-- Hard -->
 - [ ] [Min Cost to Connect All Points](16_Advanced_Graphs/02_Min_Cost_Connect_Points.md) <!-- Medium -->
 - [ ] [Network Delay Time](16_Advanced_Graphs/03_Network_Delay_Time.md) <!-- Medium -->
 - [ ] [Swim in Rising Water](16_Advanced_Graphs/04_Swim_in_Rising_Water.md) <!-- Hard -->
