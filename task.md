@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：117 題
--   **進度**：78.0%
+-   **已完成**：118 題
+-   **進度**：78.7%
 
 ---
 
@@ -210,7 +210,7 @@
 > 核心技巧：DFS/BFS、Union-Find、拓撲排序
 
 - [x] [Number of Islands](15_Graphs/01_Number_of_Islands.md) <!-- Medium ⭐ -->
-- [ ] [Clone Graph](15_Graphs/02_Clone_Graph.md) <!-- Medium -->
+- [x] [Clone Graph](15_Graphs/02_Clone_Graph.md) <!-- Medium -->
 - [ ] [Max Area of Island](15_Graphs/03_Max_Area_of_Island.md) <!-- Medium -->
 - [ ] [Pacific Atlantic Water Flow](15_Graphs/04_Pacific_Atlantic_Water_Flow.md) <!-- Medium -->
 - [ ] [Surrounded Regions](15_Graphs/05_Surrounded_Regions.md) <!-- Medium -->
