@@ -117,3 +117,22 @@ neetcode_150_demo/
     git push origin main
     ```
 
+---
+
+## 📚 Documentation & Deployment Protocol
+
+> **目標**：自動生成高品質的專案文檔網站，並透過 GitHub Actions 自動部署。
+
+### 1. 文檔架構 (MkDocs)
+-   **雙重索引策略**：
+    -   **按分類 (By Category)**：維持原始資料夾結構，適合主題式複習。
+    -   **按難度 (By Difficulty)**：自動生成索引頁 (Easy/Medium/Hard)，適合漸進式學習。
+-   **單一來源原則 (Single Source of Truth)**：
+    -   原始 Markdown 題解位於專案根目錄。
+    -   `site/` 建置目錄與 `docs/` 下的鏡像檔案 **不應** 被提交到 Git (Build-time generation only)。
+
+### 2. 自動化流程
+-   **Build Script**：每次建置前，動態將題解檔案複製/同步至 `docs/` 目錄。
+-   **GitHub Pages**：使用 GitHub Actions 在每次 Push to main 時自動建置並部署。
+
+
