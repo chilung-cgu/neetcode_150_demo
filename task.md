@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：134 題
--   **進度**：89.3%
+-   **已完成**：135 題
+-   **進度**：90.0%
 
 ---
 
@@ -233,7 +233,7 @@
 - [x] [Network Delay Time](16_Advanced_Graphs/03_Network_Delay_Time.md) <!-- Medium -->
 - [x] [Swim in Rising Water](16_Advanced_Graphs/04_Swim_in_Rising_Water.md) <!-- Hard -->
 - [x] [Alien Dictionary](16_Advanced_Graphs/05_Alien_Dictionary.md) <!-- Hard ⭐ -->
-- [ ] [Cheapest Flights Within K Stops](16_Advanced_Graphs/06_Cheapest_Flights_K_Stops.md) <!-- Medium -->
+- [x] [Cheapest Flights Within K Stops](16_Advanced_Graphs/06_Cheapest_Flights_K_Stops.md) <!-- Medium -->
 
 
 ---
