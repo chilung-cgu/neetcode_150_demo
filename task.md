@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：114 題
--   **進度**：76.0%
+-   **已完成**：115 題
+-   **進度**：76.7%
 
 ---
 
@@ -201,7 +201,7 @@
 - [x] [Merge Intervals](14_Intervals/02_Merge_Intervals.md) <!-- Medium ⭐ -->
 - [x] [Non-overlapping Intervals](14_Intervals/03_Non_Overlapping_Intervals.md) <!-- Medium -->
 - [x] [Meeting Rooms](14_Intervals/04_Meeting_Rooms.md) <!-- Easy -->
-- [ ] [Meeting Rooms II](14_Intervals/05_Meeting_Rooms_II.md) <!-- Medium -->
+- [x] [Meeting Rooms II](14_Intervals/05_Meeting_Rooms_II.md) <!-- Medium -->
 - [ ] [Minimum Interval to Include Each Query](14_Intervals/06_Minimum_Interval.md) <!-- Hard -->
 
 ---
