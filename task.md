@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：132 題
--   **進度**：88.0%
+-   **已完成**：133 題
+-   **進度**：88.7%
 
 ---
 
@@ -231,7 +231,7 @@
 - [x] [Reconstruct Itinerary](16_Advanced_Graphs/01_Reconstruct_Itinerary.md) <!-- Hard -->
 - [x] [Min Cost to Connect All Points](16_Advanced_Graphs/02_Min_Cost_Connect_Points.md) <!-- Medium -->
 - [x] [Network Delay Time](16_Advanced_Graphs/03_Network_Delay_Time.md) <!-- Medium -->
-- [ ] [Swim in Rising Water](16_Advanced_Graphs/04_Swim_in_Rising_Water.md) <!-- Hard -->
+- [x] [Swim in Rising Water](16_Advanced_Graphs/04_Swim_in_Rising_Water.md) <!-- Hard -->
 - [ ] [Alien Dictionary](16_Advanced_Graphs/05_Alien_Dictionary.md) <!-- Hard ⭐ -->
 - [ ] [Cheapest Flights Within K Stops](16_Advanced_Graphs/06_Cheapest_Flights_K_Stops.md) <!-- Medium -->
 
