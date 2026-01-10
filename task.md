@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：136 題
--   **進度**：90.7%
+-   **已完成**：137 題
+-   **進度**：91.3%
 
 ---
 
@@ -242,7 +242,7 @@
 > 核心技巧：數學性質、矩陣操作、位運算
 
 - [x] [Rotate Image](17_Math_Geometry/01_Rotate_Image.md) <!-- Medium -->
-- [ ] [Spiral Matrix](17_Math_Geometry/02_Spiral_Matrix.md) <!-- Medium -->
+- [x] [Spiral Matrix](17_Math_Geometry/02_Spiral_Matrix.md) <!-- Medium -->
 - [ ] [Set Matrix Zeroes](17_Math_Geometry/03_Set_Matrix_Zeroes.md) <!-- Medium -->
 - [ ] [Happy Number](17_Math_Geometry/04_Happy_Number.md) <!-- Easy -->
 - [ ] [Plus One](17_Math_Geometry/05_Plus_One.md) <!-- Easy -->
