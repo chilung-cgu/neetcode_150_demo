@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：111 題
--   **進度**：74.0%
+-   **已完成**：112 題
+-   **進度**：74.7%
 
 ---
 
@@ -198,7 +198,7 @@
 > 核心技巧：區間排序、區間合併、區間重疊判斷
 
 - [x] [Insert Interval](14_Intervals/01_Insert_Interval.md) <!-- Medium -->
-- [ ] [Merge Intervals](14_Intervals/02_Merge_Intervals.md) <!-- Medium ⭐ -->
+- [x] [Merge Intervals](14_Intervals/02_Merge_Intervals.md) <!-- Medium ⭐ -->
 - [ ] [Non-overlapping Intervals](14_Intervals/03_Non_Overlapping_Intervals.md) <!-- Medium -->
 - [ ] [Meeting Rooms](14_Intervals/04_Meeting_Rooms.md) <!-- Easy -->
 - [ ] [Meeting Rooms II](14_Intervals/05_Meeting_Rooms_II.md) <!-- Medium -->
