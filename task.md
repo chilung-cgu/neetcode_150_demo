@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：127 題
--   **進度**：84.7%
+-   **已完成**：128 題
+-   **進度**：85.3%
 
 ---
 
@@ -220,7 +220,7 @@
 - [x] [Course Schedule II](15_Graphs/09_Course_Schedule_II.md) <!-- Medium -->
 - [x] [Redundant Connection](15_Graphs/10_Redundant_Connection.md) <!-- Medium -->
 - [x] [Number of Connected Components in an Undirected Graph](15_Graphs/11_Number_of_Connected_Components.md) <!-- Medium -->
-- [ ] [Graph Valid Tree](15_Graphs/12_Graph_Valid_Tree.md) <!-- Medium -->
+- [x] [Graph Valid Tree](15_Graphs/12_Graph_Valid_Tree.md) <!-- Medium -->
 - [ ] [Word Ladder](15_Graphs/13_Word_Ladder.md) <!-- Hard -->
 
 ---
