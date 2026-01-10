@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：146 題
--   **進度**：97.3%
+-   **已完成**：147 題
+-   **進度**：98.0%
 
 ---
 
@@ -258,7 +258,7 @@
 - [x] [Single Number](18_Bit_Manipulation/01_Single_Number.md) <!-- Easy ⭐ -->
 - [x] [Number of 1 Bits](18_Bit_Manipulation/02_Number_of_1_Bits.md) <!-- Easy -->
 - [x] [Counting Bits](18_Bit_Manipulation/03_Counting_Bits.md) <!-- Easy -->
-- [ ] [Reverse Bits](18_Bit_Manipulation/04_Reverse_Bits.md) <!-- Easy -->
+- [x] [Reverse Bits](18_Bit_Manipulation/04_Reverse_Bits.md) <!-- Easy -->
 - [ ] [Missing Number](18_Bit_Manipulation/05_Missing_Number.md) <!-- Easy -->
 - [ ] [Sum of Two Integers](18_Bit_Manipulation/06_Sum_of_Two_Integers.md) <!-- Medium -->
 - [ ] [Reverse Integer](18_Bit_Manipulation/07_Reverse_Integer.md) <!-- Medium -->
