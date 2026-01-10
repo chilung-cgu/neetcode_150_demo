@@ -2,8 +2,8 @@
 
 ## 📊 總覽
 -   **總題數**：150 題
--   **已完成**：110 題
--   **進度**：73.3%
+-   **已完成**：111 題
+-   **進度**：74.0%
 
 ---
 
@@ -194,95 +194,47 @@
  - [x] [Valid Parenthesis String](13_Greedy/08_Valid_Parenthesis_String.md) <!-- Medium ⭐ -->
 ---
 
-## 11. Graphs (13 題)
-> 核心技巧：DFS/BFS、Union-Find、拓撲排序
-
-- [ ] [Number of Islands](11_Graphs/01_Number_of_Islands.md) <!-- Medium ⭐ -->
-- [ ] [Clone Graph](11_Graphs/02_Clone_Graph.md) <!-- Medium -->
-- [ ] [Max Area of Island](11_Graphs/03_Max_Area_of_Island.md) <!-- Medium -->
-- [ ] [Pacific Atlantic Water Flow](11_Graphs/04_Pacific_Atlantic_Water_Flow.md) <!-- Medium -->
-- [ ] [Surrounded Regions](11_Graphs/05_Surrounded_Regions.md) <!-- Medium -->
-- [ ] [Rotting Oranges](11_Graphs/06_Rotting_Oranges.md) <!-- Medium -->
-- [ ] [Walls and Gates](11_Graphs/07_Walls_and_Gates.md) <!-- Medium -->
-- [ ] [Course Schedule](11_Graphs/08_Course_Schedule.md) <!-- Medium ⭐ -->
-- [ ] [Course Schedule II](11_Graphs/09_Course_Schedule_II.md) <!-- Medium -->
-- [ ] [Redundant Connection](11_Graphs/10_Redundant_Connection.md) <!-- Medium -->
-- [ ] [Number of Connected Components in an Undirected Graph](11_Graphs/11_Number_of_Connected_Components.md) <!-- Medium -->
-- [ ] [Graph Valid Tree](11_Graphs/12_Graph_Valid_Tree.md) <!-- Medium -->
-- [ ] [Word Ladder](11_Graphs/13_Word_Ladder.md) <!-- Hard -->
-
----
-
-## 12. Advanced Graphs (6 題)
-> 核心技巧：Dijkstra、Bellman-Ford、最小生成樹
-
-- [ ] [Reconstruct Itinerary](12_Advanced_Graphs/01_Reconstruct_Itinerary.md) <!-- Hard -->
-- [ ] [Min Cost to Connect All Points](12_Advanced_Graphs/02_Min_Cost_Connect_Points.md) <!-- Medium -->
-- [ ] [Network Delay Time](12_Advanced_Graphs/03_Network_Delay_Time.md) <!-- Medium -->
-- [ ] [Swim in Rising Water](12_Advanced_Graphs/04_Swim_in_Rising_Water.md) <!-- Hard -->
-- [ ] [Alien Dictionary](12_Advanced_Graphs/05_Alien_Dictionary.md) <!-- Hard ⭐ -->
-- [ ] [Cheapest Flights Within K Stops](12_Advanced_Graphs/06_Cheapest_Flights_K_Stops.md) <!-- Medium -->
-
----
-
-## 13. 1-D Dynamic Programming (12 題)
-> 核心技巧：狀態定義、狀態轉移、空間優化
-
-- [ ] [Climbing Stairs](13_1D_DP/01_Climbing_Stairs.md) <!-- Easy -->
-- [ ] [Min Cost Climbing Stairs](13_1D_DP/02_Min_Cost_Climbing_Stairs.md) <!-- Easy -->
-- [ ] [House Robber](13_1D_DP/03_House_Robber.md) <!-- Medium ⭐ -->
-- [ ] [House Robber II](13_1D_DP/04_House_Robber_II.md) <!-- Medium -->
-- [ ] [Longest Palindromic Substring](13_1D_DP/05_Longest_Palindromic_Substring.md) <!-- Medium -->
-- [ ] [Palindromic Substrings](13_1D_DP/06_Palindromic_Substrings.md) <!-- Medium -->
-- [ ] [Decode Ways](13_1D_DP/07_Decode_Ways.md) <!-- Medium -->
-- [ ] [Coin Change](13_1D_DP/08_Coin_Change.md) <!-- Medium ⭐ -->
-- [ ] [Maximum Product Subarray](13_1D_DP/09_Maximum_Product_Subarray.md) <!-- Medium -->
-- [ ] [Word Break](13_1D_DP/10_Word_Break.md) <!-- Medium -->
-- [ ] [Longest Increasing Subsequence](13_1D_DP/11_Longest_Increasing_Subsequence.md) <!-- Medium ⭐ -->
-- [ ] [Partition Equal Subset Sum](13_1D_DP/12_Partition_Equal_Subset_Sum.md) <!-- Medium -->
-
----
-
-## 14. 2-D Dynamic Programming (11 題)
-> 核心技巧：二維狀態、路徑計算、區間 DP
-
-- [ ] [Unique Paths](14_2D_DP/01_Unique_Paths.md) <!-- Medium -->
-- [ ] [Longest Common Subsequence](14_2D_DP/02_Longest_Common_Subsequence.md) <!-- Medium ⭐ -->
-- [ ] [Best Time to Buy and Sell Stock with Cooldown](14_2D_DP/03_Buy_Sell_Stock_Cooldown.md) <!-- Medium -->
-- [ ] [Coin Change II](14_2D_DP/04_Coin_Change_II.md) <!-- Medium -->
-- [ ] [Target Sum](14_2D_DP/05_Target_Sum.md) <!-- Medium -->
-- [ ] [Interleaving String](14_2D_DP/06_Interleaving_String.md) <!-- Medium -->
-- [ ] [Longest Increasing Path in a Matrix](14_2D_DP/07_Longest_Increasing_Path_Matrix.md) <!-- Hard -->
-- [ ] [Distinct Subsequences](14_2D_DP/08_Distinct_Subsequences.md) <!-- Hard -->
-- [ ] [Edit Distance](14_2D_DP/09_Edit_Distance.md) <!-- Medium ⭐ -->
-- [ ] [Burst Balloons](14_2D_DP/10_Burst_Balloons.md) <!-- Hard -->
-- [ ] [Regular Expression Matching](14_2D_DP/11_Regular_Expression_Matching.md) <!-- Hard ⭐ -->
-
----
-
-## 15. Greedy (8 題)
-> 核心技巧：局部最優、區間調度、跳躍問題
-
-- [ ] [Maximum Subarray](15_Greedy/01_Maximum_Subarray.md) <!-- Medium ⭐ -->
-- [ ] [Jump Game](15_Greedy/02_Jump_Game.md) <!-- Medium -->
-- [ ] [Jump Game II](15_Greedy/03_Jump_Game_II.md) <!-- Medium -->
-- [ ] [Gas Station](15_Greedy/04_Gas_Station.md) <!-- Medium -->
-- [ ] [Hand of Straights](15_Greedy/05_Hand_of_Straights.md) <!-- Medium -->
-- [ ] [Merge Triplets to Form Target Triplet](15_Greedy/06_Merge_Triplets.md) <!-- Medium -->
-- [ ] [Partition Labels](15_Greedy/07_Partition_Labels.md) <!-- Medium -->
-- [ ] [Valid Parenthesis String](15_Greedy/08_Valid_Parenthesis_String.md) <!-- Medium -->
-
----
-
-## 16. Intervals (6 題)
+## 14. Intervals (6 題)
 > 核心技巧：區間排序、區間合併、區間重疊判斷
 
-- [ ] [Insert Interval](16_Intervals/01_Insert_Interval.md) <!-- Medium -->
-- [ ] [Merge Intervals](16_Intervals/02_Merge_Intervals.md) <!-- Medium ⭐ -->
-- [ ] [Non-overlapping Intervals](16_Intervals/03_Non_Overlapping_Intervals.md) <!-- Medium -->
-- [ ] [Meeting Rooms](16_Intervals/04_Meeting_Rooms.md) <!-- Easy -->
-- [ ] [Meeting Rooms II](16_Intervals/05_Meeting_Rooms_II.md) <!-- Medium -->
-- [ ] [Minimum Interval to Include Each Query](16_Intervals/06_Minimum_Interval.md) <!-- Hard -->
+- [x] [Insert Interval](14_Intervals/01_Insert_Interval.md) <!-- Medium -->
+- [ ] [Merge Intervals](14_Intervals/02_Merge_Intervals.md) <!-- Medium ⭐ -->
+- [ ] [Non-overlapping Intervals](14_Intervals/03_Non_Overlapping_Intervals.md) <!-- Medium -->
+- [ ] [Meeting Rooms](14_Intervals/04_Meeting_Rooms.md) <!-- Easy -->
+- [ ] [Meeting Rooms II](14_Intervals/05_Meeting_Rooms_II.md) <!-- Medium -->
+- [ ] [Minimum Interval to Include Each Query](14_Intervals/06_Minimum_Interval.md) <!-- Hard -->
+
+---
+
+## 15. Graphs (13 題)
+> 核心技巧：DFS/BFS、Union-Find、拓撲排序
+
+- [ ] [Number of Islands](15_Graphs/01_Number_of_Islands.md) <!-- Medium ⭐ -->
+- [ ] [Clone Graph](15_Graphs/02_Clone_Graph.md) <!-- Medium -->
+- [ ] [Max Area of Island](15_Graphs/03_Max_Area_of_Island.md) <!-- Medium -->
+- [ ] [Pacific Atlantic Water Flow](15_Graphs/04_Pacific_Atlantic_Water_Flow.md) <!-- Medium -->
+- [ ] [Surrounded Regions](15_Graphs/05_Surrounded_Regions.md) <!-- Medium -->
+- [ ] [Rotting Oranges](15_Graphs/06_Rotting_Oranges.md) <!-- Medium -->
+- [ ] [Walls and Gates](15_Graphs/07_Walls_and_Gates.md) <!-- Medium -->
+- [ ] [Course Schedule](15_Graphs/08_Course_Schedule.md) <!-- Medium ⭐ -->
+- [ ] [Course Schedule II](15_Graphs/09_Course_Schedule_II.md) <!-- Medium -->
+- [ ] [Redundant Connection](15_Graphs/10_Redundant_Connection.md) <!-- Medium -->
+- [ ] [Number of Connected Components in an Undirected Graph](15_Graphs/11_Number_of_Connected_Components.md) <!-- Medium -->
+- [ ] [Graph Valid Tree](15_Graphs/12_Graph_Valid_Tree.md) <!-- Medium -->
+- [ ] [Word Ladder](15_Graphs/13_Word_Ladder.md) <!-- Hard -->
+
+---
+
+## 16. Advanced Graphs (6 題)
+> 核心技巧：Dijkstra、Bellman-Ford、最小生成樹
+
+- [ ] [Reconstruct Itinerary](16_Advanced_Graphs/01_Reconstruct_Itinerary.md) <!-- Hard -->
+- [ ] [Min Cost to Connect All Points](16_Advanced_Graphs/02_Min_Cost_Connect_Points.md) <!-- Medium -->
+- [ ] [Network Delay Time](16_Advanced_Graphs/03_Network_Delay_Time.md) <!-- Medium -->
+- [ ] [Swim in Rising Water](16_Advanced_Graphs/04_Swim_in_Rising_Water.md) <!-- Hard -->
+- [ ] [Alien Dictionary](16_Advanced_Graphs/05_Alien_Dictionary.md) <!-- Hard ⭐ -->
+- [ ] [Cheapest Flights Within K Stops](16_Advanced_Graphs/06_Cheapest_Flights_K_Stops.md) <!-- Medium -->
+
 
 ---
 
