@@ -22,6 +22,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 這是單源最短路徑問題。
+
 -   **Bellman-Ford**: $O(V \times E)$。可行，因為 $V$ 很小 ($100$)。
 -   **Floyd-Warshall**: $O(V^3)$。計算任意兩點最短路徑。也可行。
 -   **BFS (Queue)**: 僅適用於無權圖。這裡有權重且不為 1，不能直接用簡單 BFS (除非改造成 SPFA，但 SPFA 最壞情況是指數級)。
@@ -71,31 +72,31 @@ public:
         for (const auto& t : times) {
             adj[t[0]].push_back({t[1], t[2]});
         }
-        
+
         // Min-Heap: {time, node}
         priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
         pq.push({0, k});
-        
+
         // Track visited nodes and minimum time found
         vector<int> dist(n + 1, -1);
         int visitedCount = 0;
         int maxTime = 0;
-        
+
         while (!pq.empty()) {
             pair<int, int> top = pq.top();
             pq.pop();
-            
+
             int time = top.first;
             int u = top.second;
-            
+
             if (dist[u] != -1) continue; // Already visited
-            
+
             dist[u] = time;
             visitedCount++;
             maxTime = max(maxTime, time);
-            
+
             if (visitedCount == n) return maxTime; // Optimization
-            
+
             for (const auto& edge : adj[u]) {
                 int v = edge.first;
                 int w = edge.second;
@@ -104,7 +105,7 @@ public:
                 }
             }
         }
-        
+
         return visitedCount == n ? maxTime : -1;
     }
 };
@@ -120,26 +121,26 @@ class Solution:
         adj = collections.defaultdict(list)
         for u, v, w in times:
             adj[u].append((v, w))
-            
+
         minHeap = [(0, k)]
         visit = set()
         t = 0
-        
+
         while minHeap:
             time, u = heapq.heappop(minHeap)
             if u in visit:
                 continue
-            
+
             visit.add(u)
             t = max(t, time)
-            
+
             if len(visit) == n:
                 return t
-            
+
             for v, w in adj[u]:
                 if v not in visit:
                     heapq.heappush(minHeap, (time + w, v))
-                    
+
         return -1
 ```
 
@@ -157,37 +158,37 @@ public:
         for (const auto& t : times) {
             adj[t[0]].push_back({t[1], t[2]});
         }
-        
+
         // 2. Dijkstra 初始化
         // Min-Heap 存儲 {當前總耗時, 節點編號}
         priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
         pq.push({0, k}); // 起點 k，耗時 0
-        
+
         // 記錄每個節點是否已確定最短路徑
         // 使用 vector 來記錄最短時間，初始化為 -1 代表未訪問
         vector<int> dist(n + 1, -1);
         int visitedCount = 0;
         int maxTime = 0;
-        
+
         // 3. 處理 Heap
         while (!pq.empty()) {
             pair<int, int> top = pq.top();
             pq.pop();
-            
+
             int time = top.first;
             int u = top.second;
-            
+
             // 如果已經找到該節點的最短路徑，跳過
-            if (dist[u] != -1) continue; 
-            
+            if (dist[u] != -1) continue;
+
             // 標記該節點已訪問，並記錄其最短時間
             dist[u] = time;
             visitedCount++;
             maxTime = max(maxTime, time); // 答案是所有最短時間中的最大值
-            
+
             // 優化：如果所有節點都已訪問，可以提早結束
             if (visitedCount == n) return maxTime;
-            
+
             // 擴展鄰居
             for (const auto& edge : adj[u]) {
                 int v = edge.first;
@@ -198,7 +199,7 @@ public:
                 }
             }
         }
-        
+
         return visitedCount == n ? maxTime : -1;
     }
 };

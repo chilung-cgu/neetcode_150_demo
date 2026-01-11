@@ -5,6 +5,7 @@
 給定兩個單詞 `beginWord` 和 `endWord`，以及一個字典 `wordList`。
 請找出從 `beginWord` 變換到 `endWord` 的 **最短轉換序列** 的長度。
 變換規則：
+
 1.  每次只能改變一個字母。
 2.  變換過程中的中間單詞必須都在 `wordList` 中。
 
@@ -80,47 +81,47 @@ class Solution {
 public:
     int ladderLength(string beginWord, string endWord, vector<string>& wordList) {
         unordered_set<string> wordSet(wordList.begin(), wordList.end());
-        
+
         // If endWord is not in the list, impossible
         if (wordSet.find(endWord) == wordSet.end()) return 0;
-        
+
         queue<string> q;
         q.push(beginWord);
-        
+
         int level = 1;
-        
+
         while (!q.empty()) {
             int size = q.size();
             for (int i = 0; i < size; i++) {
                 string curr = q.front();
                 q.pop();
-                
+
                 if (curr == endWord) return level;
-                
+
                 // Try changing each character
                 // We modify 'curr' directly and restore it to save space
                 for (int j = 0; j < curr.size(); j++) {
                     char originalChar = curr[j];
-                    
+
                     for (char c = 'a'; c <= 'z'; c++) {
                         if (c == originalChar) continue;
-                        
+
                         curr[j] = c;
-                        
+
                         // If transformed word is in dictionary
                         if (wordSet.find(curr) != wordSet.end()) {
                             q.push(curr);
                             wordSet.erase(curr); // Mark as visited
                         }
                     }
-                    
+
                     // Restore
                     curr[j] = originalChar;
                 }
             }
             level++;
         }
-        
+
         return 0;
     }
 };
@@ -135,18 +136,18 @@ class Solution:
     def ladderLength(self, beginWord: str, endWord: str, wordList: List[str]) -> int:
         if endWord not in wordList:
             return 0
-            
+
         nei = collections.defaultdict(list)
         wordList.append(beginWord)
         for word in wordList:
             for j in range(len(word)):
                 pattern = word[:j] + "*" + word[j+1:]
                 nei[pattern].append(word)
-                
+
         visit = set([beginWord])
         q = deque([beginWord])
         res = 1
-        
+
         while q:
             for i in range(len(q)):
                 word = q.popleft()
@@ -159,7 +160,7 @@ class Solution:
                             visit.add(neighbor)
                             q.append(neighbor)
             res += 1
-            
+
         return 0
 ```
 
@@ -173,36 +174,36 @@ public:
     int ladderLength(string beginWord, string endWord, vector<string>& wordList) {
         // 使用 Set 以便 O(1) 查找單詞是否存在
         unordered_set<string> wordSet(wordList.begin(), wordList.end());
-        
+
         // 如果目標單詞不在字典中，永遠無法到達
         if (wordSet.find(endWord) == wordSet.end()) return 0;
-        
+
         queue<string> q;
         q.push(beginWord);
-        
+
         // 初始長度為 1 (包含 beginWord 本身)
         int level = 1;
-        
+
         while (!q.empty()) {
             int size = q.size(); // 當前層的節點數
-            
+
             for (int i = 0; i < size; i++) {
                 string curr = q.front();
                 q.pop();
-                
+
                 // 找到目標
                 if (curr == endWord) return level;
-                
+
                 // 嘗試將當前單詞的每個字符替換成 'a' 到 'z'
                 for (int j = 0; j < curr.size(); j++) {
                     char originalChar = curr[j];
-                    
+
                     for (char c = 'a'; c <= 'z'; c++) {
                         // 跳過自己
                         if (c == originalChar) continue;
-                        
+
                         curr[j] = c;
-                        
+
                         // 檢查變換後的單詞是否在字典中
                         if (wordSet.find(curr) != wordSet.end()) {
                             q.push(curr);
@@ -211,7 +212,7 @@ public:
                             wordSet.erase(curr);
                         }
                     }
-                    
+
                     // 還原字符，以便嘗試下一個位置的變換
                     curr[j] = originalChar;
                 }
@@ -219,7 +220,7 @@ public:
             // 每遍歷完一層，路徑長度加 1
             level++;
         }
-        
+
         return 0; // 無法到達
     }
 };

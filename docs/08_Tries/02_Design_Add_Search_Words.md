@@ -3,6 +3,7 @@
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目要求設計一個資料結構 `WordDictionary`，支援：
+
 1.  `addWord(word)`: 新增單字。
 2.  `search(word)`: 搜尋單字。
     -   輸入的 `word` 可能包含 `.`，代表 **wildcard** (匹配任何一個字元)。
@@ -19,6 +20,7 @@
     wordDictionary.search(".ad"); // return True
     wordDictionary.search("b.."); // return True
     ```
+
 -   **Constraints**:
     -   $1 <= word.length <= 25$
     -   `word` in `addWord` consists of lowercase English letters.
@@ -31,6 +33,7 @@
 
 用 `HashSet` 存所有字。
 `search` 時，如果包含 `.`，遍歷 Set 中所有長度相同的字，逐字元比對。
+
 -   **Time**: $O(N \times L)$ for generic search.
 -   **Result**: 有點慢，但因為 $L$ 很小 (25)，可能可以過。
 
@@ -39,6 +42,7 @@
 ## 3. 💡 The "Aha!" Moment (優化)
 
 使用 **Trie (Prefix Tree)**。
+
 -   `addWord`: 標準 Trie 插入，$O(L)$。
 -   `search`: 使用 **DFS (Backtracking)**。
     -   如果當前 char 是 `.`，則遞迴遍歷當前節點的 **所有** 非空 children。只要有一條路徑回傳 true，就回傳 true。
@@ -64,7 +68,7 @@ private:
     struct TrieNode {
         TrieNode* children[26];
         bool isEndOfWord;
-        
+
         TrieNode() {
             isEndOfWord = false;
             for (int i = 0; i < 26; i++) {
@@ -72,7 +76,7 @@ private:
             }
         }
     };
-    
+
     TrieNode* root;
 
     bool searchInNode(string& word, int index, TrieNode* node) {
@@ -80,7 +84,7 @@ private:
         if (index == word.length()) {
             return node->isEndOfWord;
         }
-        
+
         char c = word[index];
         if (c == '.') {
             // Wildcard: 嘗試所有可能的子節點
@@ -104,7 +108,7 @@ public:
     WordDictionary() {
         root = new TrieNode();
     }
-    
+
     void addWord(string word) {
         TrieNode* curr = root;
         for (char c : word) {
@@ -116,7 +120,7 @@ public:
         }
         curr->isEndOfWord = true;
     }
-    
+
     bool search(string word) {
         return searchInNode(word, 0, root);
     }
@@ -146,7 +150,7 @@ class WordDictionary:
     def search(self, word: str) -> bool:
         def dfs(j, root):
             curr = root
-            
+
             for i in range(j, len(word)):
                 c = word[i]
                 if c == ".":
@@ -159,7 +163,7 @@ class WordDictionary:
                         return False
                     curr = curr.children[c]
             return curr.word
-        
+
         return dfs(0, self.root)
 ```
 
@@ -176,18 +180,18 @@ class WordDictionary {
             for(int i=0; i<26; i++) next[i] = nullptr;
         }
     };
-    
+
     TrieNode* root;
-    
+
     // DFS Helper Function
     bool dfs(const string& word, int index, TrieNode* curr) {
         // Base case: 如果字串已經比對完畢
         if (index == word.size()) {
             return curr->isEnd;
         }
-        
+
         char c = word[index];
-        
+
         if (c == '.') {
             // 如果是點，匹配任何存在的子節點
             for (int i = 0; i < 26; i++) {
@@ -212,7 +216,7 @@ public:
     WordDictionary() {
         root = new TrieNode();
     }
-    
+
     void addWord(string word) {
         TrieNode* curr = root;
         for (char c : word) {
@@ -223,7 +227,7 @@ public:
         }
         curr->isEnd = true;
     }
-    
+
     bool search(string word) {
         return dfs(word, 0, root);
     }

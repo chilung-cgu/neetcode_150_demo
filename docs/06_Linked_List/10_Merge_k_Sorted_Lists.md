@@ -21,6 +21,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 將所有 node values 收集到一個 array，排序，然後重建 list。
+
 -   **Time**: $O(N \log N)$，其中 $N$ 是總節點數。
 -   **Space**: $O(N)$。
 -   **Result**: 有效，但沒利用到「已經是 k 個 sorted list」的特性。
@@ -33,6 +34,7 @@
 
 **Approach 1: Min-Heap (Priority Queue)**
 我們需要一直找出這 `k` 個 list 的所有 current head 中 **最小** 的那個。
+
 1.  把 `k` 個 list 的 head 都放入 Min-Heap。
 2.  Pop 最小的 node，接到我們的新 list 上。
 3.  如果那個 node 有 `.next`，把 `.next` 放回 Min-Heap。
@@ -42,6 +44,7 @@
 
 **Approach 2: Divide and Conquer (Merge Sort)**
 兩兩合併。
+
 -   Round 1: Merge pairs (0,1), (2,3), (4,5)... -> 剩下 k/2 個 lists。
 -   Round 2: Merge new pairs... -> 剩下 k/4 個 lists。
 -   ...
@@ -77,17 +80,17 @@ class Solution {
 public:
     ListNode* mergeKLists(vector<ListNode*>& lists) {
         if (lists.empty()) return nullptr;
-        
+
         int k = lists.size();
         int interval = 1;
-        
+
         while (interval < k) {
             for (int i = 0; i < k - interval; i += interval * 2) {
                 lists[i] = mergeTwoLists(lists[i], lists[i + interval]);
             }
             interval *= 2;
         }
-        
+
         return lists[0];
     }
 
@@ -95,7 +98,7 @@ private:
     ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
         if (!l1) return l2;
         if (!l2) return l1;
-        
+
         if (l1->val <= l2->val) {
             l1->next = mergeTwoLists(l1->next, l2);
             return l1;
@@ -124,26 +127,26 @@ class Solution {
 public:
     ListNode* mergeKLists(vector<ListNode*>& lists) {
         priority_queue<ListNode*, vector<ListNode*>, Compare> pq;
-        
+
         for (auto list : lists) {
             if (list) pq.push(list);
         }
-        
+
         ListNode dummy(0);
         ListNode* tail = &dummy;
-        
+
         while (!pq.empty()) {
             ListNode* minNode = pq.top();
             pq.pop();
-            
+
             tail->next = minNode;
             tail = tail->next;
-            
+
             if (minNode->next) {
                 pq.push(minNode->next);
             }
         }
-        
+
         return dummy.next;
     }
 };
@@ -162,22 +165,22 @@ class Solution:
     def mergeKLists(self, lists: List[Optional[ListNode]]) -> Optional[ListNode]:
         if not lists or len(lists) == 0:
             return None
-        
+
         while len(lists) > 1:
             mergedLists = []
-            
+
             for i in range(0, len(lists), 2):
                 l1 = lists[i]
                 l2 = lists[i + 1] if (i + 1) < len(lists) else None
                 mergedLists.append(self.mergeList(l1, l2))
             lists = mergedLists
-            
+
         return lists[0]
-    
+
     def mergeList(self, l1, l2):
         dummy = ListNode()
         tail = dummy
-        
+
         while l1 and l2:
             if l1.val < l2.val:
                 tail.next = l1
@@ -205,7 +208,7 @@ public:
     ListNode* mergeKLists(vector<ListNode*>& lists) {
         // Edge case: empty input
         if (lists.empty()) return nullptr;
-        
+
         // interval 代表我們目前要合併的 two lists 之間的距離
         // 一開始是 1 (合併相鄰的 0 & 1, 2 & 3, ...)
         // 下一輪是 2 (合併 0 & 2, 4 & 6 ...)
@@ -220,7 +223,7 @@ public:
             }
             interval *= 2;
         }
-        
+
         // 最後結果會匯聚在 lists[0]
         return lists[0];
     }
@@ -230,7 +233,7 @@ private:
     ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
         ListNode dummy(0);
         ListNode* tail = &dummy;
-        
+
         while (l1 && l2) {
             if (l1->val <= l2->val) {
                 tail->next = l1;
@@ -239,12 +242,12 @@ private:
                 tail->next = l2;
                 l2 = l2->next;
             }
-            tail = tail->next; 
+            tail = tail->next;
         }
-        
+
         if (l1) tail->next = l1;
         if (l2) tail->next = l2;
-        
+
         return dummy.next;
     }
 };

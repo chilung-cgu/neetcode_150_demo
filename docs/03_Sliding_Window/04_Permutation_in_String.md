@@ -18,6 +18,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 找出 `s1` 的所有排列組合（$n!$ 種），然後在 `s2` 裡找。
+
 -   **Time**: $O(n! \cdot m)$。
 -   **Result**: 絕對 TLE。 `100!` 是天文數字。
 
@@ -55,27 +56,27 @@ class Solution {
 public:
     bool checkInclusion(string s1, string s2) {
         if (s1.length() > s2.length()) return false;
-        
+
         vector<int> s1Count(26, 0);
         vector<int> s2Count(26, 0);
-        
+
         // 初始化第一個窗口 (長度為 s1.length())
         for (int i = 0; i < s1.length(); i++) {
             s1Count[s1[i] - 'a']++;
             s2Count[s2[i] - 'a']++;
         }
-        
+
         // 計算初始 matches
         int matches = 0;
         for (int i = 0; i < 26; i++) {
             if (s1Count[i] == s2Count[i]) matches++;
         }
-        
+
         int l = 0;
         // 開始滑動 (從 s1.length 開始)
         for (int r = s1.length(); r < s2.length(); r++) {
             if (matches == 26) return true;
-            
+
             // Add new char (s2[r])
             int index = s2[r] - 'a';
             s2Count[index]++;
@@ -84,7 +85,7 @@ public:
             } else if (s2Count[index] == s1Count[index] + 1) {
                 matches--; // 原本剛好，現在多了
             }
-            
+
             // Remove old char (s2[l])
             index = s2[l] - 'a';
             s2Count[index]--;
@@ -95,7 +96,7 @@ public:
             }
             l++;
         }
-        
+
         return matches == 26;
     }
 };
@@ -110,26 +111,26 @@ class Solution {
 public:
     bool checkInclusion(string s1, string s2) {
         if (s1.size() > s2.size()) return false;
-        
+
         vector<int> s1Map(26, 0), s2Map(26, 0);
-        
+
         for (char c : s1) s1Map[c - 'a']++;
-        
+
         int left = 0;
         int right = 0;
-        
+
         while (right < s2.size()) {
             s2Map[s2[right] - 'a']++;
-            
+
             // 窗口大於 s1 長度時，收縮左邊
             if (right - left + 1 > s1.size()) {
                 s2Map[s2[left] - 'a']--;
                 left++;
             }
-            
+
             // 檢查是否相等
             if (s1Map == s2Map) return true;
-            
+
             right++;
         }
         return false;
@@ -144,28 +145,28 @@ class Solution:
     def checkInclusion(self, s1: str, s2: str) -> bool:
         if len(s1) > len(s2):
             return False
-            
+
         s1Count, s2Count = [0] * 26, [0] * 26
-        
+
         for i in range(len(s1)):
             s1Count[ord(s1[i]) - ord('a')] += 1
             s2Count[ord(s2[i]) - ord('a')] += 1
-            
+
         matches = 0
         for i in range(26):
             matches += (1 if s1Count[i] == s2Count[i] else 0)
-            
+
         l = 0
         for r in range(len(s1), len(s2)):
             if matches == 26: return True
-            
+
             index = ord(s2[r]) - ord('a')
             s2Count[index] += 1
             if s1Count[index] == s2Count[index]:
                 matches += 1
             elif s1Count[index] + 1 == s2Count[index]:
                 matches -= 1
-                
+
             index = ord(s2[l]) - ord('a')
             s2Count[index] -= 1
             if s1Count[index] == s2Count[index]:
@@ -173,7 +174,7 @@ class Solution:
             elif s1Count[index] - 1 == s2Count[index]:
                 matches -= 1
             l += 1
-            
+
         return matches == 26
 ```
 
@@ -189,35 +190,35 @@ public:
     bool checkInclusion(string s1, string s2) {
         int n = s1.size();
         int m = s2.size();
-        
+
         if (n > m) return false;
-        
+
         // 建立目標頻率表
         vector<int> target(26, 0);
         for (char c : s1) target[c - 'a']++;
-        
+
         // 建立當前窗口頻率表
         vector<int> window(26, 0);
-        
+
         // 先處理前 n-1 個元素 (如果不夠 n 個就不用比了)
         // 這裡我們選擇直接用完整的 sliding window logic
-        
+
         int l = 0;
         for (int r = 0; r < m; r++) {
             // 把右邊元素加入窗口
             window[s2[r] - 'a']++;
-            
+
             // 如果窗口寬度超過 n，把左邊元素移出
             if (r - l + 1 > n) {
                 window[s2[l] - 'a']--;
                 l++;
             }
-            
+
             // 檢查匹配
             // vector 的 == operator 會比較所有元素，時間複雜度 O(26) -> O(1)
             if (window == target) return true;
         }
-        
+
         return false;
     }
 };

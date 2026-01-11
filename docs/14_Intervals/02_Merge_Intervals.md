@@ -23,6 +23,7 @@
 將所有區間視為圖的節點。如果兩區間重疊，則連一條邊。
 我們需要找出所有的 **連通分量 (Connected Components)**。
 對於每個分量，合併後的區間是 `[min(starts), max(ends)]`。
+
 -   **Time**: $O(N^2)$ 建圖。
 
 ---
@@ -31,6 +32,7 @@
 
 如果我們先將區間 **按照起始時間 (Start Time) 排序**，那麼重疊的區間一定會是連續出現的。
 我們可以遍歷排序後的列表：
+
 1.  從第一個區間開始，設為 `current_interval`。
 2.  看下一個區間 `next_interval`：
     -   如果 `next_interval.start <= current_interval.end`：說明重疊。
@@ -58,18 +60,18 @@ class Solution {
 public:
     vector<vector<int>> merge(vector<vector<int>>& intervals) {
         if (intervals.empty()) return {};
-        
+
         // 1. Sort by start time
         sort(intervals.begin(), intervals.end());
-        
+
         vector<vector<int>> result;
         // Start with the first interval
         result.push_back(intervals[0]);
-        
+
         for (int i = 1; i < intervals.size(); i++) {
             // Get the last added interval from result (reference to modify it)
             vector<int>& last = result.back();
-            
+
             // Check for overlap
             if (intervals[i][0] <= last[1]) {
                 // Merge: Update the end time to the max of both
@@ -79,7 +81,7 @@ public:
                 result.push_back(intervals[i]);
             }
         }
-        
+
         return result;
     }
 };
@@ -92,18 +94,18 @@ class Solution:
     def merge(self, intervals: List[List[int]]) -> List[List[int]]:
         # Sort by start time
         intervals.sort(key=lambda x: x[0])
-        
+
         res = [intervals[0]]
-        
+
         for start, end in intervals[1:]:
             lastEnd = res[-1][1]
-            
+
             if start <= lastEnd:
                 # Merge
                 res[-1][1] = max(lastEnd, end)
             else:
                 res.append([start, end])
-                
+
         return res
 ```
 
@@ -116,21 +118,21 @@ class Solution {
 public:
     vector<vector<int>> merge(vector<vector<int>>& intervals) {
         if (intervals.empty()) return {};
-        
+
         // 步驟 1: 按照起始時間排序
         // 這是解決所有區間問題的常見起手式
         sort(intervals.begin(), intervals.end());
-        
+
         // 步驟 2: 初始化結果，放入第一個區間
         vector<vector<int>> result;
         result.push_back(intervals[0]);
-        
+
         // 步驟 3: 遍歷剩下的區間
         for (int i = 1; i < intervals.size(); i++) {
             // 取出目前結果集中的最後一個區間 (也就是我們正在嘗試擴展的那個)
             // 使用 reference (&) 以便直接修改它
             vector<int>& last = result.back();
-            
+
             // 檢查當前遍歷到的區間 (intervals[i]) 是否與 last 重疊
             // 由於已經排序，intervals[i].start >= last.start 必定成立
             // 所以只要 intervals[i].start <= last.end 就代表重疊
@@ -143,7 +145,7 @@ public:
                 result.push_back(intervals[i]);
             }
         }
-        
+
         return result;
     }
 };

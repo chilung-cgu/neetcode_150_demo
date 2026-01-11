@@ -15,6 +15,7 @@
      / \
     1   3
     ```
+
 -   **Output**: `true`
 -   **Input**: `root = [5,1,4,null,null,3,6]`
     ```
@@ -24,6 +25,7 @@
        / \
       3   6
     ```
+
 -   **Output**: `false` (4 < 5, OK. But 4's right child is 6. Wait, 4 must be > 5? No. 4 is Right Child of 5, so 4 must be > 5. Here 4 < 5, so invalid immediately.)
     Let's re-read the example properly.
     Node 5 -> Right 4. 4 < 5. Invalid.
@@ -49,6 +51,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 對每個節點，收集左子樹所有值確認 max < root，收集右子樹所有值確認 min > root。
+
 -   **Time**: $O(N^2)$。
 -   **Result**: 效率不佳。
 
@@ -58,6 +61,7 @@
 
 **Approach 1: Recursive DFS with Range (Top-down)**
 每個節點都必須在一個區間 `(min, max)` 內。
+
 -   Root 區間: `(-inf, +inf)`
 -   Left child: `(min, root->val)`
 -   Right child: `(root->val, max)`
@@ -66,6 +70,7 @@
 
 **Approach 2: In-order Traversal (Bottom-up)**
 BST 的 **In-order Traversal** 結果必須是 **Strictly Increasing** 的。
+
 -   遍歷過程中記錄 `prev` 節點的值。
 -   檢查 `curr->val > prev->val`。
 -   如果不是，回傳 False。
@@ -95,15 +100,15 @@ public:
     bool isValidBST(TreeNode* root) {
         return validate(root, LONG_MIN, LONG_MAX);
     }
-    
+
 private:
     bool validate(TreeNode* node, long long minVal, long long maxVal) {
         if (!node) return true;
-        
+
         if (node->val <= minVal || node->val >= maxVal) {
             return false;
         }
-        
+
         return validate(node->left, minVal, node->val) &&
                validate(node->right, node->val, maxVal);
     }
@@ -123,24 +128,24 @@ public:
         stack<TreeNode*> st;
         TreeNode* prev = nullptr;
         TreeNode* curr = root;
-        
+
         while (curr || !st.empty()) {
             while (curr) {
                 st.push(curr);
                 curr = curr->left;
             }
-            
+
             curr = st.top();
             st.pop();
-            
+
             if (prev && curr->val <= prev->val) {
                 return false;
             }
             prev = curr;
-            
+
             curr = curr->right;
         }
-        
+
         return true;
     }
 };
@@ -162,10 +167,10 @@ class Solution:
                 return True
             if not (left < node.val < right):
                 return False
-            
-            return (valid(node.left, left, node.val) and 
+
+            return (valid(node.left, left, node.val) and
                     valid(node.right, node.val, right))
-        
+
         return valid(root, float("-inf"), float("inf"))
 ```
 
@@ -181,17 +186,17 @@ public:
         // 區間是開區間 (minVal, maxVal)，亦即 minVal < node->val < maxVal
         return helper(root, LONG_MIN, LONG_MAX);
     }
-    
+
     // DFS Helper
     bool helper(TreeNode* node, long long minVal, long long maxVal) {
         if (!node) return true;
-        
+
         // 檢查當前節點是否違反區間限制
         // 注意：BST 定義通常不允許重複值 (除非題目說允許，LeetCode 題目通常是嚴格小於/大於)
         if (node->val <= minVal || node->val >= maxVal) {
             return false;
         }
-        
+
         // 遞迴檢查左右子樹，並更新區間
         // 左子樹：上限變為當前節點值
         // 右子樹：下限變為當前節點值

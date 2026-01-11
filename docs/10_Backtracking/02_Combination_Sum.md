@@ -24,10 +24,12 @@
 
 **Backtracking**:
 對每個數字，我們可以選擇：
+
 1.  選這個數字 (然後目標減去數字，繼續遞迴，**且因為可以重複選，index 不變**)。
 2.  不選這個數字 (目標不變，**index + 1**)。
 
 Base case:
+
 -   `target == 0`: 找到一組解。
 -   `target < 0` or `index` out of bounds: 失敗。
 
@@ -37,6 +39,7 @@ Base case:
 
 這就是經典的 **Unbounded Knapsack** 變形，用 Backtracking 窮舉所有路徑。
 決策樹：
+
 -   Node: current target, current index.
 -   Edges: Include `candidates[i]` OR Move to `candidates[i+1]`.
 
@@ -66,21 +69,21 @@ public:
         dfs(candidates, target, 0, current, result);
         return result;
     }
-    
+
 private:
-    void dfs(vector<int>& candidates, int target, int index, 
+    void dfs(vector<int>& candidates, int target, int index,
              vector<int>& current, vector<vector<int>>& result) {
         // Base case: Success
         if (target == 0) {
             result.push_back(current);
             return;
         }
-        
+
         // Base case: Failure or Out of bounds
         if (target < 0 || index == candidates.size()) {
             return;
         }
-        
+
         // Decision 1: Include candidates[index]
         // Only if it doesn't exceed target (Pruning)
         if (candidates[index] <= target) {
@@ -89,7 +92,7 @@ private:
             dfs(candidates, target - candidates[index], index, current, result);
             current.pop_back(); // Backtrack
         }
-        
+
         // Decision 2: Exclude candidates[index] and move next
         // Skip current element and move to next unique element
         // (Though problem says candidates are unique, so just index + 1)
@@ -104,22 +107,22 @@ private:
 class Solution:
     def combinationSum(self, candidates: List[int], target: int) -> List[List[int]]:
         res = []
-        
+
         def dfs(i, cur, total):
             if total == target:
                 res.append(cur.copy())
                 return
             if i >= len(candidates) or total > target:
                 return
-            
+
             # Decision 1: Include candidates[i]
             cur.append(candidates[i])
             dfs(i, cur, total + candidates[i])
-            
+
             # Decision 2: Skip candidates[i]
             cur.pop()
             dfs(i + 1, cur, total)
-            
+
         dfs(0, [], 0)
         return res
 ```
@@ -134,32 +137,32 @@ public:
     vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
         vector<vector<int>> res;
         vector<int> path;
-        
+
         // 遞迴搜索
         // start index 用來防止重複組合 (e.g. [2,3] 和 [3,2])
         // 因為我們每次遞迴只允許選擇 "當前 index 及之後" 的數字，不回頭選前面的
         backtrack(candidates, target, 0, path, res);
         return res;
     }
-    
+
     void backtrack(vector<int>& candidates, int target, int start, vector<int>& path, vector<vector<int>>& res) {
         // 找到解
         if (target == 0) {
             res.push_back(path);
             return;
         }
-        
+
         // 剪枝：如果 target < 0，這條路不通
         if (target < 0) return;
-        
+
         for (int i = start; i < candidates.size(); i++) {
             // 選取 candidates[i]
             path.push_back(candidates[i]);
-            
+
             // 關鍵：遞迴時傳入 'i' 而不是 'i+1'，代表可以重複使用當前數字
             // 但不能傳入 'start' 或 '0'，否則會產生重複組合 (Permutations)
             backtrack(candidates, target - candidates[i], i, path, res);
-            
+
             // Backtrack
             path.pop_back();
         }

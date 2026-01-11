@@ -16,6 +16,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 用一個 Stack 把所有 node values 存起來，然後重建一個新的 List。
+
 -   **Time**: $O(n)$。
 -   **Space**: $O(n)$。
 -   **Result**: 雖然可行，但面試官通常期望 $O(1)$ Space。
@@ -27,12 +28,14 @@
 我們可以用 **Iterative** 的方式原地 (In-place) 反轉。
 
 我們只需要維護三個指標：
+
 1.  `prev`: 指向「前一個」節點 (反轉後的下一個)。初始為 `nullptr`。
 2.  `curr`: 指向「當前」節點。初始為 `head`。
 3.  `next`: 用來暫存 `curr->next`，因為我們會切斷這個連結。
 
 **步驟**：
 當 `curr` 不為空時：
+
 1.  `next = curr->next` (暫存下一步)
 2.  `curr->next = prev` (反轉箭頭！指向前一個人)
 3.  `prev = curr` (推進 prev)
@@ -63,19 +66,19 @@ public:
     ListNode* reverseList(ListNode* head) {
         ListNode* prev = nullptr;
         ListNode* curr = head;
-        
+
         while (curr != nullptr) {
             // 1. Save next
             ListNode* nextTemp = curr->next;
-            
+
             // 2. Reverse link
             curr->next = prev;
-            
+
             // 3. Move pointers
             prev = curr;
             curr = nextTemp;
         }
-        
+
         return prev;
     }
 };
@@ -91,14 +94,14 @@ public:
         if (head == nullptr || head->next == nullptr) {
             return head;
         }
-        
+
         // Recursive step
         ListNode* newHead = reverseList(head->next);
-        
+
         // Reverse the link
         head->next->next = head; // 讓下一個節點指向自己
         head->next = nullptr;    // 斷開自己原本的指向
-        
+
         return newHead;
     }
 };
@@ -116,7 +119,7 @@ public:
 class Solution:
     def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
         prev, curr = None, head
-        
+
         while curr:
             nxt = curr.next
             curr.next = prev
@@ -136,21 +139,21 @@ public:
         // prev 會變成新的 tail (指向 nullptr)
         ListNode* prev = nullptr;
         ListNode* curr = head;
-        
+
         while (curr != nullptr) {
             // 暫存下一個節點，因為我們等一下會切斷 curr->next
             ListNode* nextNode = curr->next;
-            
+
             // 關鍵動作：將當前節點的指針「回頭」指
             curr->next = prev;
-            
+
             // 往下一個節點推進
             // prev 跑到現在的位置
             prev = curr;
             // curr 跑到剛剛暫存的位置
             curr = nextNode;
         }
-        
+
         // 當 curr 為 null 時，loop 結束，此時 prev 指向原本的最後一個節點
         // 也就是新的 head
         return prev;

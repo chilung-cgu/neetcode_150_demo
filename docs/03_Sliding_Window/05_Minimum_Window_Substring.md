@@ -18,6 +18,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 找出 `s` 所有的 substring，檢查是否 covering `t`。
+
 -   **Time**: $O(n^3)$ or $O(n^2)$.
 -   **Result**: TLE.
 
@@ -58,24 +59,24 @@ class Solution {
 public:
     string minWindow(string s, string t) {
         if (t.empty()) return "";
-        
+
         unordered_map<char, int> countT, window;
         for (char c : t) countT[c]++;
-        
+
         int have = 0, need = countT.size();
         int res[2] = {-1, -1};
         int resLen = INT_MAX;
         int l = 0;
-        
+
         for (int r = 0; r < s.length(); r++) {
             char c = s[r];
             window[c]++;
-            
+
             // 如果此字元在 t 中，且數量剛好達標，have+1
             if (countT.count(c) && window[c] == countT[c]) {
                 have++;
             }
-            
+
             // 當所有條件都滿足時，嘗試縮小窗口
             while (have == need) {
                 // update result
@@ -84,7 +85,7 @@ public:
                     res[1] = r;
                     resLen = r - l + 1;
                 }
-                
+
                 // pop from left
                 window[s[l]]--;
                 if (countT.count(s[l]) && window[s[l]] < countT[s[l]]) {
@@ -93,7 +94,7 @@ public:
                 l++;
             }
         }
-        
+
         return resLen == INT_MAX ? "" : s.substr(res[0], resLen);
     }
 };
@@ -105,34 +106,34 @@ public:
 class Solution:
     def minWindow(self, s: str, t: str) -> str:
         if t == "": return ""
-        
+
         countT, window = {}, {}
         for c in t:
             countT[c] = countT.get(c, 0) + 1
-            
+
         have, need = 0, len(countT)
         res, resLen = [-1, -1], float("infinity")
         l = 0
-        
+
         for r in range(len(s)):
             c = s[r]
             window[c] = window.get(c, 0) + 1
-            
+
             if c in countT and window[c] == countT[c]:
                 have += 1
-                
+
             while have == need:
                 # Update our result
                 if (r - l + 1) < resLen:
                     res = [l, r]
                     resLen = (r - l + 1)
-                
+
                 # pop from left
                 window[s[l]] -= 1
                 if s[l] in countT and window[s[l]] < countT[s[l]]:
                     have -= 1
                 l += 1
-                
+
         l, r = res
         return s[l : r + 1] if resLen != float("infinity") else ""
 ```
@@ -150,30 +151,30 @@ public:
         // 使用 Array 優化 Map，因為是 char (ASCII 128)
         vector<int> countT(128, 0);
         vector<int> window(128, 0);
-        
+
         for (char c : t) countT[c]++;
-        
+
         // 統計 t 有多少種「獨特」字符需要被滿足
         int need = 0;
         for (int i = 0; i < 128; i++) {
             if (countT[i] > 0) need++;
         }
-        
+
         int have = 0;
         int l = 0;
         int minLen = INT_MAX;
         int startL = 0; // 記錄最佳解的起始位置
-        
+
         for (int r = 0; r < s.size(); r++) {
             char c = s[r];
             window[c]++;
-            
+
             // 關鍵：只有當數量「剛好」達到 target 時，have 才加 1
             // 如果數量超過 target，have 不變 (因為這個 char 早就達標了)
             if (countT[c] > 0 && window[c] == countT[c]) {
                 have++;
             }
-            
+
             // 當所有獨特字符都達標 (have == need) -> 窗口合法
             while (have == need) {
                 // 1. 嘗試比較當前長度，若是最小值則更新
@@ -181,20 +182,20 @@ public:
                     minLen = r - l + 1;
                     startL = l;
                 }
-                
+
                 // 2. 嘗試移出左邊元素 (shrink) 到非法為止
                 char leftChar = s[l];
                 window[leftChar]--;
-                
+
                 // 如果移除這個字導致該字符數量 < target，那麼窗口變為非法，只能跳出迴圈繼續找右邊
                 if (countT[leftChar] > 0 && window[leftChar] < countT[leftChar]) {
                     have--;
                 }
-                
+
                 l++;
             }
         }
-        
+
         return minLen == INT_MAX ? "" : s.substr(startL, minLen);
     }
 };

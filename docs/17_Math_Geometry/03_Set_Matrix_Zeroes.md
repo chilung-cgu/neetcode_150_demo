@@ -13,6 +13,7 @@
       [1,1,1]
     ]
     ```
+
 -   **Output**:
     ```
     [
@@ -21,6 +22,7 @@
       [1,0,1]
     ]
     ```
+
 -   **Constraints**:
     -   Space Complexity: $O(1)$ is best, $O(m+n)$ is acceptable.
 
@@ -33,6 +35,7 @@
 -   但這樣不是 in-place，或者說需要 $O(m \times n)$ 空間。
 
 或者使用 $O(m+n)$ 空間：
+
 -   用兩個集合 `rows` 和 `cols` 記錄哪些行/列需要變為 0。
 -   再次遍歷矩陣，如果 `i` 在 `rows` 或 `j` 在 `cols` 中，設為 0。
 
@@ -69,10 +72,10 @@ public:
     void setZeroes(vector<vector<int>>& matrix) {
         int m = matrix.size();
         int n = matrix[0].size();
-        
+
         bool rowZero = false;
         bool colZero = false;
-        
+
         // 1. Check if first row has zero
         for (int j = 0; j < n; j++) {
             if (matrix[0][j] == 0) {
@@ -80,7 +83,7 @@ public:
                 break;
             }
         }
-        
+
         // 2. Check if first col has zero
         for (int i = 0; i < m; i++) {
             if (matrix[i][0] == 0) {
@@ -88,7 +91,7 @@ public:
                 break;
             }
         }
-        
+
         // 3. Mark zeroes in first row/col
         for (int i = 1; i < m; i++) {
             for (int j = 1; j < n; j++) {
@@ -98,7 +101,7 @@ public:
                 }
             }
         }
-        
+
         // 4. Set zeroes based on marks
         for (int i = 1; i < m; i++) {
             for (int j = 1; j < n; j++) {
@@ -107,12 +110,12 @@ public:
                 }
             }
         }
-        
+
         // 5. Handle first row/col
         if (colZero) {
             for (int i = 0; i < m; i++) matrix[i][0] = 0;
         }
-        
+
         if (rowZero) {
             for (int j = 0; j < n; j++) matrix[0][j] = 0;
         }
@@ -127,7 +130,7 @@ class Solution:
     def setZeroes(self, matrix: List[List[int]]) -> None:
         ROWS, COLS = len(matrix), len(matrix[0])
         rowZero = False
-        
+
         # Determine which rows/cols need to be zero
         for r in range(ROWS):
             for c in range(COLS):
@@ -137,18 +140,18 @@ class Solution:
                         matrix[r][0] = 0
                     else:
                         rowZero = True
-                        
+
         # Fill zeroes except first row/col
         for r in range(1, ROWS):
             for c in range(1, COLS):
                 if matrix[0][c] == 0 or matrix[r][0] == 0:
                     matrix[r][c] = 0
-                    
+
         # Handle first col (using matrix[0][0])
         if matrix[0][0] == 0:
             for r in range(ROWS):
                 matrix[r][0] = 0
-                
+
         # Handle first row (using rowZero var)
         if rowZero:
             for c in range(COLS):
@@ -165,10 +168,10 @@ public:
     void setZeroes(vector<vector<int>>& matrix) {
         int m = matrix.size();
         int n = matrix[0].size();
-        
+
         bool rowZero = false; // 紀錄第一行原本是否包含 0
         bool colZero = false; // 紀錄第一列原本是否包含 0
-        
+
         // 1. 檢查第一行
         for (int j = 0; j < n; j++) {
             if (matrix[0][j] == 0) {
@@ -176,7 +179,7 @@ public:
                 break;
             }
         }
-        
+
         // 2. 檢查第一列
         for (int i = 0; i < m; i++) {
             if (matrix[i][0] == 0) {
@@ -184,7 +187,7 @@ public:
                 break;
             }
         }
-        
+
         // 3. 使用第一行和第一列作為標記空間
         // 從 (1,1) 開始遍歷內部矩陣
         for (int i = 1; i < m; i++) {
@@ -195,7 +198,7 @@ public:
                 }
             }
         }
-        
+
         // 4. 根據標記，將內部矩陣置零
         for (int i = 1; i < m; i++) {
             for (int j = 1; j < n; j++) {
@@ -204,13 +207,13 @@ public:
                 }
             }
         }
-        
+
         // 5. 最後處理第一列和第一行
         // 注意順序：雖然這裡互不影響，但邏輯上分開處理更清晰
         if (colZero) {
             for (int i = 0; i < m; i++) matrix[i][0] = 0;
         }
-        
+
         if (rowZero) {
             for (int j = 0; j < n; j++) matrix[0][j] = 0;
         }

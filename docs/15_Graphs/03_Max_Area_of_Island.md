@@ -19,6 +19,7 @@
       [0,0,0,0,0,0,0,1,1,0,0,0,0]
     ]
     ```
+
 -   **Output**: `6`
     -   最大的那塊在中間偏右。
 -   **Constraints**:
@@ -41,6 +42,7 @@
 ## 3. 💡 The "Aha!" Moment (優化)
 
 這就是標準的 DFS 應用。
+
 -   `dfs(r, c)` 回傳以 `(r, c)` 為起點的連接分量的大小。
 -   `dfs` 邏輯：
     1.  邊界檢查 or 若 `grid[r][c] == 0`：return 0。
@@ -65,11 +67,11 @@ class Solution {
 public:
     int maxAreaOfIsland(vector<vector<int>>& grid) {
         if (grid.empty()) return 0;
-        
+
         int m = grid.size();
         int n = grid[0].size();
         int maxArea = 0;
-        
+
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 if (grid[i][j] == 1) {
@@ -77,27 +79,27 @@ public:
                 }
             }
         }
-        
+
         return maxArea;
     }
-    
+
 private:
     int dfs(vector<vector<int>>& grid, int r, int c) {
         int m = grid.size();
         int n = grid[0].size();
-        
+
         // Base case: boundaries or water
         if (r < 0 || r >= m || c < 0 || c >= n || grid[r][c] == 0) {
             return 0;
         }
-        
+
         // Mark as visited (sink the island)
         grid[r][c] = 0;
-        
+
         // Return 1 (current cell) + area of neighbors
-        return 1 + dfs(grid, r + 1, c) + 
-                   dfs(grid, r - 1, c) + 
-                   dfs(grid, r, c + 1) + 
+        return 1 + dfs(grid, r + 1, c) +
+                   dfs(grid, r - 1, c) +
+                   dfs(grid, r, c + 1) +
                    dfs(grid, r, c - 1);
     }
 };
@@ -110,23 +112,23 @@ class Solution:
     def maxAreaOfIsland(self, grid: List[List[int]]) -> int:
         rows, cols = len(grid), len(grid[0])
         max_area = 0
-        
+
         def dfs(r, c):
-            if (r < 0 or r >= rows or c < 0 or c >= cols or 
+            if (r < 0 or r >= rows or c < 0 or c >= cols or
                 grid[r][c] == 0):
                 return 0
-            
+
             # Sink
             grid[r][c] = 0
-            
-            return (1 + dfs(r+1, c) + dfs(r-1, c) + 
+
+            return (1 + dfs(r+1, c) + dfs(r-1, c) +
                     dfs(r, c+1) + dfs(r, c-1))
-        
+
         for r in range(rows):
             for c in range(cols):
                 if grid[r][c] == 1:
                     max_area = max(max_area, dfs(r, c))
-                    
+
         return max_area
 ```
 
@@ -139,11 +141,11 @@ class Solution {
 public:
     int maxAreaOfIsland(vector<vector<int>>& grid) {
         if (grid.empty()) return 0;
-        
+
         int m = grid.size();
         int n = grid[0].size();
         int maxArea = 0;
-        
+
         // 遍歷所有格子
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
@@ -153,10 +155,10 @@ public:
                 }
             }
         }
-        
+
         return maxArea;
     }
-    
+
 private:
     // DFS 函數：計算從 (r, c) 開始的連通分量面積
     int dfs(vector<vector<int>>& grid, int r, int c) {
@@ -165,14 +167,14 @@ private:
         if (r < 0 || r >= grid.size() || c < 0 || c >= grid[0].size() || grid[r][c] == 0) {
             return 0;
         }
-        
+
         // 標記為已訪問 (變成 0)
         grid[r][c] = 0;
-        
+
         // 遞迴計算上下左右的面積，並加上當前節點 (1)
-        return 1 + dfs(grid, r + 1, c) + 
-                   dfs(grid, r - 1, c) + 
-                   dfs(grid, r, c + 1) + 
+        return 1 + dfs(grid, r + 1, c) +
+                   dfs(grid, r - 1, c) +
+                   dfs(grid, r, c + 1) +
                    dfs(grid, r, c - 1);
     }
 };

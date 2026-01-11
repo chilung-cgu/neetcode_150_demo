@@ -22,6 +22,7 @@
 
 用一個 `deque` (Double-ended queue) 存所有的 nodes。
 然後交替從 `front` 和 `back` 取出 node 串接。
+
 -   **Time**: $O(n)$。
 -   **Space**: $O(n)$ (因為存了 pointers)。
 -   **Result**: 雖然可以過，但是題目通常期望 $O(1)$ Space。
@@ -31,6 +32,7 @@
 ## 3. 💡 The "Aha!" Moment (優化)
 
 這題可以拆解成三個標準的 Linked List 子問題：
+
 1.  **Find Middle**: 使用 **Slow & Fast Pointers** 找到鏈表的中點。
     -   `1->2->3->4->5` 中的 `3`。
 2.  **Reverse Second Half**: 將中點之後的鏈表反轉。
@@ -64,7 +66,7 @@ class Solution {
 public:
     void reorderList(ListNode* head) {
         if (!head || !head->next || !head->next->next) return;
-        
+
         // 1. Find the middle (Splitting the list)
         ListNode *slow = head, *fast = head;
         // fast->next and fast->next->next checked for even/odd balance
@@ -72,11 +74,11 @@ public:
             slow = slow->next;
             fast = fast->next->next;
         }
-        
+
         // slow is at the end of the first half
         ListNode* second = slow->next;
         slow->next = nullptr; // Break the link
-        
+
         // 2. Reverse the second half
         ListNode* prev = nullptr;
         ListNode* curr = second;
@@ -87,16 +89,16 @@ public:
             curr = nextTemp;
         }
         second = prev; // new head of the reversed second half
-        
+
         // 3. Merge two halves
         ListNode* first = head;
         while (second) { // second half is always shorter or equal
             ListNode* tmp1 = first->next;
             ListNode* tmp2 = second->next;
-            
+
             first->next = second;
             second->next = tmp1;
-            
+
             first = tmp1;
             second = tmp2;
         }
@@ -114,17 +116,17 @@ class Solution:
         while fast and fast.next:
             slow = slow.next
             fast = fast.next.next
-            
+
         second = slow.next
         prev = slow.next = None # split
-        
+
         # 2. Reverse second half
         while second:
             tmp = second.next
             second.next = prev
             prev = second
             second = tmp
-        
+
         # 3. Merge
         first, second = head, prev
         while second:
@@ -144,12 +146,12 @@ public:
     void reorderList(ListNode* head) {
         // Base case: 如果只有 0, 1, 2 個節點，不需要 reorder
         if (!head || !head->next || !head->next->next) return;
-        
+
         // --- Step 1: 找中點 ---
         // 使用快慢指針
         ListNode* slow = head;
         ListNode* fast = head;
-        
+
         // 我們希望 slow 停在左半段的最後一個節點
         // 對於 [1,2,3,4,5]， slow 停在 3
         // 對於 [1,2,3,4]， slow 停在 2
@@ -157,12 +159,12 @@ public:
             slow = slow->next;
             fast = fast->next->next;
         }
-        
+
         // --- Step 2: 反轉後半段 ---
         ListNode* curr = slow->next;
         // 切斷兩個 list
         slow->next = nullptr;
-        
+
         ListNode* prev = nullptr; // 這是反轉後的 head
         while (curr) {
             ListNode* temp = curr->next;
@@ -170,24 +172,24 @@ public:
             prev = curr;
             curr = temp;
         }
-        
+
         // 此時：
         // first list: head -> ... -> slow -> null
         // second list: prev -> ... -> null
-        
+
         // --- Step 3: 合併兩個 list ---
         ListNode* first = head;
         ListNode* second = prev;
-        
+
         while (second) {
             // 暫存下一個
             ListNode* tmp1 = first->next;
             ListNode* tmp2 = second->next;
-            
+
             // 連結
             first->next = second;
             second->next = tmp1;
-            
+
             // 移動
             first = tmp1;
             second = tmp2;

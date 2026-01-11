@@ -23,6 +23,7 @@
 嘗試所有排列組合？太慢。
 或者 Sort 後嘗試分組？
 如果 Sort 後是 `[1, 2, 2, 3, 3, 4, 6, 7, 8]`
+
 -   取最小的 `1`，需要 `2` 和 `3`.
 -   剩下 `[2, 3, 4, 6, 7, 8]`.
 -   取最小的 `2`，需要 `3` 和 `4`.
@@ -74,18 +75,18 @@ class Solution {
 public:
     bool isNStraightHand(vector<int>& hand, int groupSize) {
         if (hand.size() % groupSize != 0) return false;
-        
+
         // Use an ordered map to count frequencies and keep keys sorted
         map<int, int> counts;
         for (int card : hand) {
             counts[card]++;
         }
-        
+
         // Iterate through the map
         for (auto it = counts.begin(); it != counts.end(); ++it) {
             int startCard = it->first;
             int count = it->second;
-            
+
             // If count is 0, this card was already consumed by a previous sequence
             if (count > 0) {
                 // We need to form 'count' number of groups starting with 'startCard'
@@ -93,13 +94,13 @@ public:
                 for (int i = 0; i < groupSize; i++) {
                     int currentCard = startCard + i;
                     if (counts[currentCard] < count) {
-                        return false; 
+                        return false;
                     }
                     counts[currentCard] -= count;
                 }
             }
         }
-        
+
         return true;
     }
 };
@@ -115,24 +116,24 @@ class Solution:
     def isNStraightHand(self, hand: List[int], groupSize: int) -> bool:
         if len(hand) % groupSize != 0:
             return False
-        
+
         count = Counter(hand)
         min_heap = list(count.keys())
         heapq.heapify(min_heap)
-        
+
         while min_heap:
             first = min_heap[0]
-            
+
             for i in range(first, first + groupSize):
                 if i not in count:
                     return False
-                
+
                 count[i] -= 1
                 if count[i] == 0:
                     if i != min_heap[0]:
                         return False # Optimization: Must remove min element
                     heapq.heappop(min_heap)
-                    
+
         return True
 ```
 
@@ -146,19 +147,19 @@ public:
     bool isNStraightHand(vector<int>& hand, int groupSize) {
         // 基本檢查
         if (hand.size() % groupSize != 0) return false;
-        
+
         // 使用 map (Ordered Map) 統計頻率並自動排序
         // 這樣我們可以按順序處理每張牌
         map<int, int> counts;
         for (int card : hand) {
             counts[card]++;
         }
-        
+
         // 遍歷所有獨特的牌
         for (auto it = counts.begin(); it != counts.end(); ++it) {
             int startCard = it->first;
             int count = it->second;
-            
+
             // 如果這張牌還有剩餘 (count > 0)
             // 由於它是目前 map 中最小的 key (因為我們依序遍歷)，
             // 它 *必須* 作為某些順子的起點。
@@ -168,18 +169,18 @@ public:
                 // 檢查接下的 groupSize-1 張牌是否足夠
                 for (int i = 0; i < groupSize; i++) {
                     int nextCard = startCard + i;
-                    
+
                     // 如果後續的牌不夠用，或是根本不存在，則失敗
                     if (counts[nextCard] < count) {
                         return false;
                     }
-                    
+
                     // 扣掉相應的數量
                     counts[nextCard] -= count;
                 }
             }
         }
-        
+
         return true;
     }
 };

@@ -25,6 +25,7 @@
 DFS 搜索所有從 `src` 到 `dst` 的路徑。
 在遞迴過程中記錄當前的中轉次數 `stops`。如果 `stops > k` 就剪枝。
 記錄到達 `dst` 的最小費用。
+
 -   **Time**: $O(n^k)$ (最壞情況)。
 
 ---
@@ -73,17 +74,17 @@ public:
         // Distance array, initialized to Max Integer
         vector<int> prices(n, INT_MAX);
         prices[src] = 0;
-        
+
         // Loop k + 1 times (max edges allowed is k + 1)
         for (int i = 0; i <= k; i++) {
             // Create a copy to ensure we use values from previous iteration
             vector<int> tmpPrices = prices;
-            
+
             for (const auto& flight : flights) {
                 int u = flight[0];
                 int v = flight[1];
                 int w = flight[2];
-                
+
                 // If source node is reachable
                 if (prices[u] != INT_MAX) {
                     // Start relaxation
@@ -92,10 +93,10 @@ public:
                     }
                 }
             }
-            
+
             prices = tmpPrices;
         }
-        
+
         return prices[dst] == INT_MAX ? -1 : prices[dst];
     }
 };
@@ -108,18 +109,18 @@ class Solution:
     def findCheapestPrice(self, n: int, flights: List[List[int]], src: int, dst: int, k: int) -> int:
         prices = [float("inf")] * n
         prices[src] = 0
-        
+
         for i in range(k + 1):
             tmpPrices = prices.copy()
-            
+
             for s, d, p in flights: # s=source, d=dest, p=price
                 if prices[s] == float("inf"):
                     continue
                 if prices[s] + p < tmpPrices[d]:
                     tmpPrices[d] = prices[s] + p
-                    
+
             prices = tmpPrices
-            
+
         return -1 if prices[dst] == float("inf") else prices[dst]
 ```
 
@@ -135,7 +136,7 @@ public:
         // prices[i] 代表從起點 src 到達 i 的最小費用
         vector<int> prices(n, INT_MAX);
         prices[src] = 0;
-        
+
         // Bellman-Ford 算法的核心：鬆弛所有邊
         // 我們需要最多 k+1 條邊（k 次中轉），所以循環執行 k+1 次
         for (int i = 0; i <= k; i++) {
@@ -144,12 +145,12 @@ public:
             // 例如：A->B 更新了 B，然後 B->C 立即使用了新的 B，這樣就走了兩步，不符合 k 的限制
             // 所以要用 tmpPrices 保存当前这一轮的结果
             vector<int> tmpPrices = prices;
-            
+
             for (const auto& flight : flights) {
                 int u = flight[0]; // From
                 int v = flight[1]; // To
                 int w = flight[2]; // Price
-                
+
                 // 如果起點 u 還是無窮大，說明 u 還不可達，不能作為跳板
                 if (prices[u] != INT_MAX) {
                     // 鬆弛操作 (Relaxation)
@@ -158,11 +159,11 @@ public:
                     }
                 }
             }
-            
+
             // 更新 prices
             prices = tmpPrices;
         }
-        
+
         // 如果 dst 還是 INT_MAX，代表無法在 k+1 步內到達
         return prices[dst] == INT_MAX ? -1 : prices[dst];
     }

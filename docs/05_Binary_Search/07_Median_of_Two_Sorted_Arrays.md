@@ -20,6 +20,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 合併兩個陣列 (Merge Sort)，然後直接找中位數。
+
 -   **Time**: $O(m+n)$。
 -   **Result**: 題目嚴格要求 $O(\log(m+n))$，所以這不合規。
 
@@ -34,6 +35,7 @@
 `B: B_left | B_right`
 
 我們希望找到一個切法，使得：
+
 1.  **左邊元素的總數** 等於 **右邊元素的總數** (或者多 1 個，如果總數是奇數)。
 2.  **Max(A_left, B_left) <= Min(A_right, B_right)**。這保證了左邊所有元素都小於等於右邊所有元素，也就是說，Partition 是正確的。
 
@@ -73,26 +75,26 @@ public:
         if (nums1.size() > nums2.size()) {
             return findMedianSortedArrays(nums2, nums1);
         }
-        
+
         int m = nums1.size();
         int n = nums2.size();
         int total = m + n;
         int half = (total + 1) / 2;
-        
+
         int left = 0;
         int right = m;
-        
+
         while (left <= right) {
             int i = left + (right - left) / 2; // Partition index for nums1
             int j = half - i;                  // Partition index for nums2
-            
+
             // 處理邊界情況 (如果 i 為 0，左邊用 -infinity；如果 i 為 m，右邊用 infinity)
             int nums1Left = (i == 0) ? INT_MIN : nums1[i - 1];
             int nums1Right = (i == m) ? INT_MAX : nums1[i];
-            
+
             int nums2Left = (j == 0) ? INT_MIN : nums2[j - 1];
             int nums2Right = (j == n) ? INT_MAX : nums2[j];
-            
+
             // 檢查 Partition 是否合法
             if (nums1Left <= nums2Right && nums2Left <= nums1Right) {
                 // 合法！計算 Median
@@ -109,7 +111,7 @@ public:
                 left = i + 1;
             }
         }
-        
+
         return 0.0;
     }
 };
@@ -123,20 +125,20 @@ class Solution:
         A, B = nums1, nums2
         total = len(nums1) + len(nums2)
         half = total // 2
-        
+
         if len(B) < len(A):
             A, B = B, A
-        
+
         l, r = 0, len(A) - 1
         while True:
             i = (l + r) // 2 # A
             j = half - i - 2 # B
-            
+
             Aleft = A[i] if i >= 0 else float("-infinity")
             Aright = A[i + 1] if (i + 1) < len(A) else float("infinity")
             Bleft = B[j] if j >= 0 else float("-infinity")
             Bright = B[j + 1] if (j + 1) < len(B) else float("infinity")
-            
+
             if Aleft <= Bright and Bleft <= Aright:
                 # odd
                 if total % 2:
@@ -164,40 +166,40 @@ public:
         if (nums1.size() > nums2.size()) {
             return findMedianSortedArrays(nums2, nums1);
         }
-        
+
         int m = nums1.size();
         int n = nums2.size();
         int total = m + n;
-        
+
         // half 代表合併後左半邊應該有多少個元素
         // 如果 total 是奇數 (e.g. 7)，左邊要有 4 個，因為中位數就是第 4 個 (index 3)
         // 如果 total 是偶數 (e.g. 8)，左邊要有 4 個
         int half = (total + 1) / 2;
-        
+
         int l = 0;
         int r = m; // right bound 是 m，代表我们可以把所有 nums1 都分到左邊
-        
+
         while (l <= r) {
             // i 是 nums1 的分割點 (代表 nums1 左邊有 i 個元素)
             int i = l + (r - l) / 2;
             // j 是 nums2 的分割點 (代表 nums2 左邊有 j 個元素)
             // i + j 必須等於 half
             int j = half - i;
-            
+
             // 取得分割線兩側的值，注意邊界檢查
             // A_Left, A_Right
             int left1 = (i == 0) ? INT_MIN : nums1[i - 1];
             int right1 = (i == m) ? INT_MAX : nums1[i];
-            
+
             // B_Left, B_Right
             int left2 = (j == 0) ? INT_MIN : nums2[j - 1];
             int right2 = (j == n) ? INT_MAX : nums2[j];
-            
+
             // 檢查交叉條件
             // 我們希望 left1 <= right2 且 left2 <= right1
             if (left1 <= right2 && left2 <= right1) {
                 // 找到了完美的分割！
-                
+
                 if (total % 2 == 1) {
                     // 奇數個：中位數就是左半邊最大的那個
                     return max(left1, left2);
@@ -213,7 +215,7 @@ public:
                 l = i + 1;
             }
         }
-        
+
         return 0.0;
     }
 };

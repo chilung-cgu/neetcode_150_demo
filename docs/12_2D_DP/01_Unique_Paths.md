@@ -25,6 +25,7 @@
 
 **DFS**:
 `countPaths(r, c)` = `countPaths(r+1, c) + countPaths(r, c+1)`。
+
 -   **Time**: $O(2^{M+N})$。這會非常慢。
 
 ---
@@ -68,7 +69,7 @@ public:
         // We only need to store the previous row
         // dp[j] will represent the number of paths to reach cell (current_row, j)
         vector<int> dp(n, 1);
-        
+
         // Iterate through rows starting from 1 (row 0 is all 1s, already set)
         for (int i = 1; i < m; i++) {
             // Iterate through cols starting from 1 (col 0 is always 1)
@@ -77,7 +78,7 @@ public:
                 dp[j] = dp[j] + dp[j-1];
             }
         }
-        
+
         return dp[n-1];
     }
 };
@@ -89,13 +90,13 @@ public:
 class Solution:
     def uniquePaths(self, m: int, n: int) -> int:
         row = [1] * n
-        
+
         for i in range(m - 1):
             newRow = [1] * n
             for j in range(n - 2, -1, -1):
                 newRow[j] = newRow[j + 1] + row[j]
             row = newRow
-            
+
         return row[0]
 ```
 Note: The Python solution above fills from right-to-left bottom-up, which is equivalent.
@@ -122,7 +123,7 @@ public:
         // dp[j] 代表到達當前行第 j 列的路徑數。
         // 初始狀態：第一行 (Row 0) 所有格子的路徑數都是 1 (只能一直往右走)。
         vector<int> dp(n, 1);
-        
+
         // 從第二行 (Row 1) 開始遍歷每一行
         for (int i = 1; i < m; i++) {
             // 對於每一行的每一個格子 j (從第 1 欄開始，因為第 0 欄永遠是 1)
@@ -135,7 +136,7 @@ public:
                 dp[j] = dp[j] + dp[j-1];
             }
         }
-        
+
         // 回傳到達右下角的路徑數
         return dp[n-1];
     }

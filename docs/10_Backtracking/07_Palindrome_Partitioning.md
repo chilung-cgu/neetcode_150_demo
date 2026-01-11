@@ -20,6 +20,7 @@
 **Backtracking**:
 從 index 0 開始，嘗試切割出第一段 `s[0...i]`。
 如果 `s[0...i]` 是回文，則遞迴處理剩餘的 `s[i+1...]`。
+
 -   **Time**: $O(N \times 2^N)$。最壞情況（如 "aaaa"），每個切割點都可行。
 -   **Space**: $O(N)$ stack.
 
@@ -57,7 +58,7 @@ public:
         dfs(s, 0, current, result);
         return result;
     }
-    
+
 private:
     void dfs(const string& s, int start, vector<string>& current, vector<vector<string>>& result) {
         // Base case: Reached end of string
@@ -65,22 +66,22 @@ private:
             result.push_back(current);
             return;
         }
-        
+
         for (int i = start; i < s.length(); i++) {
             // Check if substring s[start...i] is a palindrome
             if (isPalindrome(s, start, i)) {
                 // If yes, include it in partition
                 current.push_back(s.substr(start, i - start + 1));
-                
+
                 // Recurse for the rest
                 dfs(s, i + 1, current, result);
-                
+
                 // Backtrack
                 current.pop_back();
             }
         }
     }
-    
+
     bool isPalindrome(const string& s, int left, int right) {
         while (left < right) {
             if (s[left] != s[right]) {
@@ -101,21 +102,21 @@ class Solution:
     def partition(self, s: str) -> List[List[str]]:
         res = []
         part = []
-        
+
         def dfs(i):
             if i >= len(s):
                 res.append(part.copy())
                 return
-            
+
             for j in range(i, len(s)):
                 if self.isPali(s, i, j):
                     part.append(s[i:j+1])
                     dfs(j + 1)
                     part.pop()
-                    
+
         dfs(0)
         return res
-    
+
     def isPali(self, s, l, r):
         while l < r:
             if s[l] != s[r]:
@@ -137,7 +138,7 @@ public:
         dfs(s, 0, path, res);
         return res;
     }
-    
+
     // start: 當前要開始切割的起始位置
     void dfs(const string& s, int start, vector<string>& path, vector<vector<string>>& res) {
         // 如果 start 已經到底，代表整個字串都被成功分割了
@@ -145,23 +146,23 @@ public:
             res.push_back(path);
             return;
         }
-        
+
         // 嘗試所有可能的切割終點 i
         for (int i = start; i < s.size(); i++) {
             // 判斷 s[start ... i] 是否回文
             if (isPalindrome(s, start, i)) {
                 // 是回文，加入當前方案
                 path.push_back(s.substr(start, i - start + 1));
-                
+
                 // 繼續處理剩下的字串 (從 i + 1 開始)
                 dfs(s, i + 1, path, res);
-                
+
                 // Backtrack：移除剛才加進去的子字串，嘗試下一個切割點
                 path.pop_back();
             }
         }
     }
-    
+
     // 檢查回共有 helper function
     bool isPalindrome(const string& s, int l, int r) {
         while (l < r) {

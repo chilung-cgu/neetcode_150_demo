@@ -20,6 +20,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 先將 Linked List 轉成整數 (int/long)，相加後，再轉回 Linked List。
+
 -   **Issue**: List 長度可達 100，這代表數字有 100 位數。即使用 `unsigned long long` 也存不下。
 -   **Result**: 必須直接在 Linked List 上做加法模擬。
 
@@ -30,6 +31,7 @@
 這就是標準的直式加法 (Column Addition)。
 我們同時遍歷兩個 List，從 head (個位數) 開始加。
 維護一個 `carry` (進位)。
+
 -   `sum = val1 + val2 + carry`
 -   `new_digit = sum % 10`
 -   `new_carry = sum / 10`
@@ -60,23 +62,23 @@ public:
         ListNode dummy(0);
         ListNode* tail = &dummy;
         int carry = 0;
-        
+
         while (l1 != nullptr || l2 != nullptr || carry != 0) {
             int digit1 = (l1 != nullptr) ? l1->val : 0;
             int digit2 = (l2 != nullptr) ? l2->val : 0;
-            
+
             int sum = digit1 + digit2 + carry;
             int digit = sum % 10;
             carry = sum / 10;
-            
+
             ListNode* newNode = new ListNode(digit);
             tail->next = newNode;
             tail = tail->next;
-            
+
             if (l1 != nullptr) l1 = l1->next;
             if (l2 != nullptr) l2 = l2->next;
         }
-        
+
         return dummy.next;
     }
 };
@@ -90,22 +92,22 @@ class Solution:
         dummy = ListNode()
         curr = dummy
         carry = 0
-        
+
         while l1 or l2 or carry:
             v1 = l1.val if l1 else 0
             v2 = l2.val if l2 else 0
-            
+
             # new digit
             val = v1 + v2 + carry
             carry = val // 10
             val = val % 10
             curr.next = ListNode(val)
-            
+
             # update ptrs
             curr = curr.next
             l1 = l1.next if l1 else None
             l2 = l2.next if l2 else None
-            
+
         return dummy.next
 ```
 
@@ -121,26 +123,26 @@ public:
         ListNode dummy(0);
         ListNode* current = &dummy;
         int carry = 0;
-        
+
         // 條件包含 carry != 0，這是為了處理最後還要進位的情況 (e.g., 99 + 1 = 100)
         while (l1 != nullptr || l2 != nullptr || carry != 0) {
             // 如果 list 已經走到底，則值視為 0
             int x = (l1 != nullptr) ? l1->val : 0;
             int y = (l2 != nullptr) ? l2->val : 0;
-            
+
             // 計算和與進位
             int sum = x + y + carry;
             carry = sum / 10;
-            
+
             // 創建新節點存個位數 (sum % 10)
             current->next = new ListNode(sum % 10);
             current = current->next;
-            
+
             // 移動指針
             if (l1 != nullptr) l1 = l1->next;
             if (l2 != nullptr) l2 = l2->next;
         }
-        
+
         return dummy.next;
     }
 };

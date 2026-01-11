@@ -18,6 +18,7 @@
       [5,1,1,2,4]
     ]
     ```
+
 -   **Output**: `[[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]]`
 -   **Constraints**:
     -   $m, n$ up to 200.
@@ -28,9 +29,11 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 對於每一個格子 `(r, c)`，執行兩次 DFS/BFS：
+
 1.  檢查能否到達 Pacific (左邊界或上邊界)。
 2.  檢查能否到達 Atlantic (右邊界或下邊界)。
 如果兩個都返回 True，則加入結果。
+
 -   **Time**: $O((M \times N)^2)$。對於每個點都遍歷全圖。效率太低。
 
 ---
@@ -61,26 +64,26 @@ class Solution {
 public:
     vector<vector<int>> pacificAtlantic(vector<vector<int>>& heights) {
         if (heights.empty()) return {};
-        
+
         int m = heights.size();
         int n = heights[0].size();
-        
+
         // Two visited matrices to keep track of reachability
         vector<vector<bool>> pacific(m, vector<bool>(n, false));
         vector<vector<bool>> atlantic(m, vector<bool>(n, false));
-        
+
         // DFS starting from top and bottom rows
         for (int c = 0; c < n; c++) {
             dfs(heights, pacific, 0, c);      // Top row (Pacific)
             dfs(heights, atlantic, m - 1, c); // Bottom row (Atlantic)
         }
-        
+
         // DFS starting from left and right columns
         for (int r = 0; r < m; r++) {
             dfs(heights, pacific, r, 0);      // Left column (Pacific)
             dfs(heights, atlantic, r, n - 1); // Right column (Atlantic)
         }
-        
+
         // Find intersection
         vector<vector<int>> result;
         for (int i = 0; i < m; i++) {
@@ -90,26 +93,26 @@ public:
                 }
             }
         }
-        
+
         return result;
     }
-    
+
 private:
     void dfs(vector<vector<int>>& heights, vector<vector<bool>>& visited, int r, int c) {
         visited[r][c] = true;
         int m = heights.size();
         int n = heights[0].size();
-        
+
         // Direction vectors
         int dirs[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
-        
+
         for (auto& d : dirs) {
             int nr = r + d[0];
             int nc = c + d[1];
-            
+
             // Check boundaries
             if (nr >= 0 && nr < m && nc >= 0 && nc < n) {
-                // Check if unvisited AND height condition implies flow is possible 
+                // Check if unvisited AND height condition implies flow is possible
                 // (Reverse flow: neighbor must be >= current)
                 if (!visited[nr][nc] && heights[nr][nc] >= heights[r][c]) {
                     dfs(heights, visited, nr, nc);
@@ -127,33 +130,33 @@ class Solution:
     def pacificAtlantic(self, heights: List[List[int]]) -> List[List[int]]:
         rows, cols = len(heights), len(heights[0])
         pac, atl = set(), set()
-        
+
         def dfs(r, c, visit, prevHeight):
             if (r < 0 or c < 0 or r >= rows or c >= cols or
                 (r, c) in visit or heights[r][c] < prevHeight):
                 return
-            
+
             visit.add((r, c))
-            
+
             dfs(r + 1, c, visit, heights[r][c])
             dfs(r - 1, c, visit, heights[r][c])
             dfs(r, c + 1, visit, heights[r][c])
             dfs(r, c - 1, visit, heights[r][c])
-            
+
         for c in range(cols):
             dfs(0, c, pac, heights[0][c])
             dfs(rows - 1, c, atl, heights[rows - 1][c])
-            
+
         for r in range(rows):
             dfs(r, 0, pac, heights[r][0])
             dfs(r, cols - 1, atl, heights[r][cols - 1])
-            
+
         res = []
         for r in range(rows):
             for c in range(cols):
                 if (r, c) in pac and (r, c) in atl:
                     res.append([r, c])
-                    
+
         return res
 ```
 
@@ -166,15 +169,15 @@ class Solution {
 public:
     vector<vector<int>> pacificAtlantic(vector<vector<int>>& heights) {
         if (heights.empty()) return {};
-        
+
         int m = heights.size();
         int n = heights[0].size();
-        
+
         // 兩個矩陣分別記錄能否到達 Pacific 和 Atlantic
         // 初始化為 false
         vector<vector<bool>> pacific(m, vector<bool>(n, false));
         vector<vector<bool>> atlantic(m, vector<bool>(n, false));
-        
+
         // 從邊界開始 DFS
         // 1. 上下邊界
         // 上邊界 (Row 0) 是 Pacific
@@ -183,7 +186,7 @@ public:
             dfs(heights, pacific, 0, c);
             dfs(heights, atlantic, m - 1, c);
         }
-        
+
         // 2. 左右邊界
         // 左邊界 (Col 0) 是 Pacific
         // 右邊界 (Col n-1) 是 Atlantic
@@ -191,7 +194,7 @@ public:
             dfs(heights, pacific, r, 0);
             dfs(heights, atlantic, r, n - 1);
         }
-        
+
         // 遍歷所有格子，找出交集 (兩者都為 true)
         vector<vector<int>> result;
         for (int i = 0; i < m; i++) {
@@ -201,25 +204,25 @@ public:
                 }
             }
         }
-        
+
         return result;
     }
-    
+
 private:
     void dfs(vector<vector<int>>& heights, vector<vector<bool>>& visited, int r, int c) {
         // 標記當前點為可到達
         visited[r][c] = true;
-        
+
         int m = heights.size();
         int n = heights[0].size();
-        
+
         // 方向數組：上下左右
         int dirs[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
-        
+
         for (auto& d : dirs) {
             int nr = r + d[0];
             int nc = c + d[1];
-            
+
             // 檢查邊界
             if (nr >= 0 && nr < m && nc >= 0 && nc < n) {
                 // 檢查是否已訪問

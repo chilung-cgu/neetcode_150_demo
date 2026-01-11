@@ -32,12 +32,14 @@
 
 **Hash Map Is The Key**:
 我們需要一個 Map：`Old Node -> New Node`。
+
 -   `map` 充當了兩個角色：
     1.  **Visited Set**: 如果一個節點在 map 中，說明我們已經訪問過或者是正在訪問它，不需要重新創建。
     2.  **Mapping**: 當我們需要連接鄰居時，如果是舊鄰居，我們可以從 map 中拿到對應的新鄰居。
 
 **Algorithm (DFS)**:
 `clone(node)`:
+
 1.  如果 `node` 是 null，回傳 null。
 2.  如果 `node` 已經在 map 中，回傳 `map[node]` (直接返回已創建的克隆)。
 3.  **Create**: 創建新節點 `newNode(node.val)`。
@@ -86,22 +88,22 @@ public:
         if (!node) {
             return nullptr;
         }
-        
+
         // If we have already cloned this node, return the stored clone
         if (copies.find(node) != copies.end()) {
             return copies[node];
         }
-        
+
         // Create a new node (just val initially)
         Node* copy = new Node(node->val);
         // Important: Add to map BEFORE recursing to handle cycles
         copies[node] = copy;
-        
+
         // Clone all neighbors
         for (Node* neighbor : node->neighbors) {
             copy->neighbors.push_back(cloneGraph(neighbor));
         }
-        
+
         return copy;
     }
 };
@@ -121,19 +123,19 @@ class Node:
 class Solution:
     def cloneGraph(self, node: 'Node') -> 'Node':
         oldToNew = {}
-        
+
         def dfs(node):
             if node in oldToNew:
                 return oldToNew[node]
-            
+
             copy = Node(node.val)
             oldToNew[node] = copy
-            
+
             for neighbor in node.neighbors:
                 copy.neighbors.append(dfs(neighbor))
-                
+
             return copy
-            
+
         return dfs(node) if node else None
 ```
 
@@ -174,26 +176,26 @@ public:
         if (node == nullptr) {
             return nullptr;
         }
-        
+
         // 檢查是否已經複製過該節點
         // 如果有，直接回傳之前創建的副本，這樣可以正確處理環 (Cycle)
         if (visited.find(node) != visited.end()) {
             return visited[node];
         }
-        
+
         // 1. 創建新節點 (Deep Copy)
         Node* cloneNode = new Node(node->val);
-        
+
         // 2. 註冊到 Map 中 (這步必須在處理鄰居之前做！)
         visited[node] = cloneNode;
-        
+
         // 3. 遞迴處理所有鄰居
         for (Node* neighbor : node->neighbors) {
             // 對每個鄰居調用 cloneGraph
             // 如果鄰居已存在，它會直接回傳；如果不存在，它會被創建
             cloneNode->neighbors.push_back(cloneGraph(neighbor));
         }
-        
+
         return cloneNode;
     }
 };

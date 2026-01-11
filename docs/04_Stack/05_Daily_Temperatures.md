@@ -17,6 +17,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 對於每一天 `i`，往後遍歷 `j > i`，直到找到 `temp[j] > temp[i]`。
+
 -   `answer[i] = j - i`.
 -   **Time**: $O(n^2)$。
 -   **Result**: TLE。
@@ -29,6 +30,7 @@
 
 想像我們在遍歷氣溫。有些日子（例如 `75` 度）在等待一個更高的溫度出現。
 當我們遇到一個新溫度 `T` 時：
+
 1.  如果 `T` 比之前的還低（例如 `71`）：那麼 `71` 無法解決 `75` 的等待，反而 `71` 也要開始等待。Push `71` 入棧。
 2.  如果 `T` 比之前的還高（例如 `72`）：那麼 `72` 就是 `71` (還有 `69`) 的救星！
     -   `71` 等到了更高溫。計算等待天數，Pop `71`。
@@ -56,23 +58,23 @@ public:
         int n = temperatures.size();
         vector<int> results(n, 0); // Initialize with 0
         stack<pair<int, int>> stk; // stores {temp, index}
-        
+
         for (int i = 0; i < n; i++) {
             int t = temperatures[i];
-            
+
             // 當前溫度 t 如果比 stack top 的溫度還高
             // 說明 stack top 的那一天等到了！
             while (!stk.empty() && t > stk.top().first) {
                 int stackT = stk.top().first;
                 int stackInd = stk.top().second;
                 stk.pop();
-                
+
                 results[stackInd] = i - stackInd;
             }
-            
+
             stk.push({t, i});
         }
-        
+
         return results;
     }
 };
@@ -85,7 +87,7 @@ class Solution:
     def dailyTemperatures(self, temperatures: List[int]) -> List[int]:
         res = [0] * len(temperatures)
         stack = [] # pair: [temp, index]
-        
+
         for i, t in enumerate(temperatures):
             while stack and t > stack[-1][0]:
                 stackT, stackInd = stack.pop()
@@ -104,25 +106,25 @@ public:
     vector<int> dailyTemperatures(vector<int>& temperatures) {
         int n = temperatures.size();
         vector<int> ans(n, 0);
-        
+
         // Stack 存 index 即可，溫度可以查 array
         stack<int> indices;
-        
+
         for (int i = 0; i < n; i++) {
             // While Stack 不為空，且當前溫度 > Stack Top 對應的溫度
             // 這意味著 Stack Top 那一天的「更高溫」終於出現了，就是現在 (i)！
             while (!indices.empty() && temperatures[i] > temperatures[indices.top()]) {
                 int prevDay = indices.top();
                 indices.pop();
-                
+
                 // 算出等待天數
                 ans[prevDay] = i - prevDay;
             }
-            
+
             // 當前這一天還沒找到更高溫，先入棧等待
             indices.push(i);
         }
-        
+
         return ans;
     }
 };

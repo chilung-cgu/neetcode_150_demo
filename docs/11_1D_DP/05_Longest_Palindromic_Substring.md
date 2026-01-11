@@ -19,6 +19,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 檢查每一個可能的子字串是否為回文。
+
 -   總共有 $O(N^2)$ 個子字串。
 -   檢查每一個需要 $O(N)$。
 -   **Total Time**: $O(N^3)$。 $N=1000$ 時 $10^9$ 次操作，太慢。
@@ -30,6 +31,7 @@
 **Approach 1: Dynamic Programming**
 `dp[i][j]` 表示 `s[i...j]` 是否為回文。
 `dp[i][j] = (s[i] == s[j]) && dp[i+1][j-1]`。
+
 -   Time: $O(N^2)$
 -   Space: $O(N^2)$ (Table size)
 
@@ -37,9 +39,11 @@
 回文是對稱的。
 我們可以枚舉每一個 **中心點**，然後向左右擴展，直到不是回文為止。
 中心點有 $2N - 1$ 個（$N$ 個單字元中心 + $N-1$ 個雙字元中心）。
+
 -   例如 "aba" 中心是 'b'。
 -   例如 "abba" 中心是 "bb" 之間的空隙。
 對每個中心擴展，最壞情況擴展 $O(N)$。
+
 -   Time: $O(N^2)$
 -   Space: $O(1)$ (No extra table needed)
 
@@ -63,19 +67,19 @@ class Solution {
 public:
     string longestPalindrome(string s) {
         if (s.empty()) return "";
-        
+
         int start = 0;
         int maxLen = 0;
-        
+
         for (int i = 0; i < s.length(); i++) {
             // Case 1: Odd length palindrome (Expand from s[i])
             int len1 = expandAroundCenter(s, i, i);
-            
+
             // Case 2: Even length palindrome (Expand from s[i], s[i+1])
             int len2 = expandAroundCenter(s, i, i + 1);
-            
+
             int len = max(len1, len2);
-            
+
             // Update maxLen and start position
             if (len > maxLen) {
                 maxLen = len;
@@ -86,10 +90,10 @@ public:
                 start = i - (len - 1) / 2;
             }
         }
-        
+
         return s.substr(start, maxLen);
     }
-    
+
 private:
     int expandAroundCenter(const string& s, int left, int right) {
         while (left >= 0 && right < s.length() && s[left] == s[right]) {
@@ -112,7 +116,7 @@ class Solution:
     def longestPalindrome(self, s: str) -> str:
         res = ""
         resLen = 0
-        
+
         for i in range(len(s)):
             # Odd length
             l, r = i, i
@@ -122,7 +126,7 @@ class Solution:
                     resLen = r - l + 1
                 l -= 1
                 r += 1
-                
+
             # Even length
             l, r = i, i + 1
             while l >= 0 and r < len(s) and s[l] == s[r]:
@@ -131,7 +135,7 @@ class Solution:
                     resLen = r - l + 1
                 l -= 1
                 r += 1
-                
+
         return res
 ```
 
@@ -144,20 +148,20 @@ class Solution {
 public:
     string longestPalindrome(string s) {
         if (s.empty()) return "";
-        
+
         int start = 0;
         int maxLen = 0;
-        
+
         for (int i = 0; i < s.length(); i++) {
             // 1. 以 s[i] 為中心的奇數長度回文
             int len1 = expand(s, i, i);
-            
+
             // 2. 以 s[i] 和 s[i+1] 之間的空隙為中心的偶數長度回文
             int len2 = expand(s, i, i + 1);
-            
+
             // 取最長的
             int len = max(len1, len2);
-            
+
             // 如果比目前最長的還長，更新 start 和 maxLen
             if (len > maxLen) {
                 maxLen = len;
@@ -167,10 +171,10 @@ public:
                 start = i - (len - 1) / 2;
             }
         }
-        
+
         return s.substr(start, maxLen);
     }
-    
+
     // 擴展函數：回傳以此中心擴展得到的最長長度
     int expand(const string& s, int l, int r) {
         while (l >= 0 && r < s.length() && s[l] == s[r]) {

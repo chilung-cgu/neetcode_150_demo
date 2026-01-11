@@ -5,6 +5,7 @@
 題目要求我們寫一個函式來判斷一個字串 `s` 是否為 **Palindrome (回文)**。
 所謂「回文」，是指正著讀跟反著讀都一樣的字串。
 但是在比對之前，我們必須先進行**資料清洗 (Data Cleaning)**：
+
 1.  **Case Insensitive**: 大寫字母要視為小寫（'A' == 'a'）。
 2.  **Alphanumeric Only**: 只保留字母 (a-z) 和數字 (0-9)，忽略所有其他符號（如空白、逗號、冒號等）。
 
@@ -24,6 +25,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 最直覺的方法是依序執行以下步驟：
+
 1.  建立一個新的字串 `filtered_s`。
 2.  遍歷原字串 `s`，如果字元是 alphanumeric，就轉成小寫並 append 到 `filtered_s`。
 3.  建立一個反轉字串 `reversed_s = reverse(filtered_s)`。
@@ -40,6 +42,7 @@
 **Two Pointers (雙指標)** 是處理「陣列/字串前後比對」問題的標準武器。
 
 我們不需要建立新字串，直接在原字串上跑：
+
 1.  設定 `left` 指標在開頭，`right` 指標在結尾。
 2.  當 `left < right` 時：
     -   如果你是指標，你會遇到什麼問題？ -> "中間有很多垃圾符號"。
@@ -109,17 +112,17 @@ class Solution:
                 l += 1
             while l < r and not self.alphaNum(s[r]):
                 r -= 1
-            
+
             if s[l].lower() != s[r].lower():
                 return False
-            
+
             l, r = l + 1, r - 1
-            
+
         return True
 
     def alphaNum(self, c):
-        return (ord('A') <= ord(c) <= ord('Z') or 
-                ord('a') <= ord(c) <= ord('z') or 
+        return (ord('A') <= ord(c) <= ord('Z') or
+                ord('a') <= ord(c) <= ord('z') or
                 ord('0') <= ord(c) <= ord('9'))
 ```
 
@@ -134,7 +137,7 @@ public:
         // 定義雙指標，分別指向頭尾
         int L = 0;
         int R = s.size() - 1;
-        
+
         // 迴圈條件：當左指標還在右指標左邊時繼續
         while (L < R) {
             // Step 1: 略過左邊的非英數字符
@@ -142,23 +145,23 @@ public:
             while (L < R && !isalnum(s[L])) {
                 L++;
             }
-            
+
             // Step 2: 略過右邊的非英數字符
             while (L < R && !isalnum(s[R])) {
                 R--;
             }
-            
+
             // Step 3: 比對字符
             // tolower() 將大寫轉小寫，非字母則不變
             if (tolower(s[L]) != tolower(s[R])) {
                 return false; // 發現不匹配，立即回傳失敗
             }
-            
+
             // 收縮範圍
             L++;
             R--;
         }
-        
+
         return true;
     }
 };

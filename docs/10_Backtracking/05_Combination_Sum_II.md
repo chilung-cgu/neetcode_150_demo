@@ -26,6 +26,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 Backtracking + Set 去重。
+
 -   **Time**: $O(2^N \times N)$.
 -   Space: $O(N)$ stack.
 
@@ -36,6 +37,7 @@ Backtracking + Set 去重。
 這題結合了 **Combination Sum I** (找和為 target) 和 **Subsets II** (去重)。
 
 核心邏輯：
+
 1.  **Sort `candidates`**。
 2.  **DFS Backtracking**:
     -   Decision: 選 `candidates[i]`，或不選。
@@ -64,37 +66,37 @@ public:
     vector<vector<int>> combinationSum2(vector<int>& candidates, int target) {
         vector<vector<int>> result;
         vector<int> current;
-        
+
         sort(candidates.begin(), candidates.end());
-        
+
         backtrack(candidates, target, 0, current, result);
         return result;
     }
-    
+
 private:
-    void backtrack(vector<int>& candidates, int target, int start, 
+    void backtrack(vector<int>& candidates, int target, int start,
                    vector<int>& current, vector<vector<int>>& result) {
         if (target == 0) {
             result.push_back(current);
             return;
         }
-        
+
         for (int i = start; i < candidates.size(); i++) {
             // Pruning: if current > target, no need to check further (since sorted)
             if (candidates[i] > target) {
                 break;
             }
-            
+
             // Skip duplicates in the same recursion level
             if (i > start && candidates[i] == candidates[i-1]) {
                 continue;
             }
-            
+
             current.push_back(candidates[i]);
-            
+
             // Recurse with i + 1 because each element can only be used once
             backtrack(candidates, target - candidates[i], i + 1, current, result);
-            
+
             current.pop_back();
         }
     }
@@ -108,25 +110,25 @@ class Solution:
     def combinationSum2(self, candidates: List[int], target: int) -> List[List[int]]:
         res = []
         candidates.sort()
-        
+
         def backtrack(cur, pos, target):
             if target == 0:
                 res.append(cur.copy())
                 return
             if target < 0:
                 return
-            
+
             prev = -1
             for i in range(pos, len(candidates)):
                 if candidates[i] == prev:
                     continue
-                
+
                 cur.append(candidates[i])
                 backtrack(cur, i + 1, target - candidates[i])
                 cur.pop()
-                
+
                 prev = candidates[i]
-                
+
         backtrack([], 0, target)
         return res
 ```
@@ -141,40 +143,40 @@ public:
     vector<vector<int>> combinationSum2(vector<int>& candidates, int target) {
         vector<vector<int>> res;
         vector<int> current;
-        
+
         // 1. 必先排序，為了去重和剪枝
         sort(candidates.begin(), candidates.end());
-        
+
         dfs(candidates, target, 0, current, res);
         return res;
     }
-    
+
     void dfs(vector<int>& candidates, int target, int start, vector<int>& current, vector<vector<int>>& res) {
         // 找到目標
         if (target == 0) {
             res.push_back(current);
             return;
         }
-        
+
         for (int i = start; i < candidates.size(); i++) {
             // 剪枝：如果當前數字已經大於剩餘目標，後面的數字更大，一定也不行
             if (candidates[i] > target) {
-                break; 
+                break;
             }
-            
+
             // 去重：如果當前數字跟上一個一樣，且不是這一層的第一個選擇
             // (i > start 表示這是這一層 loop 的第 2+ 次迭代)
             // 那麼就跳過，因為同樣的數值在這一層已經被選過一次了
             if (i > start && candidates[i] == candidates[i-1]) {
                 continue;
             }
-            
+
             // 選擇
             current.push_back(candidates[i]);
-            
+
             // 遞迴：注意這裡是 i + 1，因為每個數字只能用一次
             dfs(candidates, target - candidates[i], i + 1, current, res);
-            
+
             // 回溯
             current.pop_back();
         }

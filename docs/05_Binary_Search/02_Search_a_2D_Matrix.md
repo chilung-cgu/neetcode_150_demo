@@ -4,6 +4,7 @@
 
 題目給一個 `m x n` 的矩陣 `matrix` 和一個整數 `target`。
 這個矩陣有兩個特性：
+
 1.  每列 (Row) 的元素從左到右遞增排序。
 2.  每列的第一個整數大於前一列的最後一個整數。
 
@@ -21,6 +22,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 遍歷矩陣中每個元素。
+
 -   **Time**: $O(m \cdot n)$。
 -   **Result**: 雖然 Constraints 很小 ($100 \times 100 = 10000$)，暴力解能過，但面試這會被扣分。
 
@@ -31,6 +33,7 @@
 既然矩陣「拉直」後是有序的，我們可以直接把它當作一個大的一維陣列來跑 **Binary Search**。
 假設矩陣有 `m` 列 `n` 行，總長度 `L = m * n`。
 一維的 index `i` (從 0 到 `L-1`) 可以映射回二維座標 `(r, c)`：
+
 -   `row = i / n`
 -   `col = i % n`
 
@@ -60,21 +63,21 @@ class Solution {
 public:
     bool searchMatrix(vector<vector<int>>& matrix, int target) {
         if (matrix.empty() || matrix[0].empty()) return false;
-        
+
         int m = matrix.size();
         int n = matrix[0].size();
-        
+
         int low = 0;
         int high = m * n - 1;
-        
+
         while (low <= high) {
             int mid = low + (high - low) / 2;
-            
+
             // Map 1D mid to 2D coordinates
             int r = mid / n;
             int c = mid % n;
             int val = matrix[r][c];
-            
+
             if (val == target) {
                 return true;
             } else if (val < target) {
@@ -83,7 +86,7 @@ public:
                 high = mid - 1;
             }
         }
-        
+
         return false;
     }
 };
@@ -95,16 +98,16 @@ public:
 class Solution:
     def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
         if not matrix: return False
-        
+
         ROWS, COLS = len(matrix), len(matrix[0])
         l, r = 0, ROWS * COLS - 1
-        
+
         while l <= r:
             m = l + (r - l) // 2
             # Map to 2D
             row = m // COLS
             col = m % COLS
-            
+
             val = matrix[row][col]
             if val == target:
                 return True
@@ -112,7 +115,7 @@ class Solution:
                 l = m + 1
             else:
                 r = m - 1
-                
+
         return False
 ```
 
@@ -126,20 +129,20 @@ public:
     bool searchMatrix(vector<vector<int>>& matrix, int target) {
         int m = matrix.size();
         int n = matrix[0].size();
-        
+
         // 將2D矩陣視為長度 m*n 的1D陣列
         // index 範圍從 0 到 m*n - 1
-        long long left = 0; 
+        long long left = 0;
         long long right = (long long)m * n - 1;
-        
+
         while (left <= right) {
             long long mid = left + (right - left) / 2;
-            
+
             // 關鍵映射：
             // 行數(row) = index / 寬度(n)
             // 列數(col) = index % 寬度(n)
             int val = matrix[mid / n][mid % n];
-            
+
             if (val == target) {
                 return true;
             } else if (val < target) {
@@ -148,7 +151,7 @@ public:
                 right = mid - 1;
             }
         }
-        
+
         return false;
     }
 };

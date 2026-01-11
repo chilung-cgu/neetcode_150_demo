@@ -4,6 +4,7 @@
 
 給定一個**大整數**，以陣列 `digits` 形式表示（最高位在前）。
 請計算該整數 **加 1** 後的結果，並以同樣的陣列形式回傳。
+
 -   **Input**: `digits = [1,2,3]`
 -   **Output**: `[1,2,4]`
 -   **Input**: `digits = [4,3,2,1]`
@@ -30,6 +31,7 @@
 
 **Iterate Backwards (Digit by Digit)**:
 從最後一位開始遍歷 `digits[i]`：
+
 1.  如果 `digits[i] < 9`：
     -   `digits[i]++`。
     -   沒有進位，任務結束，直接回傳 `digits`。
@@ -56,7 +58,7 @@ class Solution {
 public:
     vector<int> plusOne(vector<int>& digits) {
         int n = digits.size();
-        
+
         // Iterate from the last digit to the first
         for (int i = n - 1; i >= 0; i--) {
             if (digits[i] < 9) {
@@ -66,7 +68,7 @@ public:
             // Carry happens, set current digit to 0
             digits[i] = 0;
         }
-        
+
         // If we're here, it means all digits were 9 (e.g., 999 -> 000)
         // Need to add a leading 1 (999 -> 1000)
         digits.insert(digits.begin(), 1);
@@ -86,7 +88,7 @@ class Solution:
             else:
                 digits[i] += 1
                 return digits
-                
+
         # If all digits were 9
         return [1] + digits
 ```
@@ -100,21 +102,21 @@ class Solution {
 public:
     vector<int> plusOne(vector<int>& digits) {
         int n = digits.size();
-        
+
         // 從個位數（陣列末尾）開始向前遍歷
         for (int i = n - 1; i >= 0; i--) {
             // 如果當前位數小於 9，直接加 1 就不會有進位
             if (digits[i] < 9) {
                 digits[i]++;
                 // 不需要處理前面的位數了，直接回傳結果
-                return digits; 
+                return digits;
             }
-            
+
             // 如果當前位數是 9，加 1 後變成 10
             // 該位數變為 0，並產生進位傳給下一輪 (i-1)
             digits[i] = 0;
         }
-        
+
         // 程式執行到這裡，意味著所有的位數都是 9 (例如 99 -> 00)
         // 我們需要在最前面補一個 1 (變成 100)
         digits.insert(digits.begin(), 1);

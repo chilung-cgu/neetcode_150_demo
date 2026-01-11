@@ -18,6 +18,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 枚舉所有子字串 `s[i...j]`，檢查它是否有重複字元。
+
 -   **Time**: Total substrings $O(n^2)$。Check duplicate $O(n)$。Total $O(n^3)$。
 -   **Space**: $O(min(n, m))$ for set。
 -   **Result**: TLE。
@@ -29,6 +30,7 @@
 這題是 **Sliding Window** 最經典的入門題。
 
 我們用一個窗口 `[left, right]` 來代表當下的子字串。
+
 1.  **Expand**: 不斷移動 `right` 指標，擴大窗口，把新字元加進來。
 2.  **Check**: 如果新加進來的字元 `s[right]` **已經存在於窗口中**，這時窗口內的內容就非法了 (有重複)。
 3.  **Shrink**: 我們需要移動 `left` 指標，把窗口左邊的字元踢出去，直到沒有重複為止。
@@ -57,7 +59,7 @@ public:
         unordered_set<char> charSet;
         int left = 0;
         int maxLen = 0;
-        
+
         for (int right = 0; right < s.length(); right++) {
             // 如果 s[right] 已經存在，說明重複了。
             // 我們需要持續縮小窗口 (移動 left)，直到 s[right] 不在 set 中為止。
@@ -65,14 +67,14 @@ public:
                 charSet.erase(s[left]);
                 left++;
             }
-            
+
             // 加入當前字元
             charSet.insert(s[right]);
-            
+
             // 更新最大長度
             maxLen = max(maxLen, right - left + 1);
         }
-        
+
         return maxLen;
     }
 };
@@ -97,22 +99,22 @@ public:
         vector<int> lastIndex(128, -1);
         int maxLen = 0;
         int left = 0;
-        
+
         for (int right = 0; right < s.length(); right++) {
             char c = s[right];
-            
+
             // 如果 c 曾經出現過，且出現的位置在 left 之後 (在當前窗口內)
             if (lastIndex[c] >= left) {
                 // 直接跳到那個重複字的下一位
                 left = lastIndex[c] + 1;
             }
-            
+
             // 更新這個字最後出現的位置為 right
             lastIndex[c] = right;
-            
+
             maxLen = max(maxLen, right - left + 1);
         }
-        
+
         return maxLen;
     }
 };
@@ -126,7 +128,7 @@ class Solution:
         charSet = set()
         l = 0
         res = 0
-        
+
         for r in range(len(s)):
             while s[r] in charSet:
                 charSet.remove(s[l])
@@ -150,7 +152,7 @@ public:
         unordered_set<char> window;
         int left = 0;
         int maxL = 0;
-        
+
         // right 指標負責擴張窗口
         for (int right = 0; right < s.length(); right++) {
             // Check condition: 我們要加入 s[right]，但如果它已存在...
@@ -161,14 +163,14 @@ public:
                 window.erase(s[left]);
                 left++;
             }
-            
+
             // 現在窗口安全了，把 s[right] 加進去
             window.insert(s[right]);
-            
+
             // 記錄當前長度
             maxL = max(maxL, right - left + 1);
         }
-        
+
         return maxL;
     }
 };

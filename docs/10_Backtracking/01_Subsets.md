@@ -28,15 +28,18 @@
 
 **Approach 1: Backtracking (DFS)**
 對於每個元素，我們有兩個選擇：
+
 1.  **包含它** (Include)。
 2.  **不包含它** (Exclude)。
 這構成了一棵二元決策樹。
+
 -   決策樹深度為 $N$。
 -   葉子節點數為 $2^N$。
 
 **Approach 2: Cascading (Iterative)**
 初始為 `[[]]`。
 對每個新數字 `n`，把現有所有子集複製一份，並在複製的那份中加入 `n`。
+
 -   Start: `[[]]`
 -   Add 1: `[[], [1]]`
 -   Add 2: `[[], [1], [2], [1,2]]`
@@ -67,7 +70,7 @@ public:
         dfs(nums, 0, current, result);
         return result;
     }
-    
+
 private:
     void dfs(vector<int>& nums, int index, vector<int>& current, vector<vector<int>>& result) {
         // Base case: 遍歷完所有元素
@@ -75,15 +78,15 @@ private:
             result.push_back(current);
             return;
         }
-        
+
         // Decision 1: Exclude nums[index] (Don't add it)
         // 直接跳到下一個 index
         dfs(nums, index + 1, current, result);
-        
+
         // Decision 2: Include nums[index] (Add it)
         current.push_back(nums[index]);
         dfs(nums, index + 1, current, result);
-        
+
         // Backtrack (Remove it to restore state for previous recursive call)
         current.pop_back();
     }
@@ -97,20 +100,20 @@ class Solution:
     def subsets(self, nums: List[int]) -> List[List[int]]:
         res = []
         subset = []
-        
+
         def dfs(i):
             if i >= len(nums):
                 res.append(subset.copy())
                 return
-            
+
             # decision to include nums[i]
             subset.append(nums[i])
             dfs(i + 1)
-            
+
             # decision NOT to include nums[i]
             subset.pop()
             dfs(i + 1)
-            
+
         dfs(0)
         return res
 ```
@@ -125,12 +128,12 @@ public:
     vector<vector<int>> subsets(vector<int>& nums) {
         vector<vector<int>> res; // 存放最終結果
         vector<int> curr;        // 存放當前子集
-        
+
         // 從 index 0 開始遞迴
         dfs(nums, 0, curr, res);
         return res;
     }
-    
+
     // DFS 函數：決定 index 位置的元素「選」還是「不選」
     void dfs(const vector<int>& nums, int index, vector<int>& curr, vector<vector<int>>& res) {
         // Base Case: 已經對每個元素都做過決定了
@@ -138,14 +141,14 @@ public:
             res.push_back(curr); // 把當前形成的子集加入結果
             return;
         }
-        
+
         // 選項 1: 包含 nums[index]
         curr.push_back(nums[index]);
         dfs(nums, index + 1, curr, res);
-        
+
         // Backtrack (回溯): 撤銷剛才的選擇，恢復狀態
         curr.pop_back();
-        
+
         // 選項 2: 不包含 nums[index]
         dfs(nums, index + 1, curr, res);
     }

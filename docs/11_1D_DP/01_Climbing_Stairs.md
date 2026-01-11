@@ -26,6 +26,7 @@
 `climbStairs(n) = climbStairs(n-1) + climbStairs(n-2)`
 這就是 Fibonacci 數列的定義。
 直接遞迴會計算大量重複的子問題。
+
 -   **Time**: $O(2^N)$。
 -   $N=45$ 時會 Timeout。
 
@@ -36,6 +37,7 @@
 **1. Memoization (Top-Down DP)**:
 用一個陣列 `memo[n]` 存已經算過的結果。
 `memo[i] = memo[i-1] + memo[i-2]`。
+
 -   Time: $O(N)$。
 
 **2. Tabulation (Bottom-Up DP)**:
@@ -43,11 +45,13 @@
 `dp[1] = 1`, `dp[2] = 2`
 `dp[3] = dp[2] + dp[1] = 3`
 ...
+
 -   Time: $O(N)$。
 -   Space: $O(N)$。
 
 **3. Space Optimization**:
 我們只需要前兩個狀態 `prev1` 和 `prev2` 就可以算出當前狀態。
+
 -   Time: $O(N)$。
 -   Space: $O(1)$。
 
@@ -66,17 +70,17 @@ class Solution {
 public:
     int climbStairs(int n) {
         if (n <= 2) return n;
-        
+
         int oneStepBefore = 2; // dp[i-1]
         int twoStepsBefore = 1; // dp[i-2]
         int current = 0;
-        
+
         for (int i = 3; i <= n; i++) {
             current = oneStepBefore + twoStepsBefore;
             twoStepsBefore = oneStepBefore;
             oneStepBefore = current;
         }
-        
+
         return oneStepBefore;
     }
 };
@@ -88,12 +92,12 @@ public:
 class Solution:
     def climbStairs(self, n: int) -> int:
         one, two = 1, 1
-        
+
         for i in range(n - 1):
             temp = one
             one = one + two
             two = temp
-            
+
         return one
 ```
 
@@ -108,21 +112,21 @@ public:
         // Base cases
         if (n == 1) return 1;
         if (n == 2) return 2;
-        
+
         // dp[i] 代表到達第 i 階的方法數
         // 狀態轉移: dp[i] = dp[i-1] + dp[i-2]
         // 因為只能從 i-1 爬 1 階上來，或從 i-2 爬 2 階上來
-        
+
         // 空間優化：只存前兩個狀態
         int prev2 = 1; // 代表 dp[i-2]，初始為 dp[1] = 1
         int prev1 = 2; // 代表 dp[i-1]，初始為 dp[2] = 2
-        
+
         for (int i = 3; i <= n; i++) {
             int curr = prev1 + prev2;
             prev2 = prev1;
             prev1 = curr;
         }
-        
+
         return prev1;
     }
 };

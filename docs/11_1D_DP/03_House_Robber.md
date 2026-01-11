@@ -26,9 +26,11 @@
 
 **DFS**:
 每個房子有兩個選擇：搶或不搶。
+
 -   如果搶 `i`，那就不能搶 `i+1`，只能考慮 `i+2`。
 -   如果不搶 `i`，可以考慮 `i+1`。
 `rob(i) = max(nums[i] + rob(i+2), rob(i+1))`
+
 -   **Time**: $O(2^N)$。
 
 ---
@@ -38,6 +40,7 @@
 這是一個標準的 DP 問題。
 定義 `dp[i]` 為：搶劫前 `i` 間房子能得到的最大金額。
 對於第 `i` 間房子 (`nums[i]`)，我們有兩個選擇：
+
 1.  **搶它**：那我們就不能搶 `i-1`，所以總金額是 `dp[i-2] + nums[i]`。
     -   注意：這裡的 `dp` 定義如果是「前 i 間」，那 `i-2` 應該對應到 `dp[i-2]`。
 2.  **不搶它**：那我們可以保持前 `i-1` 間的最大金額，即 `dp[i-1]`。
@@ -65,16 +68,16 @@ public:
         int n = nums.size();
         if (n == 0) return 0;
         if (n == 1) return nums[0];
-        
+
         int prev2 = 0; // dp[i-2]
         int prev1 = 0; // dp[i-1]
-        
+
         for (int num : nums) {
             int current = max(prev1, prev2 + num);
             prev2 = prev1;
             prev1 = current;
         }
-        
+
         return prev1;
     }
 };
@@ -86,13 +89,13 @@ public:
 class Solution:
     def rob(self, nums: List[int]) -> int:
         rob1, rob2 = 0, 0
-        
+
         # [rob1, rob2, n, n+1, ...]
         for n in nums:
             temp = max(n + rob1, rob2)
             rob1 = rob2
             rob2 = temp
-            
+
         return rob2
 ```
 
@@ -109,18 +112,18 @@ public:
         // 初始都為 0，方便處理邊界 (例如第一間房子 i=0 時，prev1=0, prev2=0)
         int prev2 = 0;
         int prev1 = 0;
-        
+
         for (int money : nums) {
             // 對於當前房子 money，我們可以：
             // 1. 搶這間：收益為 prev2 + money (不能搶上一間)
             // 2. 不搶這間：收益為 prev1 (保持上一間的最高收益)
             int curr = max(prev2 + money, prev1);
-            
+
             // 滾動更新
             prev2 = prev1;
             prev1 = curr;
         }
-        
+
         // prev1 最終會包含考慮完所有房子後的 max
         return prev1;
     }

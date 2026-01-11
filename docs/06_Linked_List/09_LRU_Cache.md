@@ -4,6 +4,7 @@
 
 設計一個 **LRU (Least Recently Used)** Cache 機制。
 支援以下操作：
+
 1.  `LRUCache(int capacity)`: 初始化，設定容量。
 2.  `int get(int key)`: 如果 key 存在回傳 value，否則回傳 -1。
     -   注意：這算是一次 "use"，該 key 會變成最近剛使用過 (Most Recently Used)。
@@ -20,6 +21,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 用 Array 或 List 存 `(key, value)` pairs。可以依使用時間排序。
+
 -   `get`: 遍歷找 key -> $O(n)$. 移動到最前面 -> $O(n)$.
 -   `put`: 插入或更新 -> $O(n)$。
 -   **Result**: 效率太差，要求 $O(1)$。
@@ -29,6 +31,7 @@
 ## 3. 💡 The "Aha!" Moment (優化)
 
 必須同時滿足：
+
 1.  **快速查找 (Random Access)** -> 需要 **Hash Map**。 `map[key] = node`.
 2.  **快速插入/刪除/移動順序 (Ordered Operations)** -> 需要 **Doubly Linked List**。
 
@@ -76,26 +79,26 @@ private:
         Node* next;
         Node(int k, int v) : key(k), val(v), prev(nullptr), next(nullptr) {}
     };
-    
+
     int capacity;
     unordered_map<int, Node*> map;
     Node* head; // Dummy Head (LRU side)
     Node* tail; // Dummy Tail (MRU side)
-    
+
     // Helper: Remove node from list
     void remove(Node* node) {
         node->prev->next = node->next;
         node->next->prev = node->prev;
     }
-    
+
     // Helper: Insert node at right (MRU)
     void insert(Node* node) {
         Node* prev = tail->prev;
         Node* next = tail;
-        
+
         prev->next = node;
         next->prev = node;
-        
+
         node->prev = prev;
         node->next = next;
     }
@@ -108,7 +111,7 @@ public:
         head->next = tail;
         tail->prev = head;
     }
-    
+
     int get(int key) {
         if (map.find(key) == map.end()) {
             return -1;
@@ -118,16 +121,16 @@ public:
         insert(node);
         return node->val;
     }
-    
+
     void put(int key, int value) {
         if (map.find(key) != map.end()) {
             remove(map[key]);
         }
-        
+
         Node* newNode = new Node(key, value);
         map[key] = newNode;
         insert(newNode);
-        
+
         if (map.size() > capacity) {
             // Remove LRU (node after head)
             Node* lru = head->next;
@@ -136,7 +139,7 @@ public:
             delete lru; // Remember to free memory
         }
     }
-    
+
     // Destructor to clean up memory (Optional for LeetCode but good practice)
     ~LRUCache() {
         Node* curr = head;
@@ -161,7 +164,7 @@ class LRUCache:
     def __init__(self, capacity: int):
         self.cap = capacity
         self.cache = {} # map key to node
-        
+
         # Left (LRU), Right (MRU)
         self.left, self.right = Node(0, 0), Node(0, 0)
         self.left.next, self.right.prev = self.right, self.left
@@ -185,10 +188,10 @@ class LRUCache:
     def put(self, key: int, value: int) -> None:
         if key in self.cache:
             self.remove(self.cache[key])
-        
+
         self.cache[key] = Node(key, value)
         self.insert(self.cache[key])
-        
+
         if len(self.cache) > self.cap:
             # Remove LRU
             lru = self.left.next
@@ -201,10 +204,12 @@ class LRUCache:
 ## 5. 📝 Detailed Code Comments (詳細註解)
 
 这里解釋一下為什麼要兩個 Dummy Node (`head`, `tail`)。
+
 -   如果我們不使用 Dummy Node，當 List 為空插入第一個元素，或者刪除最後一個元素時，都要檢查指標是否為 `nullptr`。
 -   有了 Head (左邊界) 和 Tail (右邊界)，我們永遠是在「兩個節點中間」插入或刪除，邏輯會變成單純的指標交換，完全不需要 `if-else` 判斷邊界。
 
 我們定義：
+
 -   `head`: 指向 LRU 側 (Least Recently Used)。 `head->next` 是真正的 LRU。
 -   `tail`: 指向 MRU 側 (Most Recently Used)。 `tail->prev` 是真正的 MRU。
 
@@ -235,10 +240,10 @@ class LRUCache {
     void insert(Node* node) {
         Node* p = right->prev; // 原本的最後一個
         Node* n = right;       // Dummy Tail
-        
+
         p->next = node;
         node->prev = p;
-        
+
         node->next = n;
         n->prev = node;
     }
@@ -268,11 +273,11 @@ public:
             // 注意：這裡可以直接更新值然後 move，也可以刪掉重建，這裡選擇刪掉重建流程較統一
             remove(cache[key]);
         }
-        
+
         // 建立新節點
         cache[key] = new Node(key, value);
         insert(cache[key]);
-        
+
         // 檢查是否超容
         if (cache.size() > capacity) {
             // 移除 LRU (left->next)

@@ -19,6 +19,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 和一般 Two Sum 一樣，雙層迴圈。
+
 -   `for i in 0..n`: `for j in i+1..n`: check sum.
 -   **Time**: $O(n^2)$。
 -   **Space**: $O(1)$。
@@ -31,6 +32,7 @@
 既然陣列是 **已排序** 的，我們可以利用這個性質來快速縮小搜尋範圍。
 
 想像我們有兩個指標：
+
 -   `Left` 指向最小的數 (開頭)。
 -   `Right` 指向最大的數 (結尾)。
 
@@ -69,10 +71,10 @@ public:
     vector<int> twoSum(vector<int>& numbers, int target) {
         int left = 0;
         int right = numbers.size() - 1;
-        
+
         while (left < right) {
             int currentSum = numbers[left] + numbers[right];
-            
+
             if (currentSum > target) {
                 // 總和太大，需要更小的數字 -> 右指標左移
                 right--;
@@ -84,7 +86,7 @@ public:
                 return {left + 1, right + 1};
             }
         }
-        
+
         return {}; // 理論上不會執行到這
     }
 };
@@ -96,17 +98,17 @@ public:
 class Solution:
     def twoSum(self, numbers: List[int], target: int) -> List[int]:
         l, r = 0, len(numbers) - 1
-        
+
         while l < r:
             curSum = numbers[l] + numbers[r]
-            
+
             if curSum > target:
                 r -= 1
             elif curSum < target:
                 l += 1
             else:
                 return [l + 1, r + 1]
-        
+
         return []
 ```
 
@@ -121,7 +123,7 @@ public:
         // 初始化雙指標
         int low = 0;
         int high = numbers.size() - 1;
-        
+
         while (low < high) {
             // 注意：雖然題目 constraints 說數字範圍還好，
             // 但如果數字很大，相加可能會 Integer Overflow。
@@ -132,7 +134,7 @@ public:
             // 使用 long long 更保險 (如果是 C++，int 通常是 32-bit，範圍 2*10^9，勉強夠，但 long long 更好)
             // 不過此題 return 還是 int，我們先用 int。
             int sum = numbers[low] + numbers[high];
-            
+
             if (sum == target) {
                 return {low + 1, high + 1}; // 1-based index
             } else if (sum < target) {
@@ -145,7 +147,7 @@ public:
                 high--;
             }
         }
-        
+
         return {-1, -1};
     }
 };

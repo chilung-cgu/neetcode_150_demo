@@ -20,6 +20,7 @@
 
 **Recursion**:
 `numDistinct(i, j)` = number of distinct subsequences of `t[j:]` in `s[i:]`.
+
 -   If `s[i] == t[j]`, we can either:
     1.  Match them: `numDistinct(i+1, j+1)`
     2.  Skip `s[i]`: `numDistinct(i+1, j)` (Keep looking for `t[j]` later in `s`)
@@ -65,17 +66,17 @@ public:
     int numDistinct(string s, string t) {
         int m = s.length();
         int n = t.length();
-        
+
         // Use unsigned long long to prevent overflow although int is usually sufficient for LC tests
         // But problem statement says "answer fits in 32-bit", so int is fine.
         // However, intermediate calculation might overflow? No, it's strictly additive.
         vector<vector<unsigned int>> dp(m + 1, vector<unsigned int>(n + 1, 0));
-        
+
         // Base case: t is empty
         for (int i = 0; i <= m; i++) {
             dp[i][0] = 1;
         }
-        
+
         for (int i = 1; i <= m; i++) {
             for (int j = 1; j <= n; j++) {
                 if (s[i-1] == t[j-1]) {
@@ -87,7 +88,7 @@ public:
                 }
             }
         }
-        
+
         return dp[m][n];
     }
 };
@@ -102,9 +103,9 @@ public:
         int m = s.length();
         int n = t.length();
         vector<unsigned int> dp(n + 1, 0);
-        
+
         dp[0] = 1; // Empty t can be formed by empty s (and any s)
-        
+
         for (int i = 1; i <= m; i++) {
             // Traverse backwards for t to use data from previous i (i-1)
             for (int j = n; j >= 1; j--) {
@@ -125,7 +126,7 @@ public:
 class Solution:
     def numDistinct(self, s: str, t: str) -> int:
         dp = {} # (i, j) -> count
-        
+
         def dfs(i, j):
             if j == len(t):
                 return 1
@@ -133,13 +134,13 @@ class Solution:
                 return 0
             if (i, j) in dp:
                 return dp[(i, j)]
-            
+
             if s[i] == t[j]:
                 dp[(i, j)] = dfs(i + 1, j + 1) + dfs(i + 1, j)
             else:
                 dp[(i, j)] = dfs(i + 1, j)
             return dp[(i, j)]
-            
+
         return dfs(0, 0)
 ```
 
@@ -153,14 +154,14 @@ public:
     int numDistinct(string s, string t) {
         int m = s.size();
         int n = t.size();
-        
+
         // dp[j] 代表：用當前遍歷到的 s 的前綴，湊出 t 的前 j 個字元的方法數
         // 使用 long long 防止溢位 (雖然題目保證 int，但在 C++ 中有些 corner case 會爆)
         vector<unsigned long long> dp(n + 1, 0);
-        
+
         // Base case: 湊出空字串 t (j=0) 的方法數永遠是 1 (就是什麼都不選)
         dp[0] = 1;
-        
+
         // 遍歷 s (source)
         for (int i = 1; i <= m; i++) {
             // 遍歷 t (target)
@@ -176,7 +177,7 @@ public:
                 // 如果不匹配，dp[j] 保持不變 (只能 Skip s[i]，繼承上一輪的方法數)
             }
         }
-        
+
         return dp[n];
     }
 };

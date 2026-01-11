@@ -8,6 +8,7 @@
 LCA 定義：對於節點 T，如果 p 和 q 都在 T 的子樹中（或者 T 本身就是 p 或 q），且 T 的深度最大（離 root 最遠），則 T 為 LCA。
 
 BST 性質：
+
 -   Left child < Parent
 -   Right child > Parent
 
@@ -27,6 +28,7 @@ BST 性質：
 
 這是 General Binary Tree 的解法：
 遞迴遍歷。
+
 -   如果 root == p 或 root == q，回傳 root。
 -   左邊找 LCA，右邊找 LCA。
 -   如果左右都有回傳值，代表 root 是分叉點 -> 也就是 LCA。
@@ -68,7 +70,7 @@ class Solution {
 public:
     TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
         TreeNode* curr = root;
-        
+
         while (curr) {
             if (p->val < curr->val && q->val < curr->val) {
                 // p, q 都在左邊
@@ -81,7 +83,7 @@ public:
                 return curr;
             }
         }
-        
+
         return nullptr;
     }
 };
@@ -117,7 +119,7 @@ public:
 class Solution:
     def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
         cur = root
-        
+
         while cur:
             if p.val > cur.val and q.val > cur.val:
                 cur = cur.right
@@ -138,22 +140,22 @@ public:
         // 利用 BST 性質：左小右大
         // 我們從 root 開始往下找
         TreeNode* curr = root;
-        
+
         while (curr != nullptr) {
             // Case 1: p 和 q 都比當前節點小 -> 它們一定都在左子樹
             if (p->val < curr->val && q->val < curr->val) {
                 curr = curr->left;
-            } 
+            }
             // Case 2: p 和 q 都比當前節點大 -> 它們一定都在右子樹
             else if (p->val > curr->val && q->val > curr->val) {
                 curr = curr->right;
-            } 
+            }
             // Case 3: 一大一小 (分叉)，或者其中一個等於 curr -> 找到了 LCA
             else {
                 return curr;
             }
         }
-        
+
         return nullptr;
     }
 };

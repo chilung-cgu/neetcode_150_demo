@@ -4,6 +4,7 @@
 
 題目給一個 $9 \times 9$ 的數獨棋盤，要求我們判斷它目前是否有效。
 所謂「有效」只需滿足：
+
 1.  每一行 (Row) 必須包含 1-9 不重複。
 2.  每一列 (Col) 必須包含 1-9 不重複。
 3.  每一個 $3 \times 3$ 的宮格 (Sub-box) 必須包含 1-9 不重複。
@@ -34,11 +35,13 @@
 我們可以 **只遍歷一次** 棋盤 ($9 \times 9$) 就完成所有檢查嗎？
 
 對於棋盤上的每一個數字 `board[i][j]` (若不為空)，它同時受到三個限制：
+
 1.  它所在的 Row `i`。
 2.  它所在的 Col `j`。
 3.  它所在的 Box `k`。
 
 我們可以用 **Hash Set** (或 Boolean Array) 來即時記錄這三個維度的狀態。
+
 -   `rows[9][9]`：記錄第 `i` 行是否出現過數字 `num`。
 -   `cols[9][9]`：記錄第 `j` 列是否出現過數字 `num`。
 -   `boxes[3][3][9]`：記錄第 `r/3`, `c/3` 個 Box 是否出現過數字 `num`。
@@ -72,26 +75,26 @@ public:
         bool rows[9][9] = {false};
         bool cols[9][9] = {false};
         bool boxes[9][9] = {false};
-        
+
         for (int r = 0; r < 9; r++) {
             for (int c = 0; c < 9; c++) {
                 if (board[r][c] == '.') continue;
-                
+
                 int num = board[r][c] - '1'; // 轉成 0-index (0-8)
                 int boxIndex = (r / 3) * 3 + (c / 3);
-                
+
                 // 檢查是否衝突
                 if (rows[r][num] || cols[c][num] || boxes[boxIndex][num]) {
                     return false;
                 }
-                
+
                 // 標記為已出現
                 rows[r][num] = true;
                 cols[c][num] = true;
                 boxes[boxIndex][num] = true;
             }
         }
-        
+
         return true;
     }
 };
@@ -139,7 +142,7 @@ public:
             for (int j = 0; j < 9; j++) {
                 if (board[i][j] != '.') {
                     int num = board[i][j] - '1'; // char '1'~'9' -> int 0~8
-                    
+
                     // Box index 計算公式
                     // i/3 決定是在 上/中/下 層 (0, 1, 2)
                     // j/3 決定是在 左/中/右 行 (0, 1, 2)
@@ -147,9 +150,9 @@ public:
                     int k = (i / 3) * 3 + (j / 3);
 
                     if (useRow[i][num] || useCol[j][num] || useBox[k][num]) {
-                        return false; 
+                        return false;
                     }
-                    
+
                     useRow[i][num] = true;
                     useCol[j][num] = true;
                     useBox[k][num] = true;

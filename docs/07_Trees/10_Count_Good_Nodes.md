@@ -15,6 +15,7 @@
     3   1   5 (Good, max=5)
     (Good, max=3)  (Not Good, max=4 > 1)
     ```
+
 -   **Output**: 4 (Nodes: 3, 3, 4, 5)
 -   **Constraints**:
     -   $0 <= nodes <= 10^5$
@@ -26,6 +27,7 @@
 
 對於每個節點，檢查它的所有祖先是否都小於等於它。
 這需要記錄路徑，或者每個節點都往上找（如果能往上）。
+
 -   **Time**: $O(N \times L)$，L 是平均深度。最壞 $O(N^2)$。
 -   **Result**: 效率太差。
 
@@ -37,6 +39,7 @@
 我們從上往下走的時候，只要帶著「目前為止看到的最大值 (`maxVal`)」這個資訊傳給子節點即可。
 
 對於任意節點 `curr`:
+
 1.  如果 `curr->val >= maxVal`：
     -   這個節點是 **Good Node**。
     -   更新 `newMax = curr->val`。
@@ -71,20 +74,20 @@ public:
         if (!root) return 0;
         return dfs(root, root->val);
     }
-    
+
 private:
     int dfs(TreeNode* node, int maxSoFar) {
         if (!node) return 0;
-        
+
         int count = 0;
         if (node->val >= maxSoFar) {
             count = 1;
             maxSoFar = node->val;
         }
-        
+
         count += dfs(node->left, maxSoFar);
         count += dfs(node->right, maxSoFar);
-        
+
         return count;
     }
 };
@@ -104,15 +107,15 @@ class Solution:
         def dfs(node, maxVal):
             if not node:
                 return 0
-            
+
             res = 1 if node.val >= maxVal else 0
             maxVal = max(maxVal, node.val)
-            
+
             res += dfs(node.left, maxVal)
             res += dfs(node.right, maxVal)
-            
+
             return res
-        
+
         return dfs(root, root.val)
 ```
 
@@ -128,13 +131,13 @@ public:
         // 題目有 Constraints -10^4 <= val <= 10^4，所以用一個極小值也可以
         return dfs(root, INT_MIN);
     }
-    
+
     // dfs 回傳子樹中 good nodes 的總數
     int dfs(TreeNode* node, int maxSoFar) {
         if (node == nullptr) {
             return 0;
         }
-        
+
         int good = 0;
         // 檢查當前節點是否是 Good Node
         if (node->val >= maxSoFar) {
@@ -143,11 +146,11 @@ public:
             maxSoFar = node->val;
         }
         // 如果 node->val < maxSoFar，maxSoFar 保持不變
-        
+
         // 累加左右子樹的結果
         good += dfs(node->left, maxSoFar);
         good += dfs(node->right, maxSoFar);
-        
+
         return good;
     }
 };

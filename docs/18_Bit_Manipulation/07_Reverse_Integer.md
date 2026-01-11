@@ -21,6 +21,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 將整數轉換為字符串，反轉字符串，再轉換回整數。
+
 -   **Pros**: 簡單易寫。
 -   **Cons**: 需要解析字符串，且難以處理「環境不支持 64 位」的限制（雖然 Python 自動處理，但 C++ 需要小心）。字符串轉換本身就有開銷。
 
@@ -62,11 +63,11 @@ class Solution {
 public:
     int reverse(int x) {
         int rev = 0;
-        
+
         while (x != 0) {
             int pop = x % 10;
             x /= 10;
-            
+
             // Check for overflow before it happens
             if (rev > INT_MAX / 10 || (rev == INT_MAX / 10 && pop > 7)) {
                 return 0;
@@ -74,10 +75,10 @@ public:
             if (rev < INT_MIN / 10 || (rev == INT_MIN / 10 && pop < -8)) {
                 return 0;
             }
-            
+
             rev = rev * 10 + pop;
         }
-        
+
         return rev;
     }
 };
@@ -90,14 +91,14 @@ class Solution:
     def reverse(self, x: int) -> int:
         # Python handles large integers automatically, so we need manual check
         MIN, MAX = -2147483648, 2147483647
-        
+
         res = 0
         while x:
             # Python's modulo with negative numbers is different
             # math.fmod is safer for C-like behavior, or handle sign manually
             # Here we simplify by using abs(x) and restoring sign
-            pass 
-        
+            pass
+
         # Simpler Pythonic way considering the constraints:
         sign = [1, -1][x < 0]
         res = sign * int(str(abs(x))[::-1])
@@ -113,13 +114,13 @@ class Solution {
 public:
     int reverse(int x) {
         int rev = 0;
-        
+
         while (x != 0) {
             // 取出最後一位數字
             // 在 C++ 中，-123 % 10 = -3，這符合我們的需求
             int pop = x % 10;
             x /= 10;
-            
+
             // 檢查正溢位
             // INT_MAX = 2147483647
             // 如果 rev 目前大於 214748364，乘以 10 後一定 > INT_MAX
@@ -127,18 +128,18 @@ public:
             if (rev > INT_MAX / 10 || (rev == INT_MAX / 10 && pop > 7)) {
                 return 0;
             }
-            
+
             // 檢查負溢位
             // INT_MIN = -2147483648
             // 邏輯同上，最後一位不能小於 -8
             if (rev < INT_MIN / 10 || (rev == INT_MIN / 10 && pop < -8)) {
                 return 0;
             }
-            
+
             // 安全推入
             rev = rev * 10 + pop;
         }
-        
+
         return rev;
     }
 };

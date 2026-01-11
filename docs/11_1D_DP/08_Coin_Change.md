@@ -21,6 +21,7 @@
 
 **DFS**:
 `minCoins(amount) = 1 + min(minCoins(amount - c))` for each `c` in `coins`.
+
 -   時間複雜度是指數級 $O(S^n)$，其中 $S$ 是金額，$n$ 是硬幣種類數。
 
 ---
@@ -58,9 +59,9 @@ public:
         // dp[i] stores min coins to make amount i
         // Initialize with amount + 1 (impossible value, akin to infinity)
         vector<int> dp(amount + 1, amount + 1);
-        
+
         dp[0] = 0;
-        
+
         for (int a = 1; a <= amount; a++) {
             for (int c : coins) {
                 if (a - c >= 0) {
@@ -68,7 +69,7 @@ public:
                 }
             }
         }
-        
+
         return dp[amount] > amount ? -1 : dp[amount];
     }
 };
@@ -81,12 +82,12 @@ class Solution:
     def coinChange(self, coins: List[int], amount: int) -> int:
         dp = [amount + 1] * (amount + 1)
         dp[0] = 0
-        
+
         for a in range(1, amount + 1):
             for c in coins:
                 if a - c >= 0:
                     dp[a] = min(dp[a], 1 + dp[a - c])
-                    
+
         return dp[amount] if dp[amount] != amount + 1 else -1
 ```
 
@@ -102,10 +103,10 @@ public:
         // 初始值設為 impossible (比 amount 大的值即可，這裡是 amount + 1)
         // 因為硬幣最小面額是 1，所以最多只需 amount 個硬幣。
         vector<int> dp(amount + 1, amount + 1);
-        
+
         // Base case: 湊成 0 元需要 0 個硬幣
         dp[0] = 0;
-        
+
         // 從金額 1 開始計算到 amount
         for (int a = 1; a <= amount; a++) {
             // 嘗試每一種硬幣
@@ -118,7 +119,7 @@ public:
                 }
             }
         }
-        
+
         // 如果 dp[amount] 仍然是大數，代表無法湊成
         if (dp[amount] > amount) {
             return -1;

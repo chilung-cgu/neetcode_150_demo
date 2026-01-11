@@ -18,6 +18,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 對 0 到 n 的每個數字調用前一題的 `hammingWeight`。
+
 -   **Time**: $O(n \times \log n)$。
 -   雖然 `log n` 很小 (32)，但我們可以做得更好。
 
@@ -27,6 +28,7 @@
 
 **Dynamic Programming (Bit Manipulation Relations)**:
 觀察二進制數字的規律：
+
 -   `0`: 0 (0)
 -   `1`: 1 (1) -> `dp[0] + 1`
 -   `2`: 10 (1) -> `dp[1]` (左移 1 位，1 的個數不變)
@@ -55,12 +57,12 @@ public:
     vector<int> countBits(int n) {
         vector<int> dp(n + 1);
         dp[0] = 0;
-        
+
         for (int i = 1; i <= n; i++) {
             // dp[i] = dp[i / 2] + (i % 2)
             dp[i] = dp[i >> 1] + (i & 1);
         }
-        
+
         return dp;
     }
 };
@@ -73,12 +75,12 @@ class Solution:
     def countBits(self, n: int) -> List[int]:
         dp = [0] * (n + 1)
         offset = 1
-        
+
         for i in range(1, n + 1):
             if offset * 2 == i:
                 offset = i
             dp[i] = 1 + dp[i - offset]
-            
+
         return dp
 ```
 *(Python reference uses the Offset approach, equivalent to `dp[i] = dp[i ^ mostSigBit] + 1`)*
@@ -94,7 +96,7 @@ public:
         // 大小為 n+1 的陣列，初始化為 0
         vector<int> dp(n + 1);
         dp[0] = 0;
-        
+
         // 從 1 開始遍歷到 n
         for (int i = 1; i <= n; i++) {
             // 核心轉移方程：
@@ -111,7 +113,7 @@ public:
             // dp[7] = 2 + 1 = 3。正確。
             dp[i] = dp[i >> 1] + (i & 1);
         }
-        
+
         return dp;
     }
 };

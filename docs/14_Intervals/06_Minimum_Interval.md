@@ -5,6 +5,7 @@
 給定一個區間陣列 `intervals`，其中 `intervals[i] = [left_i, right_i]`。
 以及一個查詢陣列 `queries`，其中 `queries[j]` 是一個數值。
 對於每個查詢 `q`，找出一個區間 `[l, r]` 滿足：
+
 1.  `l <= q <= r` (包含 q)
 2.  區間長度 `r - l + 1` 最小。
 如果不存在這樣的區間，回傳 -1。
@@ -25,6 +26,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 對於每個查詢，遍歷所有區間，檢查是否包含該查詢值，並記錄最小長度。
+
 -   **Time**: $O(Q \times N)$。
     -   $Q, N = 10^5 \to 10^{10}$ TLE.
 
@@ -70,31 +72,31 @@ public:
     vector<int> minInterval(vector<vector<int>>& intervals, vector<int>& queries) {
         int n = intervals.size();
         int m = queries.size();
-        
+
         // Save original indices of queries
         // pair: {value, index}
         vector<pair<int, int>> sortedQueries(m);
         for(int i = 0; i < m; i++) {
             sortedQueries[i] = {queries[i], i};
         }
-        
+
         // Sort queries by value
         sort(sortedQueries.begin(), sortedQueries.end());
-        
+
         // Sort intervals by start time
         sort(intervals.begin(), intervals.end());
-        
+
         // Min-Heap: {length, end_time}
         // C++ priority_queue is max heap by default, use greater for min heap
         priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
-        
+
         vector<int> result(m, -1);
         int i = 0; // interval pointer
-        
+
         for (const auto& qPair : sortedQueries) {
             int qVal = qPair.first;
             int qIndex = qPair.second;
-            
+
             // 1. Add valid intervals (start <= q)
             while (i < n && intervals[i][0] <= qVal) {
                 int len = intervals[i][1] - intervals[i][0] + 1;
@@ -102,18 +104,18 @@ public:
                 pq.push({len, end});
                 i++;
             }
-            
+
             // 2. Remove invalid intervals (end < q)
             while (!pq.empty() && pq.top().second < qVal) {
                 pq.pop();
             }
-            
+
             // 3. Get minimum length
             if (!pq.empty()) {
                 result[qIndex] = pq.top().first;
             }
         }
-        
+
         return result;
     }
 };
@@ -127,29 +129,29 @@ import heapq
 class Solution:
     def minInterval(self, intervals: List[List[int]], queries: List[int]) -> List[int]:
         intervals.sort()
-        
+
         minHeap = []
         res = {}
         i = 0
-        
+
         # Sort queries, but keep track of indices or just map results
         # Unique queries sorted
         sorted_queries = sorted(list(set(queries)))
-        
+
         for q in sorted_queries:
             # Add intervals that start before or at q
             while i < len(intervals) and intervals[i][0] <= q:
                 l, r = intervals[i]
                 heapq.heappush(minHeap, (r - l + 1, r))
                 i += 1
-                
+
             # Remove intervals that end before q
             while minHeap and minHeap[0][1] < q:
                 heapq.heappop(minHeap)
-                
+
             # Store result
             res[q] = minHeap[0][0] if minHeap else -1
-            
+
         return [res[q] for q in queries]
 ```
 
@@ -163,7 +165,7 @@ public:
     vector<int> minInterval(vector<vector<int>>& intervals, vector<int>& queries) {
         int n = intervals.size();
         int m = queries.size();
-        
+
         // 為了回答所有查詢，我們將查詢排序，以便使用 sweep-line 技巧
         // 但最後輸出需要按照原始順序，所以要紀錄原始 index
         vector<pair<int, int>> sortedQueries(m);
@@ -171,22 +173,22 @@ public:
             sortedQueries[i] = {queries[i], i};
         }
         sort(sortedQueries.begin(), sortedQueries.end());
-        
+
         // 將區間按起始位置排序，這樣我們可以依序處理
         sort(intervals.begin(), intervals.end());
-        
+
         // Min-Heap 儲存 {區間長度, 結束時間}
         // 我們希望快速找到「長度最小」的區間
         // 結束時間是用來判斷該區間是否還有效
         priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
-        
+
         vector<int> result(m, -1);
         int i = 0; // 用來遍歷 intervals
-        
+
         for (const auto& qPair : sortedQueries) {
             int qVal = qPair.first;
             int qIndex = qPair.second;
-            
+
             // 步驟 1: 將所有起始位置 <= 當前查詢值的區間加入 Heap
             // 這些區間是有可能覆蓋 qVal 的候選人
             while (i < n && intervals[i][0] <= qVal) {
@@ -195,20 +197,20 @@ public:
                 pq.push({len, end});
                 i++;
             }
-            
+
             // 步驟 2: 移除無效區間
             // 如果堆頂區間的結束位置 < qVal，代表它已經過期了，無法覆蓋 qVal
             // 因為 qVal 是遞增的，這個過期區間對後面的查詢也一定無效，所以可以直接丟棄
             while (!pq.empty() && pq.top().second < qVal) {
                 pq.pop();
             }
-            
+
             // 步驟 3: 此時堆頂一定是有效的且長度最小的區間
             if (!pq.empty()) {
                 result[qIndex] = pq.top().first;
             }
         }
-        
+
         return result;
     }
 };

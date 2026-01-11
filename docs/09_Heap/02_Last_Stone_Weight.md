@@ -4,6 +4,7 @@
 
 題目給一個整數陣列 `stones`，代表石頭的重量。
 每一回合，我們選出 **最重的兩顆石頭**，設重量為 `x` 和 `y` (x <= y)。
+
 -   如果 `x == y`: 兩顆石頭都銷毀。
 -   如果 `x != y`: `x` 銷毀，`y` 的重量變為 `y - x`。
 重複這個過程直到剩下一顆石頭或沒有石頭。
@@ -25,6 +26,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 每一輪都對陣列進行 Sorting，取出最後兩個（最大）。
+
 -   Sorting: $O(N \log N)$.
 -   Operation: $N$ times.
 -   Total: $O(N^2 \log N)$.
@@ -67,18 +69,18 @@ public:
     int lastStoneWeight(vector<int>& stones) {
         // C++ priority_queue is Max-Heap by default
         priority_queue<int> pq(stones.begin(), stones.end());
-        
+
         while (pq.size() > 1) {
             int y = pq.top();
             pq.pop();
             int x = pq.top();
             pq.pop();
-            
+
             if (x != y) {
                 pq.push(y - x);
             }
         }
-        
+
         return pq.empty() ? 0 : pq.top();
     }
 };
@@ -94,18 +96,18 @@ class Solution:
         # Python uses Min-Heap, so we negate values to simulate Max-Heap
         stones = [-s for s in stones]
         heapq.heapify(stones)
-        
+
         while len(stones) > 1:
             first = heapq.heappop(stones)  # Largest (most negative)
             second = heapq.heappop(stones) # Second largest
-            
+
             # first <= second (since they are negative)
             # abs(first) >= abs(second)
             # new weight = abs(first) - abs(second)
             # push -new_weight => push second - first
             if second > first:
                 heapq.heappush(stones, first - second)
-                
+
         if stones:
             return -stones[0]
         else:
@@ -123,20 +125,20 @@ public:
         // 1. 建立 Max-Heap (C++ 預設 priority_queue 即為大頂堆)
         // 初始建堆的時間複雜度為 O(N)
         priority_queue<int> pq(stones.begin(), stones.end());
-        
+
         // 2. 模擬過程，直到剩下 1 顆或 0 顆石頭
         while (pq.size() > 1) {
             // 取出最重的兩顆石頭
             int y = pq.top(); pq.pop(); // 第一重的
             int x = pq.top(); pq.pop(); // 第二重的
-            
+
             // 如果重量不同，剩下的碎塊重量放回堆中
             if (x != y) {
                 pq.push(y - x);
             }
             // 如果重量相同，兩顆都消失，不需要 push 任何東西
         }
-        
+
         // 3. 回傳結果
         if (pq.empty()) {
             return 0;

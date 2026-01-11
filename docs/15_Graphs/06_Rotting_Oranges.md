@@ -3,6 +3,7 @@
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 給定一個 `m x n` 的網格，每個單元格可以是：
+
 -   `0`: 空單元格。
 -   `1`: 新鮮橘子。
 -   `2`: 腐爛橘子。
@@ -26,6 +27,7 @@
 
 重複遍歷整個網格，每一輪找出所有會被感染的橘子，標記它們。
 重複直到沒有新的橘子被感染。
+
 -   **Time**: $O(K \times M \times N)$，其中 $K$ 是腐爛時間。這比較慢且繁瑣。
 
 ---
@@ -66,12 +68,12 @@ class Solution {
 public:
     int orangesRotting(vector<vector<int>>& grid) {
         if (grid.empty()) return 0;
-        
+
         int m = grid.size();
         int n = grid[0].size();
         int freshCount = 0;
         queue<pair<int, int>> q;
-        
+
         // 1. Initialize BFS
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
@@ -82,13 +84,13 @@ public:
                 }
             }
         }
-        
+
         // Special case: No fresh oranges to begin with
         if (freshCount == 0) return 0;
-        
+
         int minutes = 0;
         int dirs[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
-        
+
         // 2. BFS
         while (!q.empty() && freshCount > 0) {
             minutes++;
@@ -96,14 +98,14 @@ public:
             for (int k = 0; k < size; k++) {
                 pair<int, int> curr = q.front();
                 q.pop();
-                
+
                 int r = curr.first;
                 int c = curr.second;
-                
+
                 for (auto& d : dirs) {
                     int nr = r + d[0];
                     int nc = c + d[1];
-                    
+
                     // If neighbor is fresh orange
                     if (nr >= 0 && nr < m && nc >= 0 && nc < n && grid[nr][nc] == 1) {
                         grid[nr][nc] = 2; // Make it rotten
@@ -113,7 +115,7 @@ public:
                 }
             }
         }
-        
+
         return freshCount == 0 ? minutes : -1;
     }
 };
@@ -129,16 +131,16 @@ class Solution:
         q = deque()
         fresh, time = 0, 0
         rows, cols = len(grid), len(grid[0])
-        
+
         for r in range(rows):
             for c in range(cols):
                 if grid[r][c] == 1:
                     fresh += 1
                 if grid[r][c] == 2:
                     q.append((r, c))
-                    
+
         directions = [[0, 1], [0, -1], [1, 0], [-1, 0]]
-        
+
         while q and fresh > 0:
             for i in range(len(q)):
                 r, c = q.popleft()
@@ -152,7 +154,7 @@ class Solution:
                     q.append((row, col))
                     fresh -= 1
             time += 1
-            
+
         return time if fresh == 0 else -1
 ```
 
@@ -165,12 +167,12 @@ class Solution {
 public:
     int orangesRotting(vector<vector<int>>& grid) {
         if (grid.empty()) return 0;
-        
+
         int m = grid.size();
         int n = grid[0].size();
         int freshCount = 0;
         queue<pair<int, int>> q;
-        
+
         // 1. 初始化步驟
         // 掃描矩陣，將所有腐爛橘子加入 Queue (作為 BFS 的起始層)
         // 同時統計新鮮橘子的數量
@@ -183,30 +185,30 @@ public:
                 }
             }
         }
-        
+
         // 如果一開始就沒有新鮮橘子，那直接回傳 0 分鐘
         if (freshCount == 0) return 0;
-        
+
         int minutes = 0;
         int dirs[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
-        
+
         // 2. BFS 擴散
         // 只要 Queue 不空 且 還有新鮮橘子，就繼續傳染
         while (!q.empty() && freshCount > 0) {
             minutes++;
             int size = q.size(); // 當前層的廣度 (這分鐘內會腐爛的源頭)
-            
+
             for (int k = 0; k < size; k++) {
                 pair<int, int> curr = q.front();
                 q.pop();
-                
+
                 int r = curr.first;
                 int c = curr.second;
-                
+
                 for (auto& d : dirs) {
                     int nr = r + d[0];
                     int nc = c + d[1];
-                    
+
                     // 檢查鄰居是否是新鮮橘子 (1)
                     if (nr >= 0 && nr < m && nc >= 0 && nc < n && grid[nr][nc] == 1) {
                         grid[nr][nc] = 2; // 傳染腐爛
@@ -216,7 +218,7 @@ public:
                 }
             }
         }
-        
+
         // 如果還有新鮮橘子剩下來，表示有隔離區，回傳 -1
         return freshCount == 0 ? minutes : -1;
     }

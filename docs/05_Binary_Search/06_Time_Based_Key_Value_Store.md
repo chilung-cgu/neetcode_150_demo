@@ -3,6 +3,7 @@
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 設計一個 `TimeMap` 資料結構，支援以下操作：
+
 1.  `set(key, value, timestamp)`: 儲存 `key` 在 `timestamp` 的 `value`。
 2.  `get(key, timestamp)`: 回傳 `key` 在 `timestamp` 時的 `value`。
     -   如果該時間點沒有對應的值，回傳 **小於等於** `timestamp` 的最大時間點的值 (prev_value)。
@@ -26,6 +27,7 @@
 
 用一個 `HashMap<string, HashMap<int, string>>`。
 對於 `get`，遍歷 inner map 的所有 keys 找最大的那個。
+
 -   **Time**: $O(N)$ for get.
 -   **Result**: 效率不夠好。
 
@@ -67,30 +69,30 @@ private:
 
 public:
     TimeMap() {
-        
+
     }
-    
+
     void set(string key, string value, int timestamp) {
         store[key].push_back({timestamp, value});
     }
-    
+
     string get(string key, int timestamp) {
         if (store.find(key) == store.end()) {
             return "";
         }
-        
+
         // 取得該 key 的所有歷史紀錄 (已排序)
         const vector<pair<int, string>>& history = store[key];
-        
+
         // Binary Search
         int left = 0;
         int right = history.size() - 1;
         string res = "";
-        
+
         while (left <= right) {
             int mid = left + (right - left) / 2;
             int time = history[mid].first;
-            
+
             if (time <= timestamp) {
                 // 這個時間點是合法的 (<= query time)
                 // 我們先把這個值記下來，然後試試看有沒有更晚(更接近 timestamp)的
@@ -101,7 +103,7 @@ public:
                 right = mid - 1;
             }
         }
-        
+
         return res;
     }
 };
@@ -123,7 +125,7 @@ class TimeMap:
     def get(self, key: str, timestamp: int) -> str:
         res = ""
         values = self.store.get(key, [])
-        
+
         # Binary Search
         l, r = 0, len(values) - 1
         while l <= r:
@@ -150,27 +152,27 @@ private:
 
 public:
     TimeMap() {}
-    
+
     void set(string key, string value, int timestamp) {
         m[key].push_back({timestamp, value});
     }
-    
+
     string get(string key, int timestamp) {
         // 如果 key 不存在，直接回傳空字串
         if (m.find(key) == m.end()) return "";
-        
+
         const auto& vec = m[key];
-        
+
         // 手寫 Binary Search 找 <= timestamp 的最大值
         // 也可以使用 std::upper_bound 然後往前減一格，但手寫比較直觀且易於解釋
         int l = 0;
         int r = vec.size() - 1;
         string res = "";
-        
+
         while (l <= r) {
             int mid = l + (r - l) / 2;
             int t = vec[mid].first;
-            
+
             if (t == timestamp) {
                 return vec[mid].second; // 剛好命中
             } else if (t < timestamp) {
@@ -183,7 +185,7 @@ public:
                 r = mid - 1;
             }
         }
-        
+
         return res;
     }
 };

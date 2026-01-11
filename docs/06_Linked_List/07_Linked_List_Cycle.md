@@ -20,6 +20,7 @@
 
 用一個 `HashSet` 存所有走過的節點地址。
 每次走到新節點，檢查是否在 Set 中。
+
 -   如果存在：有環 (True)。
 -   如果走到 null：無環 (False)。
 -   **Time**: $O(n)$。
@@ -33,6 +34,7 @@
 使用 **Floyd's Cycle-Finding Algorithm (龜兔賽跑演算法)**。
 
 維護兩個指標：
+
 1.  **Slow** (烏龜)：一次走一步。
 2.  **Fast** (兔子)：一次走兩步。
 
@@ -63,20 +65,20 @@ class Solution {
 public:
     bool hasCycle(ListNode *head) {
         if (!head) return false;
-        
+
         ListNode *slow = head;
         ListNode *fast = head;
-        
+
         while (fast != nullptr && fast->next != nullptr) {
             slow = slow->next;
             fast = fast->next->next;
-            
+
             // 如果相遇，代表有環
             if (slow == fast) {
                 return true;
             }
         }
-        
+
         // 如果 fast 走到了盡頭，代表無環
         return false;
     }
@@ -95,14 +97,14 @@ public:
 class Solution:
     def hasCycle(self, head: Optional[ListNode]) -> bool:
         slow, fast = head, head
-        
+
         while fast and fast.next:
             slow = slow.next
             fast = fast.next.next
-            
+
             if slow == fast:
                 return True
-                
+
         return False
 ```
 
@@ -115,22 +117,22 @@ class Solution {
 public:
     bool hasCycle(ListNode *head) {
         // Floyd's Cycle Detection Algorithm
-        
+
         ListNode* slow = head;
         ListNode* fast = head;
-        
+
         // 當 Fast 還能繼續走時 (防止 NullPointer Exception)
         // 只需要檢查 fast 和 fast->next，因為 fast 走得快
         while (fast != nullptr && fast->next != nullptr) {
             slow = slow->next;          // 走 1 步
             fast = fast->next->next;    // 走 2 步
-            
+
             // 檢查是否相遇
             if (slow == fast) {
                 return true;
             }
         }
-        
+
         // 迴圈結束，代表 Fast 抵達終點 -> 無環
         return false;
     }

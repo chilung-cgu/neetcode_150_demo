@@ -25,6 +25,7 @@
 **Recursion**:
 `minCost(i) = cost[i] + min(minCost(i+1), minCost(i+2))`
 這會像 Fibonacci 一樣展開成指數級別的樹。
+
 -   **Time**: $O(2^N)$。
 
 ---
@@ -69,23 +70,23 @@ public:
         int n = cost.size();
         // dp[i] is the min cost to reach step i
         // We want to reach step n
-        
+
         // Base cases: Accessing step 0 and 1 is free initially (in terms of previous steps)
         // But the recurrence is simpler if we think:
         // Current state = value at prev1 (cost to reach prev1) + cost[prev1]
-        
+
         // Let's iterate.
         // To reach step 2: min(cost[0], cost[1])
-        
+
         int prev2 = 0; // Cost to reach step 0 (implicit start)
         int prev1 = 0; // Cost to reach step 1 (implicit start)
-        
+
         for (int i = 2; i <= n; i++) {
             int current = min(prev1 + cost[i-1], prev2 + cost[i-2]);
             prev2 = prev1;
             prev1 = current;
         }
-        
+
         return prev1;
     }
 };
@@ -117,10 +118,10 @@ public:
 class Solution:
     def minCostClimbingStairs(self, cost: List[int]) -> int:
         cost.append(0) # Top of stair has 0 cost to leave
-        
+
         for i in range(len(cost) - 3, -1, -1):
             cost[i] += min(cost[i + 1], cost[i + 2])
-            
+
         return min(cost[0], cost[1])
 ```
 
@@ -135,25 +136,25 @@ public:
         int n = cost.size();
         // dp[i] 代表到達第 i 階的最小花費
         // 我們的目標是到達第 n 階 (頂端)
-        
+
         // 初始化：
         // 到達第 0 階的花費：0 (可以直接從這裡開始)
         // 到達第 1 階的花費：0 (可以直接從這裡開始)
         int prev2 = 0; // dp[i-2]
         int prev1 = 0; // dp[i-1]
-        
+
         // 從第 2 階開始計算
         for (int i = 2; i <= n; i++) {
             // 要到達第 i 階，只有兩條路：
             // 1. 從 i-1 階爬上來：花費是 dp[i-1] + cost[i-1]
             // 2. 從 i-2 階爬上來：花費是 dp[i-2] + cost[i-2]
             int curr = min(prev1 + cost[i-1], prev2 + cost[i-2]);
-            
+
             // 滾動更新
             prev2 = prev1;
             prev1 = curr;
         }
-        
+
         return prev1;
     }
 };

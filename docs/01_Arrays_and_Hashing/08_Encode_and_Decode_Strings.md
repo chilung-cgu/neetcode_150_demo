@@ -3,6 +3,7 @@
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目要求我們設計兩個函式：
+
 1.  `encode(vector<string>) -> string`
 2.  `decode(string) -> vector<string>`
 確保 `decode(encode(strs)) == strs`。
@@ -17,6 +18,7 @@
 
 最直覺的想法是用特殊符號把字串接起來。
 例如：`["hello", "world"]` -> `"hello,world"`。
+
 -   **問題**：如果輸入是 `["hello,", "world"]`，解碼時會變成 `["hello", "", "world"]`。
 -   **修正**：那用特殊符號如 `π`? 還是會有衝突可能。
 -   **Escaping**: 也可以像 CSV 一樣用跳脫字元 (Escaping)，例如把 `,` 變成 `\,`。但這樣實作稍複雜 ( $O(n)$ 但常數較大)。
@@ -77,15 +79,15 @@ public:
             while (s[j] != '#') {
                 j++;
             }
-            
+
             // 解析長度 length
             int length = stoi(s.substr(i, j - i));
-            
+
             // 提取內容 string
             // 內容開始於 j + 1 (跳過 '#')
             string str = s.substr(j + 1, length);
             decoded.push_back(str);
-            
+
             // 移動指針到下一個區塊的開始
             i = j + 1 + length;
         }
@@ -136,29 +138,29 @@ public:
     vector<string> decode(string s) {
         vector<string> res;
         int i = 0;
-        
+
         while (i < s.size()) {
             // Step 1: 找到下一個 '#'，這之間的數字就是長度
             int j = i;
             while (s[j] != '#') {
                 j++;
             }
-            
+
             // Step 2: 解析長度
             // s.substr(start, length)
             int len = stoi(s.substr(i, j - i));
-            
+
             // Step 3: 擷取實際字串
             // 字串起始點是 '#' 的下一位: j + 1
             // 長度是剛剛解出來的 len
             string str = s.substr(j + 1, len);
             res.push_back(str);
-            
+
             // Step 4: 更新 i 到下一個 chunk 的開頭
             // 目前位置 j + 1 + len
             i = j + 1 + len;
         }
-        
+
         return res;
     }
 };

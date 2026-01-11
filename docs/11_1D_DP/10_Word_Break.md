@@ -24,6 +24,7 @@
 `canBreak(start)`:
 嘗試每一個 `end` (from `start+1` to `s.length`)。
 如果 `s[start...end]` 在字典中 AND `canBreak(end)` 回傳 true，則回傳 true。
+
 -   **Time**: $O(2^N)$。
 
 ---
@@ -67,11 +68,11 @@ public:
     bool wordBreak(string s, vector<string>& wordDict) {
         unordered_set<string> dict(wordDict.begin(), wordDict.end());
         int n = s.length();
-        
+
         // dp[i] means s[0...i-1] (length i) can be segmented
         vector<bool> dp(n + 1, false);
         dp[0] = true; // Base case
-        
+
         for (int i = 1; i <= n; i++) {
             // Check all possible split points j
             // Optimization: iterate j backwards or just words
@@ -87,7 +88,7 @@ public:
                 }
             }
         }
-        
+
         return dp[n];
     }
 };
@@ -102,7 +103,7 @@ public:
         int n = s.length();
         vector<bool> dp(n + 1, false);
         dp[0] = true;
-        
+
         for (int i = 1; i <= n; i++) {
             for (const string& w : wordDict) {
                 int len = w.length();
@@ -126,14 +127,14 @@ class Solution:
     def wordBreak(self, s: str, wordDict: List[str]) -> bool:
         dp = [False] * (len(s) + 1)
         dp[len(s)] = True
-        
+
         for i in range(len(s) - 1, -1, -1):
             for w in wordDict:
                 if (i + len(w)) <= len(s) and s[i : i + len(w)] == w:
                     dp[i] = dp[i + len(w)]
                 if dp[i]:
                     break
-                    
+
         return dp[0]
 ```
 
@@ -148,11 +149,11 @@ public:
         // 將 wordDict 放入 Hash Set 以便 O(1) 查找
         unordered_set<string> dict(wordDict.begin(), wordDict.end());
         int n = s.length();
-        
+
         // dp[i] 代表前 i 個字元 (s[0...i-1]) 是否能被成功拆分
         vector<bool> dp(n + 1, false);
         dp[0] = true; // 空字串視為成功
-        
+
         // 遍歷每一個結束位置 i (長度)
         for (int i = 1; i <= n; i++) {
             // 遍歷每一個分割點 j
@@ -167,7 +168,7 @@ public:
                 }
             }
         }
-        
+
         return dp[n];
     }
 };

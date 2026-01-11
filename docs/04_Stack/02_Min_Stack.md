@@ -22,6 +22,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 只需實現標準 Stack。`getMin()` 每次都遍歷 vector 找最小。
+
 -   `getMin()`: $O(n)$。
 -   其他: $O(1)$。
 -   **Result**: 雖然功能正確，但不符合题目要求的 $O(1)$。
@@ -33,6 +34,7 @@
 我們需要在 push 每個元素的同時，**記住「當這個元素是 Top 時，目前的最小值是誰」**。
 
 我們可以維護 **兩個 Stack**：
+
 1.  **Main Stack (`s`)**: 存所有的數據。
 2.  **Min Stack (`min_s`)**: 存「對應高度」時的最小值。
 
@@ -71,9 +73,9 @@ private:
 
 public:
     MinStack() {
-        
+
     }
-    
+
     void push(int val) {
         s.push(val);
         // 如果 min_s 為空，或者 val 比當前最小值還小，push val
@@ -84,16 +86,16 @@ public:
             min_s.push(min_s.top());
         }
     }
-    
+
     void pop() {
         s.pop();
         min_s.pop();
     }
-    
+
     int top() {
         return s.top();
     }
-    
+
     int getMin() {
         return min_s.top();
     }
@@ -155,10 +157,10 @@ public:
     MinStack() {
         // Constructor, std::stack 自動初始化为空
     }
-    
+
     void push(int val) {
         stk.push(val);
-        
+
         // 決定 minStk 要存什麼
         if (minStk.empty()) {
             minStk.push(val);
@@ -168,17 +170,17 @@ public:
             minStk.push(std::min(val, minStk.top()));
         }
     }
-    
+
     void pop() {
         // 兩個一起 pop，保持高度一致
         stk.pop();
         minStk.pop();
     }
-    
+
     int top() {
         return stk.top();
     }
-    
+
     int getMin() {
         // O(1) 取得最小值
         return minStk.top();

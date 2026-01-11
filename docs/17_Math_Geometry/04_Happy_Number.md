@@ -3,6 +3,7 @@
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 一個**快樂數**定義如下：
+
 1.  對於一個正整數 $n$，將每個位數的平方相加，得到一個新的數。
 2.  重複該過程。
 3.  如果最後變成 `1`，則它是快樂數。
@@ -24,6 +25,7 @@
 
 使用 HashSet 記錄出現過的數字。
 每次計算新的平方和：
+
 -   如果等於 1，Return True。
 -   如果已經在 Set 中，Return False (Cycle Detected)。
 -   否則加入 Set，繼續。
@@ -42,6 +44,7 @@ $9999 \to 324$。
 這本質上是在鏈表中檢測環。
 每一個數指向它的下一個數（平方和）。
 我們可以使用快慢指針：
+
 -   `slow` 每次走一步。
 -   `fast` 每次走兩步。
 -   如果 `fast` 遇到 1，它是快樂數。
@@ -64,15 +67,15 @@ public:
     bool isHappy(int n) {
         int slow = n;
         int fast = sumOfSquares(n);
-        
+
         while (fast != 1 && slow != fast) {
             slow = sumOfSquares(slow);            // Move 1 step
             fast = sumOfSquares(sumOfSquares(fast)); // Move 2 steps
         }
-        
+
         return fast == 1;
     }
-    
+
 private:
     int sumOfSquares(int n) {
         int sum = 0;
@@ -92,13 +95,13 @@ private:
 class Solution:
     def isHappy(self, n: int) -> bool:
         slow, fast = n, self.sumSq(n)
-        
+
         while fast != 1 and slow != fast:
             slow = self.sumSq(slow)
             fast = self.sumSq(self.sumSq(fast))
-            
+
         return fast == 1
-        
+
     def sumSq(self, n: int) -> int:
         output = 0
         while n:
@@ -122,19 +125,19 @@ public:
         int slow = n;
         // 快指針 (Hare)，先走一步，確保進入循環條件
         int fast = sumOfSquares(n);
-        
+
         // 條件：如果 fast 到達 1，我們成功了
         // 如果 slow == fast，我們發現了環，失敗了
         while (fast != 1 && slow != fast) {
             slow = sumOfSquares(slow);            // 慢指針走一步
             fast = sumOfSquares(sumOfSquares(fast)); // 快指針走兩步
         }
-        
+
         // 如果是因為 fast == 1 退出，則為真
         // 如果是因為 slow == fast 退出且不為 1，則為假
         return fast == 1;
     }
-    
+
 private:
     // 輔助函數：計算各位數字的平方和
     int sumOfSquares(int n) {

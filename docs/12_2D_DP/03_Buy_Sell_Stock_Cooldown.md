@@ -4,6 +4,7 @@
 
 給定一個整數陣列 `prices`，代表每天的股價。
 你可以多次買賣股票，但有以下限制：
+
 1.  **賣出股票後，第二天無法買入股票** (冷凍期 Cooldown 為 1 天)。
 2.  你手中最多只能持有一股（買入前必須先賣掉）。
 
@@ -26,6 +27,7 @@
 
 **DFS/Recursion**:
 `dfs(day, canBuy)`
+
 -   If `canBuy`:
     -   Buy: `-price[day] + dfs(day+1, false)`
     -   Cooldown (Wait): `dfs(day+1, true)`
@@ -40,6 +42,7 @@
 
 這是一個變形的 State Machine DP。
 我們定義每一天的三個狀態：
+
 1.  **Hold (持有股票)**: 今天結束時，手中有一張股票。
     -   可能是今天買的。
     -   或者昨天就持有，今天休息。
@@ -82,31 +85,31 @@ public:
         // hold: max profit if we have stock
         // sold: max profit if we just sold stock
         // rest: max profit if we have no stock (and didn't just sell)
-        
+
         int hold = INT_MIN;
         int sold = 0;
         int rest = 0;
-        
+
         for (int price : prices) {
             int prev_hold = hold;
             int prev_sold = sold;
             int prev_rest = rest;
-            
-            // To hold today: 
+
+            // To hold today:
             // 1. We held yesterday (prev_hold)
             // 2. We rested yesterday and bought today (prev_rest - price)
             hold = max(prev_hold, prev_rest - price);
-            
+
             // To be in sold state today:
             // 1. We held yesterday and sold today (prev_hold + price)
             sold = prev_hold + price;
-            
+
             // To be in rest state today:
             // 1. We rested yesterday (prev_rest)
             // 2. We sold yesterday (prev_sold) -> entering rest/cooldown
             rest = max(prev_rest, prev_sold);
         }
-        
+
         // Max profit is either we just sold or we were resting
         return max(sold, rest);
     }
@@ -120,13 +123,13 @@ class Solution:
     def maxProfit(self, prices: List[int]) -> int:
         # State: Buying or Selling?
         dp = {} # key=(i, buying) val=max_profit
-        
+
         def dfs(i, buying):
             if i >= len(prices):
                 return 0
             if (i, buying) in dp:
                 return dp[(i, buying)]
-            
+
             cooldown = dfs(i + 1, buying)
             if buying:
                 buy = dfs(i + 1, not buying) - prices[i]
@@ -135,7 +138,7 @@ class Solution:
                 sell = dfs(i + 2, not buying) + prices[i]
                 dp[(i, buying)] = max(sell, cooldown)
             return dp[(i, buying)]
-        
+
         return dfs(0, True)
 ```
 
@@ -151,7 +154,7 @@ public:
         // hold: 持有股票
         // sold: 剛剛賣出股票 (明天將會是 cooldown)
         // rest: 未持有股票，且不是剛賣出 (可以是 cooldown 中，或一直沒買)
-        
+
         // 初始化
         // 第一天如果 hold，代表買入，收益為 -price[0]，設為 INT_MIN 防止誤判
         // 但其實可以直接寫 -price[0] 如果我們從 loop 0 開始跑且特別處理
@@ -159,32 +162,32 @@ public:
         // hold = -inf (不可能持有)
         // sold = 0
         // rest = 0
-        
+
         long hold = INT_MIN; // 用 long 防止 overflow
         long sold = 0;
         long rest = 0;
-        
+
         for (int p : prices) {
             long prev_hold = hold;
             long prev_sold = sold;
             long prev_rest = rest;
-            
+
             // 如果今天結束後持有股票：
             // 1. 昨天就持有 (Rest -> Hold 不行，Hold -> Hold OK)
             // 2. 昨天是 Rest 狀態 (可以買)，今天買入 (Rest -> Hold)
             // 注意：不能從 Sold 直接變 Hold，因為有 cooldown
             hold = max(prev_hold, prev_rest - p);
-            
+
             // 如果今天結束後是剛賣出狀態：
             // 1. 昨天持有，今天賣出 (Hold -> Sold)
             sold = prev_hold + p;
-            
+
             // 如果今天結束後是 Rest 狀態：
             // 1. 昨天就是 Rest
             // 2. 昨天是 Sold (今天進入 Cooldown，也是一種 Rest)
             rest = max(prev_rest, prev_sold);
         }
-        
+
         // 最終最大收益不可能是持有股票的狀態
         return max(sold, rest);
     }

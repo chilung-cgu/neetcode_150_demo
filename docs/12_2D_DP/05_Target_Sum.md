@@ -23,6 +23,7 @@
 
 **Backtracking**:
 每個位置有 2 種選擇。
+
 -   `count(i, currentSum)`:
     -   `count(i+1, currentSum + nums[i])`
     -   `count(i+1, currentSum - nums[i])`
@@ -34,6 +35,7 @@
 
 這題可以轉化為 **0/1 背包問題**。
 我們將 `nums` 分成兩個子集：
+
 -   `P`: 正數集合 (前面放 `+`)
 -   `N`: 負數集合 (前面放 `-`)
 
@@ -72,19 +74,19 @@ class Solution {
 public:
     int findTargetSumWays(vector<int>& nums, int target) {
         long long totalSum = accumulate(nums.begin(), nums.end(), 0LL);
-        
+
         // Impossible cases
         // 1. target is out of range [-totalSum, totalSum]
         // 2. (target + totalSum) is odd
         if (target > totalSum || target < -totalSum) return 0;
         if ((target + totalSum) % 2 != 0) return 0;
-        
+
         int subsetSum = (target + totalSum) / 2;
-        
+
         // dp[j] stores number of ways to get sum j
         vector<int> dp(subsetSum + 1, 0);
         dp[0] = 1; // 0 sum possible with empty subset (1 way)
-        
+
         // 0/1 Knapsack
         for (int num : nums) {
             // Iterate backwards
@@ -92,7 +94,7 @@ public:
                 dp[j] += dp[j - num];
             }
         }
-        
+
         return dp[subsetSum];
     }
 };
@@ -104,17 +106,17 @@ public:
 class Solution:
     def findTargetSumWays(self, nums: List[int], target: int) -> int:
         dp = {} # (index, total) -> ways
-        
+
         def backtrack(i, total):
             if i == len(nums):
                 return 1 if total == target else 0
             if (i, total) in dp:
                 return dp[(i, total)]
-            
-            dp[(i, total)] = (backtrack(i + 1, total + nums[i]) + 
+
+            dp[(i, total)] = (backtrack(i + 1, total + nums[i]) +
                               backtrack(i + 1, total - nums[i]))
             return dp[(i, total)]
-            
+
         return backtrack(0, 0)
 ```
 Wait, pure recursion/memoization is also good, but DP is more optimal space-wise and avoids recursion overhead. The constraints $N=20$ allow recursion, but DP is $O(N \times Sum)$.
@@ -129,29 +131,29 @@ public:
     int findTargetSumWays(vector<int>& nums, int target) {
         long long sum = 0;
         for(int n : nums) sum += n;
-        
+
         // 數學推導：
         // P - N = target
         // P + N = sum
         // 2P = target + sum
         // P = (target + sum) / 2
-        
+
         // 如果 target + sum 是奇數，或者 target 絕對值大於 sum，則無解
         if ((target + sum) % 2 != 0 || abs(target) > sum) return 0;
-        
+
         int subsetTarget = (target + sum) / 2;
-        
+
         // dp[j] 代表湊出和 j 的方法數
         // 因為是 0/1 背包 (每個數字只能用一次)，外層迴圈遍歷 nums，內層從大到小遍歷 sum
         vector<int> dp(subsetTarget + 1, 0);
         dp[0] = 1; // sum 為 0 有一種方法 (都不選)
-        
+
         for (int n : nums) {
             for (int j = subsetTarget; j >= n; j--) {
                 dp[j] += dp[j - n];
             }
         }
-        
+
         return dp[subsetTarget];
     }
 };

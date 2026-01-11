@@ -13,6 +13,7 @@
       /  \
      15   7
     ```
+
 -   **Output**: `true` (9 height 1, 20 height 2. Diff 1. Max balance OK.)
 -   **Input**: `root = [1,2,2,3,3,null,null,4,4]`
     ```
@@ -24,6 +25,7 @@
       / \
      4   4
     ```
+
 -   **Output**: `false` (Node 1 left height 4, right height 1. Diff > 1)
 -   **Constraints**:
     -   $0 <= nodes <= 5000$
@@ -36,6 +38,7 @@
 對於每個節點 `root`，計算 `height(root->left)` 和 `height(root->right)`。
 如果 `abs(left - right) > 1`，回傳 false。
 否則遞迴檢查 `isBalanced(root->left)` 和 `isBalanced(root->right)`。
+
 -   **Time**: $O(N^2)$。因為對於上層節點，計算 height 會重複訪問下層所有節點。
 -   **Result**: 效率不佳。
 
@@ -80,22 +83,22 @@ public:
     bool isBalanced(TreeNode* root) {
         return dfsHeight(root) != -1;
     }
-    
+
 private:
     // Returns height of tree if balanced, -1 if unbalanced
     int dfsHeight(TreeNode* root) {
         if (!root) return 0;
-        
+
         int leftHeight = dfsHeight(root->left);
         if (leftHeight == -1) return -1; // Propagate failure
-        
+
         int rightHeight = dfsHeight(root->right);
         if (rightHeight == -1) return -1; // Propagate failure
-        
+
         if (abs(leftHeight - rightHeight) > 1) {
             return -1; // Current node unbalanced
         }
-        
+
         return 1 + max(leftHeight, rightHeight);
     }
 };
@@ -106,18 +109,18 @@ private:
 ```python
 class Solution:
     def isBalanced(self, root: Optional[TreeNode]) -> bool:
-        
+
         def dfs(root):
             if not root:
                 return [True, 0]
-            
+
             left, right = dfs(root.left), dfs(root.right)
-            
-            balanced = (left[0] and right[0] and 
+
+            balanced = (left[0] and right[0] and
                         abs(left[1] - right[1]) <= 1)
-            
+
             return [balanced, 1 + max(left[1], right[1])]
-        
+
         return dfs(root)[0]
 ```
 
@@ -139,20 +142,20 @@ private:
     // 如果不平衡，回傳 -1
     int checkHeight(TreeNode* node) {
         if (node == nullptr) return 0;
-        
+
         // Check Left Subtree
         int leftH = checkHeight(node->left);
         if (leftH == -1) return -1; // 提早結束
-        
+
         // Check Right Subtree
         int rightH = checkHeight(node->right);
         if (rightH == -1) return -1; // 提早結束
-        
+
         // Check Current Node
         if (abs(leftH - rightH) > 1) {
             return -1; // 當前節點不平衡
         }
-        
+
         // 回傳高度
         return 1 + max(leftH, rightH);
     }

@@ -13,6 +13,7 @@
       /  \
      15   7
     ```
+
 -   **Output**: 3
 -   **Input**: `root = [1,null,2]`
 -   **Output**: 2
@@ -34,16 +35,19 @@ DFS 走訪每條路徑，記錄最大值。
 
 **Recursive DFS (Bottom-up)**:
 對於一個節點，它的深度 = `1 + max(depth(left), depth(right))`。
+
 -   Base Case: 如果節點是 `null`，深度為 0。
 -   Recursive Step: 回傳 `1 + max(left_depth, right_depth)`。
 
 **Iterative BFS (Level Order)**:
 用 Queue。每遍歷完一層，深度 + 1。
+
 -   **Time**: $O(n)$。
 -   **Space**: $O(w)$ (max width of tree)。
 
 **Iterative DFS (Stack)**:
 用 Stack 存 pair `(node, depth)`。
+
 -   每次 pop，更新 `res = max(res, depth)`。
 -   Push children with `depth + 1`.
 
@@ -89,24 +93,24 @@ class Solution {
 public:
     int maxDepth(TreeNode* root) {
         if (!root) return 0;
-        
+
         queue<TreeNode*> q;
         q.push(root);
         int depth = 0;
-        
+
         while (!q.empty()) {
             int levelSize = q.size();
-            
+
             for (int i = 0; i < levelSize; i++) {
                 TreeNode* node = q.front();
                 q.pop();
-                
+
                 if (node->left) q.push(node->left);
                 if (node->right) q.push(node->right);
             }
             depth++;
         }
-        
+
         return depth;
     }
 };
@@ -125,7 +129,7 @@ class Solution:
     def maxDepth(self, root: Optional[TreeNode]) -> int:
         if not root:
             return 0
-        
+
         return 1 + max(self.maxDepth(root.left), self.maxDepth(root.right))
 ```
 
@@ -141,12 +145,12 @@ public:
         if (root == nullptr) {
             return 0;
         }
-        
+
         // 遞迴計算左子樹深度
         int leftDepth = maxDepth(root->left);
         // 遞迴計算右子樹深度
         int rightDepth = maxDepth(root->right);
-        
+
         // 當前節點的深度 = 1 (自己) + 左右子樹中較深的那個
         return 1 + max(leftDepth, rightDepth);
     }

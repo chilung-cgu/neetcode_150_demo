@@ -13,6 +13,7 @@
       \   \
        5   4 <---
     ```
+
 -   **Output**: `[1,3,4]`
 -   **Input**: `root = [1,null,3]`
 -   **Output**: `[1,3]`
@@ -35,6 +36,7 @@
 **Approach 1: BFS (Level Order)**
 同上一題。
 每層遍歷最後一個元素 `q.back()` or 在 loop 內的 `i == size-1` 時取值。
+
 -   **Time**: $O(n)$。
 -   **Space**: $O(n)$ (Queue width)。
 
@@ -42,6 +44,7 @@
 這是一種聰明的 DFS。
 我們可以優先遍歷 **右子樹** (Root -> Right -> Left)。
 這樣對於每一層深度 `depth`，我們**第一次**到達該深度的節點，一定是右視圖能看到的節點。
+
 -   `vec` 存結果。
 -   `dfs(node, depth)`:
     -   如果 `depth == vec.size()`，代表這是我們第一次來到這一層 -> `vec.push_back(node->val)`
@@ -78,27 +81,27 @@ public:
     vector<int> rightSideView(TreeNode* root) {
         vector<int> result;
         if (!root) return result;
-        
+
         queue<TreeNode*> q;
         q.push(root);
-        
+
         while (!q.empty()) {
             int size = q.size();
-            
+
             for (int i = 0; i < size; i++) {
                 TreeNode* node = q.front();
                 q.pop();
-                
+
                 // Keep the last node of each level
                 if (i == size - 1) {
                     result.push_back(node->val);
                 }
-                
+
                 if (node->left) q.push(node->left);
                 if (node->right) q.push(node->right);
             }
         }
-        
+
         return result;
     }
 };
@@ -114,16 +117,16 @@ public:
         dfs(root, 0, res);
         return res;
     }
-    
+
     void dfs(TreeNode* node, int depth, vector<int>& res) {
         if (!node) return;
-        
+
         // 如果當前深度 == output size，代表我們第一次到達這一層
         // 由於我們是先遍歷右邊，這一定是這一層最右邊的節點
         if (depth == res.size()) {
             res.push_back(node->val);
         }
-        
+
         dfs(node->right, depth + 1, res);
         dfs(node->left, depth + 1, res);
     }
@@ -145,18 +148,18 @@ class Solution:
         q = collections.deque()
         if root:
             q.append(root)
-            
+
         while q:
             rightSide = None
             qLen = len(q)
-            
+
             for i in range(qLen):
                 node = q.popleft()
                 if node:
                     rightSide = node
                     q.append(node.left)
                     q.append(node.right)
-            
+
             if rightSide:
                 res.append(rightSide.val)
         return res
@@ -172,30 +175,30 @@ public:
     vector<int> rightSideView(TreeNode* root) {
         vector<int> result;
         if (root == nullptr) return result;
-        
+
         queue<TreeNode*> q;
         q.push(root);
-        
+
         while (!q.empty()) {
             int levelSize = q.size();
-            
+
             // 遍歷這一層的所有節點
             for (int i = 0; i < levelSize; i++) {
                 TreeNode* curr = q.front();
                 q.pop();
-                
+
                 // 如果是這一層的最後一個節點，它就是右視圖看到的那個
                 if (i == levelSize - 1) {
                     result.push_back(curr->val);
                 }
-                
+
                 // 繼續將下一層的節點加入 Queue
                 // 順序：先左後右
                 if (curr->left) q.push(curr->left);
                 if (curr->right) q.push(curr->right);
             }
         }
-        
+
         return result;
     }
 };

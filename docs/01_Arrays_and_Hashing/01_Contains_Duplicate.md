@@ -42,6 +42,7 @@ bool containsDuplicate(vector<int>& nums) {
 在 Brute Force 中，我們為了找 `nums[i]` 是否已出現過，重複掃描了後面的陣列。這讓我們想到了 **Lookup Table** 的概念。
 
 **思路引導 (Socratic Method)**:
+
 1.  **Sorting**: 如果陣列是排序好的，重複的元素會在哪裡？
     -   *答案*：相鄰。
     -   *代價*：Sorting 需要 $O(n \log n)$。這比 $O(n^2)$ 好很多。

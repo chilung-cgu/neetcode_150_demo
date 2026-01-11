@@ -17,6 +17,7 @@
       /  \
      15   7
     ```
+
 -   **Key Insight**:
     -   `preorder[0]` 永遠是 **Root**。
     -   在 `inorder` 中找到 Root 的位置，可以將陣列切分為 **Left Subtree** 和 **Right Subtree**。
@@ -32,6 +33,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 對於每個遞迴步驟：
+
 1.  取 `preorder[0]` 作為 root。
 2.  遍歷 `inorder` 找到 root 的 index `k`。
 3.  切分 `inorder` 為 `left: [0...k-1]`, `right: [k+1...end]`。
@@ -92,29 +94,29 @@ public:
         for (int i = 0; i < inorder.size(); i++) {
             inorderMap[inorder[i]] = i;
         }
-        
+
         return build(preorder, 0, 0, inorder.size() - 1);
     }
 
 private:
     unordered_map<int, int> inorderMap;
-    
+
     // preStart: index of current root in preorder
     // inStart, inEnd: range of current subtree in inorder
     TreeNode* build(vector<int>& preorder, int preStart, int inStart, int inEnd) {
         if (inStart > inEnd) {
             return nullptr;
         }
-        
+
         int rootVal = preorder[preStart];
         TreeNode* root = new TreeNode(rootVal);
-        
+
         int inIndex = inorderMap[rootVal];
         int leftSubtreeSize = inIndex - inStart;
-        
+
         root->left = build(preorder, preStart + 1, inStart, inIndex - 1);
         root->right = build(preorder, preStart + 1 + leftSubtreeSize, inIndex + 1, inEnd);
-        
+
         return root;
     }
 };
@@ -133,13 +135,13 @@ class Solution:
     def buildTree(self, preorder: List[int], inorder: List[int]) -> Optional[TreeNode]:
         if not preorder or not inorder:
             return None
-        
+
         root = TreeNode(preorder[0])
         mid = inorder.index(preorder[0])
-        
+
         root.left = self.buildTree(preorder[1 : mid + 1], inorder[:mid])
         root.right = self.buildTree(preorder[mid + 1 :], inorder[mid + 1 :])
-        
+
         return root
 ```
 
@@ -156,7 +158,7 @@ public:
         for(int i = 0; i < inorder.size(); i++) {
             inMap[inorder[i]] = i;
         }
-        
+
         return helper(preorder, 0, inorder.size() - 1, 0); // 這裡稍微改參數傳遞，更直觀一點
         // 不過 C++ 版本我上面用了 preStart, inStart, inEnd。
         // 用 preStart 來決定 root，用 inStart/inEnd 來決定子樹邊界。
@@ -166,8 +168,8 @@ private:
     // preIndex: 現在處理到 preorder 的哪裡 (可以直接用 reference 傳遞一個 global index)
     // 或者像上面的寫法：計算 offset
     // 這裡我們改用一個更簡單的寫法： global preIndex
-    
-    /* 
+
+    /*
        Updated Implementation Logic for clarity:
        使用一個全局指標 `preIdx` 追蹤前序遍歷的進度。
        每次函式呼叫都會消耗一個 preorder 的元素做為 root。
@@ -178,7 +180,7 @@ private:
 class CleanerSolution {
     unordered_map<int, int> inMap;
     int preIdx = 0;
-    
+
 public:
     TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
         for(int i = 0; i < inorder.size(); i++) {
@@ -187,26 +189,26 @@ public:
         preIdx = 0;
         return build(preorder, 0, inorder.size() - 1);
     }
-    
+
     TreeNode* build(vector<int>& preorder, int inStart, int inEnd) {
         // Base case: 範圍無效
         if (inStart > inEnd) return nullptr;
-        
+
         // 從 preorder 取出當前 root
         int rootVal = preorder[preIdx];
         preIdx++; // 移動到下一個
-        
+
         TreeNode* root = new TreeNode(rootVal);
-        
+
         // 找到 root 在 inorder 的位置
         int inIndex = inMap[rootVal];
-        
+
         // 遞迴構造左右子樹
         // 注意：一定是先 Left 後 Right，因為 Preorder 是 Root -> Left -> Right
         // 我們的 preIdx 會先遍歷完左子樹的所有節點，才會跑到右子樹
         root->left = build(preorder, inStart, inIndex - 1);
         root->right = build(preorder, inIndex + 1, inEnd);
-        
+
         return root;
     }
 };

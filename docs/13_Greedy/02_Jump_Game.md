@@ -23,6 +23,7 @@
 
 **Backtracking / Recursion**:
 `canJump(i)`: 從 `i` 出發能否到達終點？
+
 -   嘗試從 $1$ 到 $nums[i]$ 所有可能的跳躍長度 $j$。
 -   如果 `canJump(i + j)` 為真，則回傳真。
 -   **Time**: $O(2^N)$ (或者 $O(N^2)$ with DP memoization)。 $10^4$ 下 $N^2$ 可能會勉強通過，但有更優解。
@@ -64,7 +65,7 @@ class Solution {
 public:
     bool canJump(vector<int>& nums) {
         int goal = nums.size() - 1;
-        
+
         // Iterate backwards from the second to last element
         for (int i = nums.size() - 2; i >= 0; i--) {
             // If from current position i we can reach the goal (or beyond)
@@ -73,7 +74,7 @@ public:
                 goal = i;
             }
         }
-        
+
         // If goal post reached the start, it means we can reach the original end
         return goal == 0;
     }
@@ -103,11 +104,11 @@ public:
 class Solution:
     def canJump(self, nums: List[int]) -> bool:
         goal = len(nums) - 1
-        
+
         for i in range(len(nums) - 1, -1, -1):
             if i + nums[i] >= goal:
                 goal = i
-                
+
         return True if goal == 0 else False
 ```
 
@@ -123,7 +124,7 @@ public:
     bool canJump(vector<int>& nums) {
         // 設定目前的目標是最後一個位置
         int goal = nums.size() - 1;
-        
+
         // 從倒數第二個位置往前遍歷
         for (int i = nums.size() - 2; i >= 0; i--) {
             // 如果從當前位置 i 最遠能跳到的位置 (i + nums[i])
@@ -135,7 +136,7 @@ public:
                 goal = i;
             }
         }
-        
+
         // 如果最後目標被移到了起點 0，代表從 0 可以一路連通到最後
         return goal == 0;
     }

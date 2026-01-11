@@ -3,6 +3,7 @@
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目要求設計兩個演算法：
+
 1.  `serialize(root)`: 將一棵 Binary Tree 轉換成一個 string。
 2.  `deserialize(data)`: 將這個 string 轉換回原本的 Binary Tree。
 
@@ -17,6 +18,7 @@ LeetCode 通常使用 Level Order (BFS) 來表示，例如 `[1,2,3,null,null,4,5
        / \
       4   5
     ```
+
 -   **Output**: Same tree object.
 -   **Constraints**:
     -   $0 <= nodes <= 10^4$
@@ -27,6 +29,7 @@ LeetCode 通常使用 Level Order (BFS) 來表示，例如 `[1,2,3,null,null,4,5
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 這題本身就是考設計。
+
 -   你可以存成 XML, JSON，但太 verbose。
 -   你可以存成 `(1(2)(3(4)(5)))` 這種括號表示法 (Preorder)。
 
@@ -83,7 +86,7 @@ public:
     // Encodes a tree to a single string.
     string serialize(TreeNode* root) {
         if (!root) return "N";
-        
+
         // Preorder: Root, Left, Right
         // Use comma as delimiter
         return to_string(root->val) + "," + serialize(root->left) + "," + serialize(root->right);
@@ -94,29 +97,29 @@ public:
         stringstream ss(data);
         string segment;
         queue<string> q;
-        
+
         while (getline(ss, segment, ',')) {
             q.push(segment);
         }
-        
+
         return deserializeHelper(q);
     }
-    
+
 private:
     TreeNode* deserializeHelper(queue<string>& q) {
         if (q.empty()) return nullptr;
-        
+
         string val = q.front();
         q.pop();
-        
+
         if (val == "N") {
             return nullptr;
         }
-        
+
         TreeNode* node = new TreeNode(stoi(val));
         node->left = deserializeHelper(q);
         node->right = deserializeHelper(q);
-        
+
         return node;
     }
 };
@@ -136,7 +139,7 @@ class Codec:
 
     def serialize(self, root):
         res = []
-        
+
         def dfs(node):
             if not node:
                 res.append("N")
@@ -144,32 +147,32 @@ class Codec:
             res.append(str(node.val))
             dfs(node.left)
             dfs(node.right)
-            
+
         dfs(root)
         return ",".join(res)
-        
+
 
     def deserialize(self, data):
         vals = data.split(",")
         self.i = 0
-        
+
         def dfs():
             if self.i >= len(vals):
                 return None
-            
+
             token = vals[self.i]
             self.i += 1
-            
+
             if token == "N":
                 return None
-            
+
             node = TreeNode(int(token))
             node.left = dfs()
             node.right = dfs()
             return node
-            
+
         return dfs()
-        
+
 
 # Your Codec object will be instantiated and called as such:
 # ser = Codec()
@@ -209,26 +212,26 @@ public:
         }
         return helper(q);
     }
-    
+
 private:
     TreeNode* helper(queue<string>& q) {
         if (q.empty()) return nullptr;
-        
+
         string s = q.front();
         q.pop();
-        
+
         // 遇到 "N" 代表是空節點，回傳 nullptr
         if (s == "N") {
             return nullptr;
         }
-        
+
         // 否則建立新節點
         TreeNode* node = new TreeNode(stoi(s));
-        
+
         // 遞迴建立左右子樹 (利用 Preorder 的順序)
         node->left = helper(q);
         node->right = helper(q);
-        
+
         return node;
     }
 };

@@ -46,6 +46,7 @@ vector<int> twoSum(vector<int>& nums, int target) {
 **這就是 Hash Map 最擅長的事：快速查找 (Look up)。**
 
 我們可以迭代 `nums`，對於每個數字 `n`：
+
 1.  計算我們需要的另一半：`diff = target - n`。
 2.  問 Hash Map： "你裡面用過 `diff` 嗎？"
     -   如果有，太棒了！我們找到了答案 `{map[diff], current_index}`。
@@ -132,7 +133,7 @@ public:
             prevMap[currentNum] = i;
         }
 
-        return {}; 
+        return {};
     }
 };
 ```

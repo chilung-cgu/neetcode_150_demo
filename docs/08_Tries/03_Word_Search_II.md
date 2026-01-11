@@ -16,6 +16,7 @@
     ]
     words = ["oath","pea","eat","rain"]
     ```
+
 -   **Output**: `["eat","oath"]`
 -   **Constraints**:
     -   $m, n <= 12$
@@ -27,6 +28,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 對 `words` 中的每個單字，呼叫一次 Word Search (Backtracking) 在 `board` 上搜尋。
+
 -   **Time**: $O(K \times M \times N \times 4^L)$。
     -   $K$ is number of words.
     -   $M, N$ board size.
@@ -65,7 +67,7 @@ class Solution {
     struct TrieNode {
         TrieNode* children[26];
         string* word; // Store pointer to word at leaf
-        
+
         TrieNode() {
             word = nullptr;
             for (int i = 0; i < 26; i++) {
@@ -73,7 +75,7 @@ class Solution {
             }
         }
     };
-    
+
     void insert(TrieNode* root, string& word) {
         TrieNode* curr = root;
         for (char c : word) {
@@ -85,24 +87,24 @@ class Solution {
         }
         curr->word = &word;
     }
-    
+
 public:
     vector<string> findWords(vector<vector<char>>& board, vector<string>& words) {
         TrieNode* root = new TrieNode();
         for (string& w : words) {
             insert(root, w);
         }
-        
+
         vector<string> result;
         int m = board.size();
         int n = board[0].size();
-        
+
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 dfs(board, i, j, root, result);
             }
         }
-        
+
         return result;
     }
 
@@ -110,19 +112,19 @@ private:
     void dfs(vector<vector<char>>& board, int r, int c, TrieNode* node, vector<string>& result) {
         char letter = board[r][c];
         int idx = letter - 'a';
-        
+
         if (letter == '#' || !node->children[idx]) {
             return;
         }
-        
+
         TrieNode* nextNode = node->children[idx];
         if (nextNode->word) {
             result.push_back(*nextNode->word);
             nextNode->word = nullptr; // Deduplicate: found once, no need to find again
         }
-        
+
         board[r][c] = '#'; // Mark visited
-        
+
         int dirs[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
         for (auto& d : dirs) {
             int newR = r + d[0];
@@ -131,9 +133,9 @@ private:
                 dfs(board, newR, newC, nextNode, result);
             }
         }
-        
+
         board[r][c] = letter; // Backtrack
-        
+
         // Optimization: Leaf pruning (Optional but good for performance)
         // If nextNode has no children, we can remove it from parent's children array
         // to avoid visiting empty paths again. (Not implemented here for simplicity)
@@ -173,17 +175,17 @@ class Solution:
         root = TrieNode()
         for w in words:
             root.addWord(w)
-        
+
         ROWS, COLS = len(board), len(board[0])
         res, visit = set(), set()
-        
+
         def dfs(r, c, node, word):
-            if (r < 0 or c < 0 or 
+            if (r < 0 or c < 0 or
                 r == ROWS or c == COLS or
                 board[r][c] not in node.children or node.children[board[r][c]].refs < 1 or
                 (r, c) in visit):
                 return
-            
+
             visit.add((r, c))
             node = node.children[board[r][c]]
             word += board[r][c]
@@ -191,17 +193,17 @@ class Solution:
                 node.isWord = False
                 res.add(word)
                 root.removeWord(word)
-            
+
             dfs(r + 1, c, node, word)
             dfs(r - 1, c, node, word)
             dfs(r, c + 1, node, word)
             dfs(r, c - 1, node, word)
             visit.remove((r, c))
-        
+
         for r in range(ROWS):
             for c in range(COLS):
                 dfs(r, c, root, "")
-        
+
         return list(res)
 ```
 
@@ -214,13 +216,13 @@ class Solution {
     struct TrieNode {
         TrieNode* children[26];
         string* word; // 這裡直接存字串的指標，用來快速取得結果，也兼作 isEndOfWord 標記
-        
+
         TrieNode() {
             word = nullptr;
             for(int i=0; i<26; i++) children[i] = nullptr;
         }
     };
-    
+
     // Trie Insert
     void insert(TrieNode* root, string& s) {
         TrieNode* curr = root;
@@ -231,17 +233,17 @@ class Solution {
         }
         curr->word = &s; // 標記單字結尾，並保存單字內容
     }
-    
+
 public:
     vector<string> findWords(vector<vector<char>>& board, vector<string>& words) {
         // 1. Build Trie
         TrieNode* root = new TrieNode();
         for(auto& w : words) insert(root, w);
-        
+
         vector<string> res;
         int m = board.size();
         int n = board[0].size();
-        
+
         // 2. DFS from each cell
         for(int i=0; i<m; i++){
             for(int j=0; j<n; j++){
@@ -250,26 +252,26 @@ public:
         }
         return res;
     }
-    
+
 private:
     void dfs(vector<vector<char>>& board, int r, int c, TrieNode* node, vector<string>& res) {
         char ch = board[r][c];
-        
+
         // 如果已經訪問過 (#) 或者 Trie 中沒有這個分支
         if(ch == '#' || !node->children[ch - 'a']) return;
-        
+
         TrieNode* nextNode = node->children[ch - 'a'];
-        
+
         // 找到一個單字
         if(nextNode->word != nullptr) {
             res.push_back(*nextNode->word);
             nextNode->word = nullptr; // 避免重複加入同一個單字 (Deduplication)
             // 可選：可以實作計數器來剪枝 Trie，如果一個節點下方的單字都找完了，可以把這個節點剪掉
         }
-        
+
         // 標記為訪問
         board[r][c] = '#';
-        
+
         // 遞迴四個方向
         const int dirs[4][2] = {{0,1}, {0,-1}, {1,0}, {-1,0}};
         for(auto& d : dirs) {
@@ -279,7 +281,7 @@ private:
                 dfs(board, nr, nc, nextNode, res); // 傳入 nextNode 繼續往下走
             }
         }
-        
+
         // Backtrack
         board[r][c] = ch;
     }

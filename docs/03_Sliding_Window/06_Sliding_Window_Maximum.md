@@ -22,6 +22,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 對於每一個窗口，遍歷這 `k` 個元素找最大值。
+
 -   **Time**: $O(n \cdot k)$。
 -   **Result**: 當 `k` 很大時 (例如 $k \approx n/2$)，會變成 $O(n^2)$ -> TLE。
 
@@ -38,6 +39,7 @@ BST? $O(\log k)$。
 **核心邏輯**:
 Deque 裡存的一定是 **候選的最大值** 的 Index。
 並且我們保持 Deque 裡的元素對應的數值是 **單調遞減** 的。
+
 -   `deque.front()` 永遠是當前窗口的最大值。
 -   當新元素 `nums[i]` 進來時：
     1.  **Pop Small Elements**: 如果 `nums[i]` 比 `deque.back()` 還大，那 `deque.back()` 裡的那個數字這輩子都不可能成為最大值了（因為 `nums[i]` 比它晚進來，還比它大，會壓死它）。直接踢掉 `pop_back()`。重複直到 Deque 單調或空。
@@ -63,27 +65,27 @@ public:
         // Deque 存的是 index，不是 value
         deque<int> dq;
         vector<int> res;
-        
+
         for (int i = 0; i < nums.size(); i++) {
             // 1. 移除過期元素 (超出窗口左界)
             if (!dq.empty() && dq.front() == i - k) {
                 dq.pop_front();
             }
-            
+
             // 2. 維護單調性 (移除比當前元素小的所有候選人)
             while (!dq.empty() && nums[dq.back()] < nums[i]) {
                 dq.pop_back();
             }
-            
+
             // 3. 加入新元素
             dq.push_back(i);
-            
+
             // 4. 記錄答案 (當窗口填滿 k 個後開始記錄)
             if (i >= k - 1) {
                 res.push_back(nums[dq.front()]);
             }
         }
-        
+
         return res;
     }
 };
@@ -98,18 +100,18 @@ class Solution:
     def maxSlidingWindow(self, nums: List[int], k: int) -> List[int]:
         dq = deque()
         res = []
-        
+
         for i, n in enumerate(nums):
             while dq and nums[dq[-1]] < n:
                 dq.pop()
             dq.append(i)
-            
+
             if dq[0] == i - k:
                 dq.popleft()
-            
+
             if i >= k - 1:
                 res.append(nums[dq[0]])
-                
+
         return res
 ```
 
@@ -128,31 +130,31 @@ public:
         // 且 nums[5] 是目前窗口最大值。
         deque<int> dq;
         vector<int> result;
-        
+
         for (int i = 0; i < nums.size(); i++) {
             // Step 1: Remove Out-of-bound indices
             // 窗口範圍是 [i-k+1, i]。如果 front 是 i-k，說明它過期了。
             if (!dq.empty() && dq.front() <= i - k) {
                 dq.pop_front();
             }
-            
+
             // Step 2: Remove smaller elements from back
             // 如果新來的 nums[i] 很大，那它前面那些比它小的「老元素」就沒用了。
             // 因為 nums[i] 比它們晚過期，數值又比它們大，所以它們永遠沒機會翻身。
             while (!dq.empty() && nums[dq.back()] < nums[i]) {
                 dq.pop_back();
             }
-            
+
             // Step 3: Add current index
             dq.push_back(i);
-            
+
             // Step 4: Add to result
             // 當我們至少有 k 個元素 (i >= k-1) 時，front 就是最大值
             if (i >= k - 1) {
                 result.push_back(nums[dq.front()]);
             }
         }
-        
+
         return result;
     }
 };

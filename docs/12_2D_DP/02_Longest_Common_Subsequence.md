@@ -21,6 +21,7 @@
 
 **Recursion**:
 `LCS(i, j)` 代表 `text1[i:]` 和 `text2[j:]` 的 LCS 長度。
+
 1.  如果 `text1[i] == text2[j]`，則 `1 + LCS(i+1, j+1)`。
 2.  如果不同，則 `max(LCS(i+1, j), LCS(i, j+1))`。
 -   **Time**: $O(2^{N+M})$。
@@ -34,8 +35,10 @@
 
 **State Transition**:
 和 Recursion 邏輯完全一樣：
+
 1.  If `text1[i-1] == text2[j-1]` (注意 index offset):
     `dp[i][j] = 1 + dp[i-1][j-1]`
+
 2.  If `text1[i-1] != text2[j-1]`:
     `dp[i][j] = max(dp[i-1][j], dp[i][j-1])`
 
@@ -64,11 +67,11 @@ public:
     int longestCommonSubsequence(string text1, string text2) {
         int m = text1.length();
         int n = text2.length();
-        
+
         // dp[i][j] stores LCS of text1[0..i-1] and text2[0..j-1]
         // Size is (m+1) x (n+1) initialized to 0
         vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
-        
+
         for (int i = 1; i <= m; i++) {
             for (int j = 1; j <= n; j++) {
                 if (text1[i - 1] == text2[j - 1]) {
@@ -80,7 +83,7 @@ public:
                 }
             }
         }
-        
+
         return dp[m][n];
     }
 };
@@ -92,13 +95,13 @@ public:
 class SolutionOptimized {
 public:
     int longestCommonSubsequence(string text1, string text2) {
-        if (text1.length() < text2.length()) return longestCommonSubsequence(text2, text1); 
+        if (text1.length() < text2.length()) return longestCommonSubsequence(text2, text1);
         // Ensure text2 is smaller for minor space opt
-        
+
         int m = text1.length();
         int n = text2.length();
         vector<int> dp(n + 1, 0);
-        
+
         for (int i = 1; i <= m; i++) {
             int prevDiag = 0; // Represents dp[i-1][j-1]
             for (int j = 1; j <= n; j++) {
@@ -123,14 +126,14 @@ public:
 class Solution:
     def longestCommonSubsequence(self, text1: str, text2: str) -> int:
         dp = [[0 for j in range(len(text2) + 1)] for i in range(len(text1) + 1)]
-        
+
         for i in range(len(text1) - 1, -1, -1):
             for j in range(len(text2) - 1, -1, -1):
                 if text1[i] == text2[j]:
                     dp[i][j] = 1 + dp[i + 1][j + 1]
                 else:
                     dp[i][j] = max(dp[i][j + 1], dp[i + 1][j])
-                    
+
         return dp[0][0]
 ```
 
@@ -144,12 +147,12 @@ public:
     int longestCommonSubsequence(string text1, string text2) {
         int m = text1.length();
         int n = text2.length();
-        
+
         // dp[i][j] 代表 text1 前 i 個字元與 text2 前 j 個字元的 LCS 長度
         // 大小設為 (m+1) x (n+1) 以處理空字串情況 (padding)
         // 初始值全為 0
         vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
-        
+
         for (int i = 1; i <= m; i++) {
             for (int j = 1; j <= n; j++) {
                 // 如果當前字元相同 (注意字串 index 是 i-1, j-1)
@@ -163,7 +166,7 @@ public:
                 }
             }
         }
-        
+
         return dp[m][n];
     }
 };

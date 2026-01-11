@@ -22,6 +22,7 @@
 這是一個包含 $N$ 個點的完全圖（每兩個點之間都有邊）。
 邊的總數大約是 $N^2 / 2$。
 如果我們列出所有邊，並運行 Kruskal 算法（排序邊 + Union-Find）：
+
 -   排序所有的邊：$O(N^2 \log(N^2)) = O(N^2 \log N)$。
 -   Union-Find：$O(N^2 \alpha(N))$。
 -   因為 $N \le 1000$， $N^2 = 10^6$，在這個範圍內是可以接受的。
@@ -48,6 +49,7 @@ Prim 算法從一個點開始，每次選擇距離當前生成樹最近的點加
 
 **Optimized Prim's**:
 不用 Heap 存儲所有邊，而是維護一個 `minDist` 陣列，記錄每個點到當前 MST 的最短距離。每次掃描 `minDist` 找出最小值。
+
 -   Time: $O(N^2)$。因為不用 Heap 操作的 $\log N$。
 -   對於 $N=1000$，這非常快。
 
@@ -74,27 +76,27 @@ public:
         int n = points.size();
         // Min-Heap: {cost, nodeIndex}
         priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
-        
+
         // Start from node 0 with cost 0
         pq.push({0, 0});
-        
+
         vector<bool> visited(n, false);
         int edgesCount = 0;
         int totalCost = 0;
-        
+
         while (edgesCount < n) {
             pair<int, int> top = pq.top();
             pq.pop();
-            
+
             int cost = top.first;
             int u = top.second;
-            
+
             if (visited[u]) continue;
-            
+
             visited[u] = true;
             totalCost += cost;
             edgesCount++;
-            
+
             // Add neighbors to heap
             for (int v = 0; v < n; v++) {
                 if (!visited[v]) {
@@ -103,7 +105,7 @@ public:
                 }
             }
         }
-        
+
         return totalCost;
     }
 };
@@ -118,25 +120,25 @@ class Solution:
     def minCostConnectPoints(self, points: List[List[int]]) -> int:
         N = len(points)
         adj = {i: [] for i in range(N)} # Actually implicit dense graph
-        
+
         # Min heap: [cost, point_index]
         minH = [[0, 0]]
         visit = set()
         res = 0
-        
+
         while len(visit) < N:
             cost, u = heapq.heappop(minH)
             if u in visit:
                 continue
-            
+
             res += cost
             visit.add(u)
-            
+
             for v in range(N):
                 if v not in visit:
                     dist = abs(points[u][0] - points[v][0]) + abs(points[u][1] - points[v][1])
                     heapq.heappush(minH, [dist, v])
-                    
+
         return res
 ```
 
@@ -149,35 +151,35 @@ class Solution {
 public:
     int minCostConnectPoints(vector<vector<int>>& points) {
         int n = points.size();
-        
+
         // 最小堆：儲存 {距離, 點的索引}
         // 我們依據距離從小到大取出
         priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
-        
+
         // 從任意一點开始 (例如點 0)，連接費用為 0
         pq.push({0, 0});
-        
+
         vector<bool> visited(n, false);
         int connectedNodes = 0;
         int totalCost = 0;
-        
+
         // 當我們還沒有連接所有點時
         while (connectedNodes < n) {
             // 取出當前代價最小的邊
             pair<int, int> top = pq.top();
             pq.pop();
-            
+
             int cost = top.first;
             int u = top.second;
-            
+
             // 如果這個點已經被連接過了，跳過 (Lazy Deletion)
             if (visited[u]) continue;
-            
+
             // 將點 u 加入生成樹
             visited[u] = true;
             totalCost += cost;
             connectedNodes++;
-            
+
             // 將所有從 u 出發到未訪問節點的邊加入 Heap
             for (int v = 0; v < n; v++) {
                 if (!visited[v]) {
@@ -186,7 +188,7 @@ public:
                 }
             }
         }
-        
+
         return totalCost;
     }
 };

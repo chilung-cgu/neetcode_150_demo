@@ -3,6 +3,7 @@
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 你需要設計一個數據結構，支持以下兩個操作：
+
 1.  `add(point)`: 加入一個點 `(x, y)` 到數據結構中。點可以重複（視為不同的點）。
 2.  `count(point)`: 給定一個查詢點 `(qx, qy)`，計算有多少個正方形可以由 `(qx, qy)` 以及數據結構中已有的三個點組成。且該正方形必須是 **軸對齊 (Axis-aligned)** 的（邊平行於 x 軸和 y 軸）。
 
@@ -23,6 +24,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 對於 `count(qx, qy)`，遍歷所有已存儲的點作為第二個點 `(x1, y1)`。
+
 -   如果 `x1 == qx` 或 `y1 == qy`，這不能作為對角線點（如果它們在同一行或列，只能構成邊）。
 -   如果 `abs(qx - x1) == abs(qy - y1)`，則這兩個點可以構成正方形的對角線。
 -   然後檢查另外兩個點 `(qx, y1)` 和 `(x1, qy)` 是否存在。
@@ -69,38 +71,38 @@ using namespace std;
 class DetectSquares {
 public:
     DetectSquares() {
-        
+
     }
-    
+
     void add(vector<int> point) {
         int x = point[0];
         int y = point[1];
         pointCounts[x][y]++;
         points.push_back(point);
     }
-    
+
     int count(vector<int> point) {
         int qx = point[0];
         int qy = point[1];
         int res = 0;
-        
+
         for (const auto& p : points) {
             int x = p[0];
             int y = p[1];
-            
+
             // Check if (x, y) can form a diagonal with (qx, qy)
             // Condition 1: Must not be the same point (area > 0)
             // Condition 2: |qx - x| == |qy - y| (Square property)
             if (abs(qx - x) != abs(qy - y) || x == qx) {
                 continue;
             }
-            
+
             // If valid diagonal, look for the other two corners:
             // (x, qy) and (qx, y)
             // We multiply their frequencies
             res += pointCounts[x][qy] * pointCounts[qx][y];
         }
-        
+
         return res;
     }
 
@@ -128,13 +130,13 @@ class DetectSquares:
     def count(self, point: List[int]) -> int:
         res = 0
         qx, qy = point
-        
+
         for x, y in self.pts:
             if (abs(qx - x) != abs(qy - y)) or x == qx:
                 continue
-                
+
             res += self.ptsCount[(x, qy)] * self.ptsCount[(qx, y)]
-            
+
         return res
 ```
 
@@ -148,7 +150,7 @@ public:
     DetectSquares() {
         // 初始化，這裡不需要特別做什麼，因為我們使用固定大小的數組並初始化為 0
     }
-    
+
     void add(vector<int> point) {
         int x = point[0];
         int y = point[1];
@@ -158,25 +160,25 @@ public:
         // 注意：這裡我們會存儲重複的點
         points.push_back(point);
     }
-    
+
     int count(vector<int> point) {
         int qx = point[0];
         int qy = point[1];
         int res = 0;
-        
+
         // 遍歷所有已存儲的點 (x, y)
         // 嘗試將 (x, y) 作為正方形的對角點
         for (const auto& p : points) {
             int x = p[0];
             int y = p[1];
-            
+
             // 判斷是否為合法的對角點：
             // 1. |qx - x| == |qy - y|：確保長寬相等，即為正方形
             // 2. x != qx：確保不是同一個點，且邊長不為 0
             if (abs(qx - x) != abs(qy - y) || x == qx) {
                 continue;
             }
-            
+
             // 如果 (x, y) 是對角點，那麼另外兩個頂點必須是：
             // (x, qy) 和 (qx, y)
             // 正方形的數量等於這兩個點存在的次數之積
@@ -184,7 +186,7 @@ public:
             // 列表中的每個 (x, y) 實體本身就代表了一次計數。
             res += pointCounts[x][qy] * pointCounts[qx][y];
         }
-        
+
         return res;
     }
 

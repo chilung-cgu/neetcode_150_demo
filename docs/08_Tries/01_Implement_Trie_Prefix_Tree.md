@@ -3,6 +3,7 @@
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目要求實作一個 `Trie` 類別 (Prefix Tree)，包含以下方法：
+
 1.  `insert(String word)`: 將單字 `word` 插入 Trie。
 2.  `search(String word)`: 回傳 `word` 是否在 Trie 中（必須是完整單字）。
 3.  `startsWith(String prefix)`: 回傳 Trie 中是否有任何單字以 `prefix` 開頭。
@@ -17,6 +18,7 @@
     trie.insert("app");
     trie.search("app");     // return True
     ```
+
 -   **Constraints**:
     -   `word` and `prefix` consist only of lowercase English letters (a-z).
     -   $1 <= length <= 2000$.
@@ -27,6 +29,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 用一個 `HashSet` 存所有 words。
+
 -   `insert`: $O(1)$ 或 $O(L)$ (Depends on hash)。
 -   `search`: $O(1)$ 或 $O(L)$。
 -   `startsWith`: 必須遍歷 Set 中的所有字串，檢查是否以 prefix 開頭。時間 $O(N \times L)$。太慢。
@@ -37,6 +40,7 @@
 
 使用 **Trie (N-ary Tree)** 結構。
 每個節點包含：
+
 1.  **Children**: 一個大小為 26 的 Array (對應 'a'-'z')，指向下一個節點。
 2.  **EndOfWord**: 一個 boolean，標記是否在此處結束一個完整的單字。
 
@@ -62,7 +66,7 @@ private:
     struct TrieNode {
         TrieNode* children[26];
         bool isEndOfWord;
-        
+
         TrieNode() {
             isEndOfWord = false;
             for (int i = 0; i < 26; i++) {
@@ -70,14 +74,14 @@ private:
             }
         }
     };
-    
+
     TrieNode* root;
 
 public:
     Trie() {
         root = new TrieNode();
     }
-    
+
     void insert(string word) {
         TrieNode* curr = root;
         for (char c : word) {
@@ -89,7 +93,7 @@ public:
         }
         curr->isEndOfWord = true;
     }
-    
+
     bool search(string word) {
         TrieNode* curr = root;
         for (char c : word) {
@@ -101,7 +105,7 @@ public:
         }
         return curr->isEndOfWord;
     }
-    
+
     bool startsWith(string prefix) {
         TrieNode* curr = root;
         for (char c : prefix) {
@@ -165,21 +169,21 @@ class Trie {
         // 也可以用 HashMap<char, Node*>
         Node* children[26];
         bool isEnd;
-        
+
         Node() {
             isEnd = false;
             // 初始化指標為 nullptr (C++ 不會自動做)
             for(int i=0; i<26; i++) children[i] = nullptr;
         }
     };
-    
+
     Node* root;
-    
+
 public:
     Trie() {
         root = new Node();
     }
-    
+
     // O(L) Time, O(L) Space
     void insert(string word) {
         Node* curr = root;
@@ -194,7 +198,7 @@ public:
         // 標記單字結尾
         curr->isEnd = true;
     }
-    
+
     // O(L) Time, O(1) Space
     bool search(string word) {
         Node* curr = root;
@@ -208,7 +212,7 @@ public:
         // 必須剛好在 End 位停下才是 True
         return curr->isEnd;
     }
-    
+
     // O(L) Time, O(1) Space
     bool startsWith(string prefix) {
         Node* curr = root;

@@ -26,6 +26,7 @@
 
 ### Approach 1.5: Division (Not Allowed)
 算出所有數字的總乘積 `P`，然後 `answer[i] = P / nums[i]`。
+
 -   **問題 1**: 題目 **禁止使用除法**。
 -   **問題 2**: 如果陣列中有 **0**，你會遇到 Divide by Zero (除以零) 的錯誤。即便處理 0，邏輯也會變得很複雜 (如果有兩個 0，結果全為 0；如果有一個 0，除了那個 0 的位置是其他數乘積，其他位置都是 0)。
 
@@ -42,6 +43,7 @@
 也就是：`Left Product * Right Product`
 
 我們可以分兩次遍歷計算：
+
 1.  **第一次遍歷 (Left -> Right)**:
     -   計算所有 `i` 左邊的乘積，存入 `answer[i]`。
     -   `answer[i] = nums[0] * ... * nums[i-1]`
@@ -94,17 +96,17 @@ public:
 class Solution:
     def productExceptSelf(self, nums: List[int]) -> List[int]:
         res = [1] * (len(nums))
-        
+
         prefix = 1
         for i in range(len(nums)):
             res[i] = prefix
             prefix *= nums[i]
-            
+
         postfix = 1
         for i in range(len(nums) - 1, -1, -1):
             res[i] *= postfix
             postfix *= nums[i]
-            
+
         return res
 ```
 
@@ -117,7 +119,7 @@ class Solution {
 public:
     vector<int> productExceptSelf(vector<int>& nums) {
         int n = nums.size();
-        
+
         // 初始化結果陣列。
         // 題目說 Output array 不算在 Space Complexity 中。
         // 我們先用 res 來存 Prefix Product。
@@ -131,7 +133,7 @@ public:
             res[i] = prefix; // 把「當前位置左邊的所有乘積」存入
             prefix *= nums[i]; // 把自己乘進去，給下一個人用
         }
-        
+
         // 現在 res[i] 只有左邊的乘積。
         // 第二遍：Postfix
         // 從右邊開始掃回來，補上右邊的乘積
@@ -140,7 +142,7 @@ public:
             res[i] *= postfix; // 左邊乘積 * 右邊乘積 = 答案
             postfix *= nums[i]; // 把自己乘進去，給下一個人(左邊那位)用
         }
-        
+
         return res;
     }
 };

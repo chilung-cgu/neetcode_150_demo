@@ -24,6 +24,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 最直觀的方法：
+
 1.  將 `newInterval` 直接加入到 `intervals` 列表中。
 2.  根據 start time 重新排序整個列表。
 3.  遍歷排序後的列表，執行標準的 "Merge Intervals" 操作（如果當前區間與前一個重疊，則合併）。
@@ -39,6 +40,7 @@
 我們可以用 $O(N)$ 一次遍歷完成。
 
 我們可以將所有區間分為三類：
+
 1.  **完全在左邊 (Strictly Left)**：當前區間的 `end` < `newInterval.start`。這些直接加入結果。
 2.  **重疊 (Overlapping)**：當前區間與 `newInterval` 有交集。即 `intervals[i].start <= newInterval.end` 且 `intervals[i].end >= newInterval.start`。
     -   我們不需要把這些區間加入結果，而是用它們來 **擴展** `newInterval`。
@@ -50,6 +52,7 @@
     -   然後將剩下所有的區間直接加入結果。
 
 邏輯流：
+
 -   遍歷區間：
     -   If `current.end < newInterval.start`: Push `current` to result.
     -   Else if `current.start > newInterval.end`:
@@ -78,33 +81,33 @@ public:
         vector<vector<int>> result;
         int i = 0;
         int n = intervals.size();
-        
+
         // 1. Add all intervals that come strictly before the new interval
         while (i < n && intervals[i][1] < newInterval[0]) {
             result.push_back(intervals[i]);
             i++;
         }
-        
+
         // 2. Merge all overlapping intervals
         // Check if current interval overlaps with newInterval
         // Overlap condition: intervals[i].start <= newInterval.end
-        // (Since we already passed checked intervals[i].end < newInterval.start, 
+        // (Since we already passed checked intervals[i].end < newInterval.start,
         //  we know intervals[i].end >= newInterval.start logic is somewhat implicit or guaranteed to overlap if intervals[i].start <= newInterval.end)
         while (i < n && intervals[i][0] <= newInterval[1]) {
             newInterval[0] = min(newInterval[0], intervals[i][0]);
             newInterval[1] = max(newInterval[1], intervals[i][1]);
             i++;
         }
-        
+
         // Add the merged interval
         result.push_back(newInterval);
-        
+
         // 3. Add remaining intervals
         while (i < n) {
             result.push_back(intervals[i]);
             i++;
         }
-        
+
         return result;
     }
 };
@@ -116,7 +119,7 @@ public:
 class Solution:
     def insert(self, intervals: List[List[int]], newInterval: List[int]) -> List[List[int]]:
         res = []
-        
+
         for i in range(len(intervals)):
             # If newInterval is strictly before current interval
             if newInterval[1] < intervals[i][0]:
@@ -131,7 +134,7 @@ class Solution:
                     min(newInterval[0], intervals[i][0]),
                     max(newInterval[1], intervals[i][1])
                 ]
-                
+
         res.append(newInterval)
         return res
 ```
@@ -147,14 +150,14 @@ public:
         vector<vector<int>> result;
         int i = 0;
         int n = intervals.size();
-        
+
         // 步驟 1: 處理所有在 newInterval 左邊且無重疊的區間
         // 條件：當前區間的結束時間 < newInterval 的開始時間
         while (i < n && intervals[i][1] < newInterval[0]) {
             result.push_back(intervals[i]);
             i++;
         }
-        
+
         // 步驟 2: 處理重疊區間並合併
         // 條件：當前區間與 newInterval 重疊
         // 因為上面的 while 迴圈已經排除了所有 end < newInterval.start 的區間
@@ -165,16 +168,16 @@ public:
             newInterval[1] = max(newInterval[1], intervals[i][1]);
             i++;
         }
-        
+
         // 將合併完成後的 newInterval 加入結果
         result.push_back(newInterval);
-        
+
         // 步驟 3: 處理剩下在右邊且無重疊的區間
         while (i < n) {
             result.push_back(intervals[i]);
             i++;
         }
-        
+
         return result;
     }
 };

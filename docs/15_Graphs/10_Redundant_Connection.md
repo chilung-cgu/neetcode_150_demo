@@ -23,6 +23,7 @@
 這是尋找環的邊。
 我們可以遍歷每條邊，暫時將其移除，然後檢查剩下的圖是否是連通的樹。
 或者，對於每條邊 `(u, v)`，在加入之前檢查 `u` 和 `v` 是否已經連通（DFS/BFS）。如果已經連通，那這條邊就是冗餘的。
+
 -   **Time**: $O(N^2)$。DFS 每次 $O(N)$，做 $N$ 次。
 
 ---
@@ -62,26 +63,26 @@ public:
         int n = edges.size(); // N edges and N vertices (1 to N)
         parent.resize(n + 1);
         iota(parent.begin(), parent.end(), 0); // Initialize parent[i] = i
-        
+
         for (const auto& edge : edges) {
             int u = edge[0];
             int v = edge[1];
-            
+
             // If already connected, this is the redundant edge
             if (find(u) == find(v)) {
                 return edge;
             }
-            
+
             // Otherwise, union them
             unite(u, v);
         }
-        
+
         return {};
     }
-    
+
 private:
     vector<int> parent;
-    
+
     // Find with Path Compression
     int find(int x) {
         if (parent[x] != x) {
@@ -89,7 +90,7 @@ private:
         }
         return parent[x];
     }
-    
+
     // Union
     void unite(int x, int y) {
         int rootX = find(x);
@@ -107,7 +108,7 @@ private:
 class Solution:
     def findRedundantConnection(self, edges: List[List[int]]) -> List[int]:
         parent = [i for i in range(len(edges) + 1)]
-        
+
         def find(n):
             p = parent[n]
             while p != parent[p]:
@@ -115,18 +116,18 @@ class Solution:
                 parent[p] = parent[parent[p]]
                 p = parent[p]
             return p
-        
+
         def union(n1, n2):
             p1, p2 = find(n1), find(n2)
             if p1 == p2:
                 return False
             parent[p1] = p2
             return True
-            
+
         for n1, n2 in edges:
             if not union(n1, n2):
                 return [n1, n2]
-                
+
         return []
 ```
 
@@ -143,37 +144,37 @@ public:
         // 所以 parent 數組需要大小 N + 1 (0 不用)
         int n = edges.size();
         parent.resize(n + 1);
-        
+
         // 初始化：每個節點的父節點是自己
         // iota 是 C++ numeric 庫函數，將 [begin, end) 填入 0, 1, 2...
         // 這裡我們其實是填入 0 到 n
         iota(parent.begin(), parent.end(), 0);
-        
+
         for (const auto& edge : edges) {
             int u = edge[0];
             int v = edge[1];
-            
+
             // 查找 u 和 v 的根節點
             int rootU = find(u);
             int rootV = find(v);
-            
+
             // 如果根節點相同，說明 u 和 v 已經在同一個集合中（已經連通）
             // 再加上這條邊就會形成環，所以這就是冗餘邊
             if (rootU == rootV) {
                 return edge;
             }
-            
+
             // 否則，將這兩個集合合併
             // 這裡簡單地將 rootU 掛在 rootV 下面
             parent[rootU] = rootV;
         }
-        
+
         return {};
     }
-    
+
 private:
     vector<int> parent;
-    
+
     // 查找並執行「路徑壓縮 (Path Compression)」
     // 這能讓樹的高度保持扁平，加速後續查找
     int find(int x) {
@@ -183,7 +184,7 @@ private:
         }
         return parent[x];
     }
-    
+
     // 省略了 rank/size 優化的 union，對於這題規模不是必須的
     // 但加上路徑壓縮已經足夠快 (接近 O(1))
     /*

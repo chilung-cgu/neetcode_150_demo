@@ -18,6 +18,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 Linear scan.
+
 -   **Time**: $O(n)$。
 -   **Result**: TLE (Conceptual, as $O(\log n)$ is required).
 
@@ -29,9 +30,11 @@ Linear scan.
 我們依然使用 Binary Search，取 `mid`。
 雖然 array 被旋轉了，但我們切一刀後，**至少有一半是 Sorted (有序) 的**。
 例如 `[4,5,6,7,0,1,2]` 切在 `7` (mid)：
+
 -   左半 `[4,5,6]` 是有序的。
 -   右半 `[0,1,2]` 也是有序的。
 或者 `[6,7,0,1,2,4,5]` 切在 `1` (mid)：
+
 -   左半 `[6,7,0]` 是無序的 (包含斷崖)。
 -   右半 `[2,4,5]` 是有序的。
 
@@ -63,12 +66,12 @@ public:
     int search(vector<int>& nums, int target) {
         int left = 0;
         int right = nums.size() - 1;
-        
+
         while (left <= right) {
             int mid = left + (right - left) / 2;
-            
+
             if (nums[mid] == target) return mid;
-            
+
             // 判斷哪一部分是有序的
             if (nums[left] <= nums[mid]) {
                 // 左半邊有序
@@ -89,7 +92,7 @@ public:
                 }
             }
         }
-        
+
         return -1;
     }
 };
@@ -101,12 +104,12 @@ public:
 class Solution:
     def search(self, nums: List[int], target: int) -> int:
         l, r = 0, len(nums) - 1
-        
+
         while l <= r:
             mid = (l + r) // 2
             if target == nums[mid]:
                 return mid
-            
+
             # Left sorted portion
             if nums[l] <= nums[mid]:
                 if target > nums[mid] or target < nums[l]:
@@ -132,15 +135,15 @@ public:
     int search(vector<int>& nums, int target) {
         int l = 0;
         int r = nums.size() - 1;
-        
+
         while (l <= r) {
             int m = l + (r - l) / 2;
-            
+
             if (nums[m] == target) return m;
-            
+
             // 關鍵判斷：哪一邊是連續遞增的 (Sorted Portion)？
             // Case 1: nums[l] <= nums[m]
-            // 例如 [4, 5, 6, 7, 0, 1, 2], m=3 (val=7). 4 <= 7. 
+            // 例如 [4, 5, 6, 7, 0, 1, 2], m=3 (val=7). 4 <= 7.
             // 左邊 [4, 5, 6, 7] 是 Sorted 的。
             // 注意：<= 是因為 m 可能等於 l (只剩兩個元素時)
             if (nums[l] <= nums[m]) {
@@ -163,7 +166,7 @@ public:
                 }
             }
         }
-        
+
         return -1;
     }
 };

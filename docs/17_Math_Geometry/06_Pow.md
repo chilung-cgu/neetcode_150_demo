@@ -3,6 +3,7 @@
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 實現 `pow(x, n)`，即計算 `x` 的 `n` 次冪 ($x^n$)。
+
 -   **Input**: `x = 2.00000, n = 10`
 -   **Output**: `1024.00000`
 -   **Input**: `x = 2.10000, n = 3`
@@ -20,6 +21,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 簡單的循環相乘 $n$ 次。
+
 -   Time: $O(n)$。
 -   如果 $n = 2^{31}-1$，這會超時 (Time Limit Exceeded)。
 
@@ -29,6 +31,7 @@
 
 **Fast Exponentiation (Exponentiation by Squaring)**:
 利用 $x^n = (x^2)^{n/2}$ 的性質。
+
 -   如果 $n$ 是偶數：$x^n = (x^2)^{n/2}$
 -   如果 $n$ 是奇數：$x^n = x \times (x^2)^{(n-1)/2}$
 
@@ -60,13 +63,13 @@ public:
         }
         return fastPow(x, N);
     }
-    
+
 private:
     double fastPow(double x, long long n) {
         if (n == 0) return 1.0;
-        
+
         double half = fastPow(x, n / 2);
-        
+
         if (n % 2 == 0) {
             return half * half;
         } else {
@@ -87,10 +90,10 @@ public:
             x = 1 / x;
             N = -N;
         }
-        
+
         double ans = 1;
         double current_product = x;
-        
+
         while (N > 0) {
             if (N % 2 == 1) {
                 ans = ans * current_product;
@@ -98,7 +101,7 @@ public:
             current_product = current_product * current_product;
             N /= 2;
         }
-        
+
         return ans;
     }
 };
@@ -113,16 +116,16 @@ class Solution:
         if n < 0:
             x = 1 / x
             n = -n
-            
+
         ans = 1
         curr = x
-        
+
         while n > 0:
             if n % 2 == 1:
                 ans *= curr
             curr *= curr
             n //= 2
-            
+
         return ans
 ```
 
@@ -137,16 +140,16 @@ public:
         // 使用 long long 防止 n = INT_MIN 時取絕對值溢位
         // 範圍: [-2^31, 2^31-1]，如果是 -2^31，取負後為 2^31，超過 int 範圍
         long long N = n;
-        
+
         // 處理負次方：x^-n = (1/x)^n
         if (N < 0) {
             x = 1 / x;
             N = -N;
         }
-        
+
         double ans = 1;
         double current_product = x;
-        
+
         // 快速冪迭代法 (Binary Exponentiation)
         // 例如需要計算 x^10 (1010 binary)
         // ans 初始化為 1
@@ -165,7 +168,7 @@ public:
             // 指數減半
             N /= 2;
         }
-        
+
         return ans;
     }
 };

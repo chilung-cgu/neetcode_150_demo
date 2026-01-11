@@ -3,6 +3,7 @@
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目要求設計一個類別 `KthLargest`，它可以：
+
 1.  **Initialize**: 接收一個整數 `k` 和一個整數陣列 `nums`。
 2.  **Add**: 接收一個整數 `val`，並回傳「當前數據流中」第 `k` 大的元素。
     -   注意：是第 `k` 大，不是第 `k` 個不同元素。
@@ -16,6 +17,7 @@
     kthLargest.add(9);   // nums = ..., 3rd largest is 8. Return 8.
     kthLargest.add(4);   // nums = ..., 3rd largest is 8. Return 8.
     ```
+
 -   **Constraints**:
     -   $1 <= k <= 10^4$
     -   $0 <= nums.length <= 10^4$
@@ -28,11 +30,13 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 每次 `add` 時，將所有數字排序，然後取 index `len - k`。
+
 -   **Initialize**: $O(N \log N)$.
 -   **Add**: $O(N \log N)$ per call.
 -   **Result**: 效率太差，尤其是當 `add` 被呼叫很多次時。
 
 或者維護一個 Sorted List / Insert Sort。
+
 -   **Add**: $O(N)$.
 -   仍然不夠高效。
 
@@ -89,19 +93,20 @@ public:
             add(num);
         }
     }
-    
+
     int add(int val) {
         minHeap.push(val);
-        
+
         if (minHeap.size() > k) {
             minHeap.pop();
         }
-        
+
         return minHeap.top();
     }
 };
 
 /**
+
  * Your KthLargest object will be instantiated and called as such:
  * KthLargest* obj = new KthLargest(k, nums);
  * int param_1 = obj->add(val);
@@ -148,17 +153,17 @@ public:
             add(x);
         }
     }
-    
+
     int add(int val) {
         // 先把新元素放進去
         pq.push(val);
-        
+
         // 如果超過 K 個元素，把最小的那個踢掉
         // 因為我們要找的是「前 K 大」，所以最小的那個 (Heap Top) 只要超過個數就沒資格留下來
         if (pq.size() > K) {
             pq.pop();
         }
-        
+
         // 此時 Heap Top 就是第 K 大的元素
         // (Heap 裡存的是 Top 1 到 Top K，其中最小的就是 Top K)
         return pq.top();

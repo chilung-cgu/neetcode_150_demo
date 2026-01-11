@@ -32,6 +32,7 @@ for `i` from 0 to n:
 ## 3. 💡 The "Aha!" Moment (優化)
 
 我們希望這兩個因子都最大化：
+
 1.  **Width** (`right - left`)
 2.  **Height** (`min(height[left], height[right])`)
 
@@ -66,7 +67,7 @@ public:
         int left = 0;
         int right = height.size() - 1;
         int max_area = 0;
-        
+
         while (left < right) {
             // 計算當前面積
             // 寬度: right - left
@@ -75,9 +76,9 @@ public:
             int h = min(height[left], height[right]);
             int w = right - left;
             int current_area = h * w;
-            
+
             max_area = max(max_area, current_area);
-            
+
             // Greedy Move: 移動較短的那邊
             // 因為受限於短邊，如果不移短邊，移長邊只會讓寬度變小，高度卻無法增加(被短邊卡死)
             if (height[left] < height[right]) {
@@ -86,7 +87,7 @@ public:
                 right--;
             }
         }
-        
+
         return max_area;
     }
 };
@@ -99,15 +100,15 @@ class Solution:
     def maxArea(self, height: List[int]) -> int:
         l, r = 0, len(height) - 1
         res = 0
-        
+
         while l < r:
             res = max(res, min(height[l], height[r]) * (r - l))
-            
+
             if height[l] < height[r]:
                 l += 1
             else:
                 r -= 1
-                
+
         return res
 ```
 
@@ -160,6 +161,7 @@ public:
 由於我們規定每次都移動較短的那邊，這意味著我們是在不斷縮減搜索區間 `[L, R]`。
 如果我們的演算法錯過了 `(optL, optR)`，那只能是因為在某個時刻，我們移動了 `optL` (雖然它可能比較高) 或者移動了 `optR`。
 但我們的規則是「只移動較短的」。如果我們處在 `L=optL` 且 `R > optR` 的狀態：
+
 1.  如果 `height[optL] > height[R]` -> 我們會移動 `R` (正確，朝 `optR` 前進)。
 2.  如果 `height[optL] < height[R]` -> 我們會移動 `optL`?
     -   等等，如果 `height[optL]` 真的比右邊那個非最佳解還短，那這就不會是最佳解的一部分了嗎？

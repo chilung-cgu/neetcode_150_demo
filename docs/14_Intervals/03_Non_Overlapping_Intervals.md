@@ -21,6 +21,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 嘗試移除所有可能的區間子集，檢查剩餘的是否重疊，並找出移除數量最少的。
+
 -   **Time**: $O(2^N)$。
 
 ---
@@ -62,13 +63,13 @@ class Solution {
 public:
     int eraseOverlapIntervals(vector<vector<int>>& intervals) {
         if (intervals.empty()) return 0;
-        
+
         // 1. Sort by start time
         sort(intervals.begin(), intervals.end());
-        
+
         int res = 0;
         int prevEnd = intervals[0][1];
-        
+
         for (int i = 1; i < intervals.size(); i++) {
             // Overlap detected?
             if (intervals[i][0] < prevEnd) {
@@ -81,7 +82,7 @@ public:
                 prevEnd = intervals[i][1];
             }
         }
-        
+
         return res;
     }
 };
@@ -92,19 +93,19 @@ public:
 ```python
 class Solution:
     def eraseOverlapIntervals(self, intervals: List[List[int]]) -> int:
-        intervals.sort() 
+        intervals.sort()
         res = 0
         prevEnd = intervals[0][1]
-        
+
         for start, end in intervals[1:]:
             if start < prevEnd:
                 # Overlap
                 res += 1
                 # Remove the one with larger end time (keep smaller end)
-                prevEnd = min(prevEnd, end) 
+                prevEnd = min(prevEnd, end)
             else:
                 prevEnd = end
-                
+
         return res
 ```
 
@@ -117,21 +118,21 @@ class Solution {
 public:
     int eraseOverlapIntervals(vector<vector<int>>& intervals) {
         if (intervals.empty()) return 0;
-        
+
         // 1. 按起始時間排序
         sort(intervals.begin(), intervals.end());
-        
+
         int removeCount = 0;
         // 紀錄「上一個保留區間」的結束時間
         int prevEnd = intervals[0][1];
-        
+
         for (int i = 1; i < intervals.size(); i++) {
             // 檢查當前區間是否與前一個重疊
             // 由於已排序，start >= prevStart，所以只要看 start < prevEnd
             if (intervals[i][0] < prevEnd) {
                 // 發生重疊，必須移除一個
                 removeCount++;
-                
+
                 // 貪心策略：
                 // 我們有兩個選擇：移除 prev (上一個) 或 current (當前)
                 // 為了讓後面的空間最大化，我們應該保留「結束時間較早」的那個
@@ -144,7 +145,7 @@ public:
                 prevEnd = intervals[i][1];
             }
         }
-        
+
         return removeCount;
     }
 };

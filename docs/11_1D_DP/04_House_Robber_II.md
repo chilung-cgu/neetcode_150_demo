@@ -25,6 +25,7 @@
 
 這題的難點在於頭尾相連。如果我们直接用 linear DP 會有問題。
 直接枚舉：
+
 -   搶第 1 間 -> 不能搶第 2 間，也不能搶最後一間。
 -   不搶第 1 間 -> 可以考慮搶或不搶最後一間。
 -   暴力遞迴會很慢。
@@ -37,6 +38,7 @@
 因為頭 (`index 0`) 和尾 (`index n-1`) 互斥，所以我們只能選其中一個（或者都不選，這包含在選一個的情況裡）。
 
 所以問題等價於：
+
 1.  **情況一**：不搶最後一間 (`index n-1`)。
     -   搶劫範圍：`nums[0]` 到 `nums[n-2]`。
 2.  **情況二**：不搶第一間 (`index 0`)。
@@ -63,28 +65,28 @@ public:
         int n = nums.size();
         if (n == 0) return 0;
         if (n == 1) return nums[0];
-        
+
         // Scenario 1: Rob houses 0 to n-2 (Exclude last)
         int max1 = robLinear(nums, 0, n - 2);
-        
+
         // Scenario 2: Rob houses 1 to n-1 (Exclude first)
         int max2 = robLinear(nums, 1, n - 1);
-        
+
         return max(max1, max2);
     }
-    
+
 private:
     // Helper function from House Robber I
     int robLinear(vector<int>& nums, int start, int end) {
         int prev2 = 0;
         int prev1 = 0;
-        
+
         for (int i = start; i <= end; i++) {
             int current = max(prev1, prev2 + nums[i]);
             prev2 = prev1;
             prev1 = current;
         }
-        
+
         return prev1;
     }
 };
@@ -96,7 +98,7 @@ private:
 class Solution:
     def rob(self, nums: List[int]) -> int:
         return max(nums[0], self.helper(nums[1:]), self.helper(nums[:-1]))
-        
+
     def helper(self, nums):
         rob1, rob2 = 0, 0
         for n in nums:
@@ -117,7 +119,7 @@ public:
         // 邊界條件：如果只有一間房子，直接搶，不用管鄰居
         // 如果這個不處理，下面的 range 可能會有問題
         if (nums.size() == 1) return nums[0];
-        
+
         // 因為首尾相連，我們把它拆成兩種線性情況：
         // 1. 不包含最後一間房子 (範圍 [0 ... n-2])
         // 2. 不包含第一間房子 (範圍 [1 ... n-1])
@@ -127,18 +129,18 @@ public:
             robRange(nums, 1, nums.size() - 1)
         );
     }
-    
+
     // 這就是 House Robber I 的邏輯，只是指定了 start 和 end
     int robRange(vector<int>& nums, int start, int end) {
         int prev2 = 0;
         int prev1 = 0;
-        
+
         for (int i = start; i <= end; i++) {
             int curr = max(prev2 + nums[i], prev1);
             prev2 = prev1;
             prev1 = curr;
         }
-        
+
         return prev1;
     }
 };

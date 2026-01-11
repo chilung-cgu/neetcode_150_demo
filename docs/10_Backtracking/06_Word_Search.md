@@ -15,6 +15,7 @@
     ]
     word = "ABCCED"
     ```
+
 -   **Output**: `true`
     -   (0,0)A -> (0,1)B -> (0,2)C -> (1,2)C -> (1,3)E -> (2,3)E ? No, last is D.
     -   (0,0)A -> (0,1)B -> (0,2)C -> (1,2)C -> (2,2)E -> (2,1)D. YES.
@@ -33,6 +34,7 @@
 
 **Backtracking**:
 對 board 上的每一個 cell，如果 `board[i][j] == word[0]`，則以此為起點開始 DFS。
+
 -   DFS 需要維護 `visited` 狀態 (可以用 `board[i][j] = '#'` 來標記)。
 -   **Time**: $O(M \times N \times 4^L)$。
     -   $L$ 是 word length。
@@ -69,11 +71,11 @@ public:
     bool exist(vector<vector<char>>& board, string word) {
         int m = board.size();
         int n = board[0].size();
-        
+
         // Simple Pruning: Check if board has enough chars
         // (Optional but good for edge cases)
         // ...
-        
+
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 if (board[i][j] == word[0]) {
@@ -83,35 +85,35 @@ public:
                 }
             }
         }
-        
+
         return false;
     }
-    
+
 private:
     bool dfs(vector<vector<char>>& board, int r, int c, string& word, int index) {
         // Base case: All chars matched
         if (index == word.length()) {
             return true;
         }
-        
+
         // Boundary check and Char match check
         if (r < 0 || r >= board.size() || c < 0 || c >= board[0].size() || board[r][c] != word[index]) {
             return false;
         }
-        
+
         // Mark as visited (temporarily)
         char temp = board[r][c];
         board[r][c] = '#';
-        
+
         // Explore 4 directions
         bool found = dfs(board, r + 1, c, word, index + 1) ||
                      dfs(board, r - 1, c, word, index + 1) ||
                      dfs(board, r, c + 1, word, index + 1) ||
                      dfs(board, r, c - 1, word, index + 1);
-        
+
         // Backtrack (Restore)
         board[r][c] = temp;
-        
+
         return found;
     }
 };
@@ -124,16 +126,16 @@ class Solution:
     def exist(self, board: List[List[str]], word: str) -> bool:
         ROWS, COLS = len(board), len(board[0])
         path = set()
-        
+
         def dfs(r, c, i):
             if i == len(word):
                 return True
-            if (r < 0 or c < 0 or 
-                r >= ROWS or c >= COLS or 
-                word[i] != board[r][c] or 
+            if (r < 0 or c < 0 or
+                r >= ROWS or c >= COLS or
+                word[i] != board[r][c] or
                 (r, c) in path):
                 return False
-            
+
             path.add((r, c))
             res = (dfs(r + 1, c, i + 1) or
                    dfs(r - 1, c, i + 1) or
@@ -141,7 +143,7 @@ class Solution:
                    dfs(r, c - 1, i + 1))
             path.remove((r, c))
             return res
-        
+
         for r in range(ROWS):
             for c in range(COLS):
                 if dfs(r, c, 0):
@@ -159,7 +161,7 @@ public:
     bool exist(vector<vector<char>>& board, string word) {
         int m = board.size();
         int n = board[0].size();
-        
+
         // 遍歷每一個格子，找到這字串的第一個字
         for(int i=0; i<m; i++){
             for(int j=0; j<n; j++){
@@ -169,9 +171,9 @@ public:
                 }
             }
         }
-        return false;   
+        return false;
     }
-    
+
     // DFS 函數：當前在 (r,c)，要匹配 word[index]
     bool dfs(vector<vector<char>>& board, int r, int c, string& word, int index) {
         // Base Case 1: 已經成功匹配完所有的字元
@@ -181,31 +183,31 @@ public:
         // 所以如果能夠走到 index == word.size()，代表成功。
         // 但這裡我們需要在進入之前先檢查 index 是否到底？
         // 修正邏輯：我們是檢查當前这一格。
-        
-        // 邏輯: 
+
+        // 邏輯:
         // 1. 檢查越界
         if (r < 0 || r >= board.size() || c < 0 || c >= board[0].size()) return false;
-        
+
         // 2. 檢查字元是否匹配，或是否已訪問 ('#')
         if (board[r][c] != word[index]) return false;
-        
+
         // 3. 如果這是最後一個字元，且匹配成功 (上面沒 return false)，則成功
         if (index == word.size() - 1) return true;
-        
+
         // 4. 標記訪問
         char temp = board[r][c];
         board[r][c] = '#';
-        
+
         // 5. 遞迴四個方向
         // 只要有一個方向成功，就回傳 true
         bool res = dfs(board, r+1, c, word, index+1) ||
                    dfs(board, r-1, c, word, index+1) ||
                    dfs(board, r, c+1, word, index+1) ||
                    dfs(board, r, c-1, word, index+1);
-        
+
         // 6. Backtrack 恢復
         board[r][c] = temp;
-        
+
         return res;
     }
 };

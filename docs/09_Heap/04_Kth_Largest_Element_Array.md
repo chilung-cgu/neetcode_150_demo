@@ -25,6 +25,7 @@
 
 **Sorting**:
 直接排序，然後取 `nums[nums.size() - k]`。
+
 -   **Time**: $O(N \log N)$.
 -   **Space**: $O(1)$ or $O(N)$ (depending on sort implementation).
 
@@ -36,6 +37,7 @@
 
 **Approach 1: Min-Heap (size K)**
 維護一個大小為 $k$ 的 Min-Heap。
+
 -   遍歷每個元素。
 -   Push element。
 -   如果 size > k，Pop min。
@@ -46,6 +48,7 @@
 利用 QuickSort 的 Partition 思想。
 每次選一個 Pivot，將陣列分為與 Pivot 比較的三部分：`< Pivot`, `== Pivot`, `> Pivot`。
 我們知道第 k 大的元素會落在哪一區。
+
 -   如果是找第 k **小**，比較直觀。找第 k **大**，可以轉成找第 `N - k + 1` 小。
 -   平均時間複雜度：$N + N/2 + N/4 + \dots = O(N)$。
 -   最壞時間複雜度：$O(N^2)$ (如果 pivot 選得不好)。
@@ -70,7 +73,7 @@ public:
         // nth_element 將第 n 個位置的元素放到排序後的正確位置
         // 並且保證前面的都比它小，後面的都比它大 (或相反，看 comparator)
         // 這裡我們找第 k 大，相當於找「排序後 index 為 k-1 的元素」(如果用 greater 降序排)
-        
+
         nth_element(nums.begin(), nums.begin() + k - 1, nums.end(), greater<int>());
         return nums[k - 1];
     }
@@ -89,14 +92,14 @@ class Solution {
 public:
     int findKthLargest(vector<int>& nums, int k) {
         priority_queue<int, vector<int>, greater<int>> minHeap;
-        
+
         for (int num : nums) {
             minHeap.push(num);
             if (minHeap.size() > k) {
                 minHeap.pop();
             }
         }
-        
+
         return minHeap.top();
     }
 };
@@ -109,7 +112,7 @@ class Solution:
     def findKthLargest(self, nums: List[int], k: int) -> int:
         # Convert kth largest to index of k-th smallest
         k = len(nums) - k
-        
+
         def quickSelect(l, r):
             pivot, p = nums[r], l
             for i in range(l, r):
@@ -117,11 +120,11 @@ class Solution:
                     nums[p], nums[i] = nums[i], nums[p]
                     p += 1
             nums[p], nums[r] = nums[r], nums[p]
-            
+
             if p > k: return quickSelect(l, p - 1)
             elif p < k: return quickSelect(p + 1, r)
             else: return nums[p]
-            
+
         return quickSelect(0, len(nums) - 1)
 ```
 
@@ -139,18 +142,18 @@ public:
         // 且 nums[0...k-2] 都 >= nums[k-1]，nums[k...end] 都 <= nums[k-1]
         // greater<int>() 讓它變成降序邏輯
         nth_element(nums.begin(), nums.begin() + k - 1, nums.end(), greater<int>());
-        
+
         return nums[k - 1];
     }
-    
+
     /* 解法 2: Min-Heap (O(N log k))
     int findKthLargest(vector<int>& nums, int k) {
         // 建立一個最小堆
         priority_queue<int, vector<int>, greater<int>> minHeap;
-        
+
         for (int num : nums) {
             minHeap.push(num);
-            
+
             // 保持堆的大小為 k
             // 因為是 Min-Heap，堆頂是這 k 個數中最小的
             // 也就是目前為止第 k 大的數
@@ -158,7 +161,7 @@ public:
                 minHeap.pop(); // 把不夠大的踢掉
             }
         }
-        
+
         return minHeap.top();
     }
     */

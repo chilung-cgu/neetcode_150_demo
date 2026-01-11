@@ -33,11 +33,13 @@
 
 **Algorithm 1: DFS with 3 States (三色標記法)**
 每個節點有三種狀態：
+
 1.  **0 (Unvisited)**: 還沒訪問過。
 2.  **1 (Visiting)**: 正在訪問（在當前遞迴堆疊中）。如果 DFS 過程中遇到狀態 1 的節點，說明遇到了 **環**。
 3.  **2 (Visited)**: 已經訪問過且沒有發現環。安全的節點。
 
 遍歷所有節點：
+
 -   如果是 0 -> 啟動 DFS。
 -   如果是 1 -> Return False (Cycle detected)。
 -   如果是 2 -> Return True (Safe)。
@@ -72,10 +74,10 @@ public:
         for (const auto& edge : prerequisites) {
             adj[edge[1]].push_back(edge[0]);
         }
-        
+
         // 0: Unvisited, 1: Visiting, 2: Visited
         vector<int> state(numCourses, 0);
-        
+
         for (int i = 0; i < numCourses; i++) {
             if (state[i] == 0) {
                 if (hasCycle(adj, state, i)) {
@@ -83,26 +85,26 @@ public:
                 }
             }
         }
-        
+
         return true;
     }
-    
+
 private:
     bool hasCycle(const vector<vector<int>>& adj, vector<int>& state, int curr) {
         // If current node is visiting, we found a cycle (back edge)
         if (state[curr] == 1) return true;
         // If current node is already visited and safe, no cycle here
         if (state[curr] == 2) return false;
-        
+
         // Mark as visiting
         state[curr] = 1;
-        
+
         for (int neighbor : adj[curr]) {
             if (hasCycle(adj, state, neighbor)) {
                 return true;
             }
         }
-        
+
         // Mark as visited (safe)
         state[curr] = 2;
         return false;
@@ -118,27 +120,27 @@ class Solution:
         preMap = { i: [] for i in range(numCourses) }
         for crs, pre in prerequisites:
             preMap[pre].append(crs)
-            
+
         # visitSet = all nodes along the current DFS path
         visitSet = set()
-        
+
         def dfs(crs):
             if crs in visitSet:
                 return False # Loop detected
             if preMap[crs] == []:
                 return True # No prereqs or already processed (optimization needed for strict O(V+E))
-            
+
             visitSet.add(crs)
             for neighbor in preMap[crs]:
                 if not dfs(neighbor): return False
             visitSet.remove(crs)
-            
+
             preMap[crs] = [] # Mark as verified to avoid re-visiting
             return True
-            
+
         for crs in range(numCourses):
             if not dfs(crs): return False
-            
+
         return True
 ```
 
@@ -157,13 +159,13 @@ public:
             // edge 為 [course, prereq] -> 從 prereq 指向 course
             adj[edge[1]].push_back(edge[0]);
         }
-        
+
         // 狀態陣列
         // 0: 未訪問 (Unvisited)
         // 1: 正在訪問 (Visiting - 在當前遞迴堆疊中)
         // 2: 已訪問且安全 (Visited - 確定無環)
         vector<int> state(numCourses, 0);
-        
+
         // 對每個節點執行 DFS
         for (int i = 0; i < numCourses; i++) {
             // 只對未訪問的節點啟動，以避免重複計算
@@ -173,28 +175,28 @@ public:
                 }
             }
         }
-        
+
         return true; // 無環，可完成
     }
-    
+
 private:
     bool hasCycle(const vector<vector<int>>& adj, vector<int>& state, int curr) {
         // 如果遇到狀態 1，代表在當前遞迴路徑中又回到了自己 -> 發現環
         if (state[curr] == 1) return true;
-        
+
         // 如果遇到狀態 2，代表這個節點之前檢查過了，且無環 -> 安全
         if (state[curr] == 2) return false;
-        
+
         // 將當前節點標記為正在訪問
         state[curr] = 1;
-        
+
         // 遞迴檢查所有鄰居
         for (int neighbor : adj[curr]) {
             if (hasCycle(adj, state, neighbor)) {
                 return true;
             }
         }
-        
+
         // 遞迴結束，標記當前節點為已訪問且安全
         state[curr] = 2;
         return false;

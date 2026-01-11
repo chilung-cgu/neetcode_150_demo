@@ -5,6 +5,7 @@
 給兩個字串 `word1` 和 `word2`。
 請計算將 `word1` 轉換成 `word2` 所需的 **最少操作次數**。
 允許的操作有三種：
+
 1.  Insert a character (插入)
 2.  Delete a character (刪除)
 3.  Replace a character (替換)
@@ -25,6 +26,7 @@
 
 **Recursion**:
 `minDist(i, j)`: min distance between `word1[i:]` and `word2[j:]`.
+
 -   If `word1[i] == word2[j]`:
     -   `minDist(i+1, j+1)` (Match)
 -   If `word1[i] != word2[j]`: `1 + min(`
@@ -74,14 +76,14 @@ public:
     int minDistance(string word1, string word2) {
         int m = word1.length();
         int n = word2.length();
-        
+
         // dp[i][j]
         vector<vector<int>> dp(m + 1, vector<int>(n + 1));
-        
+
         // Base cases
         for (int i = 0; i <= m; i++) dp[i][0] = i; // Delete all chars
         for (int j = 0; j <= n; j++) dp[0][j] = j; // Insert all chars
-        
+
         for (int i = 1; i <= m; i++) {
             for (int j = 1; j <= n; j++) {
                 if (word1[i - 1] == word2[j - 1]) {
@@ -95,7 +97,7 @@ public:
                 }
             }
         }
-        
+
         return dp[m][n];
     }
 };
@@ -107,19 +109,19 @@ public:
 class Solution:
     def minDistance(self, word1: str, word2: str) -> int:
         dp = [[float("inf")] * (len(word2) + 1) for i in range(len(word1) + 1)]
-        
+
         for j in range(len(word2) + 1):
             dp[len(word1)][j] = len(word2) - j
         for i in range(len(word1) + 1):
             dp[i][len(word2)] = len(word1) - i
-            
+
         for i in range(len(word1) - 1, -1, -1):
             for j in range(len(word2) - 1, -1, -1):
                 if word1[i] == word2[j]:
                     dp[i][j] = dp[i + 1][j + 1]
                 else:
                     dp[i][j] = 1 + min(dp[i + 1][j], dp[i][j + 1], dp[i + 1][j + 1])
-                    
+
         return dp[0][0]
 ```
 Note: Python solution uses backward DP (filling from bottom-right), C++ uses standard forward DP. Both are valid.
@@ -134,16 +136,16 @@ public:
     int minDistance(string word1, string word2) {
         int m = word1.length();
         int n = word2.length();
-        
+
         // dp[i][j] = 將 word1 前 i 個字元 轉換成 word2 前 j 個字元 的最小步數
         vector<vector<int>> dp(m + 1, vector<int>(n + 1));
-        
+
         // Base case initialization
         // 當 word2 是空字串 (j=0)，word1 必須刪除所有 i 個字元
         for (int i = 0; i <= m; i++) dp[i][0] = i;
         // 當 word1 是空字串 (i=0)，word1 必須插入所有 j 個字元
         for (int j = 0; j <= n; j++) dp[0][j] = j;
-        
+
         for (int i = 1; i <= m; i++) {
             for (int j = 1; j <= n; j++) {
                 // 如果當前字元相同 (注意 index 是 i-1, j-1)
@@ -160,7 +162,7 @@ public:
                 }
             }
         }
-        
+
         return dp[m][n];
     }
 };

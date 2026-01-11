@@ -23,6 +23,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 用 `std::set<vector<int>>` 來自動去重。
+
 -   先 Sort `nums` (確保子集裡的元素順序一致，以便 Set 去重)。
 -   生成所有子集。
 -   放入 Set。
@@ -39,6 +40,7 @@
 `nums = [1, 2, 2]`
 
 在 DFS 決策時：
+
 -   **Include**: 正常選 `nums[i]`。
 -   **Exclude** (`nums[i]`):
     -   如果我們決定 **不選** `nums[i]`，那麼緊接著的 `nums[i+1]` 如果跟 `nums[i]` 一樣，我們也 **不能選** `nums[i+1]`。
@@ -47,6 +49,7 @@
 
 **Loop-based DFS**:
 在 `for (int i = start; i < n; i++)` 迴圈中：
+
 -   我們選 `nums[i]` 作為當前子集的新元素。
 -   如果 `i > start` 且 `nums[i] == nums[i-1]`，代表這個數字已經在「同一層」被選過了，再選就會產生重複的子集開頭，所以 **continue**。
 
@@ -67,19 +70,19 @@ public:
     vector<vector<int>> subsetsWithDup(vector<int>& nums) {
         vector<vector<int>> result;
         vector<int> current;
-        
+
         // Sorting is crucial for handling duplicates
         sort(nums.begin(), nums.end());
-        
+
         backtrack(nums, 0, current, result);
         return result;
     }
-    
+
 private:
     void backtrack(vector<int>& nums, int start, vector<int>& current, vector<vector<int>>& result) {
         // Every combination we reach is a valid subset
         result.push_back(current);
-        
+
         for (int i = start; i < nums.size(); i++) {
             // Skip duplicates:
             // If current element is same as previous, and it's not the first element
@@ -87,13 +90,13 @@ private:
             if (i > start && nums[i] == nums[i - 1]) {
                 continue;
             }
-            
+
             // Include nums[i]
             current.push_back(nums[i]);
-            
+
             // Recurse
             backtrack(nums, i + 1, current, result);
-            
+
             // Backtrack
             current.pop_back();
         }
@@ -108,23 +111,23 @@ class Solution:
     def subsetsWithDup(self, nums: List[int]) -> List[List[int]]:
         res = []
         nums.sort()
-        
+
         def backtrack(i, subset):
             if i == len(nums):
                 res.append(subset[::])
                 return
-            
+
             # All subsets that include nums[i]
             subset.append(nums[i])
             backtrack(i + 1, subset)
             subset.pop()
-            
+
             # All subsets that don't include nums[i]
             # Skip duplicates
             while i + 1 < len(nums) and nums[i] == nums[i + 1]:
                 i += 1
             backtrack(i + 1, subset)
-            
+
         backtrack(0, [])
         return res
 ```
@@ -139,19 +142,19 @@ public:
     vector<vector<int>> subsetsWithDup(vector<int>& nums) {
         vector<vector<int>> res;
         vector<int> subset;
-        
+
         // 1. 排序：讓重複的數字靠在一起
         sort(nums.begin(), nums.end());
-        
+
         dfs(nums, 0, subset, res);
         return res;
     }
-    
+
     // DFS / Backtracking
     void dfs(vector<int>& nums, int index, vector<int>& subset, vector<vector<int>>& res) {
         // 每次進到 DFS，當前的 subset 都是一個合法的子集 (包含空集合)
         res.push_back(subset);
-        
+
         for (int i = index; i < nums.size(); i++) {
             // 2. 去重邏輯：
             // 如果當前數字 nums[i] 與上一個數字 nums[i-1] 相同，
@@ -160,13 +163,13 @@ public:
             if (i > index && nums[i] == nums[i-1]) {
                 continue;
             }
-            
+
             // 選取 nums[i]
             subset.push_back(nums[i]);
-            
+
             // 遞迴下一層
             dfs(nums, i + 1, subset, res);
-            
+
             // Backtrack
             subset.pop_back();
         }

@@ -38,6 +38,7 @@
 那麼由此可以得到收益：
 `nums[left] * nums[i] * nums[right]`
 並且問題被分割成兩個獨立的子問題：
+
 1.  `(left, i)` 之間的最大收益 (最後剩下 `i` 和 `left` 作為邊界)
 2.  `(i, right)` 之間的最大收益 (最後剩下 `i` 和 `right` 作為邊界)
 
@@ -76,11 +77,11 @@ public:
         for (int i = 0; i < n; i++) {
             arr[i + 1] = nums[i];
         }
-        
+
         // dp[i][j] represents max coins in range (i, j) - exclusive
         // New size is n + 2
         vector<vector<int>> dp(n + 2, vector<int>(n + 2, 0));
-        
+
         // Iterate length of the range (number of balloons to burst)
         // len is from 1 to n
         for (int len = 1; len <= n; len++) {
@@ -90,7 +91,7 @@ public:
             // left + len + 1 <= n + 1  =>  left <= n - len
             for (int left = 0; left <= n - len; left++) {
                 int right = left + len + 1;
-                
+
                 // Iterate pivot k (the last balloon bursts in (left, right))
                 for (int k = left + 1; k < right; k++) {
                     dp[left][right] = max(dp[left][right],
@@ -98,7 +99,7 @@ public:
                 }
             }
         }
-        
+
         return dp[0][n + 1];
     }
 };
@@ -111,20 +112,20 @@ class Solution:
     def maxCoins(self, nums: List[int]) -> int:
         nums = [1] + nums + [1]
         dp = {} # (l, r) -> maxCoins
-        
+
         def dfs(l, r):
             if l > r:
                 return 0
             if (l, r) in dp:
                 return dp[(l, r)]
-            
+
             dp[(l, r)] = 0
             for i in range(l, r + 1):
                 coins = nums[l - 1] * nums[i] * nums[r + 1]
                 coins += dfs(l, i - 1) + dfs(i + 1, r)
                 dp[(l, r)] = max(dp[(l, r)], coins)
             return dp[(l, r)]
-            
+
         return dfs(1, len(nums) - 2)
 ```
 Note: The Python recursive solution uses inclusive range `[l, r]`, while C++ iterative DP uses exclusive range `(left, right)`. Both are standard. Exclusive range is often cleaner for iterative.
@@ -143,11 +144,11 @@ public:
         arr[0] = 1;
         arr[n + 1] = 1;
         for (int i = 0; i < n; i++) arr[i+1] = nums[i];
-        
+
         // dp[left][right] 代表開區間 (left, right) 內所有氣球被戳破的最大收益
         // 注意：dp table 大小是 (n+2) x (n+2)
         vector<vector<int>> dp(n + 2, vector<int>(n + 2, 0));
-        
+
         // 2. 區間 DP 框架
         // len: 區間內氣球的數量 (從 1 到 n)
         for (int len = 1; len <= n; len++) {
@@ -156,20 +157,20 @@ public:
             // 我們要計算 dp[left][right]
             for (int left = 0; left <= n - len; left++) {
                 int right = left + len + 1;
-                
+
                 // k: 最後一個戳破的氣球的位置 (在 left 和 right 之間)
                 for (int k = left + 1; k < right; k++) {
-                    // 收益 = 
+                    // 收益 =
                     // 1. 戳破 left 到 k 之間所有氣球的最大收益 (dp[left][k])
                     // 2. 戳破 k 到 right 之間所有氣球的最大收益 (dp[k][right])
                     // 3. 最後戳破 k 自己的收益 (因為最後戳破 k，所以它的鄰居是邊界 left 和 right)
                     //    -> arr[left] * arr[k] * arr[right]
-                    dp[left][right] = max(dp[left][right], 
+                    dp[left][right] = max(dp[left][right],
                         dp[left][k] + dp[k][right] + arr[left] * arr[k] * arr[right]);
                 }
             }
         }
-        
+
         // 回傳範圍 (0, n+1) 即包含原本所有氣球的最大收益
         return dp[0][n + 1];
     }

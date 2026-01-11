@@ -29,6 +29,7 @@ Koko 每小時可以選擇一串香蕉吃掉 `k` 根（如果那串少於 `k` �
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 從 `k=1` 開始嘗試，直到找到第一個滿足條件的 `k`。
+
 -   對於每個 `k`，我們需要遍歷 `piles` 計算總時間。
 -   計算時間：`time = ceil(pile / k)`。
 -   假設最大堆大概是 `maxP`。
@@ -76,19 +77,19 @@ public:
         // 找到最大堆作為上限
         int right = 0;
         for (int p : piles) right = max(right, p);
-        
+
         int res = right; // 初始化為最大值，確保有解
-        
+
         while (left <= right) {
             int k = left + (right - left) / 2;
-            
+
             // 計算以速度 k 需要多少小時
             long long hours = 0;
             for (int p : piles) {
                 // ceil(p / k)
-                hours += (p + k - 1) / k; 
+                hours += (p + k - 1) / k;
             }
-            
+
             if (hours <= h) {
                 // 吃得完，嘗試更慢的速度
                 res = k;
@@ -98,7 +99,7 @@ public:
                 left = k + 1;
             }
         }
-        
+
         return res;
     }
 };
@@ -113,13 +114,13 @@ class Solution:
     def minEatingSpeed(self, piles: List[int], h: int) -> int:
         l, r = 1, max(piles)
         res = r
-        
+
         while l <= r:
             k = (l + r) // 2
             hours = 0
             for p in piles:
                 hours += math.ceil(p / k)
-            
+
             if hours <= h:
                 res = min(res, k)
                 r = k - 1
@@ -142,19 +143,19 @@ public:
         // 所以速度超過 max(piles) 並不會讓你吃更快 (時間數不會減少)。
         int r = 0;
         for (int p : piles) r = max(r, p);
-        
+
         int result = r;
-        
+
         while (l <= r) {
             int k = l + (r - l) / 2;
-            
+
             // 計算總時數
             long long totalTime = 0; // 防止溢位，雖然 h <= 10^9 int 夠，但保險
             for (int p : piles) {
                 // 向上取整的整數運算技巧： (a + b - 1) / b 等同於 ceil(a/b)
                 totalTime += ((long long)p + k - 1) / k;
             }
-            
+
             // 檢查是否滿足條件
             if (totalTime <= h) {
                 // 可以在 h 小時內吃完 -> 這是一個可能的解
@@ -166,7 +167,7 @@ public:
                 l = k + 1;
             }
         }
-        
+
         return result;
     }
 };

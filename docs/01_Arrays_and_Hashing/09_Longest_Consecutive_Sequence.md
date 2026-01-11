@@ -15,6 +15,7 @@
 ## 2. 🐢 Brute Force (Sorting)
 
 即使題目說不行，我們還是先想一下 Sorting。
+
 1.  Sort array: `[1, 2, 3, 4, 100, 200]`
 2.  Iterate: 如果 `nums[i] == nums[i-1] + 1`，長度 +1。
 3.  **Cost**: $O(n \log n)$。
@@ -26,6 +27,7 @@
 要達到 $O(n)$，我們必須使用 **Hash Set** 來達成 $O(1)$ 的 lookup。
 
 思路：
+
 1.  把所有數字丟進 `unordered_set`。能快速知道某個數字存不存在。
 2.  遍歷陣列中的每一個數字 `num`。
 3.  **關鍵判斷**：我們怎麼知道 `num` 是不是一個序列的**開頭**？
@@ -54,7 +56,7 @@ public:
     int longestConsecutive(vector<int>& nums) {
         unordered_set<int> numSet(nums.begin(), nums.end());
         int longest = 0;
-        
+
         for (int n : numSet) { // 遍歷 Set 而不是 vector 可以自動去重
             // Check if 'n' is the start of a sequence
             if (numSet.find(n - 1) == numSet.end()) {
@@ -65,7 +67,7 @@ public:
                 longest = max(longest, length);
             }
         }
-        
+
         return longest;
     }
 };
@@ -78,7 +80,7 @@ class Solution:
     def longestConsecutive(self, nums: List[int]) -> int:
         numSet = set(nums)
         longest = 0
-        
+
         for n in numSet:
             # check if its the start of a sequence
             if (n - 1) not in numSet:
@@ -100,16 +102,16 @@ public:
         // 1. 將所有數字放入 Hash Set，達到 O(1) 查詢
         // 同時去除重複數字，這對這題沒影響 (連續序列不需重複)
         unordered_set<int> elements(nums.begin(), nums.end());
-        
+
         int maxLen = 0;
-        
+
         for (int num : elements) {
             // 2. 只有當 num 是序列的「起點」時，才開始計算
             // 判斷方式：如果 num - 1 不在 set 裡，那 num 必然是起點
             if (elements.find(num - 1) == elements.end()) {
                 int currentNum = num;
                 int currentLen = 1;
-                
+
                 // 3. 往上尋找 consecutive elements
                 // 這是一個 inner loop，但因為每個數字只會被執行 "計數" 一次
                 // 所以整體還是 O(n)
@@ -117,14 +119,14 @@ public:
                     currentNum += 1;
                     currentLen += 1;
                 }
-                
+
                 // 4. 更新最大長度
                 if (currentLen > maxLen) {
                     maxLen = currentLen;
                 }
             }
         }
-        
+
         return maxLen;
     }
 };

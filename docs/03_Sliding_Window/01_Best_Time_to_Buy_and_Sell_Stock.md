@@ -37,6 +37,7 @@
 
 所以我們只需要維護一個變數 `minPrice`，代表「過去最低的股價」。
 然後對於每一天：
+
 1.  計算 `todayProfit = currentPrice - minPrice`。
 2.  更新 `maxProfit`。
 3.  如果 `currentPrice < minPrice`，更新 `minPrice`。
@@ -67,18 +68,18 @@ public:
     int maxProfit(vector<int>& prices) {
         int minPrice = INT_MAX;
         int maxProfit = 0;
-        
+
         for (int price : prices) {
             // 隨時更新歷史最低價
             if (price < minPrice) {
                 minPrice = price;
-            } 
+            }
             // 如果沒破底，就算算看如果今天賣能賺多少，並更新最大利潤
             else if (price - minPrice > maxProfit) {
                 maxProfit = price - minPrice;
             }
         }
-        
+
         return maxProfit;
     }
 };
@@ -91,7 +92,7 @@ class Solution:
     def maxProfit(self, prices: List[int]) -> int:
         l, r = 0, 1 # l=buy, r=sell
         maxP = 0
-        
+
         while r < len(prices):
             if prices[l] < prices[r]:
                 profit = prices[r] - prices[l]
@@ -99,7 +100,7 @@ class Solution:
             else:
                 l = r # 發現更低的買點，直接跳過去
             r += 1
-            
+
         return maxP
 ```
 
@@ -114,7 +115,7 @@ public:
         // 設定 minPrice 為最大整數，確保第一個價格一定會成為新的 minPrice
         int minPrice = INT_MAX;
         int maxP = 0;
-        
+
         // 遍歷每一天的股價
         for (const int& p : prices) {
             // Step 1: 試圖更新最低買入點
@@ -122,7 +123,7 @@ public:
             // (雖然這可能發生在最後一天，導致無法賣出，但邏輯上更新它沒壞處)
             if (p < minPrice) {
                 minPrice = p;
-            } 
+            }
             // Step 2: 如果今天價格比較高，嘗試計算利潤
             else {
                 // 如果今天賣出的利潤比之前紀錄的還高，更新 maxP
@@ -132,7 +133,7 @@ public:
                 }
             }
         }
-        
+
         return maxP;
     }
 };

@@ -13,6 +13,7 @@ Max Howell (Homebrew creator) 曾經在面試被 Google 問這題而被拒，非
      / \   / \
     1   3 6   9
     ```
+
 -   **Output**:
     ```
          4
@@ -21,6 +22,7 @@ Max Howell (Homebrew creator) 曾經在面試被 Google 問這題而被拒，非
      / \   / \
     9   6 3   1
     ```
+
 -   **Constraints**:
     -   The number of nodes in the tree is in the range `[0, 100]`.
     -   `-100 <= Node.val <= 100`.
@@ -37,11 +39,13 @@ Max Howell (Homebrew creator) 曾經在面試被 Google 問這題而被拒，非
 
 這是一個典型的 **DFS (Pre-order / Post-order) Traversal** 問題。
 對於樹中的每一個節點：
+
 1.  交換它的左子節點和右子節點 `swap(node->left, node->right)`.
 2.  遞迴地對左子樹做同樣的事。
 3.  遞迴地對右子樹做同樣的事。
 
 順序可以是：
+
 -   Swap -> Recurse Left -> Recurse Right (Pre-order)
 -   Recurse Left -> Recurse Right -> Swap (Post-order)
 -   In-order (Left -> Swap -> Left) 比較麻煩因为 Swap 後左右變了，要注意。
@@ -68,16 +72,16 @@ class Solution {
 public:
     TreeNode* invertTree(TreeNode* root) {
         if (!root) return nullptr;
-        
+
         // Swap
         TreeNode* temp = root->left;
         root->left = root->right;
         root->right = temp;
-        
+
         // Recurse
         invertTree(root->left);
         invertTree(root->right);
-        
+
         return root;
     }
 };
@@ -96,13 +100,13 @@ class Solution:
     def invertTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
         if not root:
              return None
-        
+
         # Swap
         root.left, root.right = root.right, root.left
-        
+
         self.invertTree(root.left)
         self.invertTree(root.right)
-        
+
         return root
 ```
 
@@ -118,19 +122,19 @@ public:
         if (root == nullptr) {
             return nullptr;
         }
-        
+
         // 核心操作：交換左右子樹指針
         // 就像是在照鏡子
         TreeNode* temp = root->left;
         root->left = root->right;
         root->right = temp;
-        
+
         // 遞迴處理子樹
         // 注意：即使交換了，我們依然要對這兩個子節點進行遞迴
         // 先後的邏輯是：先交換當前層的左右指針，然後深入下一層去交換它們內部的指針
         invertTree(root->left);  // 因為已經交換過，這其實是去原本的 right child
         invertTree(root->right); // 這其實是去原本的 left child
-        
+
         return root;
     }
 };

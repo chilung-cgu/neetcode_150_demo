@@ -13,6 +13,7 @@
       \
        2
     ```
+
 -   **Output**: 1
 -   **Input**: `root = [5,3,6,2,4,null,null,1], k = 3`
     ```
@@ -26,6 +27,7 @@
     ```
     Sorted: 1, 2, 3, 4, 5, 6
     3rd smallest: 3
+
 -   **Output**: 3
 -   **Constraints**:
     -   $1 <= k <= n <= 10^4$
@@ -36,6 +38,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 將所有節點數值存入一個 vector，然後 sort。
+
 -   對於 BST，如果在存的時候用 In-order Traversal，就不需要 sort。
 -   **Time**: $O(N)$ (Traversal) + $O(0)$ (Already sorted).
 -   **Space**: $O(N)$ (Vector).
@@ -50,6 +53,7 @@
 
 **Iterative Method**:
 使用 Stack 模擬 Recursion，可以更早 return。
+
 1.  一直往左走並 push stack。
 2.  Pop stack (這是當前最小的)。
 3.  `k--`。Check if `k == 0`.
@@ -84,27 +88,27 @@ public:
     int kthSmallest(TreeNode* root, int k) {
         stack<TreeNode*> st;
         TreeNode* curr = root;
-        
+
         while (curr || !st.empty()) {
             // 1. Go as left as possible
             while (curr) {
                 st.push(curr);
                 curr = curr->left;
             }
-            
+
             // 2. Process node (Backtrack)
             curr = st.top();
             st.pop();
-            
+
             k--;
             if (k == 0) {
                 return curr->val;
             }
-            
+
             // 3. Go right
             curr = curr->right;
         }
-        
+
         return -1; // Should not reach here
     }
 };
@@ -121,19 +125,19 @@ public:
         traverse(root, k);
         return result;
     }
-    
+
     // Return true if answer found (to stop recursion early)
     bool traverse(TreeNode* node, int k) {
         if (!node) return false;
-        
+
         if (traverse(node->left, k)) return true;
-        
+
         count++;
         if (count == k) {
             result = node->val;
             return true;
         }
-        
+
         return traverse(node->right, k);
     }
 };
@@ -152,12 +156,12 @@ class Solution:
     def kthSmallest(self, root: Optional[TreeNode], k: int) -> int:
         stack = []
         curr = root
-        
+
         while stack or curr:
             while curr:
                 stack.append(curr)
                 curr = curr.left
-            
+
             curr = stack.pop()
             k -= 1
             if k == 0:
@@ -177,28 +181,28 @@ public:
         // 因為中序遍歷 BST 會得到由小到大的序列
         stack<TreeNode*> st;
         TreeNode* curr = root;
-        
+
         while (curr != nullptr || !st.empty()) {
             // 步驟 1: 盡可能往左走，將沿途節點壓入 Stack
             while (curr != nullptr) {
                 st.push(curr);
                 curr = curr->left;
             }
-            
+
             // 步驟 2: 取出 Stack 頂部節點 (這是當前未處理節點中的最小值)
             curr = st.top();
             st.pop();
-            
+
             // 步驟 3: 這是第幾小的？
             k--;
             if (k == 0) {
                 return curr->val; // 找到第 k 小
             }
-            
+
             // 步驟 4: 轉向右子樹
             curr = curr->right;
         }
-        
+
         return -1;
     }
 };

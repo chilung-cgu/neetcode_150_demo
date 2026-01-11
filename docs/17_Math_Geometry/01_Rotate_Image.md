@@ -14,6 +14,7 @@
       [7,8,9]
     ]
     ```
+
 -   **Output**:
     ```
     [
@@ -22,6 +23,7 @@
       [9,6,3]
     ]
     ```
+
 -   **Constraints**:
     -   $1 <= n <= 20$.
     -   Matrix values range $[-1000, 1000]$.
@@ -32,6 +34,7 @@
 
 如果可以使用額外空間，我們可以創建一個新矩陣 `new_matrix`。
 `new_matrix[j][n - 1 - i] = matrix[i][j]`。
+
 -   **Time**: $O(N^2)$.
 -   **Space**: $O(N^2)$. (題目要求 $O(1)$)
 
@@ -40,6 +43,7 @@
 ## 3. 💡 The "Aha!" Moment (優化)
 
 要在原地旋轉，可以通過兩個簡單的矩陣操作組合來實現：
+
 1.  **Transpose (轉置)**: 沿著主對角線翻轉。行變列，列變行。
     -   `swap(matrix[i][j], matrix[j][i])` for `i < j`.
 2.  **Reflect (水平鏡像翻轉)**: 每一行左右翻轉。
@@ -84,14 +88,14 @@ class Solution {
 public:
     void rotate(vector<vector<int>>& matrix) {
         int n = matrix.size();
-        
+
         // 1. Transpose: Swap matrix[i][j] with matrix[j][i]
         for (int i = 0; i < n; i++) {
             for (int j = i + 1; j < n; j++) {
                 swap(matrix[i][j], matrix[j][i]);
             }
         }
-        
+
         // 2. Reverse each row
         for (int i = 0; i < n; i++) {
             reverse(matrix[i].begin(), matrix[i].end());
@@ -109,12 +113,12 @@ class Solution:
         Do not return anything, modify matrix in-place instead.
         """
         n = len(matrix)
-        
+
         # Transpose
         for i in range(n):
             for j in range(i + 1, n):
                 matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
-                
+
         # Reverse rows
         for i in range(n):
             matrix[i].reverse()
@@ -129,7 +133,7 @@ class Solution {
 public:
     void rotate(vector<vector<int>>& matrix) {
         int n = matrix.size();
-        
+
         // 步驟 1: 轉置矩陣 (Transpose)
         // 將 (i, j) 與 (j, i) 交換
         // 只需遍歷主對角線上方 (j > i) 的元素
@@ -139,7 +143,7 @@ public:
                 swap(matrix[i][j], matrix[j][i]);
             }
         }
-        
+
         // 步驟 2: 每一行進行左右翻轉 (Reverse)
         // 轉置後的矩陣，每一行逆序後，就變成了順時針旋轉 90 度的結果
         for (int i = 0; i < n; i++) {

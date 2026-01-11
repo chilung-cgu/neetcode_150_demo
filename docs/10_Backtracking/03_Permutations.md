@@ -21,6 +21,7 @@
 
 **Recursion**:
 第一層選一個數字，剩下的 $n-1$ 個數字做全排列。
+
 -   **Time**: $O(N! \times N)$。
 -   $N=6$， $6! = 720$，非常小。
 
@@ -32,6 +33,7 @@
 我們可以維護一個 `visited` 陣列（或 set），表示哪些數字已經被選過了。
 
 或者，使用 **Swap** 的方式：
+
 -   在 `dfs(index)` 函數中，我們決定第 `index` 位置要放哪個數字。
 -   我們可以將 `nums[index]` 與 `nums[i]` (其中 `i >= index`) 交換。
 -   交換後遞迴 `dfs(index + 1)`。
@@ -68,10 +70,10 @@ private:
         for (int i = start; i < nums.size(); i++) {
             // Swap current element with start element
             swap(nums[start], nums[i]);
-            
+
             // Recurse for the next index
             backtrack(nums, start + 1, result);
-            
+
             // Backtrack (Swap back)
             swap(nums[start], nums[i]);
         }
@@ -96,13 +98,13 @@ public:
         dfs(nums, visited, current, result);
         return result;
     }
-    
+
     void dfs(vector<int>& nums, vector<bool>& visited, vector<int>& current, vector<vector<int>>& result) {
         if (current.size() == nums.size()) {
             result.push_back(current);
             return;
         }
-        
+
         for (int i = 0; i < nums.size(); i++) {
             if (!visited[i]) {
                 visited[i] = true;
@@ -122,23 +124,23 @@ public:
 class Solution:
     def permute(self, nums: List[int]) -> List[List[int]]:
         res = []
-        
+
         # base case
         if len(nums) == 1:
             return [nums[:]] # return copy
-        
+
         for i in range(len(nums)):
             n = nums.pop(0)
-            
+
             perms = self.permute(nums)
-            
+
             for perm in perms:
                 perm.append(n)
-            
+
             res.extend(perms)
-            
+
             nums.append(n)
-            
+
         return res
 ```
 
@@ -156,22 +158,22 @@ public:
         solve(nums, 0, result);
         return result;
     }
-    
+
     void solve(vector<int>& nums, int start, vector<vector<int>>& result) {
         // Base Case: start 到達陣列結尾，代表找到一個排列
         if (start == nums.size()) {
             result.push_back(nums); // 存入當前 nums 的狀態
             return;
         }
-        
+
         // 嘗試將 index 'start' 之後的每一個數字放到 'start' 位置
         for (int i = start; i < nums.size(); i++) {
             // [Decision]: 讓 nums[i] 來到 nums[start] 的位置
             swap(nums[start], nums[i]);
-            
+
             // [Recursion]: 決定下一個位置 (start + 1)
             solve(nums, start + 1, result);
-            
+
             // [Backtrack]: 恢復交換，還原陣列狀態，以便下一輪迴圈嘗試別的數字
             swap(nums[start], nums[i]);
         }

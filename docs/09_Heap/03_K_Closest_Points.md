@@ -27,6 +27,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 計算所有點到原點的距離，然後排序。取前 `k` 個。
+
 -   Sort: $O(N \log N)$.
 -   Space: $O(N)$ (to store distances or sorted copy).
 
@@ -41,6 +42,7 @@
 維護一個大小為 `k` 的 Max-Heap，存放目前為止「最近」的 k 個點的距離。
 Max-Heap 的頂端是這 k 個點中「最遠」的那個。
 當遇到一個新點，如果它的距離比 Heap Top 還小，代表它比目前第 k 近的點還要近，所以把 Heap Top 踢掉，換新點進去。
+
 -   **Time**: $O(N \log k)$. (Better than sort if $k \ll N$)
 
 **Approach 2: Quick Select (Hoare's Selection Algorithm)**
@@ -68,24 +70,24 @@ public:
     vector<vector<int>> kClosest(vector<vector<int>>& points, int k) {
         // Max-Heap: store pair<distance_squared, index>
         priority_queue<pair<long, int>> pq;
-        
+
         for (int i = 0; i < points.size(); i++) {
             long dist = (long)points[i][0] * points[i][0] + (long)points[i][1] * points[i][1];
-            
+
             pq.push({dist, i});
-            
+
             if (pq.size() > k) {
                 pq.pop();
             }
         }
-        
+
         vector<vector<int>> result;
         while (!pq.empty()) {
             int idx = pq.top().second;
             result.push_back(points[idx]);
             pq.pop();
         }
-        
+
         return result;
     }
 };
@@ -106,16 +108,16 @@ public:
         // the element at the nth position is the one that would be in that position
         // if the range was fully sorted.
         // All elements before it are <= to it.
-        
+
         auto dist = [](const vector<int>& p) {
             return p[0] * p[0] + p[1] * p[1];
         };
-        
-        nth_element(points.begin(), points.begin() + k, points.end(), 
+
+        nth_element(points.begin(), points.begin() + k, points.end(),
             [&](const vector<int>& a, const vector<int>& b) {
                 return dist(a) < dist(b);
             });
-            
+
         return vector<vector<int>>(points.begin(), points.begin() + k);
     }
 };
@@ -132,16 +134,16 @@ class Solution:
         for x, y in points:
             dist = (x ** 2) + (y ** 2)
             minHeap.append([dist, x, y])
-            
+
         heapq.heapify(minHeap)
-        
+
         res = []
         for _ in range(k):
             _, x, y = heapq.heappop(minHeap)
             res.append([x, y])
-            
+
         return res
-        
+
     # Or using nsmallest
     # return heapq.nsmallest(k, points, key=lambda p: p[0]**2 + p[1]**2)
 ```
@@ -158,15 +160,15 @@ public:
         // C++ 預設 priority_queue 是 Max-Heap
         // 內容物是 pair<距離平方, 在原陣列的index>
         priority_queue<pair<long long, int>> maxHeap;
-        
+
         for (int i = 0; i < points.size(); i++) {
             long long x = points[i][0];
             long long y = points[i][1];
             long long dist = x*x + y*y;
-            
+
             // 將當前點加入堆
             maxHeap.push({dist, i});
-            
+
             // 如果堆的大小超過 K，代表我們存了 K+1 個點
             // 因為是 Max-Heap，堆頂是這 K+1 個點中「距離最遠」的
             // 我們把最遠的踢掉，剩下的就是比較近的 K 個
@@ -174,7 +176,7 @@ public:
                 maxHeap.pop();
             }
         }
-        
+
         // 將堆中的結果轉成答案 vector
         vector<vector<int>> result;
         while (!maxHeap.empty()) {
@@ -182,7 +184,7 @@ public:
             result.push_back(points[index]);
             maxHeap.pop();
         }
-        
+
         return result;
     }
 };

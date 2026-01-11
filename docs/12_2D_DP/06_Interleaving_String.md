@@ -24,6 +24,7 @@
 
 **Recursion**:
 `check(i, j, k)` checks match between `s1[i:]`, `s2[j:]`, and `s3[k:]`.
+
 -   If `s1[i] == s3[k]`, try `check(i+1, j, k+1)`.
 -   If `s2[j] == s3[k]`, try `check(i, j+1, k+1)`.
 -   If both match, try both branches.
@@ -38,6 +39,7 @@
 
 **Transition**:
 `dp[i][j]` is true IF:
+
 1.  `s1` 的第 `i` 個字元 (`s1[i-1]`) 等於 `s3` 的第 `i+j` 個字元 (`s3[i+j-1]`)，且 `dp[i-1][j]` 為真。
     **OR**
 2.  `s2` 的第 `j` 個字元 (`s2[j-1]`) 等於 `s3` 的第 `i+j` 個字元 (`s3[i+j-1]`)，且 `dp[i][j-1]` 為真。
@@ -66,38 +68,38 @@ public:
     bool isInterleave(string s1, string s2, string s3) {
         int m = s1.length();
         int n = s2.length();
-        
+
         if (m + n != s3.length()) return false;
-        
+
         // dp[i][j]: can s1[0...i-1] and s2[0...j-1] form s3[0...i+j-1]
         vector<vector<bool>> dp(m + 1, vector<bool>(n + 1, false));
-        
+
         dp[0][0] = true;
-        
+
         // Initialize column 0 (using only s1)
         for (int i = 1; i <= m; i++) {
             dp[i][0] = dp[i-1][0] && (s1[i-1] == s3[i-1]);
         }
-        
+
         // Initialize row 0 (using only s2)
         for (int j = 1; j <= n; j++) {
             dp[0][j] = dp[0][j-1] && (s2[j-1] == s3[j-1]);
         }
-        
+
         for (int i = 1; i <= m; i++) {
             for (int j = 1; j <= n; j++) {
                 // Check if s1[i-1] matches s3 current char
                 if (s1[i-1] == s3[i+j-1]) {
                     dp[i][j] = dp[i][j] || dp[i-1][j];
                 }
-                
+
                 // Check if s2[j-1] matches s3 current char
                 if (s2[j-1] == s3[i+j-1]) {
                     dp[i][j] = dp[i][j] || dp[i][j-1];
                 }
             }
         }
-        
+
         return dp[m][n];
     }
 };
@@ -110,30 +112,30 @@ class Solution:
     def isInterleave(self, s1: str, s2: str, s3: str) -> bool:
         if len(s1) + len(s2) != len(s3):
             return False
-        
+
         dp = [ [False] * (len(s2) + 1) for i in range(len(s1) + 1) ]
         dp[len(s1)][len(s2)] = True
-        
+
         # Here we perform bottom-up recursion (memoization logic backwards)
         # But standard forward DP is more intuitive.
         # Let's stick to forward DP as in C++ logic for explanation.
-        
+
         # Re-implementing forward DP in Python for clarity
         dp_fwd = [[False] * (len(s2) + 1) for _ in range(len(s1) + 1)]
         dp_fwd[0][0] = True
-        
+
         for i in range(len(s1) + 1):
             for j in range(len(s2) + 1):
                 if i == 0 and j == 0: continue
-                
+
                 # Check s2 (left neighbor)
                 if j > 0 and dp_fwd[i][j - 1] and s2[j - 1] == s3[i + j - 1]:
                     dp_fwd[i][j] = True
-                    
+
                 # Check s1 (top neighbor)
                 if i > 0 and dp_fwd[i - 1][j] and s1[i - 1] == s3[i + j - 1]:
                     dp_fwd[i][j] = True
-                    
+
         return dp_fwd[len(s1)][len(s2)]
 ```
 
@@ -147,31 +149,31 @@ public:
     bool isInterleave(string s1, string s2, string s3) {
         int m = s1.size();
         int n = s2.size();
-        
+
         // 基本檢查：長度必須吻合
         if (m + n != s3.size()) return false;
-        
+
         // dp[i][j] 代表：
         // s1 的前 i 個字元 + s2 的前 j 個字元
         // 是否能交錯組成 s3 的前 i+j 個字元
         vector<vector<bool>> dp(m + 1, vector<bool>(n + 1, false));
-        
+
         // Base Case: 兩個空字串組成一個空字串 -> True
         dp[0][0] = true;
-        
+
         // 填表
         for (int i = 0; i <= m; i++) {
             for (int j = 0; j <= n; j++) {
                 // 跳過已經初始化的 (0,0)
                 if (i == 0 && j == 0) continue;
-                
+
                 // 1. 嘗試從 s1 拿字元
                 // 如果 i > 0 (s1 還有剩)，且 s1 當前字元 (i-1) 等於 s3 當前字元 (i+j-1)
                 // 且之前的狀態 dp[i-1][j] 是可行的
                 if (i > 0 && s1[i-1] == s3[i+j-1] && dp[i-1][j]) {
                     dp[i][j] = true;
                 }
-                
+
                 // 2. 嘗試從 s2 拿字元
                 // 如果 j > 0 (s2 還有剩)，且 s2 當前字元 (j-1) 等於 s3 當前字元 (i+j-1)
                 // 且之前的狀態 dp[i][j-1] 是可行的
@@ -180,7 +182,7 @@ public:
                 }
             }
         }
-        
+
         return dp[m][n];
     }
 };

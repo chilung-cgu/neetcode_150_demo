@@ -23,9 +23,11 @@
 使用 `visited` 陣列。
 遍歷 0 到 n-1。
 如果節點 `i` 沒有被訪問過：
+
 -   `count++`
 -   啟動 DFS/BFS 遍歷整個分量並標記為已訪問。
 回傳 `count`。
+
 -   **Time**: $O(V + E)$。其實這不是暴力解，這已經是很好的解法了。
 
 ---
@@ -64,26 +66,26 @@ public:
     int countComponents(int n, vector<vector<int>>& edges) {
         parent.resize(n);
         iota(parent.begin(), parent.end(), 0);
-        
+
         int components = n;
-        
+
         for (const auto& edge : edges) {
             int rootU = find(edge[0]);
             int rootV = find(edge[1]);
-            
+
             if (rootU != rootV) {
                 // Merge two components
                 parent[rootU] = rootV;
                 components--;
             }
         }
-        
+
         return components;
     }
-    
+
 private:
     vector<int> parent;
-    
+
     int find(int x) {
         if (parent[x] != x) {
             parent[x] = find(parent[x]);
@@ -99,23 +101,23 @@ private:
 class Solution:
     def countComponents(self, n: int, edges: List[List[int]]) -> int:
         parent = [i for i in range(n)]
-        
+
         def find(x):
             if parent[x] != x:
                 parent[x] = find(parent[x])
             return parent[x]
-            
+
         def union(n1, n2):
             p1, p2 = find(n1), find(n2)
             if p1 == p2:
                 return 0 # Already connected, count doesn't change
             parent[p1] = p2
             return 1 # Successful union, count decreases by 1
-            
+
         res = n
         for n1, n2 in edges:
             res -= union(n1, n2)
-            
+
         return res
 ```
 
@@ -130,16 +132,16 @@ public:
         // 初始化並查集
         parent.resize(n);
         iota(parent.begin(), parent.end(), 0);
-        
+
         // 初始狀態下，每個節點都是一個獨立的連通分量
         // 所以總數為 n
         int components = n;
-        
+
         // 遍歷所有邊
         for (const auto& edge : edges) {
             int rootU = find(edge[0]);
             int rootV = find(edge[1]);
-            
+
             // 如果两个节点不在同一个集合中，合并它们
             if (rootU != rootV) {
                 parent[rootU] = rootV;
@@ -148,13 +150,13 @@ public:
                 components--;
             }
         }
-        
+
         return components;
     }
-    
+
 private:
     vector<int> parent;
-    
+
     // 查找並執行路徑壓縮
     int find(int x) {
         if (parent[x] != x) {

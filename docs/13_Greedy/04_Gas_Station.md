@@ -25,6 +25,7 @@
 
 嘗試以每一個站作為起點。
 `check(start)`: 模擬開一圈。
+
 -   **Time**: $O(N^2)$。 TLE for $10^5$.
 
 ---
@@ -67,22 +68,22 @@ public:
     int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {
         long long totalGas = 0;
         long long totalCost = 0;
-        
+
         // 1. Check if solution exists
         for (int i = 0; i < gas.size(); i++) {
             totalGas += gas[i];
             totalCost += cost[i];
         }
-        
+
         if (totalGas < totalCost) return -1;
-        
+
         // 2. Find start position
         int start = 0;
         long long currentTank = 0;
-        
+
         for (int i = 0; i < gas.size(); i++) {
             currentTank += (gas[i] - cost[i]);
-            
+
             // If tank drops below 0, it means we cannot reach i from 'start'
             // Furthermore, no station between 'start' and 'i' can be a valid start
             // So we try starting from i + 1
@@ -91,7 +92,7 @@ public:
                 currentTank = 0;
             }
         }
-        
+
         return start;
     }
 };
@@ -104,17 +105,17 @@ class Solution:
     def canCompleteCircuit(self, gas: List[int], cost: List[int]) -> int:
         if sum(gas) < sum(cost):
             return -1
-        
+
         total = 0
         start = 0
-        
+
         for i in range(len(gas)):
             total += (gas[i] - cost[i])
-            
+
             if total < 0:
                 total = 0
                 start = i + 1
-                
+
         return start
 ```
 
@@ -128,23 +129,23 @@ public:
     int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {
         long long totalGas = 0;
         long long totalCost = 0;
-        
+
         // 先計算總油量和總消耗，如果總油量不足，直接回傳 -1
         // (也可以在一個迴圈內做，但分開寫更清晰)
         for (int x : gas) totalGas += x;
         for (int x : cost) totalCost += x;
-        
+
         if (totalGas < totalCost) return -1;
-        
+
         // 既然總油量足夠，那一定有解 (題目保證唯一解)
         // 使用 Greedy 找起點
         int start = 0;
         long long currentTank = 0;
-        
+
         for (int i = 0; i < gas.size(); i++) {
             // 累加當前的淨油量 (gas - cost)
             currentTank += (gas[i] - cost[i]);
-            
+
             // 如果開到這裡油箱變負的了
             // 說明從目前的 start 到 i 這是不可行的
             // 而且 start 到 i 中間的任一點也不可能作為起點 (因為 start 到它們累積是正的，扣掉正的會更慘)
@@ -154,7 +155,7 @@ public:
                 currentTank = 0;
             }
         }
-        
+
         // 為什麼不需要檢查 start 是否跑完整圈？
         // 因為前面的總和检查保證了 total sum >= 0。
         // 如果我們找到了唯一的有效區間 [start, n-1]，使得這個區間 sum >= 0，

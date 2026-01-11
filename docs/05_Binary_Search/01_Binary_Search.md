@@ -21,6 +21,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 遍歷整個陣列。
+
 -   **Time**: $O(n)$。
 -   **Result**: 題目明確要求 $O(\log n)$，所以這不合規。
 
@@ -32,6 +33,7 @@
 因為陣列是 **Sorted** 的，我們不需要檢查每個元素。
 
 我們每次都檢查 **中間 (Middle)** 的元素：
+
 1.  如果 `nums[mid] == target`，找到了！
 2.  如果 `nums[mid] > target`，代表目標一定在左半邊 (因為右半邊都比 `nums[mid]` 大，肯定更比 `target` 大)。所以我們把搜尋範圍縮小到 `[left, mid - 1]`。
 3.  如果 `nums[mid] < target`，代表目標一定在右半邊。所以我們把搜尋範圍縮小到 `[mid + 1, right]`。
@@ -59,11 +61,11 @@ public:
     int search(vector<int>& nums, int target) {
         int left = 0;
         int right = nums.size() - 1;
-        
+
         while (left <= right) {
             // 防止 (left + right) 溢位
             int mid = left + (right - left) / 2;
-            
+
             if (nums[mid] == target) {
                 return mid;
             } else if (nums[mid] < target) {
@@ -72,7 +74,7 @@ public:
                 right = mid - 1;
             }
         }
-        
+
         return -1;
     }
 };
@@ -84,7 +86,7 @@ public:
 class Solution:
     def search(self, nums: List[int], target: int) -> int:
         l, r = 0, len(nums) - 1
-        
+
         while l <= r:
             m = l + ((r - l) // 2)  # (l + r) // 2 works in Python but this is good habit
             if nums[m] > target:
@@ -106,18 +108,18 @@ public:
     int search(vector<int>& nums, int target) {
         int low = 0;
         int high = nums.size() - 1;
-        
+
         // 迴圈條件是 low <= high
         // 為什麼要有 '=' ? 因為當 low == high 時，或者是只有一個元素時，
         // 我們仍然需要檢查那最後一個位置是否是 target。
         while (low <= high) {
             // 計算中點
             int mid = low + (high - low) / 2;
-            
+
             if (nums[mid] == target) {
                 return mid;
-            } 
-            
+            }
+
             if (nums[mid] < target) {
                 // 目標在右邊，移動下界
                 low = mid + 1;
@@ -129,7 +131,7 @@ public:
                 high = mid - 1;
             }
         }
-        
+
         return -1;
     }
 };

@@ -6,10 +6,12 @@
 請判斷這些邊是否構成了一棵有效的樹。
 
 樹的定義：
+
 1.  **Fully Connected**: 所有節點都是連通的。
 2.  **No Cycles**: 沒有環。
 
 這等價於：
+
 -   連通分量數量為 1。
 -   邊的數量等於 `n - 1`。
 -   或者，如果在併查集中，每次 Union 的兩個點原本不連通，最後總共成功合併了 `n - 1` 次。
@@ -65,33 +67,33 @@ public:
         if (edges.size() != n - 1) {
             return false;
         }
-        
+
         parent.resize(n);
         iota(parent.begin(), parent.end(), 0);
-        
+
         int components = n;
-        
+
         for (const auto& edge : edges) {
             int rootU = find(edge[0]);
             int rootV = find(edge[1]);
-            
+
             // Condition 2: No cycles
             if (rootU == rootV) {
                 return false;
             }
-            
+
             // Merge
             parent[rootU] = rootV;
             components--;
         }
-        
+
         // Condition 3: Fully connected (1 component)
         return components == 1;
     }
-    
+
 private:
     vector<int> parent;
-    
+
     int find(int x) {
         if (parent[x] != x) {
             parent[x] = find(parent[x]);
@@ -108,18 +110,18 @@ class Solution:
     def validTree(self, n: int, edges: List[List[int]]) -> bool:
         if not n:
             return True
-        
+
         adj = { i:[] for i in range(n) }
         for n1, n2 in edges:
             adj[n1].append(n2)
             adj[n2].append(n1)
-            
+
         visit = set()
-        
+
         def dfs(i, prev):
             if i in visit:
                 return False # Loop detected
-            
+
             visit.add(i)
             for j in adj[i]:
                 if j == prev:
@@ -127,7 +129,7 @@ class Solution:
                 if not dfs(j, i):
                     return False
             return True
-        
+
         return dfs(0, -1) and n == len(visit)
 ```
 
@@ -144,38 +146,38 @@ public:
         if (edges.size() != n - 1) {
             return false;
         }
-        
+
         // 雖然上面的檢查過濾了大部分情況，但我們還需要確認「是否有環」或者「是否連通」
         // (如果有 n-1 條邊但有環，那必定不連通)
         // 使用 Union-Find 來同時檢查這兩點
-        
+
         parent.resize(n);
         iota(parent.begin(), parent.end(), 0);
-        
+
         int components = n;
-        
+
         for (const auto& edge : edges) {
             int rootU = find(edge[0]);
             int rootV = find(edge[1]);
-            
+
             // 如果两个节点已经在同一个集合中，再次连接它们会形成环
             if (rootU == rootV) {
                 return false;
             }
-            
+
             // 合併
             parent[rootU] = rootV;
             components--;
         }
-        
+
         // 如果無環且邊數正確，最後一定只剩 1 個連通分量
         // 但為了保險（或者省略掉第一步檢查時），檢查 components == 1 是最穩的
         return components == 1;
     }
-    
+
 private:
     vector<int> parent;
-    
+
     int find(int x) {
         if (parent[x] != x) {
             parent[x] = find(parent[x]);

@@ -5,6 +5,7 @@
 題目給兩棵 Binary Tree `p` 和 `q`。
 判斷它們是否 **完全相同**。
 相同意味著：
+
 1.  結構相同 (Structure).
 2.  每個對應節點的值相同 (Value).
 
@@ -22,6 +23,7 @@
 
 同時遍歷兩棵樹 (DFS/BFS)。
 每一步都檢查：
+
 -   `p` 和 `q` 是否同时為 null? (是 -> OK)
 -   `p` 和 `q` 只有一個為 null? (是 -> False)
 -   `p->val != q->val`? (是 -> False)
@@ -35,6 +37,7 @@
 
 **Logic**:
 `isSame(p, q)` is true IF:
+
 1.  Both null -> True.
 2.  One null, one not -> False.
 3.  Values different -> False.
@@ -60,16 +63,16 @@ class Solution {
 public:
     bool isSameTree(TreeNode* p, TreeNode* q) {
         // Base cases
-        
+
         // 1. Both are null -> Identical
         if (!p && !q) return true;
-        
+
         // 2. One is null, one is not -> Not identical
         if (!p || !q) return false;
-        
+
         // 3. Values are different -> Not identical
         if (p->val != q->val) return false;
-        
+
         // Recursive step: Check left value AND check right value
         return isSameTree(p->left, q->left) && isSameTree(p->right, q->right);
     }
@@ -85,8 +88,8 @@ class Solution:
             return True
         if not p or not q or p.val != q.val:
             return False
-            
-        return (self.isSameTree(p.left, q.left) and 
+
+        return (self.isSameTree(p.left, q.left) and
                 self.isSameTree(p.right, q.right))
 ```
 
@@ -102,13 +105,13 @@ public:
         if (p == nullptr && q == nullptr) {
             return true;
         }
-        
+
         // Condition 2: 其中一個到底了，另一個還有，結構不同 -> False
         // Condition 3: 兩個都沒到底，但是值不同 -> False
         if (p == nullptr || q == nullptr || p->val != q->val) {
             return false;
         }
-        
+
         // Recursive Step: 只有當左子樹相同 且 右子樹相同時，整棵樹才相同
         return isSameTree(p->left, q->left) && isSameTree(p->right, q->right);
     }

@@ -5,6 +5,7 @@
 給定一個只包含 `(`, `)`, `*` 的字串。
 檢查它是否為有效字串。
 規則：
+
 1.  `(` 必須有對應的 `)`。
 2.  `(` 必須在 `)` 之前。
 3.  `*` 可以被視為 `(`, `)`, 或 空字串 `""`。
@@ -25,9 +26,10 @@
 **Recursion / Backtracking**:
 對於每個 `*`，嘗試三種可能性：
 `check(index, openCount)`
+
 -   If '(': `check(index+1, openCount+1)`
 -   If ')': `if openCount>0 check(index+1, openCount-1)`
--   If '*': 
+-   If '*':
     -   `check(index+1, openCount+1)` (treat as '(')
     -   `if openCount>0 check(index+1, openCount-1)` (treat as ')')
     -   `check(index+1, openCount)` (treat as empty)
@@ -51,11 +53,13 @@ Greedy 的思路非常巧妙：
     -   綜合起來：`minOpen` 減 1 (最少可能情況)，`maxOpen` 加 1 (最多可能情況)。
 
 在任何時候：
+
 1.  如果 `maxOpen < 0`：說明即使把所有的 `*` 都當成左括號，也無法抵消右括號。這字串無效 (例如 `))((`)。Return False。
 2.  如果 `minOpen < 0`：說明 `minOpen` 的假設太激進了 (把太多 `*` 當成右括號了)，但我們還有其他選擇 (把 `*` 當空或左)，所以我們只要把 `minOpen` 重置為 0 即可 (因為左括號數量不可能為負)。
 
 遍歷結束後：
 檢查 `minOpen == 0`。
+
 -   如果 `minOpen == 0`，代表我們可以通過某種組合讓左括號剛好被抵消。
 -   (注意：我們只關心是否 *包含* 0，而 `minOpen` 一旦被重置為 0，就代表 0 在範圍內)。
 
@@ -76,7 +80,7 @@ public:
     bool checkValidString(string s) {
         int leftMin = 0; // Minimum possible open parentheses count
         int leftMax = 0; // Maximum possible open parentheses count
-        
+
         for (char c : s) {
             if (c == '(') {
                 leftMin++;
@@ -88,15 +92,15 @@ public:
                 leftMin--; // Treat as ')'
                 leftMax++; // Treat as '('
             }
-            
+
             if (leftMax < 0) return false; // Too many ')'
-            
+
             // leftMin cannot be negative (we can't have negative count of open parens)
             // If it goes negative, it just means treating * as ')' was not viable,
             // so we treat * as empty effectively resetting the lower bound to 0.
-            if (leftMin < 0) leftMin = 0; 
+            if (leftMin < 0) leftMin = 0;
         }
-        
+
         return leftMin == 0;
     }
 };
@@ -108,7 +112,7 @@ public:
 class Solution:
     def checkValidString(self, s: str) -> bool:
         leftMin, leftMax = 0, 0
-        
+
         for c in s:
             if c == "(":
                 leftMin += 1
@@ -119,12 +123,12 @@ class Solution:
             else:
                 leftMin -= 1
                 leftMax += 1
-                
+
             if leftMax < 0:
                 return False
             if leftMin < 0:
                 leftMin = 0
-                
+
         return leftMin == 0
 ```
 
@@ -140,7 +144,7 @@ public:
         // leftMax: 左括號數量的上界 (盡可能把 * 當成左括號)
         int leftMin = 0;
         int leftMax = 0;
-        
+
         for (char c : s) {
             if (c == '(') {
                 leftMin++;
@@ -152,18 +156,18 @@ public:
                 leftMin--; // 當成 ')'，讓左括號數變少
                 leftMax++; // 當成 '(', 讓左括號數變多
             }
-            
+
             // 如果上界都小於 0，代表把所有 * 都變成左括號也不夠抵消右括號
             // 必定無效 (e.g. "())")
             if (leftMax < 0) return false;
-            
+
             // 下界如果小於 0，是不合理的 (左括號數量不能是負的)
             // 這代表我們把太多 * 當成右括號了，這條路行不通
             // 但因為 leftMax >= 0 (上面檢查過)，所以我們還有其他選擇 (把 * 當空字串)
             // 所以我們只要把下界重置為 0 即可 (最少就是 0 個左括號)
             if (leftMin < 0) leftMin = 0;
         }
-        
+
         // 如果最終下界是 0，代表有一種情況可以剛好配對完畢
         return leftMin == 0;
     }

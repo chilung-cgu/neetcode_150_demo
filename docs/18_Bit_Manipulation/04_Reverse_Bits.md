@@ -36,6 +36,7 @@ return res;
 
 **Divide and Conquer (Bit Masking)**:
 如果不使用循環，可以利用分治法。
+
 1.  交換相鄰的 1 位：`0x55555555` (0101...)
     -   `n = ((n & 0xAAAAAAAA) >> 1) | ((n & 0x55555555) << 1)`
 2.  交換相鄰的 2 位：`0x33333333` (0011...)
@@ -65,13 +66,13 @@ public:
         for (int i = 0; i < 32; i++) {
             // Shift result to outputmake room for new bit
             res = res << 1;
-            
+
             // Get the last bit of n
             int bit = n & 1;
-            
+
             // Add it to result (strictly speaking, OR or ADD both work for 0/1)
             res = res | bit;
-            
+
             // Shift n to process next bit
             n = n >> 1;
         }
@@ -101,24 +102,24 @@ class Solution {
 public:
     uint32_t reverseBits(uint32_t n) {
         uint32_t res = 0;
-        
+
         // 必須循環 32 次，即使 n 變成 0 了，我們也要繼續補 0 到高位
         // 例如 n = 1 (0...01)，翻轉後應該是 10...0 (2^31)
         for (int i = 0; i < 32; i++) {
             // 將結果左移一位，騰出最低位
             res = res << 1;
-            
+
             // 取出 n 的最低位
             int bit = n & 1;
-            
+
             // 將取出的位放到 res 的最低位
             // (因為 res 剛左移過，最低位是 0，可以用 | 或 +)
             res = res | bit;
-            
+
             // 將 n 右移一位，準備處理下一位
             n = n >> 1;
         }
-        
+
         return res;
     }
 };

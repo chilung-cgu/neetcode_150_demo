@@ -26,6 +26,7 @@
 每個元素可以選擇放入 Set A 或 Set B。
 如果 Set A sum == Set B sum，則成功。
 這等同於 subset sum problem。
+
 -   **Time**: $O(2^N)$。
 
 ---
@@ -70,11 +71,11 @@ public:
     bool canPartition(vector<int>& nums) {
         int sum = accumulate(nums.begin(), nums.end(), 0);
         if (sum % 2 != 0) return false;
-        
+
         int target = sum / 2;
         unordered_set<int> dp;
         dp.insert(0);
-        
+
         for (int num : nums) {
             unordered_set<int> nextDP = dp; // Copy current possible sums
             for (int s : dp) {
@@ -85,7 +86,7 @@ public:
             }
             dp = nextDP;
         }
-        
+
         return dp.count(target);
     }
 };
@@ -104,18 +105,18 @@ public:
     bool canPartition(vector<int>& nums) {
         int sum = accumulate(nums.begin(), nums.end(), 0);
         if (sum % 2 != 0) return false;
-        
+
         int target = sum / 2;
         vector<bool> dp(target + 1, false);
         dp[0] = true;
-        
+
         for (int num : nums) {
             // Iterate backwards to avoid reusing the same element for the same sum
             for (int j = target; j >= num; j--) {
                 dp[j] = dp[j] || dp[j - num];
             }
         }
-        
+
         return dp[target];
     }
 };
@@ -128,11 +129,11 @@ class Solution:
     def canPartition(self, nums: List[int]) -> bool:
         if sum(nums) % 2 == 1:
             return False
-        
+
         dp = set()
         dp.add(0)
         target = sum(nums) // 2
-        
+
         for i in range(len(nums) - 1, -1, -1):
             nextDP = set()
             for t in dp:
@@ -156,19 +157,19 @@ public:
     bool canPartition(vector<int>& nums) {
         // 1. 計算總和
         int totalSum = accumulate(nums.begin(), nums.end(), 0);
-        
+
         // 如果總和是奇數，無法分成兩個相等的整數和
         if (totalSum % 2 != 0) return false;
-        
+
         int target = totalSum / 2;
-        
+
         // dp[j] 代表能否湊出總和 j
         // 大小為 target + 1
         vector<bool> dp(target + 1, false);
-        
+
         // Base case: 湊出 0 是可能的 (都不選)
         dp[0] = true;
-        
+
         // 2. 0/1 背包處理
         for (int num : nums) {
             // 必須從大到小遍歷，這是 0/1 背包壓縮空間的關鍵
@@ -178,7 +179,7 @@ public:
                 dp[j] = dp[j] || dp[j - num];
             }
         }
-        
+
         return dp[target];
     }
 };

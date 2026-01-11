@@ -27,6 +27,7 @@ RPN 本身就是為了方便電腦計算而設計的，所以直接模擬它的�
 使用 **Stack**。
 
 邏輯：
+
 1.  遍歷 `tokens`。
 2.  如果是 **數字**：
     -   Push 進 Stack。
@@ -55,13 +56,13 @@ class Solution {
 public:
     int evalRPN(vector<string>& tokens) {
         stack<int> s;
-        
+
         for (const string& token : tokens) {
             if (token == "+" || token == "-" || token == "*" || token == "/") {
                 // Pop right operand first!
                 int b = s.top(); s.pop();
                 int a = s.top(); s.pop();
-                
+
                 if (token == "+") s.push(a + b);
                 else if (token == "-") s.push(a - b);
                 else if (token == "*") s.push(a * b); // 注意 overflow，但題目保證 fit int
@@ -71,7 +72,7 @@ public:
                 s.push(stoi(token));
             }
         }
-        
+
         return s.top();
     }
 };
@@ -110,7 +111,7 @@ class Solution {
 public:
     int evalRPN(vector<string>& tokens) {
         stack<int> stk;
-        
+
         for (const string& t : tokens) {
             // 判斷是否為運算子
             // 小技巧：如果 string 長度大於 1，那肯定是負數或數字 (因為運算子只有 1 char)
@@ -124,24 +125,24 @@ public:
                 stk.push(stoi(t));
                 continue;
             }
-            
+
             // 這裡一定是運算子 +, -, *, /
             // 因為題目保證 Valid，所以 stack 一定至少有兩個數
             int right = stk.top(); stk.pop();
             int left = stk.top(); stk.pop();
-            
+
             long long res = 0; // 防止中間運算溢位，雖然題目說 int 夠用，但保險
             if (t == "+") res = (long long)left + right;
             else if (t == "-") res = (long long)left - right;
             else if (t == "*") res = (long long)left * right;
             else if (t == "/") res = left / right; // C++ 除法向 0 取整，符合題目
-            
+
             stk.push((int)res);
         }
-        
+
         return stk.top();
     }
-    
+
     // 輔助判斷是否為數字 (雖然上面用了更簡單的邏輯)
     bool is_number(const string& s) {
         return (s.size() > 1) || isdigit(s[0]);

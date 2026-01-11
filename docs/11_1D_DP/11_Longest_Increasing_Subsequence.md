@@ -23,6 +23,7 @@
 **Recursion**:
 `LIS(prev_val, current_index)`:
 對於當前元素，如果 `nums[i] > prev_val`，可以選擇：
+
 1.  包含它：`1 + LIS(nums[i], i + 1)`
 2.  不包含它：`LIS(prev_val, i + 1)`
 -   **Time**: $O(2^N)$。
@@ -40,6 +41,7 @@
 **Approach 2: Patience Sorting / Greedy + Binary Search ($O(N \log N)$)**
 我們維護一個陣列 `sub`。
 遍歷 `x` in `nums`:
+
 1.  如果 `x` 比 `sub` 中所有元素都大，將 `x` 加到 `sub` 末尾。
 2.  否則，用 `x` 替換 `sub` 中第一個大於或等於 `x` 的元素。
     -   這一步是 Greedy：我們希望子序列結尾越小越好，這樣後面才有更多機會接上更小的數。
@@ -64,10 +66,10 @@ public:
     int lengthOfLIS(vector<int>& nums) {
         int n = nums.size();
         if (n == 0) return 0;
-        
+
         vector<int> dp(n, 1);
         int maxLen = 1;
-        
+
         for (int i = 1; i < n; i++) {
             for (int j = 0; j < i; j++) {
                 if (nums[i] > nums[j]) {
@@ -76,7 +78,7 @@ public:
             }
             maxLen = max(maxLen, dp[i]);
         }
-        
+
         return maxLen;
     }
 };
@@ -94,9 +96,9 @@ class Solution {
 public:
     int lengthOfLIS(vector<int>& nums) {
         if (nums.empty()) return 0;
-        
+
         vector<int> sub; // This strictly increases
-        
+
         for (int x : nums) {
             if (sub.empty() || x > sub.back()) {
                 sub.push_back(x);
@@ -106,7 +108,7 @@ public:
                 *it = x; // Replace it
             }
         }
-        
+
         return sub.size();
     }
 };
@@ -118,7 +120,7 @@ public:
 class Solution:
     def lengthOfLIS(self, nums: List[int]) -> int:
         LIS = [1] * len(nums)
-        
+
         for i in range(len(nums) - 1, -1, -1):
             for j in range(i + 1, len(nums)):
                 if nums[i] < nums[j]:
@@ -139,7 +141,7 @@ public:
         // sub 陣列用來存放當前構建的「潛力」子序列
         // 並非最終的正確序列，但其長度會等於 LIS 長度
         vector<int> sub;
-        
+
         for (int x : nums) {
             // 如果 sub 為空或 x 比 sub 最後一個元素還大
             // 代表 x 可以接在最長序列後面，直接 push
@@ -151,13 +153,13 @@ public:
                 // 所以我們找到 sub 中 "第一個大於或等於 x" 的元素，並將其替換為 x
                 // 例如 sub=[2, 5], x=3 -> 把 5 換成 3 -> sub=[2, 3]
                 // 這樣長度不變，但結尾變小了，更有利於後面接上 4
-                
+
                 // std::lower_bound 回傳 iterator 指向第一個 >= x 的元素
                 auto it = lower_bound(sub.begin(), sub.end(), x);
                 *it = x;
             }
         }
-        
+
         return sub.size();
     }
 };

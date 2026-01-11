@@ -13,6 +13,7 @@
       [7, 8, 9]
     ]
     ```
+
 -   **Output**: `[1,2,3,6,9,8,7,4,5]`
 -   **Input**:
     ```
@@ -22,6 +23,7 @@
       [9,10,11,12]
     ]
     ```
+
 -   **Output**: `[1,2,3,4,8,12,11,10,9,5,6,7]`
 -   **Constraints**:
     -   $m, n$ up to 10.
@@ -40,12 +42,14 @@
 
 **Simulation with Boundaries (Layer-by-Layer)**:
 維護四個邊界：
+
 -   `top`
 -   `bottom`
 -   `left`
 -   `right`
 
 順序：
+
 1.  **Left to Right**: `matrix[top][left...right]`, then `top++`.
 2.  **Top to Bottom**: `matrix[top...bottom][right]`, then `right--`.
 3.  **Right to Left**: `matrix[bottom][right...left]`, then `bottom--`.
@@ -70,45 +74,45 @@ class Solution {
 public:
     vector<int> spiralOrder(vector<vector<int>>& matrix) {
         if (matrix.empty()) return {};
-        
+
         int m = matrix.size();
         int n = matrix[0].size();
         vector<int> result;
-        
+
         int top = 0;
         int bottom = m - 1;
         int left = 0;
         int right = n - 1;
-        
+
         while (top <= bottom && left <= right) {
             // 1. Left to Right
             for (int j = left; j <= right; j++) {
                 result.push_back(matrix[top][j]);
             }
             top++; // Shrink top boundary
-            
+
             // 2. Top to Bottom
             for (int i = top; i <= bottom; i++) {
                 result.push_back(matrix[i][right]);
             }
             right--; // Shrink right boundary
-            
+
             // Check if done after shrinking
             if (top > bottom || left > right) break;
-            
+
             // 3. Right to Left
             for (int j = right; j >= left; j--) {
                 result.push_back(matrix[bottom][j]);
             }
             bottom--; // Shrink bottom boundary
-            
+
             // 4. Bottom to Top
             for (int i = bottom; i >= top; i--) {
                 result.push_back(matrix[i][left]);
             }
             left++; // Shrink left boundary
         }
-        
+
         return result;
     }
 };
@@ -122,31 +126,31 @@ class Solution:
         res = []
         left, right = 0, len(matrix[0])
         top, bottom = 0, len(matrix)
-        
+
         while left < right and top < bottom:
             # get every i in the top row
             for i in range(left, right):
                 res.append(matrix[top][i])
             top += 1
-            
+
             # get every i in the right col
             for i in range(top, bottom):
                 res.append(matrix[i][right - 1])
             right -= 1
-            
+
             if not (left < right and top < bottom):
                 break
-                
+
             # get every i in the bottom row
             for i in range(right - 1, left - 1, -1):
                 res.append(matrix[bottom - 1][i])
             bottom -= 1
-            
+
             # get every i in the left col
             for i in range(bottom - 1, top - 1, -1):
                 res.append(matrix[i][left])
             left += 1
-            
+
         return res
 ```
 
@@ -159,17 +163,17 @@ class Solution {
 public:
     vector<int> spiralOrder(vector<vector<int>>& matrix) {
         if (matrix.empty()) return {};
-        
+
         int m = matrix.size();
         int n = matrix[0].size();
         vector<int> result;
-        
+
         // 定義四個邊界
         int top = 0;
         int bottom = m - 1;
         int left = 0;
         int right = n - 1;
-        
+
         // 當邊界還沒有交錯時，繼續遍歷
         while (top <= bottom && left <= right) {
             // 1. 從左到右 (遍歷上邊界)
@@ -177,32 +181,32 @@ public:
                 result.push_back(matrix[top][j]);
             }
             top++; // 上邊界向下收縮
-            
+
             // 2. 從上到下 (遍歷右邊界)
             for (int i = top; i <= bottom; i++) {
                 result.push_back(matrix[i][right]);
             }
             right--; // 右邊界向左收縮
-            
+
             // 關鍵檢查：
             // 在上縮和右縮之後，可能會導致 top > bottom 或 left > right
             // 例如單行矩陣，遍歷完第一步 top++ 後就結束了
             // 如果不檢查，後面的步驟會重複遍歷或越界
             if (top > bottom || left > right) break;
-            
+
             // 3. 從右到左 (遍歷下邊界)
             for (int j = right; j >= left; j--) {
                 result.push_back(matrix[bottom][j]);
             }
             bottom--; // 下邊界向上收縮
-            
+
             // 4. 從下到上 (遍歷左邊界)
             for (int i = bottom; i >= top; i--) {
                 result.push_back(matrix[i][left]);
             }
             left++; // 左邊界向右收縮
         }
-        
+
         return result;
     }
 };

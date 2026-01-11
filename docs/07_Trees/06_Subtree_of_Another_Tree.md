@@ -16,9 +16,11 @@ Subtree 意味著：`root` 中的某個節點的所有後代結構与值都和 `
       / \
      1   2
     ```
+
 -   **Output**: `true`
 -   **Input**: `root = [3,4,5,1,2,null,null,null,null,0]`, `subRoot = [4,1,2]`
     (Node 2 has a child 0 in root, but Node 2 is leaf in subRoot)
+
 -   **Output**: `false`
 -   **Constraints**:
     -   $0 <= nodes <= 2000$
@@ -30,6 +32,7 @@ Subtree 意味著：`root` 中的某個節點的所有後代結構与值都和 `
 
 利用我們剛剛寫好的 `isSameTree`。
 遍歷 `root` 的每一個節點，檢查以該節點為根的子樹是否和 `subRoot` 相同。
+
 -   **Time**: $O(m \times n)$。 `m` 是 `root` 節點數，`n` 是 `subRoot` 節點數。
 -   **Result**: 這是最標準的解法，Given Constraints $N \le 2000$， $2000^2 = 4 \times 10^6$，是可以接受的。
 
@@ -42,6 +45,7 @@ Subtree 意味著：`root` 中的某個節點的所有後代結構与值都和 `
 
 **Logic (DFS)**:
 `isSubtree(root, subRoot)` is true IF:
+
 1.  `subRoot` is null -> Always true (empty tree is subtree of any tree).
 2.  `root` is null -> False (subRoot is not null).
 3.  `isSameTree(root, subRoot)` is true.
@@ -69,22 +73,22 @@ public:
     bool isSubtree(TreeNode* root, TreeNode* subRoot) {
         if (!subRoot) return true; // Empty set is subset of any set
         if (!root) return false;   // subRoot not null but root is null
-        
+
         // 1. Check if current trees are identical
         if (isSameTree(root, subRoot)) {
             return true;
         }
-        
+
         // 2. Check if subRoot represents a subtree of left or right child
         return isSubtree(root->left, subRoot) || isSubtree(root->right, subRoot);
     }
-    
+
 private:
     bool isSameTree(TreeNode* p, TreeNode* q) {
         if (!p && !q) return true;
         if (!p || !q) return false;
         if (p->val != q->val) return false;
-        
+
         return isSameTree(p->left, q->left) && isSameTree(p->right, q->right);
     }
 };
@@ -103,18 +107,18 @@ class Solution:
     def isSubtree(self, root: Optional[TreeNode], subRoot: Optional[TreeNode]) -> bool:
         if not subRoot: return True
         if not root: return False
-        
+
         if self.isSameTree(root, subRoot):
             return True
-            
-        return (self.isSubtree(root.left, subRoot) or 
+
+        return (self.isSubtree(root.left, subRoot) or
                 self.isSubtree(root.right, subRoot))
-        
+
     def isSameTree(self, p, q):
         if not p and not q: return True
         if not p or not q or p.val != q.val: return False
-        
-        return (self.isSameTree(p.left, q.left) and 
+
+        return (self.isSameTree(p.left, q.left) and
                 self.isSameTree(p.right, q.right))
 ```
 
@@ -131,12 +135,12 @@ public:
         if (subRoot == nullptr) return true;
         // 如果 root 已經空了 (但 subRoot 不空)，那就不可能是子樹
         if (root == nullptr) return false;
-        
+
         // Step 1: 檢查「當前這棵樹」是否跟 subRoot 完全一樣
         if (isSameTree(root, subRoot)) {
             return true;
         }
-        
+
         // Step 2: 如果不一樣，遞迴去 root 的左子樹和右子樹找看看
         return isSubtree(root->left, subRoot) || isSubtree(root->right, subRoot);
     }

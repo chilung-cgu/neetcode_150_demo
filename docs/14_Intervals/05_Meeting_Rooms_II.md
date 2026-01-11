@@ -20,6 +20,7 @@
 
 對於每一個時間點，計算同時進行的會議數量，取最大值。
 時間點是連續的，但我們可以只關注所有區間的端點。
+
 -   **Time**: $O(N^2)$ (如果遍歷所有區間來檢查每個點) 或者 $O(Range)$ (掃描線)。
 
 ---
@@ -40,6 +41,7 @@
 
 **Algorithm 2: Chronological Ordering (Two Pointers)**
 我們可以把「開始」和「結束」事件分開來看。
+
 1.  將所有的 `start_times` 取出並排序。
 2.  將所有的 `end_times` 取出並排序。
 3.  使用兩個指針 `s` (start pointer) 和 `e` (end pointer)。
@@ -71,25 +73,25 @@ class Solution {
 public:
     int minMeetingRooms(vector<vector<int>>& intervals) {
         if (intervals.empty()) return 0;
-        
+
         vector<int> starts;
         vector<int> ends;
         int n = intervals.size();
-        
+
         // 分離並收集 start 和 end
         for(const auto& i : intervals) {
             starts.push_back(i[0]);
             ends.push_back(i[1]);
         }
-        
+
         // 排序
         sort(starts.begin(), starts.end());
         sort(ends.begin(), ends.end());
-        
+
         int s = 0, e = 0;
         int count = 0;
         int maxRooms = 0;
-        
+
         while (s < n) {
             // 如果有會議開始的時間 < 最早結束的時間
             // 說明我們需要開新房間
@@ -109,7 +111,7 @@ public:
             }
             maxRooms = max(maxRooms, count);
         }
-        
+
         return maxRooms;
     }
 };
@@ -122,10 +124,10 @@ class Solution:
     def minMeetingRooms(self, intervals: List[List[int]]) -> int:
         starts = sorted([i[0] for i in intervals])
         ends = sorted([i[1] for i in intervals])
-        
+
         res, count = 0, 0
         s, e = 0, 0
-        
+
         while s < len(intervals):
             if starts[s] < ends[e]:
                 count += 1
@@ -134,7 +136,7 @@ class Solution:
                 count -= 1
                 e += 1
             res = max(res, count)
-            
+
         return res
 ```
 
@@ -147,28 +149,28 @@ class Solution {
 public:
     int minMeetingRooms(vector<vector<int>>& intervals) {
         if (intervals.empty()) return 0;
-        
+
         int n = intervals.size();
         vector<int> start(n);
         vector<int> end(n);
-        
+
         // 將開始時間和結束時間分開儲存
         for (int i = 0; i < n; i++) {
             start[i] = intervals[i][0];
             end[i] = intervals[i][1];
         }
-        
+
         // 分別排序
         // 這樣做的意義是把時間軸上的「事件」有序化
         // 我們不在乎哪個 start 對應哪個 end，只在乎在某個時間點，有多少個 start 還沒 end
         sort(start.begin(), start.end());
         sort(end.begin(), end.end());
-        
+
         int s = 0; // start 指針
         int e = 0; // end 指針
         int count = 0; // 當前使用房間數
         int maxRooms = 0; // 歷史最大房間數
-        
+
         while (s < n) {
             // 如果下一個會議的開始時間，早於目前最早結束會議的結束時間
             // 代表我們必須多開一間房間
@@ -182,11 +184,11 @@ public:
                 count--;
                 e++;
             }
-            
+
             // 更新最大值
             maxRooms = max(maxRooms, count);
         }
-        
+
         return maxRooms;
     }
 };

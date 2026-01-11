@@ -5,6 +5,7 @@
 題目給一個只包含 `(`, `)`, `{`, `}`, `[`, `]` 的字串 `s`。
 判斷這個字串是否有效。
 有效條件：
+
 1.  左括號必須由相同類型的右括號閉合。
 2.  左括號必須以正確的順序閉合。
     -   `"()"` -> True
@@ -23,6 +24,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 不斷地尋找成對的 `()`, `[]`, `{}` 並把它們刪除，直到字串為空或無法刪除。
+
 -   `replace("()", "")`, `replace("[]", "")`...
 -   **Time**: $O(n^2)$。因為每次 delete/replace 都可能重組字串。
 -   **Result**: 雖然可行，但在字串很長時效率差。
@@ -61,14 +63,14 @@ class Solution {
 public:
     bool isValid(string s) {
         stack<char> openStack;
-        
+
         for (char c : s) {
             if (c == '(' || c == '[' || c == '{') {
                 openStack.push(c);
             } else {
                 // 遇到右括號，但在這之前沒有左括號 -> Invalid
                 if (openStack.empty()) return false;
-                
+
                 char top = openStack.top();
                 if ((c == ')' && top == '(') ||
                     (c == ']' && top == '[') ||
@@ -79,7 +81,7 @@ public:
                 }
             }
         }
-        
+
         return openStack.empty();
     }
 };
@@ -92,7 +94,7 @@ class Solution:
     def isValid(self, s: str) -> bool:
         stack = []
         closeToOpen = {")": "(", "]": "[", "}": "{"}
-        
+
         for c in s:
             if c in closeToOpen:
                 if stack and stack[-1] == closeToOpen[c]:
@@ -101,7 +103,7 @@ class Solution:
                     return False
             else:
                 stack.append(c)
-                
+
         return True if not stack else False
 ```
 
@@ -115,13 +117,13 @@ public:
     bool isValid(string s) {
         // 使用 Stack 來儲存尚未閉合的左括號
         stack<char> stk;
-        
+
         for (char c : s) {
             // Case 1: 左括號，直接入棧
             // 我們還不知道這是否有效，直到看到右括號
             if (c == '(' || c == '{' || c == '[') {
                 stk.push(c);
-            } 
+            }
             // Case 2: 右括號，嘗試匹配
             else {
                 // 如果棧是空的，代表沒有左括號來配對這個右括號
@@ -129,14 +131,14 @@ public:
                 if (stk.empty()) {
                     return false;
                 }
-                
+
                 char open = stk.top();
-                
+
                 // 檢查是否匹配
                 bool isMatch = (c == ')' && open == '(') ||
                                (c == '}' && open == '{') ||
                                (c == ']' && open == '[');
-                               
+
                 if (isMatch) {
                     stk.pop(); // 匹配成功，消除這一對
                 } else {
@@ -144,7 +146,7 @@ public:
                 }
             }
         }
-        
+
         // 如果最後棧不為空，代表有左括號沒被閉合 e.g., "(()"
         return stk.empty();
     }

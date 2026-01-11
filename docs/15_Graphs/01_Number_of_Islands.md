@@ -16,6 +16,7 @@
       ["0","0","0","0","0"]
     ]
     ```
+
 -   **Output**: `1`
 -   **Input**:
     ```
@@ -26,6 +27,7 @@
       ["0","0","0","1","1"]
     ]
     ```
+
 -   **Output**: `3`
 -   **Constraints**:
     -   $m == grid.length$
@@ -50,6 +52,7 @@
 
 **DFS / BFS**:
 遍歷網格中的每個點 `(r, c)`：
+
 1.  如果 `grid[r][c] == '1'`：
     -   計數器 `islands++`。
     -   呼叫 `dfs(r, c)` 或 `bfs(r, c)`。
@@ -76,11 +79,11 @@ class Solution {
 public:
     int numIslands(vector<vector<char>>& grid) {
         if (grid.empty()) return 0;
-        
+
         int m = grid.size();
         int n = grid[0].size();
         int count = 0;
-        
+
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 if (grid[i][j] == '1') {
@@ -89,23 +92,23 @@ public:
                 }
             }
         }
-        
+
         return count;
     }
-    
+
 private:
     void dfs(vector<vector<char>>& grid, int r, int c) {
         int m = grid.size();
         int n = grid[0].size();
-        
+
         // Base case: boundaries or water
         if (r < 0 || r >= m || c < 0 || c >= n || grid[r][c] == '0') {
             return;
         }
-        
+
         // Mark as visited (sink the island)
         grid[r][c] = '0';
-        
+
         // Visit neighbors
         dfs(grid, r + 1, c);
         dfs(grid, r - 1, c);
@@ -122,28 +125,28 @@ class Solution:
     def numIslands(self, grid: List[List[str]]) -> int:
         if not grid:
             return 0
-            
+
         rows, cols = len(grid), len(grid[0])
         islands = 0
-        
+
         def dfs(r, c):
-            if (r < 0 or c < 0 or r >= rows or c >= cols or 
+            if (r < 0 or c < 0 or r >= rows or c >= cols or
                 grid[r][c] == '0'):
                 return
-            
+
             grid[r][c] = '0' # Sink
-            
+
             dfs(r + 1, c)
             dfs(r - 1, c)
             dfs(r, c + 1)
             dfs(r, c - 1)
-            
+
         for r in range(rows):
             for c in range(cols):
                 if grid[r][c] == '1':
                     islands += 1
                     dfs(r, c)
-                    
+
         return islands
 ```
 
@@ -156,11 +159,11 @@ class Solution {
 public:
     int numIslands(vector<vector<char>>& grid) {
         if (grid.empty()) return 0;
-        
+
         int m = grid.size();
         int n = grid[0].size();
         int count = 0;
-        
+
         // 遍歷每一個格子
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
@@ -173,26 +176,26 @@ public:
                 }
             }
         }
-        
+
         return count;
     }
-    
+
 private:
     void dfs(vector<vector<char>>& grid, int r, int c) {
         // 邊界檢查
         if (r < 0 || r >= grid.size() || c < 0 || c >= grid[0].size()) {
             return;
         }
-        
+
         // 如果是水 '0'，直接返回
         if (grid[r][c] == '0') {
             return;
         }
-        
+
         // 關鍵步驟：將當前陸地標記為 '0' (沈沒)
         // 這防止了無限遞迴，同时也標記了已訪問
         grid[r][c] = '0';
-        
+
         // 遞迴訪問上下左右四個鄰居
         dfs(grid, r + 1, c);
         dfs(grid, r - 1, c);

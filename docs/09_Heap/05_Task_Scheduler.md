@@ -4,6 +4,7 @@
 
 題目給一個字元陣列 `tasks`，每個字元代表一種任務。
 你需要安排這些任務的執行順序。
+
 -   每個任務執行耗時 1 單位時間。
 -   相同種類的任務之間必須有至少 `n` 單位時間的冷卻時間 (Interval)。
 -   在此期間，CPU 可以執行其他不同的任務，或者 **Idle (待命)**。
@@ -28,6 +29,7 @@
 使用優先佇列 (Priority Queue) 存放任務頻率。
 每次從 PQ 拿出 `n+1` 個頻率最高的任務來填滿「一輪」週期。
 如果不夠 `n+1` 個，就填 Idle。
+
 -   Simulation works, but complex to implement cleanly.
 
 ---
@@ -79,7 +81,7 @@ public:
             counts[t]++;
             maxFreq = max(maxFreq, counts[t]);
         }
-        
+
         // Count how many tasks have the max frequency
         int maxFreqTasksCount = 0;
         for (auto& pair : counts) {
@@ -87,11 +89,11 @@ public:
                 maxFreqTasksCount++;
             }
         }
-        
+
         // Calculate the minimum length based on maxFreq
         // (maxFreq - 1) groups of size (n + 1), plus the last chunk
         long result = (long)(maxFreq - 1) * (n + 1) + maxFreqTasksCount;
-        
+
         // The answer cannot be less than the total number of tasks
         return max((int)result, (int)tasks.size());
     }
@@ -111,31 +113,31 @@ public:
     int leastInterval(vector<char>& tasks, int n) {
         unordered_map<char, int> counts;
         for (char t : tasks) counts[t]++;
-        
+
         priority_queue<int> pq;
         for (auto& pair : counts) pq.push(pair.second);
-        
+
         int time = 0;
         queue<pair<int, int>> waitQueue; // {count, readyTime}
-        
+
         while (!pq.empty() || !waitQueue.empty()) {
             time++;
-            
+
             if (!pq.empty()) {
                 int count = pq.top();
                 pq.pop();
-                
+
                 if (count - 1 > 0) {
                     waitQueue.push({count - 1, time + n});
                 }
             }
-            
+
             if (!waitQueue.empty() && waitQueue.front().second == time) {
                 pq.push(waitQueue.front().first);
                 waitQueue.pop();
             }
         }
-        
+
         return time;
     }
 };
@@ -151,13 +153,13 @@ class Solution:
         count = collections.Counter(tasks)
         maxFreq = max(count.values())
         maxFreqTasks = 0
-        
+
         for c in count.values():
             if c == maxFreq:
                 maxFreqTasks += 1
-                
+
         res = (maxFreq - 1) * (n + 1) + maxFreqTasks
-        
+
         return max(res, len(tasks))
 ```
 
@@ -177,7 +179,7 @@ public:
             freq[c - 'A']++;
             maxFreq = max(maxFreq, freq[c - 'A']);
         }
-        
+
         // 2. 統計有幾個任務同為最大頻率 (Tie for max frequency)
         // 例如 A:3, B:3, n=2. maxFreq=3, count=2 (A, B)
         // 排列: A B _ A B _ A B
@@ -187,7 +189,7 @@ public:
                 maxFreqCount++;
             }
         }
-        
+
         // 3. 計算公式
         // 我們把頻率最高的任務 A 視為 "骨架"
         // A _ _ A _ _ A
@@ -197,7 +199,7 @@ public:
         // 最後，我們要把剩下那一次 A (以及其他也是 maxFreq 的任務)加回去
         // 即 + maxFreqCount
         int calcLen = (maxFreq - 1) * (n + 1) + maxFreqCount;
-        
+
         // 4. 回傳
         // 如果任務種類很多，把空格都填滿了還有剩，那就不會有任何 Idle
         // 此時所需時間就是任務總數

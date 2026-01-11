@@ -13,6 +13,7 @@
        / \
       4   5
     ```
+
 -   **Output**: 3 (Path: 4-2-1-3 or 5-2-1-3)
 -   **Input**: `root = [1,2]`
 -   **Output**: 1 (Path: 2-1)
@@ -28,6 +29,7 @@
 `Left Height + Right Height`。
 遍歷所有節點，取最大值。
 `Height` 需要 $O(N)$ 計算。
+
 -   **Time**: $O(N^2)$ (如果樹不平衡)。
 -   **Result**: 效率可以再優化。
 
@@ -39,6 +41,7 @@
 這是一個 **Bottom-up DFS**。
 
 對於任意節點 `curr`：
+
 1.  遞迴取得左子樹的高度 `LH`。
 2.  遞迴取得右子樹的高度 `RH`。
 3.  經過 `curr` 的最長路徑長度是 `LH + RH`。用這值去更新全域的 `maxDiameter`。
@@ -84,10 +87,10 @@ private:
     // 回傳該子樹的高度 (Max depth)
     int height(TreeNode* node) {
         if (!node) return 0;
-        
+
         int leftHeight = height(node->left);
         int rightHeight = height(node->right);
-        
+
         // 更新全局最大直徑
         // 經過這個 node 的路徑長度 = 左高 + 右高
         // (注意：这里的 Height 是以 node 數計算的，null 是 0，leaf 是 1)
@@ -95,7 +98,7 @@ private:
         // 例如 leaf: 0+0=0 edges.
         // Node [2,4,5]: left 1, right 1 => 2 edges (4->2->5).
         diameter = max(diameter, leftHeight + rightHeight);
-        
+
         // 回傳给 parent 的是高度
         return 1 + max(leftHeight, rightHeight);
     }
@@ -115,18 +118,18 @@ public:
 class Solution:
     def diameterOfBinaryTree(self, root: Optional[TreeNode]) -> int:
         self.res = 0
-        
+
         def dfs(curr):
             if not curr:
                 return 0
-            
+
             left = dfs(curr.left)
             right = dfs(curr.right)
-            
+
             self.res = max(self.res, left + right)
-            
+
             return 1 + max(left, right)
-        
+
         dfs(root)
         return self.res
 ```
@@ -138,21 +141,21 @@ class Solution:
 ```cpp
 class Solution {
     int maxD = 0; // 用來記錄遍歷過程中的最大直徑
-    
+
     // DFS 函數：計算深度，並在過程中更新直徑
     int dfs(TreeNode* root) {
         if (root == nullptr) {
             return 0; // 空節點高度為 0
         }
-        
+
         int left = dfs(root->left);   // 左子樹高度
         int right = dfs(root->right); // 右子樹高度
-        
+
         // 核心邏輯：
         // 經過 root 的最長路徑 = 左子樹高度 + 右子樹高度
         // 更新全域最大值
         maxD = max(maxD, left + right);
-        
+
         // 返回給父節點的值：自己的高度
         return 1 + max(left, right);
     }

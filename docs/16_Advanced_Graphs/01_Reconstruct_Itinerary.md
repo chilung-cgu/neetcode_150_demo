@@ -5,6 +5,7 @@
 給定一份機票列表 `tickets`，其中 `tickets[i] = [from, to]`。
 請重建行程路徑。
 規則：
+
 1.  行程必須從 "JFK" 開始。
 2.  必須用完所有機票。
 3.  如果有多種有效的行程，請回傳字典序最小的那一個。
@@ -27,6 +28,7 @@ DFS 回溯法。
 從 "JFK" 出發，嘗試走每一條可用的邊。
 如果走不下去了但還有邊沒用完，就回溯。
 為了保證字典序最小，我們可以先對鄰接表中的目的地進行排序。
+
 -   **Time**: 指數級（如果有很多死胡同需要回溯）。
 
 ---
@@ -71,19 +73,19 @@ public:
     vector<string> findItinerary(vector<vector<string>>& tickets) {
         // Build graph with Priority Queue for lexical order
         unordered_map<string, priority_queue<string, vector<string>, greater<string>>> adj;
-        
+
         for (const auto& t : tickets) {
             adj[t[0]].push(t[1]);
         }
-        
+
         vector<string> result;
         dfs("JFK", adj, result);
-        
+
         // The result is currently in reverse order
         reverse(result.begin(), result.end());
         return result;
     }
-    
+
 private:
     void dfs(string curr, unordered_map<string, priority_queue<string, vector<string>, greater<string>>>& adj, vector<string>& result) {
         // Visit all outgoing edges
@@ -104,22 +106,22 @@ private:
 class Solution:
     def findItinerary(self, tickets: List[List[str]]) -> List[str]:
         adj = { src: [] for src, dst in tickets }
-        
+
         # Sort to ensure lexical order
         tickets.sort()
-        
+
         for src, dst in tickets:
             adj[src].append(dst)
-            
+
         res = []
-        
+
         def dfs(src):
             while src in adj and len(adj[src]) > 0:
                 # Pop the smallest lexical neighbor
-                v = adj[src].pop(0) 
+                v = adj[src].pop(0)
                 dfs(v)
             res.append(src)
-            
+
         dfs("JFK")
         return res[::-1]
 ```
@@ -136,21 +138,21 @@ public:
         // Key: 出發機場
         // Value: 目的機場列表 (使用 Priority Queue 自動排序，保證字典序最小)
         unordered_map<string, priority_queue<string, vector<string>, greater<string>>> adj;
-        
+
         for (const auto& t : tickets) {
             adj[t[0]].push(t[1]);
         }
-        
+
         vector<string> result;
         // 從起點 JFK 開始 DFS
         dfs("JFK", adj, result);
-        
+
         // Hierholzer 算法是後序添加節點，也就是說終點會最先進入 result
         // 因此最後需要反轉整個列表
         reverse(result.begin(), result.end());
         return result;
     }
-    
+
 private:
     void dfs(string curr, unordered_map<string, priority_queue<string, vector<string>, greater<string>>>& adj, vector<string>& result) {
         // 當前節點還有出邊時，一直訪問
@@ -159,11 +161,11 @@ private:
         while (!adj[curr].empty()) {
             string next = adj[curr].top();
             adj[curr].pop(); // 訪問過這條邊就刪除 (歐拉路徑每條邊只能用一次)
-            
+
             // 遞迴訪問下一個節點
             dfs(next, adj, result);
         }
-        
+
         // 當沒有出邊可以走的時候（或者所有出邊都已經走過了）
         // 將當前節點加入结果
         // 這就是為什麼它是逆序的：因為我們是「退回來」的時候才記錄

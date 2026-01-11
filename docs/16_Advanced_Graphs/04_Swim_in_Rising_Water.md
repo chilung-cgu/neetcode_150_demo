@@ -23,6 +23,7 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 DFS 尋找所有路徑，記錄每條路徑的最大值，取最小值。
+
 -   **Time**: 指數級。
 
 ---
@@ -68,35 +69,35 @@ class Solution {
 public:
     int swimInWater(vector<vector<int>>& grid) {
         int n = grid.size();
-        
+
         // Min-Heap: {max_height_so_far, r, c}
         priority_queue<vector<int>, vector<vector<int>>, greater<vector<int>>> pq;
-        
+
         // Initial node: (0, 0)
         pq.push({grid[0][0], 0, 0});
-        
+
         vector<vector<bool>> visited(n, vector<bool>(n, false));
         visited[0][0] = true;
-        
+
         int dirs[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
-        
+
         while (!pq.empty()) {
             vector<int> curr = pq.top();
             pq.pop();
-            
+
             int h = curr[0];
             int r = curr[1];
             int c = curr[2];
-            
+
             // Reached destination
             if (r == n - 1 && c == n - 1) {
                 return h;
             }
-            
+
             for (auto& d : dirs) {
                 int nr = r + d[0];
                 int nc = c + d[1];
-                
+
                 if (nr >= 0 && nr < n && nc >= 0 && nc < n && !visited[nr][nc]) {
                     visited[nr][nc] = true;
                     // The cost to reach neighbor is max(current_path_max, neighbor_height)
@@ -104,7 +105,7 @@ public:
                 }
             }
         }
-        
+
         return -1;
     }
 };
@@ -120,22 +121,22 @@ class Solution:
         N = len(grid)
         visit = set([(0, 0)])
         minH = [[grid[0][0], 0, 0]]
-        
+
         directions = [[0, 1], [0, -1], [1, 0], [-1, 0]]
-        
+
         while minH:
             t, r, c = heapq.heappop(minH)
-            
+
             if r == N - 1 and c == N - 1:
                 return t
-            
+
             for dr, dc in directions:
                 neiR, neiC = r + dr, c + dc
-                if (neiR < 0 or neiC < 0 or 
+                if (neiR < 0 or neiC < 0 or
                     neiR == N or neiC == N or
                     (neiR, neiC) in visit):
                     continue
-                
+
                 visit.add((neiR, neiC))
                 heapq.heappush(minH, [max(t, grid[neiR][neiC]), neiR, neiC])
 ```
@@ -149,40 +150,40 @@ class Solution {
 public:
     int swimInWater(vector<vector<int>>& grid) {
         int n = grid.size();
-        
+
         // 使用 Priority Queue 實現 Dijkstra
         // 儲存格式: {路徑上的最大高度, 行, 列}
         // 我們總是優先擴展「最大高度較小」的路徑
         priority_queue<vector<int>, vector<vector<int>>, greater<vector<int>>> pq;
-        
+
         // 從 (0,0) 出發，初始高度就是 grid[0][0]
         pq.push({grid[0][0], 0, 0});
-        
+
         // 記錄已訪問的節點，避免走回頭路
         vector<vector<bool>> visited(n, vector<bool>(n, false));
         visited[0][0] = true;
-        
+
         int dirs[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
-        
+
         while (!pq.empty()) {
             vector<int> curr = pq.top();
             pq.pop();
-            
+
             int h = curr[0]; // 到達這裡所需的最少水位高度
             int r = curr[1];
             int c = curr[2];
-            
+
             // 如果到達右下角，則當前的 h 就是答案
             // 因為 Dijkstra 保證我們是按 cost 從小到大訪問的
             if (r == n - 1 && c == n - 1) {
                 return h;
             }
-            
+
             // 擴展鄰居
             for (auto& d : dirs) {
                 int nr = r + d[0];
                 int nc = c + d[1];
-                
+
                 if (nr >= 0 && nr < n && nc >= 0 && nc < n && !visited[nr][nc]) {
                     visited[nr][nc] = true;
                     // 關鍵邏輯：
@@ -193,7 +194,7 @@ public:
                 }
             }
         }
-        
+
         return -1;
     }
 };
