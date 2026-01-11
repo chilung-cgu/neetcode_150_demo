@@ -47,6 +47,7 @@
 (Open interval means we do not burst `i` and `j`, they are the boundaries).
 
 **Process**:
+
 1.  Add `1` to head and tail of `nums`. New size $N+2$.
 2.  Iterate `len` from 1 to $N$.
 3.  Iterate `left` from 0 to $N - len + 1$.

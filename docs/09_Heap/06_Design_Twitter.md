@@ -56,6 +56,7 @@
 -   重複 10 次。
 
 **Data Structures**:
+
 -   `Global Timestamp`: `time++` whenever tweet posted.
 -   `User Map`: `userId -> User Object`.
     -   `User Object`:

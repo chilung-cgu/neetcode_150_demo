@@ -36,6 +36,7 @@ Prim 算法從一個點開始，每次選擇距離當前生成樹最近的點加
 因為是稠密圖（Dense Graph，邊數 $E \approx V^2$），使用 Prim 算法通常比 Kruskal 更好，因為我們不需要預先生成和排序所有邊（可以在遍歷時動態計算距離）。
 
 **Algorithm**:
+
 1.  **Min-Heap**: 儲存 `(cost, point_index)`。
 2.  **Visited Set**: 記錄已加入 MST 的點。
 3.  **Start**: 從點 0 開始，推入 `{0, 0}` 到 Heap。

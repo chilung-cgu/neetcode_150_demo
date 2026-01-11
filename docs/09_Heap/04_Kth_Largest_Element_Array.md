@@ -173,9 +173,11 @@ public:
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
 **Quick Select (`nth_element`)**:
+
 -   **Time Complexity**: $O(N)$ average. Worst Case $O(N^2)$ for naive QuickSelect, but `std::nth_element` uses IntroSelect which guarantees $O(N)$ by switching to Median-of-Medians logic if recursion goes too deep.
 -   **Space Complexity**: $O(1)$ (In-place) or $O(\log N)$ (Recursion stack).
 
 **Min-Heap**:
+
 -   **Time Complexity**: $O(N \log k)$.
 -   **Space Complexity**: $O(k)$.

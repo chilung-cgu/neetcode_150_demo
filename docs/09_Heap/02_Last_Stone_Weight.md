@@ -40,6 +40,7 @@
 這就是 **Max-Heap (大頂堆)** 的標準使用場景。
 
 **Algorithm**:
+
 1.  把所有石頭放入 Max-Heap。
 2.  當 Heap size > 1 時：
     -   Pop 出最大值 `y`。
@@ -48,6 +49,7 @@
 3.  如果 Heap 為空，回傳 0；否則回傳 Top。
 
 **Complexity**:
+
 -   Build Heap: $O(N)$.
 -   Pop/Push operations: $O(\log N)$. Loop $N$ times.
 -   Total: $O(N \log N)$.

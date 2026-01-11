@@ -52,6 +52,7 @@
 Heap 的 **頂端 (Top)** 就是這 k 個數中最小的那個，也就是 **第 k 大** 的數。
 
 **Algorithm**:
+
 -   **Init**:
     1.  建立一個 Min-Heap。
     2.  遍歷 `nums`，將每個數 push 進 heap。
@@ -62,6 +63,7 @@ Heap 的 **頂端 (Top)** 就是這 k 個數中最小的那個，也就是 **第
     3.  Return Heap Top。
 
 **Complexity**:
+
 -   **Init**: $O(N \log k)$。
 -   **Add**: $O(\log k)$。 (Queue size is limited to k+1)
 -   這非常高效，因為 $k$ 反映了記憶窗口的大小，與操作次數 $M$ 無關。

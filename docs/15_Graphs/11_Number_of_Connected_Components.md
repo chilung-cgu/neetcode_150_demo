@@ -38,6 +38,7 @@
 但這裡可以用 **Union-Find** 更加優雅地解決。
 
 **Algorithm (Union-Find)**:
+
 1.  最初有 `n` 個分量 (Count = n)。
 2.  遍歷每條邊 `[u, v]`：
     -   `Find(u)`, `Find(v)`。

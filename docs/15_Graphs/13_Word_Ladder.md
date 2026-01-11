@@ -39,10 +39,12 @@ BFS 是解決無權圖最短路徑的標準算法。
 技巧在於如何高效地找到鄰居。
 
 **Option 1: Pre-process Adjacency List**
+
 -   對於每一對單詞，檢查是否只差 1 個字母。$O(M^2 \times L)$.
 -   如果 $M$ 很大 (5000)，這個建圖過程會太慢。
 
 **Option 2: Generate Neighbors via Wildcard Map**
+
 -   對於單詞 "hot"，我們可以生成模式 "*ot", "h*t", "ho*"。
 -   建立一個 Map: `pattern -> list of words`。
 -   例如 `*ot -> [hot, dot, lot]`。
@@ -50,12 +52,14 @@ BFS 是解決無權圖最短路徑的標準算法。
 -   **Time**: $O(M \times L^2)$ 用於預處理，$O(M \times L)$ 用於 BFS 查找。
 
 **Input Constraints Analysis**:
+
 -   $M=5000, L=10$.
 -   $M^2 \times L = 2.5 \times 10^8$ (Might TLE).
 -   $M \times L^2 \times 26 = 5000 \times 100 \times 26 \approx 1.3 \times 10^7$ (Safe).
 -   注意：也可以不預處理 Map，而是在 BFS 過程中動態生成 `a-z` 的變換並檢查 `wordSet`。這也是 $O(M \times L \times 26)$。這個方法通常比較省空間且不需要維護複雜的 Map。
 
 **Algorithm (Dynamic Neighbor Generation)**:
+
 1.  將 `wordList` 放入 `unordered_set` 以便 $O(1)$ 查找。
 2.  Queue 初始化 `q.push(beginWord)`。
 3.  Level-by-level BFS。

@@ -40,6 +40,7 @@ Bellman-Ford 算法的核心是「鬆弛 (Relax) 所有邊 $n-1$ 次」。
 所以我們只需要運行 Bellman-Ford 算法 $k+1$ 次即可。
 
 **Algorithm**:
+
 1.  **Prices Array**: `arr` 初始化為 INF，`arr[src] = 0`。
 2.  **Loop k+1 times**:
     -   複製一份當前的 `arr` 為 `tmp` (為了避免同一次迭代中使用了剛更新的值，導致走了多步)。

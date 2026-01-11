@@ -32,6 +32,7 @@ $10^5$ 的數據規模下， $O(N^2)$ 會 TLE。
 所以如果 `current_sum < 0`，我們就應該**拋棄**前面的部分，重新從當前數字開始計算。
 
 **Logic**:
+
 1.  Initialize `maxTotal = nums[0]`, `currentTotal = 0`.
 2.  For each `n` in `nums`:
     `currentTotal += n`
@@ -58,21 +59,21 @@ public:
     int maxSubArray(vector<int>& nums) {
         int maxSub = nums[0];
         int curSum = 0;
-        
+
         for (int n : nums) {
             // Add current number to running sum
             curSum += n;
-            
+
             // Check if we found a new max
             maxSub = max(maxSub, curSum);
-            
+
             // If running sum drops below 0, it's not worth keeping
             // Start fresh from next element (reset to 0)
             if (curSum < 0) {
                 curSum = 0;
             }
         }
-        
+
         return maxSub;
     }
 };
@@ -85,13 +86,13 @@ class Solution:
     def maxSubArray(self, nums: List[int]) -> int:
         maxSub = nums[0]
         curSum = 0
-        
+
         for n in nums:
             if curSum < 0:
                 curSum = 0
             curSum += n
             maxSub = max(maxSub, curSum)
-            
+
         return maxSub
 ```
 
@@ -106,21 +107,21 @@ public:
         // maxSub 初始化為第一個元素，避免全負數情況下回傳 0
         int maxSub = nums[0];
         int curSum = 0;
-        
+
         for (int n : nums) {
             // 如果之前的累加和 < 0，那加上去只會讓結果變小
             // 所以不如直接捨棄之前的，從現在這個數字 n 重新開始
             if (curSum < 0) {
                 curSum = 0;
             }
-            
+
             // 將當前數字加入累加和
             curSum += n;
-            
+
             // 更新全域最大值
             maxSub = max(maxSub, curSum);
         }
-        
+
         return maxSub;
     }
 };

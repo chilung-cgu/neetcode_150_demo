@@ -30,6 +30,7 @@
 所有屬於同一組的 Anagram，算出來的 Key 必須一樣。
 
 **候選 Key**:
+
 1.  **Sorted String**:
     -   "eat" -> sort -> "aet"
     -   "tea" -> sort -> "aet"
@@ -65,22 +66,22 @@ public:
         // Key: 排序後的字串 (e.g., "aet")
         // Value: 原始字串的列表 (e.g., ["eat", "tea", "ate"])
         unordered_map<string, vector<string>> groups;
-        
+
         for (string s : strs) {
-            string key = s; 
+            string key = s;
             sort(key.begin(), key.end()); // 產生 Key: O(n log n)
             groups[key].push_back(s);     // 歸類: O(1) assuming string hash is fast
         }
-        
+
         // 轉換 Map 到 Vector
         vector<vector<string>> result;
         // Optimization: reserve 避免 realloc
         result.reserve(groups.size());
-        
+
         for (auto& pair : groups) {
             result.push_back(move(pair.second)); // move 避免 copy，這是 C++ 的精隨
         }
-        
+
         return result;
     }
 };
@@ -99,15 +100,15 @@ from collections import defaultdict
 class Solution:
     def groupAnagrams(self, strs: List[str]) -> List[List[str]]:
         ans = defaultdict(list)
-        
+
         for s in strs:
             count = [0] * 26
             for c in s:
                 count[ord(c) - ord('a')] += 1
-            
+
             # list 不能當 dict key, 但 tuple 可以
             ans[tuple(count)].append(s)
-            
+
         return list(ans.values())
 ```
 
@@ -125,12 +126,12 @@ public:
         // 遍歷每一個字串
         for (auto& s : strs) {
             // copy 一份出來做 sorting 當作 key
-            string t = s; 
-            
+            string t = s;
+
             // 排序後，所有 anagrams 應該都長得一樣
             // e.g. "nat" -> "ant", "tan" -> "ant"
             sort(t.begin(), t.end());
-            
+
             // 將原始字串 s 放入對應的 key 下
             mp[t].push_back(s);
         }

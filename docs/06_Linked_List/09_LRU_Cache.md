@@ -13,6 +13,7 @@
     -   如果 key 不存在，插入新的。如果容量已滿，必須 **移除** 最久沒被使用的那個項目 (LRU)，然後再插入。
 
 **Constraints**:
+
 -   $O(1)$ Time Complexity for both `get` and `put`.
 -   Capacity ranges from 1 to 3000.
 
@@ -36,6 +37,7 @@
 2.  **快速插入/刪除/移動順序 (Ordered Operations)** -> 需要 **Doubly Linked List**。
 
 **架構 (Hash Map + Doubly Linked List)**:
+
 -   **Doubly Linked List**:
     -   維護一個 ordered list，由 **LRU** (Head) 到 **MRU** (Tail)。
     -   或者反過來，Head 是 MRU，Tail 是 LRU。
@@ -45,6 +47,7 @@
     -   Value: 指向 Linked List 節點的 Pointer (`Node*`)。
 
 **操作邏輯**:
+
 -   `get(key)`:
     -   Check Map。沒找到 -> -1。
     -   找到了 -> 取出 Node。

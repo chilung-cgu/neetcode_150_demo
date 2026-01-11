@@ -33,6 +33,7 @@
 (移除最少 = 保留最多)。
 
 **Greedy Strategy**:
+
 1.  **Sort**: 按照 **起始時間 (Start Time)** 排序。
 2.  **Iterate**: 遍歷區間，維護前一個保留區間的結束時間 `prevEnd`。
     -   對於當前區間 `current`：

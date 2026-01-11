@@ -38,6 +38,7 @@ bool isAnagram(string s, string t) {
 Match!
 
 **思路引導**:
+
 1.  **Hash Map (Generic Approach)**: 用兩個 Map 分別統計，最後比對 Map。
     -   Cost: $O(n)$ Time, $O(n)$ Space (如果字元集很大)。
 2.  **Frequency Array (Optimized for lowercase English)**:
@@ -96,9 +97,9 @@ class Solution {
 public:
     bool isAnagram(string s, string t) {
         if (s.length() != t.length()) return false;
-        
+
         unordered_map<char, int> count;
-        
+
         for (char c : s) count[c]++;
         for (char c : t) {
             if (count.find(c) == count.end() || count[c] == 0) {
@@ -106,7 +107,7 @@ public:
             }
             count[c]--;
         }
-        
+
         return true;
     }
 };
@@ -119,13 +120,13 @@ class Solution:
     def isAnagram(self, s: str, t: str) -> bool:
         if len(s) != len(t):
             return False
-            
+
         countS, countT = {}, {}
-        
+
         for i in range(len(s)):
             countS[s[i]] = countS.get(s[i], 0) + 1
             countT[t[i]] = countT.get(t[i], 0) + 1
-            
+
         return countS == countT
         # 或者直接: return Counter(s) == Counter(t)
 ```

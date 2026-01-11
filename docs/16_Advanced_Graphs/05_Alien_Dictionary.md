@@ -32,6 +32,7 @@
 ## 3. 💡 The "Aha!" Moment (優化)
 
 **Algorithm (Kahn's Algorithm - BFS)**:
+
 1.  **Build Graph**:
     -   初始化 `adj` (Map<Char, Set<Char>>) 和 `indegree` (Map<Char, Int>)。
     -   將所有出現過的字符都加入 `indegree` 並設為 0（確保所有字符都被考慮）。
@@ -70,24 +71,24 @@ public:
     string alienOrder(vector<string>& words) {
         unordered_map<char, unordered_set<char>> adj;
         unordered_map<char, int> indegree;
-        
+
         // 1. Initialize indegree for all unique characters
         for (const string& w : words) {
             for (char c : w) {
                 indegree[c] = 0;
             }
         }
-        
+
         // 2. Build Graph
         for (int i = 0; i < words.size() - 1; i++) {
             string w1 = words[i];
             string w2 = words[i+1];
-            
+
             // Check prefix edge case (e.g., "abc", "ab" is invalid)
             if (w1.size() > w2.size() && w1.compare(0, w2.size(), w2) == 0) {
                 return "";
             }
-            
+
             // Find first difference
             for (int j = 0; j < min(w1.size(), w2.size()); j++) {
                 if (w1[j] != w2[j]) {
@@ -100,7 +101,7 @@ public:
                 }
             }
         }
-        
+
         // 3. BFS (Topological Sort)
         queue<char> q;
         for (auto const& [key, val] : indegree) {
@@ -108,13 +109,13 @@ public:
                 q.push(key);
             }
         }
-        
+
         string result = "";
         while (!q.empty()) {
             char curr = q.front();
             q.pop();
             result += curr;
-            
+
             for (char neighbor : adj[curr]) {
                 indegree[neighbor]--;
                 if (indegree[neighbor] == 0) {
@@ -122,12 +123,12 @@ public:
                 }
             }
         }
-        
+
         // 4. Verify no cycles
         if (result.size() != indegree.size()) {
             return "";
         }
-        
+
         return result;
     }
 };
@@ -139,40 +140,40 @@ public:
 class Solution:
     def alienOrder(self, words: List[str]) -> str:
         adj = { c:set() for w in words for c in w }
-        
+
         for i in range(len(words) - 1):
             w1, w2 = words[i], words[i+1]
             minLen = min(len(w1), len(w2))
-            
+
             if len(w1) > len(w2) and w1[:minLen] == w2[:minLen]:
                 return ""
-            
+
             for j in range(minLen):
                 if w1[j] != w2[j]:
                     adj[w1[j]].add(w2[j])
                     break
-                    
+
         visit = {} # False=visited, True=current path
         res = []
-        
+
         def dfs(c):
             if c in visit:
                 return visit[c]
-            
+
             visit[c] = True
-            
+
             for nei in adj[c]:
                 if dfs(nei):
                     return True
-            
+
             visit[c] = False
             res.append(c)
             return False
-            
+
         for c in adj:
             if dfs(c):
                 return ""
-                
+
         res.reverse()
         return "".join(res)
 ```
@@ -189,31 +190,31 @@ public:
         unordered_map<char, unordered_set<char>> adj;
         // indegree: 入度表，Key: 字符，Value: 入度
         unordered_map<char, int> indegree;
-        
+
         // 1. 初始化：收集所有出現過的唯一字符
         for (const string& w : words) {
             for (char c : w) {
                 indegree[c] = 0;
             }
         }
-        
+
         // 2. 建圖：比較相鄰單詞
         for (int i = 0; i < words.size() - 1; i++) {
             string w1 = words[i];
             string w2 = words[i+1];
-            
+
             // 特殊情況檢查：前綴問題
             // 如果 w2 是 w1 的前綴且 w2 更短 (例如 "abc", "ab")，這在字典序中是不合法的
             // 因為 "ab" 應該排在 "abc" 前面
             if (w1.size() > w2.size() && w1.compare(0, w2.size(), w2) == 0) {
                 return "";
             }
-            
+
             // 找出第一個不同的字符
             for (int j = 0; j < min(w1.size(), w2.size()); j++) {
                 if (w1[j] != w2[j]) {
                     // w1[j] 排在 w2[j] 前面 -> 建立有向邊 w1[j] -> w2[j]
-                    
+
                     // 避免重複添加邊 (這會導致入度計算錯誤)
                     if (adj[w1[j]].find(w2[j]) == adj[w1[j]].end()) {
                         adj[w1[j]].insert(w2[j]);
@@ -224,7 +225,7 @@ public:
                 }
             }
         }
-        
+
         // 3. BFS 拓撲排序 (Kahn's Algorithm)
         queue<char> q;
         // 將所有入度為 0 的字符加入 Queue
@@ -233,13 +234,13 @@ public:
                 q.push(key);
             }
         }
-        
+
         string result = "";
         while (!q.empty()) {
             char curr = q.front();
             q.pop();
             result += curr;
-            
+
             // 遍歷後繼字符
             for (char neighbor : adj[curr]) {
                 indegree[neighbor]--;
@@ -248,13 +249,13 @@ public:
                 }
             }
         }
-        
+
         // 4. 環檢測
         // 如果結果長度不等於字符總數，說明圖中有環
         if (result.size() != indegree.size()) {
             return "";
         }
-        
+
         return result;
     }
 };

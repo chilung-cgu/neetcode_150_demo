@@ -29,12 +29,14 @@
 如何避開 $O(n \log n)$ 的全局排序？
 
 **思路 1: Max Heap (Priority Queue)**
+
 -   我們不需要對 *所有* 元素排序，我們只需要前 `k` 個。
 -   建立一個 Max Heap，把所有 `(Count, Number)` 丟進去。
 -   Pop `k` 次。
 -   **Cost**: Build Heap $O(N)$, Pop $k$ times $O(k \log n)$。總共 $O(N + k \log n)$。這比 Sort 好。
 
 **思路 2: Bucket Sort (Linear Time)**
+
 -   頻率的範圍是多少？一個數字最多出現 `n` 次 (陣列長度)。
 -   我們可以建立一個陣列 `buckets`，大小為 `n + 1`。
 -   `buckets[i]` 存放「出現了 `i` 次的所有數字」。
@@ -67,7 +69,7 @@ public:
         for (int n : nums) {
             countMap[n]++;
         }
-        
+
         // 2. Create buckets
         // Index i 代表出現頻率，Value 是出現 i 次的數字列表
         // 大小為 n + 1 因為頻率最大可能是 nums.size()
@@ -75,19 +77,19 @@ public:
         for (auto& pair : countMap) {
             buckets[pair.second].push_back(pair.first);
         }
-        
+
         // 3. Gather top k
         vector<int> result;
         // 從最高頻率往回找
         for (int i = buckets.size() - 1; i >= 0; i--) {
             if (buckets[i].empty()) continue;
-            
+
             for (int n : buckets[i]) {
                 result.push_back(n);
                 if (result.size() == k) return result;
             }
         }
-        
+
         return result;
     }
 };
@@ -137,12 +139,12 @@ class Solution:
     def topKFrequent(self, nums: List[int], k: int) -> List[int]:
         count = {}
         freq = [[] for i in range(len(nums) + 1)]
-        
+
         for n in nums:
             count[n] = count.get(n, 0) + 1
         for n, c in count.items():
             freq[c].append(n)
-            
+
         res = []
         for i in range(len(freq) - 1, 0, -1):
             for n in freq[i]:
@@ -167,26 +169,26 @@ public:
         for (int n : nums) {
             counts[n]++;
         }
-        
+
         // Step 2: 建立 Buckets
         // buckets[i] 是一個 list，存放所有出現次數為 i 的數字
         // 最大出現次數就是 nums.size() (全部都是同一個字時)
         // Space: O(N)
         vector<vector<int>> buckets(nums.size() + 1);
-        
+
         for (auto const& [num, count] : counts) {
             buckets[count].push_back(num);
         }
-        
+
         // Step 3: 從後往前遍歷 Buckets
         vector<int> result;
         // 小技巧：reserve k 可以稍微優化 performance
-        result.reserve(k); 
-        
+        result.reserve(k);
+
         for (int i = buckets.size() - 1; i > 0; i--) {
             // 如果這個頻率沒有數字，直接跳過
             if (buckets[i].empty()) continue;
-            
+
             // 將這個頻率桶裡的所有數字加入結果
             for (int n : buckets[i]) {
                 result.push_back(n);
@@ -196,8 +198,8 @@ public:
                 }
             }
         }
-        
-        return result; 
+
+        return result;
     }
 };
 ```

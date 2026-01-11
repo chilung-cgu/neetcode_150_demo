@@ -47,6 +47,7 @@ Backtracking + Set 去重。
     -   這代表「如果在同一層決策中，已經試過這個數值了，就不要再試一次」。
 
 **Pruning**:
+
 -   如果 `target - candidates[i] < 0`，因為已經排序，後面的數字更大，一定也不行。直接 `break` (比 continue 更優)。
 
 ---

@@ -4,6 +4,7 @@
 
 題目要求設計一個 Stack，除了支援標準的 `push`, `pop`, `top` 之外，還額外支援 `getMin()`。
 **Constraints**:
+
 -   所有操作都必須是 **$O(1)$** Time Complexity。
 -   $O(1)$ `getMin` 是最難的部分。如果遍歷 Stack 找最小值，那是 $O(n)$。
 
@@ -39,6 +40,7 @@
 2.  **Min Stack (`min_s`)**: 存「對應高度」時的最小值。
 
 **邏輯**：
+
 -   **Push(val)**:
     -   `s.push(val)`
     -   `min_s.push( min(val, min_s.top()) )`。

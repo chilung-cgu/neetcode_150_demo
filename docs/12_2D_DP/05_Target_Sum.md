@@ -51,6 +51,7 @@
 這就是 **Subset Sum** 問題 (Partition Equal Subset Sum 的變形)。
 
 **注意**：
+
 1.  如果 `target + totalSum` 是奇數，無解 (return 0)。
 2.  如果 `target + totalSum < 0`，無解。
 

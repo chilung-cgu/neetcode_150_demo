@@ -53,6 +53,7 @@
     -   或者是昨天剛賣出（今天冷凍）。
 
 **State Transitions**:
+
 -   `hold[i] = max(hold[i-1], rest[i-1] - prices[i])`
     -   (昨天持有) vs (昨天休息，今天買入)。注意：不能從 sold 轉過來，因為有 cooldown。
 -   `sold[i] = hold[i-1] + prices[i]`

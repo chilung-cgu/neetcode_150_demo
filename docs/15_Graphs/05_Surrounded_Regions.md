@@ -48,6 +48,7 @@
 2.  **Captured**: 其他所有的 `'O'`。這些 `'O'` 都會變成 `'X'`。
 
 **Algorithm**:
+
 1.  **Phase 1 (Mark Escaped)**:
     -   遍歷矩陣的四條邊界。
     -   如果遇到 `'O'`，則啟動 DFS/BFS，將所有與之相連的 `'O'` 標記為一個特殊字符（例如 `'T'` for Temporary, or `'E'` for Escaped）。

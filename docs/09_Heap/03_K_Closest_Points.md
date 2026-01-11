@@ -195,6 +195,7 @@ public:
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
 **Using Max-Heap**:
+
 -   **Time Complexity**: $O(N \log k)$
     -   We iterate through $N$ points.
     -   Each push/pop operation on a heap of size $k$ takes $O(\log k)$.
@@ -202,5 +203,6 @@ public:
     -   Heap stores $k$ elements.
 
 **Using Quick Select (`nth_element`)**:
+
 -   **Time Complexity**: $O(N)$ average, $O(N^2)$ worst case.
 -   **Space Complexity**: $O(1)$ (in-place) or $O(\log N)$ (stack).

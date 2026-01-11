@@ -42,6 +42,7 @@
     -   `1->5->2->4->3`。
 
 **步驟細節**：
+
 -   **Find Mid**: `slow` 走一步，`fast` 走兩步。
 -   **Split**: `mid = slow->next`; `slow->next = nullptr`.
 -   **Reverse**: 標準 reverse linked list。

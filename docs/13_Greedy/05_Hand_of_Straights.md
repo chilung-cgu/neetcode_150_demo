@@ -37,6 +37,7 @@
 這題的關鍵是與 "Divide Array in Sets of K Consecutive Numbers" (LeetCode 1296) 完全相同。
 
 **Greedy Strategy**:
+
 1.  如果 `hand.length` 不能被 `groupSize` 整除，直接 False。
 2.  使用 **Hash Map** (Frequency Count) 統計每張牌的出現次數。
 3.  使用 **Min-Heap** 或者 **Sort** 讓牌有序。

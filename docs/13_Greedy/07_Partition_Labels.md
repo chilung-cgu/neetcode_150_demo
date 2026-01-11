@@ -30,6 +30,7 @@
 ## 3. 💡 The "Aha!" Moment (優化)
 
 **Greedy / Merge Intervals**:
+
 1.  首先，對於每個字符，我們需要知道它 **最後一次出現的位置 (Last Index)**。
     -   因為如果一段區間包含了字符 'a'，那麼這個區間 **至少** 要延伸到 'a' 最後一次出現的地方，否則 'a' 就會被切斷。
 2.  遍歷字串：
@@ -64,25 +65,25 @@ public:
         for (int i = 0; i < s.length(); i++) {
             lastIndex[s[i] - 'a'] = i;
         }
-        
+
         vector<int> result;
         int size = 0;
         int end = 0;
-        
+
         // Step 2: Iterate and update boundaries
         for (int i = 0; i < s.length(); i++) {
             size++;
             // Expand the end boundary to the last occurrence of current char
             end = max(end, lastIndex[s[i] - 'a']);
-            
-            // If we reached the end boundary, it means all characters in the current 
+
+            // If we reached the end boundary, it means all characters in the current
             // segment have their last occurrence within this segment.
             if (i == end) {
                 result.push_back(size);
                 size = 0; // Reset length for next partition
             }
         }
-        
+
         return result;
     }
 };
@@ -94,18 +95,18 @@ public:
 class Solution:
     def partitionLabels(self, s: str) -> List[int]:
         lastIndex = { c: i for i, c in enumerate(s) }
-        
+
         res = []
         size, end = 0, 0
-        
+
         for i, c in enumerate(s):
             size += 1
             end = max(end, lastIndex[c])
-            
+
             if i == end:
                 res.append(size)
                 size = 0
-                
+
         return res
 ```
 
@@ -123,17 +124,17 @@ public:
         for (int i = 0; i < s.length(); i++) {
             lastIndex[s[i] - 'a'] = i;
         }
-        
+
         vector<int> result;
         int size = 0; // 當前區間長度
         int end = 0;  // 當前區間必須延伸到的最遠位置
-        
+
         for (int i = 0; i < s.length(); i++) {
             size++;
-            
+
             // 對於遇到的每個字元，它要求區間至少要延伸到它的最後出現位置
             end = max(end, lastIndex[s[i] - 'a']);
-            
+
             // 如果當前遍歷到的位置 i 正好等於目前要求的結束位置 end
             // 代表前面所有字元的最後出現位置都在 i 之內
             // 所以可以在這裡切斷
@@ -142,7 +143,7 @@ public:
                 size = 0; // 重置長度，準備下一個區間
             }
         }
-        
+
         return result;
     }
 };

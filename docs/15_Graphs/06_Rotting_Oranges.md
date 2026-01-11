@@ -38,6 +38,7 @@
 我們可以想像腐爛像病毒一樣從多個源頭同時擴散。BFS 本質上就是按層次（時間）遍歷，所以 BFS 的層數就是所需的分鐘數。
 
 **Algorithm**:
+
 1.  **Queue Initialization**: 遍歷網格，找出所有 **腐爛橘子 (2)** 的位置，加入 Queue。同時，統計 **新鮮橘子 (1)** 的總數 `freshCount`。
 2.  **BFS Loop**:
     -   如果 Queue 不為空且 `freshCount > 0`，時間 `time++`。

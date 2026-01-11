@@ -38,11 +38,13 @@
 -   `col = i % n`
 
 **演算法**：
+
 1.  `low = 0`, `high = m * n - 1`。
 2.  做標準 Binary Search。
 3.  每次取出 `mid`，計算座標 `(mid / n, mid % n)` 來取值。
 
 **Alternative Approach (Two Binary Searches)**:
+
 1.  先對「第一欄」做 BS，找出 target 可能在哪個 Row。
 2.  再對那個 Row 做 BS。
 這樣邏輯比較複雜一點，但也是 $O(\log m + \log n) = O(\log(mn))$。

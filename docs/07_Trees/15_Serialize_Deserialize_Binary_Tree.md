@@ -40,12 +40,14 @@ LeetCode 通常使用 Level Order (BFS) 來表示，例如 `[1,2,3,null,null,4,5
 最簡單且高效的方法是 **Preorder DFS (Root -> Left -> Right)**。
 
 **Serialize (Preorder)**:
+
 -   遍歷樹。
 -   如果是非空節點，append `val` + `,` (Delimiter)。
 -   如果是空節點，append `N` + `,` (Null Marker)。
 -   Result String: `1,2,N,N,3,4,N,N,5,N,N,`
 
 **Deserialize**:
+
 -   將 string 根據 `,` split 成 values queue/stream。
 -   `1` -> Create Node(1). Recursively build left.
     -   Next is `2` -> Create Node(2). Recursively build left.

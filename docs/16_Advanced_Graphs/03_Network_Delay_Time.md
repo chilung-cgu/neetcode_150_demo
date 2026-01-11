@@ -36,6 +36,7 @@
 因為邊權重代表時間，一定是非負的。
 
 **Algorithm**:
+
 1.  **Graph**: 建立鄰接表 `adj[u] -> [(v, w)]`。
 2.  **Priority Queue**: Min-Heap 儲存 `(time_from_source, node)`。
 3.  **Distances**: 記錄從 k 到每個節點的最短時間。也可以只用一個 `visited` 集合來記錄。

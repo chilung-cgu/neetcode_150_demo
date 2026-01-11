@@ -38,6 +38,7 @@
 這時候，我們就可以結算以 `prev_h` 為高度的矩形面積。
 
 **演算法**：
+
 1.  維護一個 Stack，存 `(index, height)`。保持 Stack 中的高度 **單調遞增**。
 2.  遍歷每個柱子 `current_h` at `i`：
     -   while Stack 頂端的高度 `stack_h > current_h`：

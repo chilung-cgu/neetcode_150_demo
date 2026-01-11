@@ -47,6 +47,7 @@
 這就是標準的 **DFS Backtracking** on Grid。
 
 **Optimization (Pruning)**:
+
 1.  **Check feasibility first**: 如果 `word` 中的某個字元在 `board` 中出現的總次數比 `word` 中需要的還少，直接回傳 `false`。
 2.  **Reverse Word**: 如果 `word` 尾端的字元在 board 中出現次數很少，而首端的字元出現次數很多，可以考慮將 `word` 反轉再搜尋，減少分支 (Branching Factor)。
     -   例如 board 只有很少的 'A' 但有很多 'Z'，而 `word` 是 "ZZZ...A"，從 'Z' 開始搜會有很多無效路徑，從 'A' 開始搜就會很快。

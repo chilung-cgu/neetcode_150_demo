@@ -43,6 +43,7 @@
 `unordered_map<string, vector<pair<int, string>>> store;`
 
 **Get Algorithm**:
+
 1.  找到 `key` 對應的 `vector`。如果没有，return `""`。
 2.  對 `vector` 進行二分搜尋。
     -   找 `target <= timestamp` 的最大值。

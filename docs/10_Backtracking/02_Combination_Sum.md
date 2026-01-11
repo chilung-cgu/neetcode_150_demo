@@ -44,6 +44,7 @@ Base case:
 -   Edges: Include `candidates[i]` OR Move to `candidates[i+1]`.
 
 **Pruning (剪枝)**:
+
 -   如果 `target < candidates[i]`，且 candidates 是 **sorted** 的，那後面的都不用看了 (因為都比當前大)。
 -   這題 Constraints 很小 (target <= 40)，所以就算不 sorting，基本的 backtracking 也能過。
 

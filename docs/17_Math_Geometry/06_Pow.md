@@ -12,6 +12,7 @@
 -   **Output**: `0.25000` ($2^{-2} = 1/2^2 = 1/4 = 0.25$)
 
 **Constraints**:
+
 -   $n$ is a 32-bit signed integer `[-2^31, 2^31 - 1]`.
 -   Handle negative exponents.
 -   Handle edge case `n = INT_MIN`.

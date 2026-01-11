@@ -56,6 +56,7 @@
 或者更簡單：只傳遞 `root` 在 `preorder` 中的 index，以及當前子樹在 `inorder` 中的範圍 `(left, right)`。
 
 **Algorithm**:
+
 1.  Map `inorder` values to indices.
 2.  Function `build(preStart, inStart, inEnd)`:
     -   if `preStart > preEnd` or `inStart > inEnd`: return null.

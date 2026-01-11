@@ -27,12 +27,14 @@
 這題有兩個經典的 $O(n)$/$O(1)$ 解法：
 
 **Approach 1: Math (Sum Formula)**
+
 -   0 到 n 的總和應該是 $\frac{n(n+1)}{2}$。
 -   計算數組 `nums` 的實際總和。
 -   兩者之差就是缺失的數字。
 -   **Risk**: 如果 n 很大，求和可能會溢出 (Integer Overflow)。但題目 constraints 通常 $n \le 10^4$，不會溢出。
 
 **Approach 2: Bit Manipulation (XOR)**
+
 -   利用 XOR 的性質：$x \oplus x = 0$。
 -   如果我們把 `nums` 中的所有數字 XOR 起來，再把 `0` 到 `n` 的所有數字 XOR 起來。
 -   所有出現兩次的數字（一個在陣列，一個在索引範圍）都會抵銷。
@@ -56,12 +58,12 @@ public:
     int missingNumber(vector<int>& nums) {
         int n = nums.size();
         int res = n; // Initialize with n, because loop only goes 0 to n-1
-        
+
         for (int i = 0; i < n; i++) {
             res ^= i;
             res ^= nums[i];
         }
-        
+
         return res;
     }
 };
@@ -112,17 +114,17 @@ public:
         // 我們需要 XOR 兩組數據：
         // 1. 数组中的所有元素 (nums[0]...nums[n-1])
         // 2. 完整的序列 (0...n)
-        
+
         // 先將 res 初始化為 n (因為循環只跑到 n-1)
         int res = n;
-        
+
         for (int i = 0; i < n; i++) {
             // XOR 索引 i (代表完整序列的一部分)
             res ^= i;
             // XOR 数组元素 nums[i]
             res ^= nums[i];
         }
-        
+
         // 最終剩下的就是缺失的數字
         // 例如 nums = [3,0,1], n=3
         // res = 3 ^ (0^3) ^ (1^0) ^ (2^1)

@@ -7,6 +7,7 @@
 請找出這個重複的數字。
 
 **Constraints / Requirements**:
+
 -   You must not modify the array (assume the array is read-only).
 -   You must use only constant, $O(1)$ extra space.
 -   Your runtime complexity should be less than $O(n^2)$.
@@ -41,6 +42,7 @@
 而且，重複的數字 `x` 就是這個環的 **入口 (Entry Point)**。
 
 **Floyd's Algorithm (Turtle and Hare)**:
+
 1.  **Phase 1**: 判斷是否有環（一定有）。
     -   `slow = nums[slow]`, `fast = nums[nums[fast]]`。
     -   他們會相遇。
@@ -73,24 +75,24 @@ public:
         // Phase 1: Find intersection point
         int slow = nums[0];
         int fast = nums[nums[0]];
-        
+
         while (slow != fast) {
             slow = nums[slow];
             fast = nums[nums[fast]];
         }
-        
+
         // Phase 2: Find entrance of cycle
         slow = 0; // 從起點開始 (題目 array 是 0-indexed，但值是 1-n，所以 index 0 永遠是安全的起點，且因為值 >=1，0 不在 cycle 內)
-        
+
         // 注意：這裡我們把 Pointer 邏輯稍微調整。
         // 標準 Floyd 是從 head 開始。
         // 上面 Phase 1 我們是從 head 的 next 開始的 (slow=nums[0], fast=nums[nums[0]])
         // 所以 Phase 2 我們也要稍微對齊。
-        
+
         // 修正逻辑：
         // Start from initial state: slow = 0, fast = 0
         // do-while for Phase 1
-        
+
         // Better Implementation:
         slow = 0;
         fast = 0;
@@ -98,13 +100,13 @@ public:
             slow = nums[slow];
             fast = nums[nums[fast]];
         } while (slow != fast);
-        
+
         slow = 0;
         while (slow != fast) {
             slow = nums[slow];
             fast = nums[fast];
         }
-        
+
         return slow;
     }
 };
@@ -121,7 +123,7 @@ class Solution:
             fast = nums[nums[fast]]
             if slow == fast:
                 break
-        
+
         slow2 = 0
         while True:
             slow = nums[slow]
@@ -142,29 +144,29 @@ public:
     int findDuplicate(vector<int>& nums) {
         // 使用 Floyd's Cycle Detection 演算法
         // 我們將 array 視為 Linked List: i -> nums[i]
-        
+
         // 1. 判斷是否有環 (Phase 1)
         // 初始時都在 index 0
         int slow = 0;
         int fast = 0;
-        
+
         // 使用 do-while 確保至少走一步
         do {
             slow = nums[slow];          // 走一步
             fast = nums[nums[fast]];    // 走兩步
         } while (slow != fast);
-        
+
         // 2. 尋找環的入口 (Phase 2)
         // 將 slow (或者另一個新的指針) 放回起點
         // fast 留在原地
         int slow2 = 0;
-        
+
         // 兩個指針都每次走一步，它們會在環的入口 (重複的數字) 相遇
         while (slow2 != fast) {
             slow2 = nums[slow2];
             fast = nums[fast];
         }
-        
+
         return slow2;
     }
 };

@@ -50,6 +50,7 @@
 這樣只需要一次 DFS 就能算完。
 
 **Height Definition**:
+
 -   Null node: 0 (or -1 depending on edge vs node counting, problem says "length of path between two nodes" which is edge count. So height of leaf is 0? No, let's use standard height: null is 0, leaf is 1. Then edge path length is `LH + RH` directly).
 -   Example:
     -   Node 4 (leaf): L=0, R=0. Path=0. Return 1.

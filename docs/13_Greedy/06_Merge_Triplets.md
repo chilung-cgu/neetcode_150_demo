@@ -32,10 +32,11 @@
 ## 3. 💡 The "Aha!" Moment (優化)
 
 **Greedy Filtering**:
+
 1.  **Filter (過濾)**:
     任何一個三元組 `t`，如果 `t[0] > target[0]` 或 `t[1] > target[1]` 或 `t[2] > target[2]`，那麼這個三元組 **絕對不能選**。
     因為 `max` 操作只會讓值變大，如果你已經超過了 target，那以後怎麼合併都回不來了。
-    
+
 2.  **Verify (驗證)**:
     過濾掉那些「有害」的三元組後，剩下的都是「安全」的 (所有維度都小於等於 target)。
     我們將所有剩下的「安全」三元組全部合併起來（取 max）。
@@ -67,19 +68,19 @@ public:
         bool foundX = false;
         bool foundY = false;
         bool foundZ = false;
-        
+
         for (const auto& t : triplets) {
             // Filter: If any component is greater than target, discard this triplet completely
             if (t[0] > target[0] || t[1] > target[1] || t[2] > target[2]) {
                 continue;
             }
-            
+
             // If valid, check if it contributes to matching the target
             if (t[0] == target[0]) foundX = true;
             if (t[1] == target[1]) foundY = true;
             if (t[2] == target[2]) foundZ = true;
         }
-        
+
         return foundX && foundY && foundZ;
     }
 };
@@ -91,15 +92,15 @@ public:
 class Solution:
     def mergeTriplets(self, triplets: List[List[int]], target: List[int]) -> bool:
         good = set()
-        
+
         for t in triplets:
             if t[0] > target[0] or t[1] > target[1] or t[2] > target[2]:
                 continue
-                
+
             for i, v in enumerate(t):
                 if v == target[i]:
                     good.add(i)
-                    
+
         return len(good) == 3
 ```
 
@@ -115,7 +116,7 @@ public:
         bool x_ok = false;
         bool y_ok = false;
         bool z_ok = false;
-        
+
         for (auto& t : triplets) {
             // 關鍵過濾步驟：
             // 如果這個三元組的任何一個值大於 target 的對應值，
@@ -124,17 +125,17 @@ public:
             if (t[0] > target[0] || t[1] > target[1] || t[2] > target[2]) {
                 continue;
             }
-            
+
             // 如果這是一個「安全」的三元組 (所有值 <= target)
             // 我們看看它能不能貢獻出 target 想要的值
             if (t[0] == target[0]) x_ok = true;
             if (t[1] == target[1]) y_ok = true;
             if (t[2] == target[2]) z_ok = true;
-            
+
             // 如果三個值都已經湊齊了，可以提早回傳
             if (x_ok && y_ok && z_ok) return true;
         }
-        
+
         return x_ok && y_ok && z_ok;
     }
 };

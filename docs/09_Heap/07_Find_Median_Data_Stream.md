@@ -45,6 +45,7 @@
 2.  **Min-Heap (`large`)**: 儲存較大的那一半數字。堆頂是這一半中的最小值（即靠近中位數的右邊）。
 
 **Balancing Rule**:
+
 -   我們要保持兩個 heaps 的大小平衡：
     -   `size(small) == size(large)` (偶數個，中位數 = (small.top + large.top)/2)
     -   `size(small) == size(large) + 1` (奇數個，中位數 = small.top)

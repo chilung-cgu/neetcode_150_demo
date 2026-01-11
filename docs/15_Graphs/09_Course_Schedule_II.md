@@ -27,6 +27,7 @@
 這就是要求輸出 **拓撲排序 (Topological Sort)** 的結果。
 
 **Algorithm: Kahn's Algorithm (BFS + Indegree)**
+
 1.  建立鄰接表 `adj` 和入度表 `indegree`。
 2.  將所有 **入度為 0** 的節點（沒有前置課程的課）加入 Queue。
 3.  初始化結果陣列 `result`。
@@ -41,6 +42,7 @@
     -   否則（圖中有環，有些節點入度永遠不為 0），回傳 `{}`。
 
 **DFS Approach**:
+
 -   如果你使用 DFS (3-colored)，當一個節點狀態變為 2 (Visited) 時，將其加入結果列表。
 -   最後將結果列表 **反轉 (Reverse)**。
 -   (因為 DFS 是後序遍歷，最深層的節點最先完成)。
@@ -65,14 +67,14 @@ public:
     vector<int> findOrder(int numCourses, vector<vector<int>>& prerequisites) {
         vector<vector<int>> adj(numCourses);
         vector<int> indegree(numCourses, 0);
-        
+
         // 1. Build Graph and calculate Indegrees
         for (const auto& edge : prerequisites) {
             // edge: [course, pre] -> pre points to course
             adj[edge[1]].push_back(edge[0]);
             indegree[edge[0]]++;
         }
-        
+
         // 2. Add courses with 0 indegree to queue
         queue<int> q;
         for (int i = 0; i < numCourses; i++) {
@@ -80,15 +82,15 @@ public:
                 q.push(i);
             }
         }
-        
+
         vector<int> result;
-        
+
         // 3. Process Queue
         while (!q.empty()) {
             int curr = q.front();
             q.pop();
             result.push_back(curr);
-            
+
             for (int neighbor : adj[curr]) {
                 indegree[neighbor]--;
                 if (indegree[neighbor] == 0) {
@@ -96,12 +98,12 @@ public:
                 }
             }
         }
-        
+
         // 4. Check for cycle
         if (result.size() != numCourses) {
             return {};
         }
-        
+
         return result;
     }
 };
@@ -116,26 +118,26 @@ class Solution:
     def findOrder(self, numCourses: int, prerequisites: List[List[int]]) -> List[int]:
         adj = { i:[] for i in range(numCourses) }
         indegree = { i:0 for i in range(numCourses) }
-        
+
         for crs, pre in prerequisites:
             adj[pre].append(crs)
             indegree[crs] += 1
-            
+
         q = deque()
         for i in range(numCourses):
             if indegree[i] == 0:
                 q.append(i)
-                
+
         res = []
         while q:
             curr = q.popleft()
             res.append(curr)
-            
+
             for neighbor in adj[curr]:
                 indegree[neighbor] -= 1
                 if indegree[neighbor] == 0:
                     q.append(neighbor)
-                    
+
         return res if len(res) == numCourses else []
 ```
 
@@ -149,7 +151,7 @@ public:
     vector<int> findOrder(int numCourses, vector<vector<int>>& prerequisites) {
         vector<vector<int>> adj(numCourses);
         vector<int> indegree(numCourses, 0);
-        
+
         // 1. 建圖並計算入度 (Indegree)
         // 入度代表還有多少前置課程沒修完
         for (const auto& edge : prerequisites) {
@@ -157,7 +159,7 @@ public:
             adj[edge[1]].push_back(edge[0]);
             indegree[edge[0]]++;
         }
-        
+
         // 2. 將所有「無門檻」的課程 (入度為 0) 加入 Queue
         queue<int> q;
         for (int i = 0; i < numCourses; i++) {
@@ -165,16 +167,16 @@ public:
                 q.push(i);
             }
         }
-        
+
         vector<int> result;
-        
+
         // 3. BFS 拓撲排序
         while (!q.empty()) {
             int curr = q.front();
             q.pop();
             // 將當前課程加入結果（修課）
             result.push_back(curr);
-            
+
             // 通知所有後續課程：前置課程已修完
             for (int neighbor : adj[curr]) {
                 indegree[neighbor]--;
@@ -185,13 +187,13 @@ public:
                 }
             }
         }
-        
+
         // 4. 環檢測
         // 如果結果課程數不等於總課程數，代表圖中有環 (cycle)，有些課永遠修不到
         if (result.size() != numCourses) {
             return {};
         }
-        
+
         return result;
     }
 };

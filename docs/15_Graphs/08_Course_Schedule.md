@@ -45,6 +45,7 @@
 -   如果是 2 -> Return True (Safe)。
 
 **Algorithm 2: Kahns Algorithm (BFS + Indegree)**
+
 1.  計算每個節點的 **入度 (Indegree)**。
 2.  將所有入度為 0 的節點加入 Queue。
 3.  BFS:

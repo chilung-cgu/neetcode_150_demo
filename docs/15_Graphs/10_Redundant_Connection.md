@@ -33,6 +33,7 @@
 這是 **並查集 (Union-Find / Disjoint Set Union)** 的標準應用場景。
 
 **Algorithm**:
+
 1.  初始化 Union-Find 結構，每個節點最初是獨立的集合。
 2.  遍歷 `edges` 中的每一條邊 `[u, v]`：
     -   `Find(u)`: 查找 `u` 的根節點。

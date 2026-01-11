@@ -36,6 +36,7 @@ DFS 尋找所有路徑，記錄每條路徑的最大值，取最小值。
 `new_dist = max(current_max, height[neighbor])`。
 
 **Algorithm**:
+
 1.  **Priority Queue**: Min-Heap `(max_height, r, c)`。
 2.  **Start**: Push `(grid[0][0], 0, 0)`。
 3.  **Visited**: `set` 或 `matrix` to avoid cycles.
@@ -48,6 +49,7 @@ DFS 尋找所有路徑，記錄每條路徑的最大值，取最小值。
         -   Mark visited.
 
 **Alternative**: Binary Search on Answer + DFS/BFS check.
+
 -   Binary Search range `[0, n*n-1]`.
 -   Check if path exists with values `<= mid`.
 -   Time: $O(N^2 \log(N^2))$. Dijkstra is $O(N^2 \log N)$. Dijkstra is slightly better.

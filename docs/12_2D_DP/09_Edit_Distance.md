@@ -44,6 +44,7 @@
 `dp[i][j]` 表示 `word1` 前 `i` 個字元和 `word2` 前 `j` 個字元的最少操作數。
 
 **Transition**:
+
 1.  如果 `word1[i-1] == word2[j-1]`:
     -   不需要操作，直接繼承：`dp[i][j] = dp[i-1][j-1]`
 2.  如果不相等：
@@ -54,6 +55,7 @@
         - `)`
 
 **Base Case**:
+
 -   `dp[i][0] = i` (word2 為空，word1 需刪除 `i` 次)
 -   `dp[0][j] = j` (word1 為空，word1 需插入 `j` 次)
 

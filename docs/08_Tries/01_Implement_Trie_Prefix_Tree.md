@@ -45,6 +45,7 @@
 2.  **EndOfWord**: 一個 boolean，標記是否在此處結束一個完整的單字。
 
 **Operations**:
+
 -   `insert(word)`: 從 root 開始，沿著 word 的每個 char 往下走/建立節點。最後將最後一個節點的 `EndOfWord` 設為 true。 $O(L)$。
 -   `search(word)`: 從 root 開始走。如果卡住（child 為 null）回傳 false。走完後檢查 `EndOfWord` 是否為 true。 $O(L)$。
 -   `startsWith(prefix)`: 同 search，但走完後不需要檢查 `EndOfWord`，只要沒卡住就回傳 true。 $O(L)$。

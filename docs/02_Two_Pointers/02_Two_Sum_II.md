@@ -164,6 +164,7 @@ public:
     -   只有 `left`, `right`, `sum` 幾個變數。沒有使用 Hash Map。
 
 **Comparison w/ Two Sum I**:
+
 -   Two Sum I: $O(n)$ Time, $O(n)$ Space (Hash Map).
 -   Two Sum II: $O(n)$ Time, $O(1)$ Space (Two Pointers).
 -   **關鍵差異**: II 的 Input 是 **Sorted** 的，這讓我們可以用空間換取了... 呃，其實這題同時省了空間跟時間常數，因為 Two Pointers 比 Hash Map 操作更快。

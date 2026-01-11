@@ -39,6 +39,7 @@ Linear scan.
 -   右半 `[2,4,5]` 是有序的。
 
 **演算法**：
+
 1.  Check if `nums[mid] == target`.
 2.  判斷哪半邊是有序的：
     -   如果 `nums[left] <= nums[mid]`：**左半邊有序**。

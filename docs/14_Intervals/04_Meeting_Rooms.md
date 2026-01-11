@@ -33,6 +33,7 @@
 如果 `intervals[i]` 與 `intervals[i+1]` 不重疊，那麼 `intervals[i]` 也不可能與 `intervals[i+2]` 重疊（因為 `i+2` 開始得更晚）。
 
 **Logic**:
+
 1.  Sort intervals by start time.
 2.  Iterate from `i = 0` to `N-2`:
     -   Check if `intervals[i].end > intervals[i+1].start`.

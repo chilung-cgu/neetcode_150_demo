@@ -36,6 +36,7 @@
 -   `4`: 100 (1) -> `dp[2]`
 
 **Relation**:
+
 1.  **Offset Approach**: `dp[i] = dp[i - offset] + 1`。
 2.  **LSB Approach**: `i` 的位元數等於 `i >> 1` (除以 2) 的位元數加上 `i & 1` (最後一位是否為 1)。
     -   `dp[i] = dp[i >> 1] + (i & 1)`。

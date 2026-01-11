@@ -42,6 +42,7 @@
 
 或者反過來思考 (NeetCode 喜歡這種)：
 **Shift the Goal Post backward**.
+
 -   目標是到達 `last index` (一開始 goal = n-1)。
 -   從後往前遍歷 `i`。
 -   如果 `i + nums[i] >= goal`，說明從 `i` 可以跳到 `goal`。

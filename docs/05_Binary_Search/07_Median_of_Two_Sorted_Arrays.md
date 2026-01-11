@@ -42,6 +42,7 @@
 只要我們對較短的那個陣列 (假設是 A) 做 Binary Search 尋找切點 `i`，另一個陣列的切點 `j` 就會自動確定 (因為總左半邊數量是固定的 `(m + n + 1) / 2`)。
 
 **Partitioning Logic**:
+
 -   `half = (m + n + 1) / 2`
 -   Binary Search on A: `i` is index in A.
 -   `j = half - i` (index in B).
