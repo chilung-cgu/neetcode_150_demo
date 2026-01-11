@@ -121,18 +121,26 @@ neetcode_150_demo/
 
 ## 📚 Documentation & Deployment Protocol
 
-> **目標**：自動生成高品質的專案文檔網站，並透過 GitHub Actions 自動部署。
+> **目標**：透過 MkDocs Material 生成專業的文檔網站，並透過 GitHub Actions 自動部署至 GitHub Pages。
 
-### 1. 文檔架構 (MkDocs)
--   **雙重索引策略**：
-    -   **按分類 (By Category)**：維持原始資料夾結構，適合主題式複習。
-    -   **按難度 (By Difficulty)**：自動生成索引頁 (Easy/Medium/Hard)，適合漸進式學習。
--   **單一來源原則 (Single Source of Truth)**：
-    -   原始 Markdown 題解位於專案根目錄。
-    -   `site/` 建置目錄與 `docs/` 下的鏡像檔案 **不應** 被提交到 Git (Build-time generation only)。
+### 1. 網站網址
+-   **Live Site**：https://chilung-cgu.github.io/neetcode_150_demo/
 
-### 2. 自動化流程
--   **Build Script**：每次建置前，動態將題解檔案複製/同步至 `docs/` 目錄。
--   **GitHub Pages**：使用 GitHub Actions 在每次 Push to main 時自動建置並部署。
+### 2. 文檔架構 (MkDocs)
+-   **檔案位置**：所有題解 Markdown 檔案直接存放於 `docs/` 目錄下。
+-   **導航結構**：按分類（18 個模組）展示，定義於 `mkdocs.yml` 的 `nav` 區塊。
+-   **忽略規則**：僅 `site/`（Build 產物）需加入 `.gitignore`。
 
+### 3. 自動部署
+-   **觸發條件**：Push to `main` 分支。
+-   **Workflow**：`.github/workflows/deploy-docs.yml`
+-   **部署目標**：GitHub Pages（使用 `actions/deploy-pages@v4`）
 
+### 4. README 要求
+-   專案根目錄必須包含 `README.md`。
+-   README 必須包含：
+    -   專案標題與簡介
+    -   **網站連結**（prominently displayed）
+    -   題目分類與數量
+    -   本地預覽指南
+    -   專案結構說明
