@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number of Islands Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .grid { display: grid; gap: 2px; max-width: 220px; margin: 0 auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; border-radius: 4px; }
+        .cell.water { background: #1e3a5f; color: #64b5f6; }
+        .cell.land { background: var(--viz-success); color: #0f172a; }
+        .cell.visited { background: #f59e0b; color: #0f172a; }
+        .cell.current { border: 3px solid var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">NUMBER OF ISLANDS (DFS)</div>
+                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(5, 40px);"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Islands Found</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DFS ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int numIslands(grid) {', id: 0 },
+            { line: '    int count = 0;', id: 1 },
+            { line: '    for (int i = 0; i < m; i++) {', id: 2 },
+            { line: '        for (int j = 0; j < n; j++) {', id: 3 },
+            { line: '            if (grid[i][j] == \'1\') {', id: 4 },
+            { line: '                count++;', id: 5 },
+            { line: '                dfs(grid, i, j); // mark all connected', id: 6 },
+            { line: '            }', id: 7 },
+            { line: '        }', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return count;', id: 10 },
+            { line: '}', id: 11 },
+        ];
+        const grid = [
+            [1, 1, 1, 1, 0],
+            [1, 1, 0, 1, 0],
+            [1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0]
+        ];
+        const m = grid.length, n = grid[0].length;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const visited = Array(m).fill(null).map(() => Array(n).fill(false));
+            let count = 0;
+            steps.push({ visited: visited.map(r => [...r]), count, highlightLines: [0, 1], explanation: { title: 'Start', text: 'Scan grid for land' }});
+            
+            function dfs(i, j) {
+                if (i < 0 || i >= m || j < 0 || j >= n || grid[i][j] === 0 || visited[i][j]) return;
+                visited[i][j] = true;
+                dfs(i + 1, j); dfs(i - 1, j); dfs(i, j + 1); dfs(i, j - 1);
+            }
+            
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (grid[i][j] === 1 && !visited[i][j]) {
+                        count++;
+                        steps.push({ visited: visited.map(r => [...r]), count, current: [i, j], highlightLines: [4, 5], explanation: { title: `Found island #${count}`, text: `Starting DFS at [${i},${j}]` }});
+                        dfs(i, j);
+                        steps.push({ visited: visited.map(r => [...r]), count, highlightLines: [6], explanation: { title: `Island #${count} marked`, text: 'All connected land visited' }});
+                    }
+                }
+            }
+            steps.push({ visited: visited.map(r => [...r]), count, highlightLines: [10], explanation: { title: 'Done!', text: `${count} islands found` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    for (let i = 0; i < m; i++) {
+                        for (let j = 0; j < n; j++) {
+                            let cls = grid[i][j] === 0 ? 'water' : (step.visited[i][j] ? 'visited' : 'land');
+                            if (step.current && step.current[0] === i && step.current[1] === j) cls += ' current';
+                            html += `<div class="cell ${cls}">${grid[i][j] === 0 ? '~' : '■'}</div>`;
+                        }
+                    }
+                    document.getElementById('gridDisplay').innerHTML = html;
+                    document.getElementById('countDisplay').textContent = step.count;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

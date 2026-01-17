@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Counting Bits Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .bits-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+        .bit-item { text-align: center; padding: 8px 12px; border-radius: 6px; font-family: monospace; background: rgba(255,255,255,0.1); }
+        .bit-item.current { background: var(--viz-secondary); color: #0f172a; }
+        .bit-count { font-size: 1.2rem; color: var(--viz-success); }
+        .bit-binary { font-size: 0.75rem; color: var(--viz-text-muted); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">COUNTING BITS (DP)</div>
+                <div class="bits-row" id="bitsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> countBits(int n) {', id: 0 },
+            { line: '    vector<int> dp(n + 1, 0);', id: 1 },
+            { line: '    int offset = 1;', id: 2 },
+            { line: '    for (int i = 1; i <= n; i++) {', id: 3 },
+            { line: '        if (offset * 2 == i) offset = i;', id: 4 },
+            { line: '        dp[i] = 1 + dp[i - offset];', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return dp;', id: 7 },
+            { line: '}', id: 8 },
+        ];
+        const n = 5;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const dp = [0];
+            let offset = 1;
+            steps.push({ dp: [...dp], idx: 0, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'dp[0] = 0, offset = 1' }});
+            for (let i = 1; i <= n; i++) {
+                if (offset * 2 === i) offset = i;
+                dp[i] = 1 + dp[i - offset];
+                steps.push({ dp: [...dp], idx: i, highlightLines: [4, 5], explanation: { title: `dp[${i}] = 1 + dp[${i - offset}]`, text: `= 1 + ${dp[i - offset]} = ${dp[i]}` }});
+            }
+            steps.push({ dp: [...dp], idx: -1, highlightLines: [7], explanation: { title: 'Done!', text: `Result: [${dp.join(', ')}]` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('bitsDisplay').innerHTML = step.dp.map((count, i) => `<div class="bit-item ${i === step.idx ? 'current' : ''}"><div>${i}</div><div class="bit-count">${count}</div><div class="bit-binary">${i.toString(2)}</div></div>`).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subsets Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .subset { display: inline-block; padding: 6px 12px; margin: 4px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .subset.current { background: var(--viz-secondary); color: #0f172a; }
+        .result-display { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; max-height: 150px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SUBSETS - BACKTRACKING</div>
+                <div style="text-align: center; margin: 10px 0;">Current: <strong id="currentSubset">[]</strong></div>
+                <div class="viz-title" style="margin-top: 15px;">ALL SUBSETS</div>
+                <div class="result-display" id="resultDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BACKTRACKING</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'void backtrack(int start, vector<int>& cur) {', id: 0 },
+            { line: '    result.push_back(cur);', id: 1 },
+            { line: '    for (int i = start; i < nums.size(); i++) {', id: 2 },
+            { line: '        cur.push_back(nums[i]);', id: 3 },
+            { line: '        backtrack(i + 1, cur);', id: 4 },
+            { line: '        cur.pop_back();', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '}', id: 7 },
+        ];
+        const nums = [1, 2, 3];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const result = [];
+            function backtrack(start, cur) {
+                result.push([...cur]);
+                steps.push({ cur: [...cur], result: result.map(r => [...r]), highlightLines: [1], explanation: { title: `Add [${cur.join(',')}]`, text: '' }});
+                for (let i = start; i < nums.length; i++) {
+                    cur.push(nums[i]);
+                    steps.push({ cur: [...cur], result: result.map(r => [...r]), highlightLines: [3], explanation: { title: `Include ${nums[i]}`, text: '' }});
+                    backtrack(i + 1, cur);
+                    cur.pop();
+                }
+            }
+            backtrack(0, []);
+            steps.push({ cur: [], result: result.map(r => [...r]), highlightLines: [7], explanation: { title: 'Done!', text: `${result.length} subsets` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('currentSubset').textContent = `[${step.cur.join(', ')}]`;
+                    document.getElementById('resultDisplay').innerHTML = step.result.map(r => `<span class="subset">[${r.join(',')}]</span>`).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

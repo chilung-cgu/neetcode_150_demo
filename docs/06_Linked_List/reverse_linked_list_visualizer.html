@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Linked List Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .list-display { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 15px 0; flex-wrap: wrap; }
+        .node { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .node.current { background: var(--viz-secondary); color: #0f172a; }
+        .node.done { background: var(--viz-success); color: #0f172a; }
+        .arrow { color: var(--viz-text-muted); font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">REVERSE LINKED LIST</div>
+                <div class="list-display" id="listDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">prev</div><div class="state-value" id="prevDisplay">null</div></div>
+                    <div class="state-item"><div class="state-label">curr</div><div class="state-value" id="currDisplay" style="color: var(--viz-secondary);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'ListNode* reverseList(ListNode* head) {', id: 0 },
+            { line: '    ListNode* prev = nullptr;', id: 1 },
+            { line: '    ListNode* curr = head;', id: 2 },
+            { line: '    while (curr) {', id: 3 },
+            { line: '        ListNode* next = curr->next;', id: 4 },
+            { line: '        curr->next = prev;', id: 5 },
+            { line: '        prev = curr;', id: 6 },
+            { line: '        curr = next;', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return prev;', id: 9 },
+            { line: '}', id: 10 },
+        ];
+        const list = [1, 2, 3, 4, 5];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let reversed = [];
+            steps.push({ list: [...list], reversed: [], currIdx: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'prev=null, curr=head' }});
+            for (let i = 0; i < list.length; i++) {
+                reversed.unshift(list[i]);
+                steps.push({ list: list.slice(i + 1), reversed: [...reversed], currIdx: 0, highlightLines: [4, 5, 6, 7], explanation: { title: `Reverse node ${list[i]}`, text: `prev=${reversed[0]}, curr=${list[i + 1] ?? 'null'}` }});
+            }
+            steps.push({ list: [], reversed, currIdx: -1, highlightLines: [9], explanation: { title: 'Done!', text: `Reversed: ${reversed.join(' → ')}` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = step.reversed.map((v, i) => `<span class="node done">${v}</span><span class="arrow">→</span>`).join('');
+                    html += step.list.map((v, i) => `<span class="node ${i === step.currIdx ? 'current' : ''}">${v}</span>${i < step.list.length - 1 ? '<span class="arrow">→</span>' : ''}`).join('');
+                    if (step.list.length === 0 && step.reversed.length > 0) html = step.reversed.map((v, i) => `<span class="node done">${v}</span>${i < step.reversed.length - 1 ? '<span class="arrow">→</span>' : ''}`).join('');
+                    document.getElementById('listDisplay').innerHTML = html || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    document.getElementById('prevDisplay').textContent = step.reversed[0] ?? 'null';
+                    document.getElementById('currDisplay').textContent = step.list[step.currIdx] ?? 'null';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

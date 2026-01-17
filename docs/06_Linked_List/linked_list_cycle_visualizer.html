@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linked List Cycle Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .list-display { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 15px 0; flex-wrap: wrap; }
+        .node { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: rgba(255,255,255,0.1); }
+        .node.slow { background: var(--viz-primary); color: white; }
+        .node.fast { background: var(--viz-secondary); color: #0f172a; }
+        .node.both { background: var(--viz-success); color: #0f172a; }
+        .arrow { color: var(--viz-text-muted); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">LINKED LIST CYCLE - FLOYD'S ALGORITHM</div>
+                <div class="list-display" id="listDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Slow</div><div class="state-value" id="slowDisplay" style="color: var(--viz-primary);">0</div></div>
+                    <div class="state-item"><div class="state-label">Fast</div><div class="state-value" id="fastDisplay" style="color: var(--viz-secondary);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool hasCycle(ListNode* head) {', id: 0 },
+            { line: '    ListNode *slow = head, *fast = head;', id: 1 },
+            { line: '    while (fast && fast->next) {', id: 2 },
+            { line: '        slow = slow->next;', id: 3 },
+            { line: '        fast = fast->next->next;', id: 4 },
+            { line: '        if (slow == fast) return true;', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return false;', id: 7 },
+            { line: '}', id: 8 },
+        ];
+        const list = [3, 2, 0, -4];
+        const cycleStart = 1; // cycle back to index 1
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let slow = 0, fast = 0;
+            steps.push({ slow, fast, highlightLines: [0, 1], explanation: { title: 'Init', text: 'slow=fast=head' }});
+            for (let i = 0; i < 8; i++) {
+                slow = (slow + 1) % list.length;
+                fast = (fast + 2) % list.length;
+                if (slow >= cycleStart) slow = cycleStart + (slow - cycleStart) % (list.length - cycleStart);
+                if (fast >= cycleStart) fast = cycleStart + (fast - cycleStart) % (list.length - cycleStart);
+                steps.push({ slow, fast, highlightLines: [3, 4], explanation: { title: `Move: slow→${list[slow]}, fast→${list[fast]}`, text: slow === fast ? '✓ Cycle detected!' : '' }});
+                if (slow === fast) {
+                    steps.push({ slow, fast, found: true, highlightLines: [5], explanation: { title: '✓ Cycle Found!', text: 'slow == fast' }});
+                    return steps;
+                }
+            }
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('listDisplay').innerHTML = list.map((v, i) => {
+                        let cls = 'node';
+                        if (i === step.slow && i === step.fast) cls += ' both';
+                        else if (i === step.slow) cls += ' slow';
+                        else if (i === step.fast) cls += ' fast';
+                        return `<span class="${cls}">${v}</span>`;
+                    }).join('<span class="arrow">→</span>') + `<span class="arrow">⤴️ (cycle to idx ${cycleStart})</span>`;
+                    document.getElementById('slowDisplay').textContent = list[step.slow];
+                    document.getElementById('fastDisplay').textContent = list[step.fast];
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

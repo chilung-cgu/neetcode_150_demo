@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LRU Cache Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .cache-display { display: flex; gap: 8px; justify-content: center; margin: 15px 0; }
+        .cache-item { padding: 8px 14px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .cache-item.recent { background: var(--viz-success); color: #0f172a; }
+        .cache-item.evicted { background: var(--viz-error); color: white; text-decoration: line-through; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">LRU CACHE (capacity=2)</div>
+                <div class="cache-display" id="cacheDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Operation</div><div class="state-value" id="opDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DATA STRUCTURE</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'class LRUCache {', id: 0 },
+            { line: '    unordered_map<int, list<pair>::iterator> map;', id: 1 },
+            { line: '    list<pair<int, int>> dll; // doubly linked list', id: 2 },
+            { line: '    int get(int key) { ... }', id: 3 },
+            { line: '    void put(int key, int val) {', id: 4 },
+            { line: '        if (size > capacity) evict LRU;', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '};', id: 7 },
+        ];
+        const ops = [['put', 1, 1], ['put', 2, 2], ['get', 1], ['put', 3, 3], ['get', 2], ['put', 4, 4], ['get', 1], ['get', 3], ['get', 4]];
+        const capacity = 2;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const cache = new Map();
+            steps.push({ cache: [], op: 'init', result: '-', highlightLines: [0, 1, 2], explanation: { title: 'Init', text: `capacity=${capacity}` }});
+            for (const [op, k, v] of ops) {
+                if (op === 'put') {
+                    let evicted = null;
+                    if (cache.has(k)) cache.delete(k);
+                    else if (cache.size >= capacity) {
+                        evicted = cache.keys().next().value;
+                        cache.delete(evicted);
+                    }
+                    cache.set(k, v);
+                    const cacheArr = [...cache.entries()].map(([key, val]) => ({ key, val, recent: key === k }));
+                    steps.push({ cache: cacheArr, op: `put(${k}, ${v})`, result: evicted ? `evict ${evicted}` : 'ok', evicted, highlightLines: [4, 5], explanation: { title: `put(${k}, ${v})`, text: evicted ? `Evicted key ${evicted}` : '' }});
+                } else {
+                    const val = cache.get(k);
+                    if (val !== undefined) {
+                        cache.delete(k);
+                        cache.set(k, val);
+                    }
+                    const cacheArr = [...cache.entries()].map(([key, v]) => ({ key, val: v, recent: key === k }));
+                    steps.push({ cache: cacheArr, op: `get(${k})`, result: val ?? -1, highlightLines: [3], explanation: { title: `get(${k})`, text: val !== undefined ? `Found: ${val}` : 'Not found: -1' }});
+                }
+            }
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('cacheDisplay').innerHTML = step.cache.map(e => `<span class="cache-item ${e.recent ? 'recent' : ''}">${e.key}:${e.val}</span>`).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    document.getElementById('opDisplay').textContent = step.op;
+                    document.getElementById('resultDisplay').textContent = step.result;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

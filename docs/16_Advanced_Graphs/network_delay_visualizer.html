@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Delay Time (Dijkstra) Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .node { display: inline-block; width: 50px; height: 50px; line-height: 50px; text-align: center; margin: 8px; border-radius: 50%; font-family: monospace; background: rgba(255,255,255,0.1); }
+        .node.visited { background: var(--viz-success); color: #0f172a; }
+        .node.current { background: var(--viz-secondary); color: #0f172a; }
+        .dist-label { font-size: 0.75rem; color: var(--viz-text-muted); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">DIJKSTRA'S ALGORITHM</div>
+                <div style="text-align: center; margin: 15px 0;" id="nodesDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Max Time</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DIJKSTRA</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int networkDelayTime(times, n, k) {', id: 0 },
+            { line: '    priority_queue<pair<int,int>> pq;', id: 1 },
+            { line: '    vector<int> dist(n+1, INT_MAX);', id: 2 },
+            { line: '    dist[k] = 0; pq.push({0, k});', id: 3 },
+            { line: '    while (!pq.empty()) {', id: 4 },
+            { line: '        auto [d, u] = pq.top(); pq.pop();', id: 5 },
+            { line: '        for (auto [v, w] : adj[u]) {', id: 6 },
+            { line: '            if (dist[u] + w < dist[v]) {', id: 7 },
+            { line: '                dist[v] = dist[u] + w;', id: 8 },
+            { line: '                pq.push({dist[v], v});', id: 9 },
+            { line: '            }', id: 10 },
+            { line: '        }', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    return *max_element(dist);', id: 13 },
+            { line: '}', id: 14 },
+        ];
+        const n = 4, k = 2;
+        // times: [[2,1,1],[2,3,1],[3,4,1]]
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const dist = [Infinity, Infinity, 0, Infinity, Infinity]; // 1-indexed
+            const visited = Array(n + 1).fill(false);
+            steps.push({ dist: [...dist], visited: [...visited], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: `Start from node ${k}` }});
+            
+            // Node 2 -> Node 1 (dist 1), Node 3 (dist 1)
+            dist[1] = 1; dist[3] = 1;
+            steps.push({ dist: [...dist], visited: [...visited], current: 2, highlightLines: [5, 6, 7, 8], explanation: { title: 'Process node 2', text: 'Relax neighbors: 1, 3' }});
+            visited[2] = true;
+            
+            // Node 3 -> Node 4 (dist 2)
+            dist[4] = 2;
+            steps.push({ dist: [...dist], visited: [...visited], current: 3, highlightLines: [5, 6, 7, 8], explanation: { title: 'Process node 3', text: 'Relax neighbor: 4' }});
+            visited[3] = true;
+            visited[1] = true;
+            visited[4] = true;
+
+            steps.push({ dist: [...dist], visited: [...visited], highlightLines: [13], explanation: { title: 'Done!', text: `Max delay = ${Math.max(...dist.slice(1).filter(d => d !== Infinity))}` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    for (let i = 1; i <= n; i++) {
+                        let cls = step.current === i ? 'current' : step.visited[i] ? 'visited' : '';
+                        const d = step.dist[i] === Infinity ? '∞' : step.dist[i];
+                        html += `<div class="node ${cls}">${i}<div class="dist-label">d=${d}</div></div>`;
+                    }
+                    document.getElementById('nodesDisplay').innerHTML = html;
+                    const maxDist = Math.max(...step.dist.slice(1).filter(d => d !== Infinity));
+                    document.getElementById('maxDisplay').textContent = maxDist === -Infinity ? '-' : maxDist;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

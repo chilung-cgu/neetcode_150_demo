@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge Intervals Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .interval-row { display: flex; align-items: center; height: 30px; margin: 4px 0; position: relative; }
+        .interval { position: absolute; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-family: monospace; }
+        .interval.original { background: var(--viz-primary); color: white; }
+        .interval.merged { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">MERGE INTERVALS</div>
+                <div id="intervalsDisplay" style="min-height: 150px; position: relative;"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<vector<int>> merge(intervals) {', id: 0 },
+            { line: '    sort(intervals.begin(), intervals.end());', id: 1 },
+            { line: '    vector<vector<int>> res;', id: 2 },
+            { line: '    for (auto& interval : intervals) {', id: 3 },
+            { line: '        if (res.empty() || res.back()[1] < interval[0])', id: 4 },
+            { line: '            res.push_back(interval);', id: 5 },
+            { line: '        else', id: 6 },
+            { line: '            res.back()[1] = max(res.back()[1], interval[1]);', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return res;', id: 9 },
+            { line: '}', id: 10 },
+        ];
+        const intervals = [[1,3], [2,6], [8,10], [15,18]];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const sorted = [...intervals].sort((a, b) => a[0] - b[0]);
+            const result = [];
+            steps.push({ intervals: sorted, result: [], highlightLines: [0, 1, 2], explanation: { title: 'Sort by start', text: `${sorted.map(i => `[${i}]`).join(', ')}` }});
+            for (const int of sorted) {
+                if (result.length === 0 || result[result.length - 1][1] < int[0]) {
+                    result.push([...int]);
+                    steps.push({ intervals: sorted, result: result.map(r => [...r]), current: int, highlightLines: [4, 5], explanation: { title: `[${int}] → new interval`, text: '' }});
+                } else {
+                    result[result.length - 1][1] = Math.max(result[result.length - 1][1], int[1]);
+                    steps.push({ intervals: sorted, result: result.map(r => [...r]), current: int, merged: true, highlightLines: [6, 7], explanation: { title: `[${int}] → merge`, text: `Extended to [${result[result.length - 1]}]` }});
+                }
+            }
+            steps.push({ intervals: sorted, result: result.map(r => [...r]), highlightLines: [9], explanation: { title: 'Done!', text: `${result.length} merged intervals` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const scale = 15; // pixels per unit
+                    let html = '<div style="margin-bottom: 10px; color: var(--viz-text-muted);">Original:</div>';
+                    step.intervals.forEach((int, i) => {
+                        html += `<div class="interval-row"><div class="interval original" style="left: ${int[0] * scale}px; width: ${(int[1] - int[0]) * scale}px;">[${int[0]},${int[1]}]</div></div>`;
+                    });
+                    html += '<div style="margin: 10px 0; color: var(--viz-text-muted);">Merged:</div>';
+                    step.result.forEach((int, i) => {
+                        html += `<div class="interval-row"><div class="interval merged" style="left: ${int[0] * scale}px; width: ${(int[1] - int[0]) * scale}px;">[${int[0]},${int[1]}]</div></div>`;
+                    });
+                    document.getElementById('intervalsDisplay').innerHTML = html;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

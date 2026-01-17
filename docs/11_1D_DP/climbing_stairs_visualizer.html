@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climbing Stairs Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">CLIMBING STAIRS (n=5)</div>
+                <div class="chart-container" id="chartContainer"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">dp[i]</div><div class="state-value" id="dpDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">Formula</div><div class="state-value" id="formulaDisplay" style="font-size: 0.85rem;">dp[i] = dp[i-1] + dp[i-2]</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int climbStairs(int n) {', id: 0 },
+            { line: '    if (n <= 2) return n;', id: 1 },
+            { line: '    int prev2 = 1, prev1 = 2;', id: 2 },
+            { line: '    for (int i = 3; i <= n; i++) {', id: 3 },
+            { line: '        int curr = prev1 + prev2;', id: 4 },
+            { line: '        prev2 = prev1;', id: 5 },
+            { line: '        prev1 = curr;', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return prev1;', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const n = 5;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const dp = [0, 1, 2];
+            steps.push({ dp: [...dp], i: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'dp[1]=1, dp[2]=2 (base cases)' }});
+            for (let i = 3; i <= n; i++) {
+                dp[i] = dp[i - 1] + dp[i - 2];
+                steps.push({ dp: [...dp], i, highlightLines: [4, 5, 6], explanation: { title: `dp[${i}] = dp[${i-1}] + dp[${i-2}]`, text: `= ${dp[i-1]} + ${dp[i-2]} = ${dp[i]}` }});
+            }
+            steps.push({ dp: [...dp], i: n, highlightLines: [8], explanation: { title: 'Done!', text: `${dp[n]} ways to climb ${n} stairs` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const states = step.dp.slice(1).map((_, i) => i + 1 === step.i ? 'current' : i + 1 < step.i ? 'in-stack' : '');
+                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), step.dp.slice(1), states, { height: 180 });
+                    document.getElementById('dpDisplay').textContent = step.dp.slice(1).map((v, i) => `dp[${i+1}]=${v}`).join(', ');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

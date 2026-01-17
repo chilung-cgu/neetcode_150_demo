@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Common Subsequence Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .dp-table { display: grid; gap: 2px; max-width: 350px; margin: 0 auto; }
+        .dp-cell { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: rgba(255,255,255,0.1); border-radius: 3px; font-size: 0.9rem; }
+        .dp-cell.header { background: transparent; color: var(--viz-text-muted); }
+        .dp-cell.current { background: var(--viz-secondary); color: #0f172a; }
+        .dp-cell.match { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">LONGEST COMMON SUBSEQUENCE</div>
+                <div class="dp-table" id="dpTable"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">LCS Length</div><div class="state-value" id="lcsDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int longestCommonSubsequence(s1, s2) {', id: 0 },
+            { line: '    int dp[m+1][n+1] = {0};', id: 1 },
+            { line: '    for (int i = 1; i <= m; i++) {', id: 2 },
+            { line: '        for (int j = 1; j <= n; j++) {', id: 3 },
+            { line: '            if (s1[i-1] == s2[j-1])', id: 4 },
+            { line: '                dp[i][j] = dp[i-1][j-1] + 1;', id: 5 },
+            { line: '            else', id: 6 },
+            { line: '                dp[i][j] = max(dp[i-1][j], dp[i][j-1]);', id: 7 },
+            { line: '        }', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return dp[m][n];', id: 10 },
+            { line: '}', id: 11 },
+        ];
+        const s1 = "ace", s2 = "abcde";
+        const m = s1.length, n = s2.length;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+            steps.push({ dp: dp.map(r => [...r]), i: 0, j: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: `s1="${s1}", s2="${s2}"` }});
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    const match = s1[i - 1] === s2[j - 1];
+                    if (match) dp[i][j] = dp[i - 1][j - 1] + 1;
+                    else dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+                    if ((i + j) % 2 === 0 || (i === m && j === n)) {
+                        steps.push({ dp: dp.map(r => [...r]), i, j, match, highlightLines: match ? [4, 5] : [6, 7], explanation: { title: `dp[${i}][${j}] = ${dp[i][j]}`, text: match ? `'${s1[i-1]}' == '${s2[j-1]}' (match!)` : 'Take max' }});
+                    }
+                }
+            }
+            steps.push({ dp: dp.map(r => [...r]), i: m, j: n, highlightLines: [10], explanation: { title: 'Done!', text: `LCS = ${dp[m][n]}` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            document.getElementById('dpTable').style.gridTemplateColumns = `repeat(${n + 2}, 35px)`;
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '<div class="dp-cell header"></div>';
+                    html += [...s2].map(c => `<div class="dp-cell header">${c}</div>`).join('');
+                    html += '<div class="dp-cell header"></div>';
+                    for (let i = 0; i <= m; i++) {
+                        html += `<div class="dp-cell header">${i > 0 ? s1[i - 1] : ''}</div>`;
+                        for (let j = 0; j <= n; j++) {
+                            const cls = (i === step.i && j === step.j) ? (step.match ? 'match' : 'current') : '';
+                            html += `<div class="dp-cell ${cls}">${step.dp[i][j]}</div>`;
+                        }
+                    }
+                    document.getElementById('dpTable').innerHTML = html;
+                    document.getElementById('lcsDisplay').textContent = step.dp[m][n];
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

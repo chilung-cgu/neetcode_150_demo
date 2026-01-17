@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invert Binary Tree Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .tree-level { display: flex; justify-content: center; gap: 20px; margin: 8px 0; }
+        .tree-node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
+        .tree-node.swapped { background: var(--viz-success); color: #0f172a; }
+        .tree-node.current { border: 3px solid var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">INVERT BINARY TREE</div>
+                <div id="treeDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'TreeNode* invertTree(TreeNode* root) {', id: 0 },
+            { line: '    if (!root) return nullptr;', id: 1 },
+            { line: '    swap(root->left, root->right);', id: 2 },
+            { line: '    invertTree(root->left);', id: 3 },
+            { line: '    invertTree(root->right);', id: 4 },
+            { line: '    return root;', id: 5 },
+            { line: '}', id: 6 },
+        ];
+        // Tree: [4, 2, 7, 1, 3, 6, 9]
+        const levels = [[4], [2, 7], [1, 3, 6, 9]];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let tree = JSON.parse(JSON.stringify(levels));
+            steps.push({ tree: JSON.parse(JSON.stringify(tree)), current: [0, 0], highlightLines: [0, 1], explanation: { title: 'Init', text: 'Start at root (4)' }});
+            // Swap level 1
+            [tree[1][0], tree[1][1]] = [tree[1][1], tree[1][0]];
+            steps.push({ tree: JSON.parse(JSON.stringify(tree)), swapped: [[1, 0], [1, 1]], highlightLines: [2], explanation: { title: 'Swap children of 4', text: '2 ↔ 7' }});
+            // Swap level 2 (left subtree)
+            [tree[2][0], tree[2][1]] = [tree[2][1], tree[2][0]];
+            steps.push({ tree: JSON.parse(JSON.stringify(tree)), swapped: [[2, 0], [2, 1]], highlightLines: [2, 3], explanation: { title: 'Swap children of 7', text: '6 ↔ 9 (now 3 ↔ 1)' }});
+            // Swap level 2 (right subtree)
+            [tree[2][2], tree[2][3]] = [tree[2][3], tree[2][2]];
+            steps.push({ tree: JSON.parse(JSON.stringify(tree)), swapped: [[2, 2], [2, 3]], highlightLines: [2, 4], explanation: { title: 'Swap children of 2', text: '1 ↔ 3 (now 9 ↔ 6)' }});
+            steps.push({ tree: JSON.parse(JSON.stringify(tree)), done: true, highlightLines: [5], explanation: { title: 'Done!', text: 'Tree inverted' }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    step.tree.forEach((level, li) => {
+                        html += `<div class="tree-level">${level.map((v, i) => `<div class="tree-node ${step.swapped?.some(s => s[0] === li && s[1] === i) ? 'swapped' : ''}">${v}</div>`).join('')}</div>`;
+                    });
+                    document.getElementById('treeDisplay').innerHTML = html;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

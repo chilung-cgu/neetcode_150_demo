@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validate BST Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .tree-level { display: flex; justify-content: center; gap: 20px; margin: 8px 0; }
+        .tree-node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
+        .tree-node.valid { background: var(--viz-success); color: #0f172a; }
+        .tree-node.invalid { background: var(--viz-error); }
+        .tree-node.current { border: 3px solid var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">VALIDATE BST</div>
+                <div id="treeDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Range</div><div class="state-value" id="rangeDisplay">(-∞, ∞)</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool isValidBST(TreeNode* root, long min, long max) {', id: 0 },
+            { line: '    if (!root) return true;', id: 1 },
+            { line: '    if (root->val <= min || root->val >= max)', id: 2 },
+            { line: '        return false;', id: 3 },
+            { line: '    return isValidBST(root->left, min, root->val)', id: 4 },
+            { line: '        && isValidBST(root->right, root->val, max);', id: 5 },
+            { line: '}', id: 6 },
+        ];
+        const levels = [[5], [1, 6], ['', '', 4, 7]];
+        const flat = [5, 1, 6, null, null, 4, 7];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ current: [0, 0], range: '(-∞, ∞)', validated: [], highlightLines: [0], explanation: { title: 'Check root (5)', text: 'Range: (-∞, ∞)' }});
+            steps.push({ current: [1, 0], range: '(-∞, 5)', validated: [5], highlightLines: [4], explanation: { title: 'Check left (1)', text: '1 in (-∞, 5) ✓' }});
+            steps.push({ current: [1, 1], range: '(5, ∞)', validated: [5, 1], highlightLines: [5], explanation: { title: 'Check right (6)', text: '6 in (5, ∞) ✓' }});
+            steps.push({ current: [2, 2], range: '(5, 6)', validated: [5, 1, 6], invalid: 4, highlightLines: [2, 3], explanation: { title: 'Check 4', text: '4 NOT in (5, 6) ✗' }});
+            steps.push({ validated: [], invalid: true, highlightLines: [3], explanation: { title: 'Invalid BST!', text: 'Node 4 violates range' }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    levels.forEach((level, li) => {
+                        html += `<div class="tree-level">${level.map((v, i) => v ? `<div class="tree-node ${step.validated?.includes(v) ? 'valid' : ''} ${step.invalid === v ? 'invalid' : ''} ${step.current?.[0] === li && step.current?.[1] === i ? 'current' : ''}">${v}</div>` : '<div style="width:40px"></div>').join('')}</div>`;
+                    });
+                    document.getElementById('treeDisplay').innerHTML = html;
+                    document.getElementById('rangeDisplay').textContent = step.range || '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

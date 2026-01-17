@@ -1,15 +1,24 @@
-- [x] Phase 1: 基礎建設與 LeetCode 84 重構
-  - [x] 建立共用樣式庫 `docs/assets/visualizer/style.css`
-  - [x] 建立核心邏輯庫 `docs/assets/visualizer/core.js`
-  - [x] 重構 `leetcode_84_visualizer.html` 引用共用資源
-  - [x] 整合至 `07_Largest_Rectangle_in_Histogram.md`
-  - [x] 優化佈局 (55/45 split) 與章節結構
-- [x] Phase 2: 自動化工具
-  - [x] 建立 `/add-visualizer` workflow 文件
-  - [x] 建立 `template.html` 模板
-- [ ] Phase 3: 規模化試產
+# Visual Enhancement Tasks
+
+- [x] Create `docs/assets/images` directory
+- [x] Phase 3: 規模化試產
   - [x] Arrays & Hashing (9/9) - Completed
   - [x] Two Pointers (5/5) - Completed
   - [x] Sliding Window (6/6) - Completed
   - [x] Stack (7/7) - Completed
   - [x] Binary Search (7/7) - Completed
+  - [x] Linked List (4 key problems) - Completed
+  - [x] Trees (4 key problems) - Completed
+  - [x] Tries (1/3) - Completed
+  - [x] Heap (1 key problem) - Completed
+  - [x] Backtracking (2 key problems) - Completed
+  - [x] 1D DP (2 key problems) - Completed
+  - [x] 2D DP (1 key problem) - Completed
+  - [x] Greedy (1 key problem) - Completed
+  - [x] Intervals (1 key problem) - Completed
+  - [x] Graphs (2 key problems) - Completed
+  - [x] Advanced Graphs (1 key problem) - Completed
+  - [x] Math & Geometry (1 key problem) - Completed
+  - [x] Bit Manipulation (2 key problems) - Completed
+- [ ] Configure `mkdocs.yml` for new logo <!-- id: 4 -->
+- [ ] Add Banners to Chapter Index pages <!-- id: 5 -->

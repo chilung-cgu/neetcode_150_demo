@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Median from Data Stream Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .heap-container { display: flex; gap: 20px; justify-content: center; }
+        .heap { text-align: center; }
+        .heap-title { font-size: 0.9rem; color: var(--viz-text-muted); margin-bottom: 8px; }
+        .heap-items { display: flex; flex-direction: column-reverse; gap: 4px; align-items: center; min-height: 100px; }
+        .heap-item { padding: 8px 14px; border-radius: 4px; font-family: monospace; }
+        .max-heap .heap-item { background: var(--viz-primary); color: white; }
+        .min-heap .heap-item { background: var(--viz-secondary); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">FIND MEDIAN - TWO HEAPS</div>
+                <div class="heap-container">
+                    <div class="heap max-heap"><div class="heap-title">Max Heap (smaller half)</div><div class="heap-items" id="maxHeap"></div></div>
+                    <div class="heap min-heap"><div class="heap-title">Min Heap (larger half)</div><div class="heap-items" id="minHeap"></div></div>
+                </div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Median</div><div class="state-value" id="medianDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'class MedianFinder {', id: 0 },
+            { line: '    priority_queue<int> maxHeap; // smaller half', id: 1 },
+            { line: '    priority_queue<int, vec, greater> minHeap;', id: 2 },
+            { line: '    void addNum(int num) {', id: 3 },
+            { line: '        maxHeap.push(num);', id: 4 },
+            { line: '        minHeap.push(maxHeap.top()); maxHeap.pop();', id: 5 },
+            { line: '        if (minHeap.size() > maxHeap.size())', id: 6 },
+            { line: '            maxHeap.push(minHeap.top()); minHeap.pop();', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    double findMedian() { ... }', id: 9 },
+            { line: '};', id: 10 },
+        ];
+        const nums = [1, 2, 3, 4, 5];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const maxH = [], minH = [];
+            steps.push({ maxH: [], minH: [], median: '-', highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Two empty heaps' }});
+            for (const num of nums) {
+                maxH.push(num);
+                maxH.sort((a, b) => b - a);
+                minH.push(maxH.shift());
+                minH.sort((a, b) => a - b);
+                if (minH.length > maxH.length) {
+                    maxH.push(minH.shift());
+                    maxH.sort((a, b) => b - a);
+                }
+                const median = maxH.length > minH.length ? maxH[0] : (maxH[0] + minH[0]) / 2;
+                steps.push({ maxH: [...maxH], minH: [...minH], median, highlightLines: [4, 5, 6, 7], explanation: { title: `Add ${num}`, text: `Median = ${median}` }});
+            }
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('maxHeap').innerHTML = step.maxH.map(v => `<span class="heap-item">${v}</span>`).join('') || '-';
+                    document.getElementById('minHeap').innerHTML = step.minH.map(v => `<span class="heap-item">${v}</span>`).join('') || '-';
+                    document.getElementById('medianDisplay').textContent = step.median;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

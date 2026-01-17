@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Implement Trie Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .trie-display { font-family: monospace; margin: 15px 0; }
+        .trie-node { display: inline-block; padding: 6px 10px; margin: 2px; border-radius: 4px; background: var(--viz-primary); color: white; }
+        .trie-node.end { background: var(--viz-success); color: #0f172a; }
+        .trie-node.current { border: 2px solid var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">TRIE (PREFIX TREE)</div>
+                <div class="trie-display" id="trieDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Operation</div><div class="state-value" id="opDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DATA STRUCTURE</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'class TrieNode {', id: 0 },
+            { line: '    TrieNode* children[26];', id: 1 },
+            { line: '    bool isEnd = false;', id: 2 },
+            { line: '};', id: 3 },
+            { line: 'void insert(string word) { ... }', id: 4 },
+            { line: 'bool search(string word) { ... }', id: 5 },
+            { line: 'bool startsWith(string prefix) { ... }', id: 6 },
+        ];
+        const ops = [['insert', 'apple'], ['search', 'apple'], ['search', 'app'], ['startsWith', 'app'], ['insert', 'app'], ['search', 'app']];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const words = new Set();
+            steps.push({ words: [], op: 'init', result: '-', highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 'Empty Trie' }});
+            for (const [op, word] of ops) {
+                if (op === 'insert') {
+                    words.add(word);
+                    steps.push({ words: [...words], op: `insert("${word}")`, result: 'ok', current: word, highlightLines: [4], explanation: { title: `Insert "${word}"`, text: 'Added to Trie' }});
+                } else if (op === 'search') {
+                    const found = words.has(word);
+                    steps.push({ words: [...words], op: `search("${word}")`, result: found, current: word, highlightLines: [5], explanation: { title: `Search "${word}"`, text: found ? '✓ Found' : '✗ Not found (no end marker)' }});
+                } else {
+                    const found = [...words].some(w => w.startsWith(word));
+                    steps.push({ words: [...words], op: `startsWith("${word}")`, result: found, current: word, highlightLines: [6], explanation: { title: `Prefix "${word}"`, text: found ? '✓ Exists' : '✗ Not found' }});
+                }
+            }
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('trieDisplay').innerHTML = step.words.map(w => `<span class="trie-node end ${w === step.current ? 'current' : ''}">${w}</span>`).join(' ') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    document.getElementById('opDisplay').textContent = step.op;
+                    document.getElementById('resultDisplay').textContent = step.result;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

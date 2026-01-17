@@ -1,4 +1,8 @@
-# Valid Palindrome (驗證回文串)
+![Two Pointers Hero](../assets/images/banners/two_pointers.png){ class="header-banner" }
+
+# 01. Valid Palindrome
+
+(驗證回文串)
 
 ## 1. 🧐 Problem Dissection (釐清問題)
 

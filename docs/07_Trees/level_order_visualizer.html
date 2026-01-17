@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Level Order Traversal Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .tree-level { display: flex; justify-content: center; gap: 20px; margin: 8px 0; }
+        .tree-node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: rgba(255,255,255,0.1); }
+        .tree-node.visited { background: var(--viz-success); color: #0f172a; }
+        .tree-node.current { background: var(--viz-secondary); color: #0f172a; }
+        .result-display { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+        .result-level { background: var(--viz-primary); padding: 6px 12px; border-radius: 6px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">LEVEL ORDER TRAVERSAL (BFS)</div>
+                <div id="treeDisplay"></div>
+                <div class="viz-title" style="margin-top: 15px;">RESULT</div>
+                <div class="result-display" id="resultDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (BFS)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<vector<int>> levelOrder(TreeNode* root) {', id: 0 },
+            { line: '    queue<TreeNode*> q;', id: 1 },
+            { line: '    q.push(root);', id: 2 },
+            { line: '    while (!q.empty()) {', id: 3 },
+            { line: '        int size = q.size();', id: 4 },
+            { line: '        vector<int> level;', id: 5 },
+            { line: '        for (int i = 0; i < size; i++) {', id: 6 },
+            { line: '            auto node = q.front(); q.pop();', id: 7 },
+            { line: '            level.push_back(node->val);', id: 8 },
+            { line: '            if (node->left) q.push(node->left);', id: 9 },
+            { line: '            if (node->right) q.push(node->right);', id: 10 },
+            { line: '        }', id: 11 },
+            { line: '        result.push_back(level);', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '}', id: 14 },
+        ];
+        const levels = [[3], [9, 20], [15, 7]];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const result = [];
+            steps.push({ visited: [], result: [], currentLevel: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Queue with root' }});
+            levels.forEach((level, li) => {
+                result.push(level);
+                steps.push({ visited: result.flat(), result: [...result], currentLevel: li, highlightLines: [4, 5, 6, 7, 8], explanation: { title: `Level ${li + 1}`, text: `Nodes: [${level.join(', ')}]` }});
+            });
+            steps.push({ visited: result.flat(), result, currentLevel: -1, highlightLines: [14], explanation: { title: 'Done!', text: `${result.length} levels` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    levels.forEach((level, li) => {
+                        html += `<div class="tree-level">${level.map(v => `<div class="tree-node ${step.visited.includes(v) ? 'visited' : ''} ${step.currentLevel === li ? 'current' : ''}">${v}</div>`).join('')}</div>`;
+                    });
+                    document.getElementById('treeDisplay').innerHTML = html;
+                    document.getElementById('resultDisplay').innerHTML = step.result.map((l, i) => `<span class="result-level">[${l.join(', ')}]</span>`).join('') || '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

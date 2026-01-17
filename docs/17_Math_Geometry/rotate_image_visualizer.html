@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotate Image Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .matrix { display: grid; gap: 2px; max-width: 200px; margin: 0 auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; }
+        .cell.swapped { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">ROTATE IMAGE 90° CLOCKWISE</div>
+                <div class="matrix" id="matrixDisplay" style="grid-template-columns: repeat(4, 40px);"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'void rotate(matrix) {', id: 0 },
+            { line: '    // Step 1: Transpose', id: 1 },
+            { line: '    for (i = 0; i < n; i++)', id: 2 },
+            { line: '        for (j = i; j < n; j++)', id: 3 },
+            { line: '            swap(matrix[i][j], matrix[j][i]);', id: 4 },
+            { line: '    // Step 2: Reverse each row', id: 5 },
+            { line: '    for (auto& row : matrix)', id: 6 },
+            { line: '        reverse(row.begin(), row.end());', id: 7 },
+            { line: '}', id: 8 },
+        ];
+        const original = [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]];
+        const n = 4;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let matrix = original.map(r => [...r]);
+            steps.push({ matrix: matrix.map(r => [...r]), highlightLines: [0], explanation: { title: 'Original', text: '4x4 matrix' }});
+            
+            // Transpose
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    [matrix[i][j], matrix[j][i]] = [matrix[j][i], matrix[i][j]];
+                }
+            }
+            steps.push({ matrix: matrix.map(r => [...r]), highlightLines: [1, 2, 3, 4], explanation: { title: 'Step 1: Transpose', text: 'Swap [i][j] ↔ [j][i]' }});
+            
+            // Reverse rows
+            for (let i = 0; i < n; i++) {
+                matrix[i].reverse();
+            }
+            steps.push({ matrix: matrix.map(r => [...r]), highlightLines: [5, 6, 7], explanation: { title: 'Step 2: Reverse rows', text: 'Each row reversed' }});
+            
+            steps.push({ matrix: matrix.map(r => [...r]), highlightLines: [8], explanation: { title: 'Done!', text: 'Rotated 90° clockwise' }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('matrixDisplay').innerHTML = step.matrix.flat().map(v => `<div class="cell">${v}</div>`).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

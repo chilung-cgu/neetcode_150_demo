@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Schedule Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .course { display: inline-block; padding: 10px 16px; margin: 4px; border-radius: 50%; font-family: monospace; background: var(--viz-primary); color: white; }
+        .course.visiting { background: var(--viz-secondary); color: #0f172a; }
+        .course.completed { background: var(--viz-success); color: #0f172a; }
+        .course.cycle { background: var(--viz-error); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">COURSE SCHEDULE (TOPOLOGICAL SORT)</div>
+                <div style="text-align: center; margin: 15px 0;" id="coursesDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DFS + CYCLE DETECTION</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool canFinish(numCourses, prerequisites) {', id: 0 },
+            { line: '    // Build adjacency list', id: 1 },
+            { line: '    // DFS with 3-color marking', id: 2 },
+            { line: '    for (int i = 0; i < numCourses; i++) {', id: 3 },
+            { line: '        if (!dfs(i)) return false; // cycle!', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    return true;', id: 6 },
+            { line: '}', id: 7 },
+        ];
+        const numCourses = 4;
+        const prerequisites = [[1, 0], [2, 0], [3, 1], [3, 2]];
+        // 0 -> 1, 0 -> 2, 1 -> 3, 2 -> 3
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const status = Array(numCourses).fill(0); // 0=unvisited, 1=visiting, 2=completed
+            steps.push({ status: [...status], highlightLines: [0, 1, 2], explanation: { title: 'Init', text: `${numCourses} courses, ${prerequisites.length} prerequisites` }});
+            
+            // Simulated DFS order
+            const order = [0, 1, 3, 2];
+            for (const c of order) {
+                status[c] = 1;
+                steps.push({ status: [...status], current: c, highlightLines: [3, 4], explanation: { title: `Visit course ${c}`, text: 'Checking dependencies...' }});
+                status[c] = 2;
+                steps.push({ status: [...status], highlightLines: [4], explanation: { title: `Course ${c} ✓`, text: 'No cycle, mark complete' }});
+            }
+            steps.push({ status: [...status], highlightLines: [6], explanation: { title: 'Can Finish!', text: 'All courses can be completed' }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    for (let i = 0; i < numCourses; i++) {
+                        let cls = step.status[i] === 0 ? '' : step.status[i] === 1 ? 'visiting' : 'completed';
+                        if (step.current === i) cls = 'visiting';
+                        html += `<span class="course ${cls}">${i}</span>`;
+                    }
+                    document.getElementById('coursesDisplay').innerHTML = html;
+                    document.getElementById('resultDisplay').textContent = step.status.every(s => s === 2) ? 'true' : '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
