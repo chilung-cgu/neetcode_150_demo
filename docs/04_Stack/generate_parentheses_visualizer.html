@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Parentheses Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .tree-display { text-align: center; font-family: monospace; }
+        .current-str { font-size: 1.5rem; color: var(--viz-secondary); margin: 15px 0; }
+        .result-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .result-item { background: var(--viz-success); color: #0f172a; padding: 6px 12px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">GENERATE PARENTHESES (n=3)</div>
+                <div class="tree-display">
+                    <div class="current-str" id="currentStr">""</div>
+                    <div style="margin-top: 10px;">Open: <span id="openCount">0</span> | Close: <span id="closeCount">0</span></div>
+                </div>
+                <div class="viz-title" style="margin-top: 15px;">RESULTS</div>
+                <div class="result-list" id="resultList"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BACKTRACKING</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'void backtrack(int open, int close, string cur) {', id: 0 },
+            { line: '    if (cur.size() == 2 * n) {', id: 1 },
+            { line: '        result.push_back(cur);', id: 2 },
+            { line: '        return;', id: 3 },
+            { line: '    }', id: 4 },
+            { line: '    if (open < n) backtrack(open+1, close, cur+"(");', id: 5 },
+            { line: '    if (close < open) backtrack(open, close+1, cur+")");', id: 6 },
+            { line: '}', id: 7 },
+        ];
+        const n = 3;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const results = [];
+            function backtrack(open, close, cur) {
+                steps.push({ str: cur, open, close, results: [...results], highlightLines: cur.length === 2*n ? [1, 2] : [5, 6], explanation: { title: cur || '""', text: cur.length === 2*n ? '✓ Complete!' : `open=${open}, close=${close}` }});
+                if (cur.length === 2 * n) { results.push(cur); return; }
+                if (open < n) backtrack(open + 1, close, cur + '(');
+                if (close < open) backtrack(open, close + 1, cur + ')');
+            }
+            backtrack(0, 0, '');
+            steps.push({ str: '', open: 0, close: 0, results, highlightLines: [0], explanation: { title: 'Done!', text: `Found ${results.length} combinations` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('currentStr').textContent = `"${step.str}"`;
+                    document.getElementById('openCount').textContent = step.open;
+                    document.getElementById('closeCount').textContent = step.close;
+                    document.getElementById('resultList').innerHTML = step.results.map(r => `<span class="result-item">${r}</span>`).join('') || '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

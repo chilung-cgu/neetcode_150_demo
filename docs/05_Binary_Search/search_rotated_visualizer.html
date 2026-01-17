@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search in Rotated Sorted Array Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SEARCH ROTATED ARRAY (target=0)</div>
+                <div class="chart-container" id="chartContainer"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">[L, R]</div><div class="state-value" id="rangeDisplay">[0, 6]</div></div>
+                    <div class="state-item"><div class="state-label">Mid</div><div class="state-value" id="midDisplay" style="color: var(--viz-secondary);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int search(nums, target) {', id: 0 },
+            { line: '    int l = 0, r = nums.size() - 1;', id: 1 },
+            { line: '    while (l <= r) {', id: 2 },
+            { line: '        int mid = (l + r) / 2;', id: 3 },
+            { line: '        if (nums[mid] == target) return mid;', id: 4 },
+            { line: '        // Check which half is sorted', id: 5 },
+            { line: '        if (nums[l] <= nums[mid]) { // left sorted', id: 6 },
+            { line: '            // target in left? or go right', id: 7 },
+            { line: '        } else { // right sorted', id: 8 },
+            { line: '            // target in right? or go left', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return -1;', id: 12 },
+            { line: '}', id: 13 },
+        ];
+        const nums = [4, 5, 6, 7, 0, 1, 2];
+        const target = 0;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let l = 0, r = nums.length - 1;
+            steps.push({ l, r, mid: -1, highlightLines: [0, 1], explanation: { title: 'Init', text: `Search ${target} in [${nums}]` }});
+            while (l <= r) {
+                const mid = Math.floor((l + r) / 2);
+                if (nums[mid] === target) {
+                    steps.push({ l, r, mid, found: true, highlightLines: [4], explanation: { title: '✓ Found!', text: `nums[${mid}] = ${target}` }});
+                    return steps;
+                }
+                const leftSorted = nums[l] <= nums[mid];
+                let goLeft;
+                if (leftSorted) {
+                    goLeft = target >= nums[l] && target < nums[mid];
+                } else {
+                    goLeft = !(target > nums[mid] && target <= nums[r]);
+                }
+                steps.push({ l, r, mid, highlightLines: leftSorted ? [6, 7] : [8, 9], explanation: { title: `mid=${mid}=${nums[mid]}`, text: leftSorted ? 'Left sorted' : 'Right sorted' }});
+                if (goLeft) r = mid - 1;
+                else l = mid + 1;
+            }
+            steps.push({ l, r, mid: -1, highlightLines: [12], explanation: { title: 'Not Found', text: '' }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const states = nums.map((_, i) => i === step.mid ? (step.found ? 'active' : 'current') : i >= step.l && i <= step.r ? 'in-stack' : '');
+                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), nums, states, { height: 200 });
+                    document.getElementById('rangeDisplay').textContent = `[${step.l}, ${step.r}]`;
+                    document.getElementById('midDisplay').textContent = step.mid >= 0 ? `${step.mid} → ${nums[step.mid]}` : '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

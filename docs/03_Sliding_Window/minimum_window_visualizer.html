@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimum Window Substring Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .char-row { display: flex; justify-content: center; gap: 1px; margin: 10px 0; flex-wrap: wrap; }
+        .char-box { padding: 6px 8px; border-radius: 3px; font-family: monospace; font-size: 0.85rem; background: rgba(255,255,255,0.1); }
+        .char-box.in-window { background: var(--viz-primary); color: white; }
+        .char-box.best { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">MINIMUM WINDOW SUBSTRING</div>
+                <div style="text-align: center; margin-bottom: 10px;">Target: <strong id="targetDisplay"></strong></div>
+                <div class="char-row" id="charRow"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Window</div><div class="state-value" id="windowDisplay">[0, 0]</div></div>
+                    <div class="state-item"><div class="state-label">Best</div><div class="state-value" id="bestDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'string minWindow(string s, string t) {', id: 0 },
+            { line: '    // Count chars needed from t', id: 1 },
+            { line: '    int have = 0, need = t.size();', id: 2 },
+            { line: '    while (right < s.size()) {', id: 3 },
+            { line: '        // Expand right, check if valid', id: 4 },
+            { line: '        while (have == need) { // Shrink left', id: 5 },
+            { line: '            // Update min window', id: 6 },
+            { line: '        }', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return result;', id: 9 },
+            { line: '}', id: 10 },
+        ];
+        const s = "ADOBECODEBANC", t = "ABC";
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const need = {};
+            for (const c of t) need[c] = (need[c] || 0) + 1;
+            const have = {};
+            let formed = 0, required = Object.keys(need).length;
+            let left = 0, minLen = Infinity, minL = 0, minR = 0;
+            
+            steps.push({ left: 0, right: -1, best: '', highlightLines: [0, 1, 2], explanation: { title: 'Init', text: `Need: ${t}` }});
+            
+            for (let right = 0; right < s.length; right++) {
+                const c = s[right];
+                have[c] = (have[c] || 0) + 1;
+                if (need[c] && have[c] === need[c]) formed++;
+                
+                while (formed === required) {
+                    if (right - left + 1 < minLen) {
+                        minLen = right - left + 1;
+                        minL = left; minR = right;
+                    }
+                    steps.push({ left, right, best: s.substring(minL, minR + 1), valid: true, highlightLines: [5, 6], explanation: { title: 'Valid Window!', text: `"${s.substring(left, right + 1)}", shrinking...` }});
+                    
+                    const lc = s[left];
+                    have[lc]--;
+                    if (need[lc] && have[lc] < need[lc]) formed--;
+                    left++;
+                }
+                
+                steps.push({ left, right, best: minLen < Infinity ? s.substring(minL, minR + 1) : '', highlightLines: [3, 4], explanation: { title: `Expand to ${right}`, text: `Current: "${s.substring(left, right + 1)}"` }});
+            }
+            
+            steps.push({ left, right: s.length - 1, best: minLen < Infinity ? s.substring(minL, minR + 1) : '', highlightLines: [9], explanation: { title: 'Done!', text: `Min = "${s.substring(minL, minR + 1)}"` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            document.getElementById('targetDisplay').textContent = t;
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('charRow').innerHTML = [...s].map((c, i) => {
+                        let cls = 'char-box';
+                        if (i >= step.left && i <= step.right) cls += step.valid ? ' best' : ' in-window';
+                        return `<div class="${cls}">${c}</div>`;
+                    }).join('');
+                    document.getElementById('windowDisplay').textContent = `[${step.left}, ${step.right}]`;
+                    document.getElementById('bestDisplay').textContent = step.best || '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

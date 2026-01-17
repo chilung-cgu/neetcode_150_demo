@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Search Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">BINARY SEARCH (target=5)</div>
+                <div class="chart-container" id="chartContainer"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">[L, R]</div><div class="state-value" id="rangeDisplay">[0, 6]</div></div>
+                    <div class="state-item"><div class="state-label">Mid</div><div class="state-value" id="midDisplay" style="color: var(--viz-secondary);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int search(vector<int>& nums, int target) {', id: 0 },
+            { line: '    int l = 0, r = nums.size() - 1;', id: 1 },
+            { line: '    while (l <= r) {', id: 2 },
+            { line: '        int mid = l + (r - l) / 2;', id: 3 },
+            { line: '        if (nums[mid] == target) return mid;', id: 4 },
+            { line: '        if (nums[mid] < target) l = mid + 1;', id: 5 },
+            { line: '        else r = mid - 1;', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return -1;', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const nums = [-1, 0, 3, 5, 9, 12];
+        const target = 5;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let l = 0, r = nums.length - 1;
+            steps.push({ l, r, mid: -1, highlightLines: [0, 1], explanation: { title: 'Init', text: `Search for ${target} in sorted array` }});
+            while (l <= r) {
+                const mid = l + Math.floor((r - l) / 2);
+                const v = nums[mid];
+                if (v === target) {
+                    steps.push({ l, r, mid, found: true, highlightLines: [4], explanation: { title: '✓ Found!', text: `nums[${mid}] = ${target}` }});
+                    return steps;
+                }
+                steps.push({ l, r, mid, highlightLines: v < target ? [5] : [6], explanation: { title: `mid=${mid}, nums[mid]=${v}`, text: v < target ? `${v} < ${target} → l = ${mid + 1}` : `${v} > ${target} → r = ${mid - 1}` }});
+                if (v < target) l = mid + 1;
+                else r = mid - 1;
+            }
+            steps.push({ l, r, mid: -1, highlightLines: [8], explanation: { title: 'Not Found', text: 'l > r' }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const states = nums.map((_, i) => i === step.mid ? (step.found ? 'active' : 'current') : i >= step.l && i <= step.r ? 'in-stack' : '');
+                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), nums.map(n => n + 2), states, { height: 200 });
+                    document.getElementById('rangeDisplay').textContent = `[${step.l}, ${step.r}]`;
+                    document.getElementById('midDisplay').textContent = step.mid >= 0 ? `${step.mid} → ${nums[step.mid]}` : '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

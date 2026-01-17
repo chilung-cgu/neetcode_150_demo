@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3Sum Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .triplet { background: var(--viz-success); color: #0f172a; padding: 4px 10px; border-radius: 6px; margin: 2px; display: inline-block; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">3SUM - SORT + TWO POINTERS</div>
+                <div class="chart-container" id="chartContainer"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Found Triplets</div><div id="tripletsDisplay" style="font-size: 0.9rem;"></div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<vector<int>> threeSum(vector<int>& nums) {', id: 0 },
+            { line: '    sort(nums.begin(), nums.end());', id: 1 },
+            { line: '    for (int i = 0; i < nums.size(); i++) {', id: 2 },
+            { line: '        if (i > 0 && nums[i] == nums[i-1]) continue;', id: 3 },
+            { line: '        int l = i+1, r = nums.size()-1;', id: 4 },
+            { line: '        while (l < r) {', id: 5 },
+            { line: '            int sum = nums[i] + nums[l] + nums[r];', id: 6 },
+            { line: '            if (sum > 0) r--;', id: 7 },
+            { line: '            else if (sum < 0) l++;', id: 8 },
+            { line: '            else { res.push_back({...}); l++; r--; }', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '}', id: 12 },
+        ];
+        const nums = [-1, 0, 1, 2, -1, -4];
+        const sorted = [...nums].sort((a, b) => a - b);
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const triplets = [];
+            steps.push({ i: -1, l: -1, r: -1, triplets: [], highlightLines: [0, 1], explanation: { title: 'Sort', text: `Sorted: [${sorted.join(', ')}]` }});
+            for (let i = 0; i < sorted.length; i++) {
+                if (i > 0 && sorted[i] === sorted[i-1]) continue;
+                let l = i + 1, r = sorted.length - 1;
+                steps.push({ i, l, r, triplets: [...triplets], highlightLines: [2, 4], explanation: { title: `Fix i=${i} (${sorted[i]})`, text: `Two pointers: l=${l}, r=${r}` }});
+                while (l < r) {
+                    const sum = sorted[i] + sorted[l] + sorted[r];
+                    if (sum === 0) {
+                        triplets.push([sorted[i], sorted[l], sorted[r]]);
+                        steps.push({ i, l, r, triplets: [...triplets], found: true, highlightLines: [9], explanation: { title: '✓ Found!', text: `[${sorted[i]}, ${sorted[l]}, ${sorted[r]}]` }});
+                        l++; r--;
+                        while (l < r && sorted[l] === sorted[l-1]) l++;
+                    } else if (sum > 0) { r--; }
+                    else { l++; }
+                }
+            }
+            steps.push({ i: -1, l: -1, r: -1, triplets, highlightLines: [12], explanation: { title: 'Done', text: `Found ${triplets.length} triplets` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const states = sorted.map((_, idx) => idx === step.i ? 'in-stack' : idx === step.l ? 'current' : idx === step.r ? 'calculating' : '');
+                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), sorted, states, { height: 180 });
+                    document.getElementById('tripletsDisplay').innerHTML = step.triplets.map(t => `<span class="triplet">[${t.join(',')}]</span>`).join(' ') || '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

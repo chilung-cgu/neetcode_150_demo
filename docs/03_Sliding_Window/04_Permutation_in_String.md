@@ -4,14 +4,14 @@
 
 題目給兩個字串 `s1` 和 `s2`。請判斷 `s2` 是否包含 `s1` 的任意 **Permutation** (排列組合) 作為子字串。
 
--   **Input**: `s1 = "ab", s2 = "eidbaooo"`
--   **Output**: `true` (`s2` contains "ba", which is a permutation of "ab").
--   **Input**: `s1 = "ab", s2 = "eidboaoo"`
--   **Output**: `false`.
--   **Key Insight**: 如果 `sub` 是 `s1` 的 permutation，那麼它們必須有 **完全相同的字元頻率 (Character Frequency)**。長度也必須相同。
--   **Constraints**:
-    -   $1 <= s1.length, s2.length <= 10^4$.
-    -   只包含小寫英文字母。
+- **Input**: `s1 = "ab", s2 = "eidbaooo"`
+- **Output**: `true` (`s2` contains "ba", which is a permutation of "ab").
+- **Input**: `s1 = "ab", s2 = "eidboaoo"`
+- **Output**: `false`.
+- **Key Insight**: 如果 `sub` 是 `s1` 的 permutation，那麼它們必須有 **完全相同的字元頻率 (Character Frequency)**。長度也必須相同。
+- **Constraints**:
+  - $1 <= s1.length, s2.length <= 10^4$.
+  - 只包含小寫英文字母。
 
 ---
 
@@ -19,8 +19,8 @@
 
 找出 `s1` 的所有排列組合（$n!$ 種），然後在 `s2` 裡找。
 
--   **Time**: $O(n! \cdot m)$。
--   **Result**: 絕對 TLE。 `100!` 是天文數字。
+- **Time**: $O(n! \cdot m)$。
+- **Result**: 絕對 TLE。 `100!` 是天文數字。
 
 ---
 
@@ -32,13 +32,20 @@
 2.  這窗口在 `s2` 上滑動。
 3.  在每一個時刻，我們檢查 **當前窗口內的字元計數** 是否等於 **`s1` 的字元計數**。
 
--   **Naive Window Check**: 每次移動窗口都要比較兩個長度 26 的 array。
-    -   Total Time: $O(26 \cdot n)$。因為 $26$ 是常數，所以這已經是 $O(n)$ 了。
--   **Optimized Window Check**:
-    -   我們可以維護一個 `matches` 變數 (0 到 26)。
-    -   當我們 slide window 時，只有一個字元進，一個字元出。
-    -   我們只更新變動的這兩個字元的 count，並看它們是否導致 `matches` 增加或減少。
-    -   如果 `matches == 26`，return true。
+- **Naive Window Check**: 每次移動窗口都要比較兩個長度 26 的 array。
+  - Total Time: $O(26 \cdot n)$。因為 $26$ 是常數，所以這已經是 $O(n)$ 了。
+- **Optimized Window Check**:
+  - 我們可以維護一個 `matches` 變數 (0 到 26)。
+  - 當我們 slide window 時，只有一個字元進，一個字元出。
+  - 我們只更新變動的這兩個字元的 count，並看它們是否導致 `matches` 增加或減少。
+  - 如果 `matches == 26`，return true。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../permutation_string_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../permutation_string_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -102,7 +109,7 @@ public:
 };
 ```
 
-### Simple Approach (O(26*n))
+### Simple Approach (O(26\*n))
 
 雖然 `matches` 優化很酷，但在面試有時容易寫錯。直接比較 `vector` 其實夠快了。
 
@@ -228,12 +235,12 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(26 \cdot n)$ or $O(n)$
-    -   我們遍歷 `s2` 一次。
-    -   每次迭代比較兩個長度 26 的 vector。
-    -   $26$ 是常數，所以是線性時間 $O(n)$。
--   **Space Complexity**: $O(1)$
-    -   只用了長度 26 的 vector。
+- **Time Complexity**: $O(26 \cdot n)$ or $O(n)$
+  - 我們遍歷 `s2` 一次。
+  - 每次迭代比較兩個長度 26 的 vector。
+  - $26$ 是常數，所以是線性時間 $O(n)$。
+- **Space Complexity**: $O(1)$
+  - 只用了長度 26 的 vector。
 
 **Comparison**:
 這題跟 **Valid Anagram** 很像，只是 Anagram 是全域比較，這裡是局部窗口比較。

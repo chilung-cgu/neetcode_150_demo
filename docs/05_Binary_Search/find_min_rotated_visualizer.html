@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Minimum in Rotated Sorted Array Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">ROTATED ARRAY - FIND MINIMUM</div>
+                <div class="chart-container" id="chartContainer"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">[L, R]</div><div class="state-value" id="rangeDisplay">[0, 6]</div></div>
+                    <div class="state-item"><div class="state-label">Mid</div><div class="state-value" id="midDisplay" style="color: var(--viz-secondary);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int findMin(vector<int>& nums) {', id: 0 },
+            { line: '    int l = 0, r = nums.size() - 1;', id: 1 },
+            { line: '    while (l < r) {', id: 2 },
+            { line: '        int mid = (l + r) / 2;', id: 3 },
+            { line: '        if (nums[mid] > nums[r])', id: 4 },
+            { line: '            l = mid + 1; // min is in right half', id: 5 },
+            { line: '        else', id: 6 },
+            { line: '            r = mid; // min is in left half (incl mid)', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return nums[l];', id: 9 },
+            { line: '}', id: 10 },
+        ];
+        const nums = [3, 4, 5, 1, 2];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let l = 0, r = nums.length - 1;
+            steps.push({ l, r, mid: -1, highlightLines: [0, 1], explanation: { title: 'Init', text: `Rotated array: [${nums}]` }});
+            while (l < r) {
+                const mid = Math.floor((l + r) / 2);
+                const goRight = nums[mid] > nums[r];
+                steps.push({ l, r, mid, highlightLines: goRight ? [4, 5] : [6, 7], explanation: { title: `mid=${mid}, nums[${mid}]=${nums[mid]}`, text: goRight ? `${nums[mid]} > ${nums[r]} → min in right` : `${nums[mid]} <= ${nums[r]} → min in left` }});
+                if (goRight) l = mid + 1;
+                else r = mid;
+            }
+            steps.push({ l, r, mid: l, found: true, highlightLines: [9], explanation: { title: `Min = ${nums[l]}`, text: `At index ${l}` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const states = nums.map((_, i) => i === step.mid ? (step.found ? 'active' : 'current') : i >= step.l && i <= step.r ? 'in-stack' : '');
+                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), nums, states, { height: 200 });
+                    document.getElementById('rangeDisplay').textContent = `[${step.l}, ${step.r}]`;
+                    document.getElementById('midDisplay').textContent = step.mid >= 0 ? `${step.mid} → ${nums[step.mid]}` : '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

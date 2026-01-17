@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Repeating Character Replacement Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .char-row { display: flex; justify-content: center; gap: 2px; margin: 10px 0; }
+        .char-box { padding: 8px 12px; border-radius: 4px; font-family: monospace; background: rgba(255,255,255,0.1); }
+        .char-box.in-window { background: var(--viz-primary); color: white; }
+        .char-box.current { border: 2px solid var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SLIDING WINDOW + MAX COUNT</div>
+                <div class="char-row" id="charRow"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Window Size</div><div class="state-value" id="windowSize">0</div></div>
+                    <div class="state-item"><div class="state-label">Max Count</div><div class="state-value" id="maxCount" style="color: var(--viz-success);">0</div></div>
+                    <div class="state-item"><div class="state-label">Replacements</div><div class="state-value" id="replacements">0</div></div>
+                    <div class="state-item"><div class="state-label">K</div><div class="state-value" id="kDisplay">2</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int characterReplacement(string s, int k) {', id: 0 },
+            { line: '    int count[26] = {0};', id: 1 },
+            { line: '    int left = 0, maxCount = 0, maxLen = 0;', id: 2 },
+            { line: '    for (int right = 0; right < s.length(); right++) {', id: 3 },
+            { line: '        count[s[right] - \'A\']++;', id: 4 },
+            { line: '        maxCount = max(maxCount, count[s[right]-\'A\']);', id: 5 },
+            { line: '        while ((right - left + 1) - maxCount > k)', id: 6 },
+            { line: '            count[s[left++] - \'A\']--;', id: 7 },
+            { line: '        maxLen = max(maxLen, right - left + 1);', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return maxLen;', id: 10 },
+            { line: '}', id: 11 },
+        ];
+        const str = "AABABBA";
+        const k = 1;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const count = {};
+            let left = 0, maxCount = 0, maxLen = 0;
+            steps.push({ left, right: -1, maxCount: 0, maxLen: 0, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: `k=${k}` }});
+            for (let right = 0; right < str.length; right++) {
+                const c = str[right];
+                count[c] = (count[c] || 0) + 1;
+                maxCount = Math.max(maxCount, count[c]);
+                let windowSize = right - left + 1;
+                let replacements = windowSize - maxCount;
+                if (replacements > k) {
+                    steps.push({ left, right, maxCount, maxLen, shrinking: true, highlightLines: [6, 7], explanation: { title: 'Shrink', text: `Need ${replacements} replacements > k=${k}` }});
+                    count[str[left]]--;
+                    left++;
+                }
+                windowSize = right - left + 1;
+                maxLen = Math.max(maxLen, windowSize);
+                steps.push({ left, right, maxCount, maxLen, highlightLines: [4, 5, 8], explanation: { title: `Add '${c}'`, text: `Window=${windowSize}, maxCount=${maxCount}, max=${maxLen}` }});
+            }
+            steps.push({ left, right: str.length - 1, maxCount, maxLen, highlightLines: [10], explanation: { title: 'Done!', text: `Max = ${maxLen}` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            document.getElementById('kDisplay').textContent = k;
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('charRow').innerHTML = [...str].map((c, i) => {
+                        let cls = 'char-box';
+                        if (i >= step.left && i <= step.right) cls += ' in-window';
+                        if (i === step.right) cls += ' current';
+                        return `<div class="${cls}">${c}</div>`;
+                    }).join('');
+                    const ws = step.right >= 0 ? step.right - step.left + 1 : 0;
+                    document.getElementById('windowSize').textContent = ws;
+                    document.getElementById('maxCount').textContent = step.maxCount;
+                    document.getElementById('replacements').textContent = Math.max(0, ws - step.maxCount);
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Substring Without Repeating Characters Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .char-row { display: flex; justify-content: center; gap: 2px; margin: 10px 0; flex-wrap: wrap; }
+        .char-box { padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 1rem; background: rgba(255,255,255,0.1); }
+        .char-box.in-window { background: var(--viz-primary); color: white; }
+        .char-box.current { border: 2px solid var(--viz-secondary); }
+        .char-box.duplicate { background: var(--viz-error); }
+        .set-display { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; font-family: monospace; }
+        .set-char { background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SLIDING WINDOW</div>
+                <div class="char-row" id="charRow"></div>
+                <div class="viz-title" style="margin-top: 15px;">WINDOW SET</div>
+                <div class="set-display" id="setDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Window [L, R]</div><div class="state-value" id="windowDisplay">[0, 0]</div></div>
+                    <div class="state-item"><div class="state-label">Max Length</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int lengthOfLongestSubstring(string s) {', id: 0 },
+            { line: '    unordered_set<char> charSet;', id: 1 },
+            { line: '    int left = 0, maxLen = 0;', id: 2 },
+            { line: '    for (int right = 0; right < s.length(); right++) {', id: 3 },
+            { line: '        while (charSet.find(s[right]) != charSet.end()) {', id: 4 },
+            { line: '            charSet.erase(s[left]); left++;', id: 5 },
+            { line: '        }', id: 6 },
+            { line: '        charSet.insert(s[right]);', id: 7 },
+            { line: '        maxLen = max(maxLen, right - left + 1);', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return maxLen;', id: 10 },
+            { line: '}', id: 11 },
+        ];
+        const str = "abcabcbb";
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const charSet = new Set();
+            let left = 0, maxLen = 0;
+            steps.push({ left, right: -1, charSet: new Set(), maxLen: 0, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Empty set, left=0' }});
+            for (let right = 0; right < str.length; right++) {
+                const c = str[right];
+                while (charSet.has(c)) {
+                    steps.push({ left, right, charSet: new Set(charSet), maxLen, shrinking: true, duplicate: c, highlightLines: [4, 5], explanation: { title: `Duplicate '${c}'`, text: `Shrink: remove '${str[left]}'` }});
+                    charSet.delete(str[left]);
+                    left++;
+                }
+                charSet.add(c);
+                maxLen = Math.max(maxLen, right - left + 1);
+                steps.push({ left, right, charSet: new Set(charSet), maxLen, highlightLines: [7, 8], explanation: { title: `Add '${c}'`, text: `Window [${left}, ${right}], len=${right - left + 1}` }});
+            }
+            steps.push({ left, right: str.length - 1, charSet, maxLen, highlightLines: [10], explanation: { title: 'Done!', text: `Max = ${maxLen}` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('charRow').innerHTML = [...str].map((c, i) => {
+                        let cls = 'char-box';
+                        if (i >= step.left && i <= step.right) cls += ' in-window';
+                        if (i === step.right) cls += ' current';
+                        if (step.duplicate && c === step.duplicate && i === step.right) cls += ' duplicate';
+                        return `<div class="${cls}">${c}</div>`;
+                    }).join('');
+                    document.getElementById('setDisplay').innerHTML = [...step.charSet].map(c => `<span class="set-char">${c}</span>`).join('') || '-';
+                    document.getElementById('windowDisplay').textContent = `[${step.left}, ${step.right}]`;
+                    document.getElementById('maxDisplay').textContent = step.maxLen;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

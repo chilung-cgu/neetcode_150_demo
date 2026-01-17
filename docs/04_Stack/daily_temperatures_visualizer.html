@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Temperatures Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .stack-display { display: flex; gap: 4px; justify-content: center; font-family: monospace; margin: 10px 0; }
+        .stack-item { background: var(--viz-primary); color: white; padding: 6px 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">DAILY TEMPERATURES - MONOTONIC STACK</div>
+                <div class="chart-container" id="chartContainer"></div>
+                <div class="viz-title" style="margin-top: 10px;">STACK (indices)</div>
+                <div class="stack-display" id="stackDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid" style="margin-top: 10px;">
+                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resultDisplay" style="font-size: 0.85rem;">[ ]</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> dailyTemperatures(vector<int>& T) {', id: 0 },
+            { line: '    stack<int> stk; // indices', id: 1 },
+            { line: '    vector<int> res(T.size(), 0);', id: 2 },
+            { line: '    for (int i = 0; i < T.size(); i++) {', id: 3 },
+            { line: '        while (!stk.empty() && T[stk.top()] < T[i]) {', id: 4 },
+            { line: '            res[stk.top()] = i - stk.top();', id: 5 },
+            { line: '            stk.pop();', id: 6 },
+            { line: '        }', id: 7 },
+            { line: '        stk.push(i);', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return res;', id: 10 },
+            { line: '}', id: 11 },
+        ];
+        const temps = [73, 74, 75, 71, 69, 72, 76, 73];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const stack = [];
+            const res = new Array(temps.length).fill(0);
+            steps.push({ idx: -1, stack: [], res: [...res], highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Empty stack, result array zeros' }});
+            for (let i = 0; i < temps.length; i++) {
+                while (stack.length && temps[stack[stack.length - 1]] < temps[i]) {
+                    const j = stack.pop();
+                    res[j] = i - j;
+                    steps.push({ idx: i, stack: [...stack], res: [...res], popped: j, highlightLines: [4, 5, 6], explanation: { title: `Pop idx ${j}`, text: `Warmer found! res[${j}] = ${i - j}` }});
+                }
+                stack.push(i);
+                steps.push({ idx: i, stack: [...stack], res: [...res], highlightLines: [8], explanation: { title: `Push idx ${i} (${temps[i]}°)`, text: '' }});
+            }
+            steps.push({ idx: -1, stack, res, highlightLines: [10], explanation: { title: 'Done!', text: `Result: [${res.join(', ')}]` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const states = temps.map((_, i) => step.stack.includes(i) ? 'in-stack' : i === step.idx ? 'current' : '');
+                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), temps, states, { height: 180 });
+                    document.getElementById('stackDisplay').innerHTML = step.stack.map(i => `<span class="stack-item">${i}→${temps[i]}°</span>`).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    document.getElementById('resultDisplay').textContent = `[${step.res.join(', ')}]`;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

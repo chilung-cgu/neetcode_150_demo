@@ -7,13 +7,13 @@
 目標是：在替換不超過 `k` 次的情況下，找出最常的子字串，該子字串由 **完全相同的字元** 組成。
 回傳該長度。
 
--   **Input**: `s = "ABAB", k = 2`
--   **Output**: `4` (Change both 'A's to 'B' -> "BBBB", or both 'B's to 'A' -> "AAAA")
--   **Input**: `s = "AABABBA", k = 1`
--   **Output**: `4` (Replace middle 'B' with 'A' -> "AAAABBA", the "AAAA" part)
--   **Constraints**:
-    -   $s.length <= 10^5$.
-    -   只包含 uppercase English letters. (Count array size 26).
+- **Input**: `s = "ABAB", k = 2`
+- **Output**: `4` (Change both 'A's to 'B' -> "BBBB", or both 'B's to 'A' -> "AAAA")
+- **Input**: `s = "AABABBA", k = 1`
+- **Output**: `4` (Replace middle 'B' with 'A' -> "AAAABBA", the "AAAA" part)
+- **Constraints**:
+  - $s.length <= 10^5$.
+  - 只包含 uppercase English letters. (Count array size 26).
 
 ---
 
@@ -26,8 +26,8 @@
 2.  計算需要替換的字元數：`replacements = length - maxFreq`。
 3.  如果 `replacements <= k`，則此子字串合法，更新 Max Length。
 
--   **Time**: $O(n^3)$ or $O(n^2)$.
--   **Result**: TLE.
+- **Time**: $O(n^3)$ or $O(n^2)$.
+- **Result**: TLE.
 
 ---
 
@@ -50,8 +50,8 @@
 1.  Expand `right`。
 2.  Update `count[s[right]]`，並可能更新全局 `maxFreq` (注意這裡有個小優化)。
 3.  Check condition: `(r - l + 1) - maxFreq > k`?
-    -   如果 True (需要替換太多)，則窗口無效。
-    -   Shrink `left` (move `left` forward)，並更新 `count[s[left]]--`。
+    - 如果 True (需要替換太多)，則窗口無效。
+    - Shrink `left` (move `left` forward)，並更新 `count[s[left]]--`。
 4.  Update global `result`.
 
 **關於 maxFreq 的優化**:
@@ -59,6 +59,13 @@
 但在求「最長」子字串的問題中，我們其實不需要精確縮小 `maxFreq`。
 因為只有當我們找到一個比歷史 `maxFreq` 更大的頻率時，窗口才有可能**突破歷史最大長度**。
 所以我們只需要維護一個歷史最大 `maxFreq` 即可，這讓邏輯簡化很多。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../longest_repeating_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../longest_repeating_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -183,9 +190,9 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n)$
-    -   `right` 掃描一遍 $0 \to n$。
-    -   `left` 掃描一遍 $0 \to n$。
-    -   總共 $2n$ operations。
--   **Space Complexity**: $O(1)$
-    -   我們使用了一個大小為 26 的陣列 `count`。這與 `n` 無關。
+- **Time Complexity**: $O(n)$
+  - `right` 掃描一遍 $0 \to n$。
+  - `left` 掃描一遍 $0 \to n$。
+  - 總共 $2n$ operations。
+- **Space Complexity**: $O(1)$
+  - 我們使用了一個大小為 26 的陣列 `count`。這與 `n` 無關。

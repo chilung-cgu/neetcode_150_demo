@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valid Palindrome Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .char-row { display: flex; justify-content: center; gap: 2px; margin: 10px 0; flex-wrap: wrap; }
+        .char-box { width: 28px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.9rem; background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .char-box.left { border-bottom: 3px solid var(--viz-success); }
+        .char-box.right { border-bottom: 3px solid var(--viz-secondary); }
+        .char-box.match { background: var(--viz-success); color: #0f172a; }
+        .char-box.mismatch { background: var(--viz-error); color: white; }
+        .char-box.skip { opacity: 0.3; }
+        .pointer-label { text-align: center; font-size: 0.75rem; color: var(--viz-text-muted); margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">TWO POINTERS</div>
+                <div class="char-row" id="charRow"></div>
+                <div style="display: flex; justify-content: space-between; max-width: 400px; margin: 0 auto;">
+                    <div class="pointer-label" style="color: var(--viz-success);">↑ Left</div>
+                    <div class="pointer-label" style="color: var(--viz-secondary);">↑ Right</div>
+                </div>
+                <div class="controls" style="margin-top: 20px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid" style="margin-top: 15px;">
+                    <div class="state-item"><div class="state-label">Left Char</div><div class="state-value" id="leftChar" style="color: var(--viz-success);">-</div></div>
+                    <div class="state-item"><div class="state-label">Right Char</div><div class="state-value" id="rightChar" style="color: var(--viz-secondary);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool isPalindrome(string s) {', id: 0 },
+            { line: '    int left = 0, right = s.length() - 1;', id: 1 },
+            { line: '    while (left < right) {', id: 2 },
+            { line: '        while (left < right && !isalnum(s[left])) left++;', id: 3 },
+            { line: '        while (left < right && !isalnum(s[right])) right--;', id: 4 },
+            { line: '        if (tolower(s[left]) != tolower(s[right]))', id: 5 },
+            { line: '            return false;', id: 6 },
+            { line: '        left++; right--;', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return true;', id: 9 },
+            { line: '}', id: 10 },
+        ];
+
+        const str = "A man, a plan, a canal: Panama";
+        const isAlnum = c => /[a-zA-Z0-9]/.test(c);
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let left = 0, right = str.length - 1;
+
+            steps.push({ left, right, phase: 'init', highlightLines: [0, 1],
+                explanation: { title: 'Initialization', text: `字串: "${str}"。Left=0, Right=${right}` }});
+
+            while (left < right) {
+                while (left < right && !isAlnum(str[left])) {
+                    steps.push({ left, right, phase: 'skip-left', highlightLines: [3],
+                        explanation: { title: `Skip non-alphanumeric`, text: `'${str[left]}' 不是英數字，left++` }});
+                    left++;
+                }
+                while (left < right && !isAlnum(str[right])) {
+                    steps.push({ left, right, phase: 'skip-right', highlightLines: [4],
+                        explanation: { title: `Skip non-alphanumeric`, text: `'${str[right]}' 不是英數字，right--` }});
+                    right--;
+                }
+
+                if (left >= right) break;
+
+                const lc = str[left].toLowerCase(), rc = str[right].toLowerCase();
+                const match = lc === rc;
+
+                steps.push({ left, right, phase: match ? 'match' : 'mismatch', highlightLines: match ? [5, 7] : [5, 6],
+                    explanation: { title: match ? `Match! '${lc}' == '${rc}'` : `Mismatch! '${lc}' != '${rc}'`, text: match ? `字符匹配，繼續收縮。` : `字符不匹配，回傳 false。` }});
+
+                if (!match) return steps;
+                left++; right--;
+            }
+
+            steps.push({ left, right, phase: 'done', highlightLines: [9],
+                explanation: { title: '✓ Valid Palindrome!', text: `所有字符都匹配，是回文。` }});
+
+            return steps;
+        }
+
+        function renderChars(step) {
+            document.getElementById('charRow').innerHTML = [...str].map((c, i) => {
+                let cls = 'char-box';
+                if (i === step.left) cls += ' left';
+                if (i === step.right) cls += ' right';
+                if (step.phase === 'match' && (i === step.left || i === step.right)) cls += ' match';
+                if (step.phase === 'mismatch' && (i === step.left || i === step.right)) cls += ' mismatch';
+                if ((step.phase === 'skip-left' && i < step.left) || (step.phase === 'skip-right' && i > step.right)) cls += ' skip';
+                return `<div class="${cls}">${c}</div>`;
+            }).join('');
+            document.getElementById('leftChar').textContent = str[step.left] || '-';
+            document.getElementById('rightChar').textContent = str[step.right] || '-';
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({ codeLines: codeStructure, onStepChange: renderChars });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -1,41 +1,54 @@
-# Walkthrough - LeetCode 84 Visualization Integration
+# Visualizing NeetCode 150: Chapters 1-5 Complete
 
-## Unlocked Capabilities (已解鎖功能)
+We have successfully implemented interactive visualizations for the first five chapters of the NeetCode 150 roadmap. This massive update brings clarity and interactivity to 34 algorithmic problems.
 
-這份文件記錄了如何將高品質的互動式演算法視覺化工具整合至 MkDocs 文件中。
+## 🌟 Key Achievements
 
-### 1. 核心視覺化架構 (Core Visualization Architecture)
+- **Scalable Architecture**: Created a shared `core.js` and `style.css` foundation, allowing rapid development of consistent visualizers.
+- **Workflow Automation**: Established a repeatable workflow for creating and embedding visualizations.
+- **Five Chapters Complete**: 100% coverage for the initial set of problems.
 
-我們建立了模組化的共用資源，位於 `docs/assets/visualizer/`：
+## 📊 Coverage Summary
 
-- **Style (`style.css`)**: 定義了 **Premium Glassmorphism** 風格 (深色背景、毛玻璃卡片、Neon 霓虹光暈)。
-- **Core Logic (`core.js`)**: 封裝了 `AlgorithmVisualizer` 類別，負責狀態管理、DOM 操作與圖表繪製。
+| Chapter                 | Problems | Visualized | Status      |
+| :---------------------- | :------: | :--------: | :---------- |
+| **1. Arrays & Hashing** |    9     |     9      | ✅ Complete |
+| **2. Two Pointers**     |    5     |     5      | ✅ Complete |
+| **3. Sliding Window**   |    6     |     6      | ✅ Complete |
+| **4. Stack**            |    7     |     7      | ✅ Complete |
+| **5. Binary Search**    |    7     |     7      | ✅ Complete |
+| **Total**               |  **34**  |   **34**   | **100%**    |
 
-### 2. LeetCode 84 整合範例
+## 🎨 Visualization Gallery
 
-成功重構並嵌入了 `Largest Rectangle in Histogram` 的視覺化：
+### Two Pointers: Trapping Rain Water
 
-- **Iframe Embedding**: 在 Markdown 中使用 `iframe` 完美嵌入，不干擾文件閱讀。
-- **Fullscreen Mode**: 提供全螢幕連結，讓使用者能沈浸式操作。
-- **Interactive Features**: 支援上一步/下一步、重置、鍵盤操作 (左右鍵)。
+Uses two pointers (left and right) to calculate trapped water based on max heights.
+![Trapping Rain Water](/docs/02_Two_Pointers/trapping_rain_water_visualizer.html)
 
-## Demonstration (成果展示)
+### Sliding Window: Minimum Window Substring
 
-### Visualizer Design
+Dynamically expands and shrinks the window to find the smallest substring covering all target characters.
+![Minimum Window Substring](/docs/03_Sliding_Window/minimum_window_visualizer.html)
 
-![Glassmorphism Design](file:///data/leo/.gemini/antigravity/brain/722066e4-446b-4b36-93f7-87b269b89961/visualizer_glassmorphism_look_1768651353858.png)
-_圖：整合後的視覺化介面，呈現深色毛玻璃風格與動態程式碼高亮_
+### Stack: Car Fleet
 
-## Validation (驗證結果)
+Simulates cars moving towards a target and merging into fleets based on arrival times.
+![Car Fleet](/docs/04_Stack/car_fleet_visualizer.html)
 
-- [x] **Localhost Verification**: 確認 `http://localhost:8084/04_Stack/leetcode_84_visualizer.html` 顯示正常。
-- [x] **Design Check**: 長條圖顏色正確 (Orange=Current, Green=Stack)，程式碼高亮同步。
-- [x] **Integration Check**: Markdown Iframe 顯示正確。
-- [x] **UI Polish**: 程式碼區塊寬度增加至 450px，優化字體大小與閱讀體驗。
-- [x] **Architectural Fix**: 修正文件引用路徑為 `../assets/`，解決 MkDocs 資料夾結構導致的 404 問題。
-- [x] **Deployment Fix**: 確認提交 `leetcode_84_visualizer.html` 的路徑修正 (此為導致使用者看到無樣式頁面的主因)。
+### Binary Search: Search 2D Matrix
 
-## Next Steps (後續規劃)
+Treats a matrix as a flattened sorted array to perform binary search efficiently.
+![Search 2D Matrix](/docs/05_Binary_Search/search_2d_matrix_visualizer.html)
 
-- 觀察 GitHub Pages 部署狀態。
-- 根據此架構，開始 Phase 2 自動化工作 (`/add-visualizer`)。
+## 🛠️ Technical Details
+
+- **Stack**: MkDocs Material + HTML5/JS (Vanilla).
+- **Integration**: Using `iframe` to ensure style isolation and responsiveness.
+- **Layout**: `55%` visualization / `45%` code split for optimal learning experience.
+- **Theme**: Premium dark mode with consistent color palette (Primary Blue, Success Green, Secondary Purple).
+
+## 🚀 Next Steps
+
+- **Phase 3 Expansion**: Continue to "Linked List", "Trees", and "Tries".
+- **Interactive Features**: Add "Step Back" and "Auto Play" controls to the core library.

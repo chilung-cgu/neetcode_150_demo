@@ -1,36 +1,67 @@
-# 實作計畫 - Arrays & Hashing 視覺化批量添加
+# Visual Enhancement Implementation Plan
 
-## 目標
+## Goal
 
-為 `01_Arrays_and_Hashing` 目錄下的 9 道題目添加互動式演算法視覺化。
+Elevate the visual presentation of "NeetCode 150 完全攻略" from a standard text-based documentation to a premium, visually engaging learning platform using Gemini 3 Pro generated assets.
 
-## 題目清單與視覺化設計
+## User Review Required
 
-| #   | 題目                  | 視覺化類型         | 關鍵狀態                |
-| --- | --------------------- | ------------------ | ----------------------- |
-| 1   | Contains Duplicate    | Array + HashSet    | 遍歷元素、Set 狀態      |
-| 2   | Valid Anagram         | Two HashMaps       | 字元計數對比            |
-| 3   | Two Sum               | Array + HashMap    | 目標值、Complement 查詢 |
-| 4   | Group Anagrams        | HashMap Grouping   | 排序 Key、分組結果      |
-| 5   | Top K Frequent        | Bucket Sort        | 頻率桶、結果提取        |
-| 6   | Product of Array      | Prefix/Suffix      | 左右累積陣列            |
-| 7   | Valid Sudoku          | 9x9 Grid + Sets    | 行/列/Box 衝突檢測      |
-| 8   | Encode/Decode Strings | String Parsing     | 編碼/解碼過程           |
-| 9   | Longest Consecutive   | HashSet + Sequence | 序列起點、延伸過程      |
+> [!NOTE]
+> Due to current high demand on the Image Generation Model (`MODEL_CAPACITY_EXHAUSTED`), I have prepared the **Visual Architecture** and **Prompts** below. We can execute the generation steps as soon as capacity returns.
 
-## 執行順序
+## Proposed Changes
 
-1. 先處理較簡單的題目 (1-3)
-2. 再處理中等複雜度 (4-6)
-3. 最後處理複雜題目 (7-9)
+### 1. Asset Directory Structure
 
-## 預計檔案結構
+Create a dedicated folder for high-resolution assets:
+`docs/assets/images/`
 
+- `logo.png` (Project Icon)
+- `banners/` (Chapter Headers)
+
+### 2. Visual Assets & Prompts
+
+We will generate the following assets using these specific prompts:
+
+#### A. Project Logo
+
+> **Prompt**: "A minimalist, modern, tech logo for a coding project named 'NeetCode 150'. The design should combine a code bracket '{ }' and a stylized brain or neural network node to represent learning algorithms. Use a gradient color scheme with cyan, neon purple, and deep blue on a dark background. High resolution, vector art style, clean lines, suitable for a favicon or circular icon."
+
+- **Usage**: Replace standard favicon in `mkdocs.yml` and add to README.
+
+#### B. Chapter Hero Images (Banners)
+
+Targeting the most popular/current chapters first:
+
+| Chapter          | Prompt Concept                                                                                                                                                                                                                                                                                                                                                                                           |
+| :--------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Two Pointers** | "Abstract 3D digital art representing the 'Two Pointers' algorithm. Two glowing beams of light or data streams traveling from opposite ends of a long horizontal futuristic highway towards a meeting point in the center. Cyberpunk aesthetic, neon blue and orange colors. deeply detailed, cinematic lighting, 8k resolution, wide aspect ratio."                                                     |
+| **Stack**        | "Digital art representing a 'Stack' data structure (Last-In, First-Out). A vertical pillar of glowing, futuristic glass data blocks being stacked one on top of another. The top block is highlighting, emitting a brighter light, ready to be popped. Sci-fi laboratory setting with dark reflections. Vertical composition but framed for a wide header. 8k resolution, unreal engine 5 render style." |
+
+### 3. Integration Strategy
+
+#### `mkdocs.yml`
+
+```yaml
+theme:
+  logo: assets/images/logo.png
+  favicon: assets/images/logo.png
 ```
-docs/01_Arrays_and_Hashing/
-├── 01_Contains_Duplicate.md
-├── contains_duplicate_visualizer.html  [NEW]
-├── 02_Valid_Anagram.md
-├── valid_anagram_visualizer.html       [NEW]
+
+#### Chapter Index Pages (`docs/02_Two_Pointers/index.md`)
+
+Add the banner at the top of the chapter index (or first file if index doesn't exist).
+
+```markdown
+![Two Pointers Hero](../assets/images/banners/two_pointers.png)
+
+# Two Pointers
+
 ...
 ```
+
+## Verification Plan
+
+1.  **Generate Images**: Retry generation until successful.
+2.  **Verify Rendering**: Run `mkdocs serve` to ensure images load correctly and look good in Light/Dark modes.
+3.  **Responsiveness**: Check mobile view to ensure banners scale properly.

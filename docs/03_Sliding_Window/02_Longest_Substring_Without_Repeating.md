@@ -4,14 +4,14 @@
 
 題目給一個字串 `s`，請找出**不包含重複字元**的**最長子字串**的長度。
 
--   **Input**: `"abcabcbb"`
--   **Output**: `3` ("abc")
--   **Input**: `"pwwkew"`
--   **Output**: `3` ("wke", 注意 "pwke" 有兩個 w，所以不行)
--   **Wrong Example**: `"subsequence"` vs `"substring"`. 題目要的是連續的 substring，不是跳著選的 subsequence。
--   **Constraints**:
-    -   $0 <= s.length <= 5 * 10^4$.
-    -   包含 ASCII 字元 (所以不只是小寫字母)。
+- **Input**: `"abcabcbb"`
+- **Output**: `3` ("abc")
+- **Input**: `"pwwkew"`
+- **Output**: `3` ("wke", 注意 "pwke" 有兩個 w，所以不行)
+- **Wrong Example**: `"subsequence"` vs `"substring"`. 題目要的是連續的 substring，不是跳著選的 subsequence。
+- **Constraints**:
+  - $0 <= s.length <= 5 * 10^4$.
+  - 包含 ASCII 字元 (所以不只是小寫字母)。
 
 ---
 
@@ -19,9 +19,9 @@
 
 枚舉所有子字串 `s[i...j]`，檢查它是否有重複字元。
 
--   **Time**: Total substrings $O(n^2)$。Check duplicate $O(n)$。Total $O(n^3)$。
--   **Space**: $O(min(n, m))$ for set。
--   **Result**: TLE。
+- **Time**: Total substrings $O(n^2)$。Check duplicate $O(n)$。Total $O(n^3)$。
+- **Space**: $O(min(n, m))$ for set。
+- **Result**: TLE。
 
 ---
 
@@ -34,11 +34,18 @@
 1.  **Expand**: 不斷移動 `right` 指標，擴大窗口，把新字元加進來。
 2.  **Check**: 如果新加進來的字元 `s[right]` **已經存在於窗口中**，這時窗口內的內容就非法了 (有重複)。
 3.  **Shrink**: 我們需要移動 `left` 指標，把窗口左邊的字元踢出去，直到沒有重複為止。
-    -   例如視窗是 `"abca"` (遇到第二個 'a')。
-    -   我們必須踢掉第一個 `'a'`，變成 `"bca"`，才恢復合法。
+    - 例如視窗是 `"abca"` (遇到第二個 'a')。
+    - 我們必須踢掉第一個 `'a'`，變成 `"bca"`，才恢復合法。
 4.  **Update**: 在每次窗口合法時，更新最大長度 `maxLen = max(maxLen, right - left + 1)`。
 
 為了快速檢查「是否存在窗口中」，我們需要一個 **Hash Set** (或者 Array 如果是 ASCII)。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../longest_substring_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../longest_substring_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -180,8 +187,8 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n)$
-    -   雖然有 `while` loop，但 `left` 和 `right` 都只會從 0 走到 n。每個字元最多被 `insert` 一次、`erase` 一次。總運算量 $2n$。
--   **Space Complexity**: $O(min(n, m))$
-    -   $m$ 是字元集大小 (ASCII 128)。Set 最多存這麼多字。
-    -   所以實際上是 $O(1)$ 如果 char set 固定。
+- **Time Complexity**: $O(n)$
+  - 雖然有 `while` loop，但 `left` 和 `right` 都只會從 0 走到 n。每個字元最多被 `insert` 一次、`erase` 一次。總運算量 $2n$。
+- **Space Complexity**: $O(min(n, m))$
+  - $m$ 是字元集大小 (ASCII 128)。Set 最多存這麼多字。
+  - 所以實際上是 $O(1)$ 如果 char set 固定。

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two Sum II Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SORTED ARRAY - TWO POINTERS</div>
+                <div class="chart-container" id="chartContainer"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Target</div><div class="state-value" id="targetDisplay">9</div></div>
+                    <div class="state-item"><div class="state-label">Sum</div><div class="state-value" id="sumDisplay">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> twoSum(vector<int>& nums, int target) {', id: 0 },
+            { line: '    int left = 0, right = nums.size() - 1;', id: 1 },
+            { line: '    while (left < right) {', id: 2 },
+            { line: '        int sum = nums[left] + nums[right];', id: 3 },
+            { line: '        if (sum > target) right--;', id: 4 },
+            { line: '        else if (sum < target) left++;', id: 5 },
+            { line: '        else return {left+1, right+1};', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return {};', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const nums = [2, 7, 11, 15];
+        const target = 9;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let left = 0, right = nums.length - 1;
+            steps.push({ left, right, sum: null, highlightLines: [0, 1], explanation: { title: 'Init', text: `left=0, right=${right}, target=${target}` }});
+            while (left < right) {
+                const sum = nums[left] + nums[right];
+                steps.push({ left, right, sum, highlightLines: [2, 3], explanation: { title: `Sum = ${nums[left]} + ${nums[right]} = ${sum}`, text: sum > target ? `${sum} > ${target}，right--` : sum < target ? `${sum} < ${target}，left++` : `找到！` }});
+                if (sum > target) right--;
+                else if (sum < target) left++;
+                else { steps.push({ left, right, sum, found: true, highlightLines: [6], explanation: { title: '✓ Found!', text: `Answer: [${left+1}, ${right+1}]` }}); return steps; }
+            }
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), nums, nums.map((_, i) => i === step.left ? 'current' : i === step.right ? 'calculating' : ''), { height: 200 });
+                    document.getElementById('sumDisplay').textContent = step.sum ?? '-';
+                    document.getElementById('sumDisplay').style.color = step.found ? 'var(--viz-success)' : step.sum > target ? 'var(--viz-error)' : step.sum < target ? 'var(--viz-secondary)' : 'var(--viz-text-main)';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

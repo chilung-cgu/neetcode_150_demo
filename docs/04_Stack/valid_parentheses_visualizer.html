@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valid Parentheses Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .char-row { display: flex; justify-content: center; gap: 4px; margin: 10px 0; }
+        .char-box { padding: 10px 14px; border-radius: 4px; font-family: monospace; font-size: 1.1rem; background: rgba(255,255,255,0.1); }
+        .char-box.current { background: var(--viz-secondary); color: #0f172a; }
+        .char-box.matched { background: var(--viz-success); color: #0f172a; }
+        .stack-display { display: flex; flex-direction: column-reverse; align-items: center; gap: 2px; min-height: 80px; }
+        .stack-item { background: var(--viz-primary); color: white; padding: 6px 14px; border-radius: 4px; font-family: monospace; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">VALID PARENTHESES - STACK</div>
+                <div class="char-row" id="charRow"></div>
+                <div class="viz-title" style="margin-top: 15px;">STACK</div>
+                <div class="stack-display" id="stackDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool isValid(string s) {', id: 0 },
+            { line: '    stack<char> stk;', id: 1 },
+            { line: '    map<char, char> m = {...)};', id: 2 },
+            { line: '    for (char c : s) {', id: 3 },
+            { line: '        if (m.count(c)) stk.push(c);', id: 4 },
+            { line: '        else if (stk.empty() || m[stk.top()] != c)', id: 5 },
+            { line: '            return false;', id: 6 },
+            { line: '        else stk.pop();', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return stk.empty();', id: 9 },
+            { line: '}', id: 10 },
+        ];
+        const str = "({[]})";
+        const pairs = { '(': ')', '[': ']', '{': '}' };
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const stack = [];
+            steps.push({ idx: -1, stack: [], highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Empty stack' }});
+            for (let i = 0; i < str.length; i++) {
+                const c = str[i];
+                if (pairs[c]) {
+                    stack.push(c);
+                    steps.push({ idx: i, stack: [...stack], highlightLines: [4], explanation: { title: `Push '${c}'`, text: `Opening bracket → push` }});
+                } else {
+                    if (stack.length === 0 || pairs[stack[stack.length-1]] !== c) {
+                        steps.push({ idx: i, stack: [...stack], invalid: true, highlightLines: [5, 6], explanation: { title: 'Mismatch!', text: `Expected ${pairs[stack[stack.length-1]] || '(none)'}, got ${c}` }});
+                        return steps;
+                    }
+                    stack.pop();
+                    steps.push({ idx: i, stack: [...stack], highlightLines: [7], explanation: { title: `Pop (match '${c}')`, text: `Closing bracket matches` }});
+                }
+            }
+            steps.push({ idx: -1, stack, valid: stack.length === 0, highlightLines: [9], explanation: { title: stack.length === 0 ? '✓ Valid!' : '✗ Invalid', text: stack.length === 0 ? 'Stack empty, all matched' : 'Stack not empty' }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('charRow').innerHTML = [...str].map((c, i) => `<div class="char-box ${i === step.idx ? 'current' : ''}">${c}</div>`).join('');
+                    document.getElementById('stackDisplay').innerHTML = step.stack.map(c => `<div class="stack-item">${c}</div>`).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

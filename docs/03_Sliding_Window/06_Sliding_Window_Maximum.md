@@ -7,15 +7,15 @@
 我們只能看到窗口內的 `k` 個數字。
 請回傳 **每一個位置時窗口內的最大值**。
 
--   **Input**: `nums = [1,3,-1,-3,5,3,6,7], k = 3`
--   **Output**: `[3,3,5,5,6,7]`
-    -   `[1,3,-1]`, -3, 5, 3, 6, 7 -> max: 3
-    -   1, `[3,-1,-3]`, 5, 3, 6, 7 -> max: 3
-    -   1, 3, `[-1,-3,5]`, 3, 6, 7 -> max: 5
-    -   ...
--   **Constraints**:
-    -   $1 <= k <= nums.length <= 10^5$.
-    -   題目要求 $O(n)$ 的解法。
+- **Input**: `nums = [1,3,-1,-3,5,3,6,7], k = 3`
+- **Output**: `[3,3,5,5,6,7]`
+  - `[1,3,-1]`, -3, 5, 3, 6, 7 -> max: 3
+  - 1, `[3,-1,-3]`, 5, 3, 6, 7 -> max: 3
+  - 1, 3, `[-1,-3,5]`, 3, 6, 7 -> max: 5
+  - ...
+- **Constraints**:
+  - $1 <= k <= nums.length <= 10^5$.
+  - 題目要求 $O(n)$ 的解法。
 
 ---
 
@@ -23,8 +23,8 @@
 
 對於每一個窗口，遍歷這 `k` 個元素找最大值。
 
--   **Time**: $O(n \cdot k)$。
--   **Result**: 當 `k` 很大時 (例如 $k \approx n/2$)，會變成 $O(n^2)$ -> TLE。
+- **Time**: $O(n \cdot k)$。
+- **Result**: 當 `k` 很大時 (例如 $k \approx n/2$)，會變成 $O(n^2)$ -> TLE。
 
 ---
 
@@ -40,12 +40,19 @@ BST? $O(\log k)$。
 Deque 裡存的一定是 **候選的最大值** 的 Index。
 並且我們保持 Deque 裡的元素對應的數值是 **單調遞減** 的。
 
--   `deque.front()` 永遠是當前窗口的最大值。
--   當新元素 `nums[i]` 進來時：
-    1.  **Pop Small Elements**: 如果 `nums[i]` 比 `deque.back()` 還大，那 `deque.back()` 裡的那個數字這輩子都不可能成為最大值了（因為 `nums[i]` 比它晚進來，還比它大，會壓死它）。直接踢掉 `pop_back()`。重複直到 Deque 單調或空。
-    2.  **Add New Element**: 把 `i` 加進 `push_back()`。
-    3.  **Pop Outdated Elements**: 如果 `deque.front()` 的 index 已經超出窗口範圍 (`i - k`)，就踢掉 `pop_front()`。
-    4.  **Record Result**: 只要 `i >= k-1` (窗口成形後)，`deque.front()` 就是當前答案。
+- `deque.front()` 永遠是當前窗口的最大值。
+- 當新元素 `nums[i]` 進來時：
+  1.  **Pop Small Elements**: 如果 `nums[i]` 比 `deque.back()` 還大，那 `deque.back()` 裡的那個數字這輩子都不可能成為最大值了（因為 `nums[i]` 比它晚進來，還比它大，會壓死它）。直接踢掉 `pop_back()`。重複直到 Deque 單調或空。
+  2.  **Add New Element**: 把 `i` 加進 `push_back()`。
+  3.  **Pop Outdated Elements**: 如果 `deque.front()` 的 index 已經超出窗口範圍 (`i - k`)，就踢掉 `pop_front()`。
+  4.  **Record Result**: 只要 `i >= k-1` (窗口成形後)，`deque.front()` 就是當前答案。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../sliding_maximum_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../sliding_maximum_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -164,10 +171,10 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n)$
-    -   每個元素被 push 進 Deque 一次。
-    -   每個元素被 pop 出 Deque 最多一次。
-    -   總操作次數是 $2n$，所以是線性時間。
--   **Space Complexity**: $O(k)$
-    -   Deque 最多同時儲存 $k$ 個元素 (在 Input 是 Strictly Decreasing `[5,4,3,2,1]` 的最差情況下)。
-    -   Output space $O(n-k+1)$ 不算在 auxiliary space 中。
+- **Time Complexity**: $O(n)$
+  - 每個元素被 push 進 Deque 一次。
+  - 每個元素被 pop 出 Deque 最多一次。
+  - 總操作次數是 $2n$，所以是線性時間。
+- **Space Complexity**: $O(k)$
+  - Deque 最多同時儲存 $k$ 個元素 (在 Input 是 Strictly Decreasing `[5,4,3,2,1]` 的最差情況下)。
+  - Output space $O(n-k+1)$ 不算在 auxiliary space 中。

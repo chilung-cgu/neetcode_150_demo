@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min Stack Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .dual-stack { display: flex; gap: 30px; justify-content: center; }
+        .stack-col { text-align: center; }
+        .stack-display { display: flex; flex-direction: column-reverse; align-items: center; gap: 2px; min-height: 120px; }
+        .stack-item { padding: 8px 16px; border-radius: 4px; font-family: monospace; }
+        .main-item { background: var(--viz-primary); color: white; }
+        .min-item { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">MIN STACK - TWO STACKS</div>
+                <div class="dual-stack">
+                    <div class="stack-col"><div class="viz-title">Main Stack</div><div class="stack-display" id="mainStack"></div></div>
+                    <div class="stack-col"><div class="viz-title">Min Stack</div><div class="stack-display" id="minStack"></div></div>
+                </div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid" style="margin-top: 10px;">
+                    <div class="state-item"><div class="state-label">getMin()</div><div class="state-value" id="minDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">OPERATIONS</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'class MinStack {', id: 0 },
+            { line: '    stack<int> main, minStk;', id: 1 },
+            { line: '    void push(int val) {', id: 2 },
+            { line: '        main.push(val);', id: 3 },
+            { line: '        minStk.push(min(val, minStk.top()));', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    void pop() { main.pop(); minStk.pop(); }', id: 6 },
+            { line: '    int getMin() { return minStk.top(); }', id: 7 },
+            { line: '};', id: 8 },
+        ];
+        const ops = [['push', -2], ['push', 0], ['push', -3], ['getMin'], ['pop'], ['getMin']];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const main = [], minStk = [];
+            steps.push({ main: [], minStk: [], minVal: '-', highlightLines: [0, 1], explanation: { title: 'Init', text: 'Two empty stacks' }});
+            for (const [op, val] of ops) {
+                if (op === 'push') {
+                    main.push(val);
+                    minStk.push(minStk.length === 0 ? val : Math.min(val, minStk[minStk.length - 1]));
+                    steps.push({ main: [...main], minStk: [...minStk], minVal: minStk[minStk.length - 1], highlightLines: [3, 4], explanation: { title: `push(${val})`, text: `min = ${minStk[minStk.length - 1]}` }});
+                } else if (op === 'pop') {
+                    main.pop(); minStk.pop();
+                    steps.push({ main: [...main], minStk: [...minStk], minVal: minStk[minStk.length - 1] ?? '-', highlightLines: [6], explanation: { title: 'pop()', text: '' }});
+                } else if (op === 'getMin') {
+                    steps.push({ main: [...main], minStk: [...minStk], minVal: minStk[minStk.length - 1], highlightLines: [7], explanation: { title: `getMin() = ${minStk[minStk.length - 1]}`, text: 'O(1) lookup' }});
+                }
+            }
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('mainStack').innerHTML = step.main.map(v => `<div class="stack-item main-item">${v}</div>`).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    document.getElementById('minStack').innerHTML = step.minStk.map(v => `<div class="stack-item min-item">${v}</div>`).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    document.getElementById('minDisplay').textContent = step.minVal;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

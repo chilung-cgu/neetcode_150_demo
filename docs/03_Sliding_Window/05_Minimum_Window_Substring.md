@@ -5,13 +5,13 @@
 題目給兩個字串 `s` 和 `t`。請在 `s` 中找出一個 **最短子字串**，該子字串包含 `t` 中的 **所有字元 (包含重複數量)**。
 如果不存在，回傳空字串 `""`。
 
--   **Input**: `s = "ADOBECODEBANC", t = "ABC"`
--   **Output**: `"BANC"` (包含 A, B, C，長度 4)。雖然 "ADOBEC" 也包含，但長度 6 太長。
--   **Input**: `s = "a", t = "aa"`
--   **Output**: `""` (s 只有一個 a，不夠 t 的兩個 a)。
--   **Constraints**:
-    -   $m, n <= 10^5$.
-    -   英文字母 (大小寫敏感)。
+- **Input**: `s = "ADOBECODEBANC", t = "ABC"`
+- **Output**: `"BANC"` (包含 A, B, C，長度 4)。雖然 "ADOBEC" 也包含，但長度 6 太長。
+- **Input**: `s = "a", t = "aa"`
+- **Output**: `""` (s 只有一個 a，不夠 t 的兩個 a)。
+- **Constraints**:
+  - $m, n <= 10^5$.
+  - 英文字母 (大小寫敏感)。
 
 ---
 
@@ -19,8 +19,8 @@
 
 找出 `s` 所有的 substring，檢查是否 covering `t`。
 
--   **Time**: $O(n^3)$ or $O(n^2)$.
--   **Result**: TLE.
+- **Time**: $O(n^3)$ or $O(n^2)$.
+- **Result**: TLE.
 
 ---
 
@@ -31,15 +31,22 @@
 1.  **Map**: 我們需要一個 `targetMap` 記錄 `t` 中每個字元需要的次數。
 2.  **Window**: 維護一個窗口 `[left, right]` 和 `windowMap`。
 3.  **Count `have` vs `need`**:
-    -   我們不需要每次都比對兩個整個 Map ($O(52)$)。
-    -   我們可以維護兩個變數：
-        -   `need`: `t` 中有多少個 **獨特 (Unique) 字元** 需要被滿足。
-        -   `have`: 目前窗口中，有多少個獨特字元 **已經達標** (次數 >= target)。
+    - 我們不需要每次都比對兩個整個 Map ($O(52)$)。
+    - 我們可以維護兩個變數：
+      - `need`: `t` 中有多少個 **獨特 (Unique) 字元** 需要被滿足。
+      - `have`: 目前窗口中，有多少個獨特字元 **已經達標** (次數 >= target)。
 4.  **Flow**:
-    -   **Expand (`right`)**: 加入字元。如果該字元的 `windowCount == targetCount`，則 `have++`。
-    -   **Shrink (`left`)**: 當 `have == need` 時，表示目前窗口是合法的 (Valid)。我們嘗試縮小它 (move `left`) 來找最小長度。
-        -   移出字元前，先記錄當前長度 `right - left + 1`，如果比 `minLen` 小就更新。
-        -   移出字元。如果該字元的 `windowCount < targetCount`，則 `have--`。這時窗口變回非法，跳出 shrink loop，繼續 expand。
+    - **Expand (`right`)**: 加入字元。如果該字元的 `windowCount == targetCount`，則 `have++`。
+    - **Shrink (`left`)**: 當 `have == need` 時，表示目前窗口是合法的 (Valid)。我們嘗試縮小它 (move `left`) 來找最小長度。
+      - 移出字元前，先記錄當前長度 `right - left + 1`，如果比 `minLen` 小就更新。
+      - 移出字元。如果該字元的 `windowCount < targetCount`，則 `have--`。這時窗口變回非法，跳出 shrink loop，繼續 expand。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../minimum_window_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../minimum_window_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -205,8 +212,8 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n + m)$
-    -   $O(m)$ 建立 `countT`。
-    -   $O(n)$ 掃描 `s`。雖然有 inner loop，但 `left` 和 `right` 都只前進不後退，所以是 $2n$。
--   **Space Complexity**: $O(1)$ (Assuming size of charset is fixed 128/256)
-    -   如果 charset 很大，則是 $O(k)$ where k is unique chars。
+- **Time Complexity**: $O(n + m)$
+  - $O(m)$ 建立 `countT`。
+  - $O(n)$ 掃描 `s`。雖然有 inner loop，但 `left` 和 `right` 都只前進不後退，所以是 $2n$。
+- **Space Complexity**: $O(1)$ (Assuming size of charset is fixed 128/256)
+  - 如果 charset 很大，則是 $O(k)$ where k is unique chars。

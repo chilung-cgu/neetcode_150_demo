@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Koko Eating Bananas Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">KOKO EATING BANANAS (h=8)</div>
+                <div class="chart-container" id="chartContainer"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Speed [L, R]</div><div class="state-value" id="rangeDisplay">[1, 11]</div></div>
+                    <div class="state-item"><div class="state-label">Try k</div><div class="state-value" id="kDisplay" style="color: var(--viz-secondary);">-</div></div>
+                    <div class="state-item"><div class="state-label">Hours needed</div><div class="state-value" id="hoursDisplay">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BINARY SEARCH ON ANSWER</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int minEatingSpeed(piles, h) {', id: 0 },
+            { line: '    int l = 1, r = max(piles);', id: 1 },
+            { line: '    while (l < r) {', id: 2 },
+            { line: '        int mid = (l + r) / 2;', id: 3 },
+            { line: '        if (canFinish(mid, h)) r = mid;', id: 4 },
+            { line: '        else l = mid + 1;', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return l;', id: 7 },
+            { line: '}', id: 8 },
+        ];
+        const piles = [3, 6, 7, 11];
+        const h = 8;
+
+        function hoursNeeded(k) {
+            return piles.reduce((sum, p) => sum + Math.ceil(p / k), 0);
+        }
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let l = 1, r = Math.max(...piles);
+            steps.push({ l, r, k: -1, hours: '-', highlightLines: [0, 1], explanation: { title: 'Init', text: `Piles: [${piles}], h=${h}` }});
+            while (l < r) {
+                const mid = Math.floor((l + r) / 2);
+                const hours = hoursNeeded(mid);
+                const canFinish = hours <= h;
+                steps.push({ l, r, k: mid, hours, highlightLines: canFinish ? [4] : [5], explanation: { title: `k=${mid}: ${hours} hours`, text: canFinish ? `${hours} <= ${h} ✓ r=${mid}` : `${hours} > ${h} ✗ l=${mid + 1}` }});
+                if (canFinish) r = mid;
+                else l = mid + 1;
+            }
+            steps.push({ l, r, k: l, hours: hoursNeeded(l), highlightLines: [7], explanation: { title: `Answer = ${l}`, text: `Minimum speed to finish in ${h} hours` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), piles, [], { height: 180 });
+                    document.getElementById('rangeDisplay').textContent = `[${step.l}, ${step.r}]`;
+                    document.getElementById('kDisplay').textContent = step.k > 0 ? step.k : '-';
+                    document.getElementById('hoursDisplay').textContent = step.hours;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container With Most Water Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .water-area { position: absolute; background: rgba(59, 130, 246, 0.3); bottom: 0; border: 2px dashed var(--viz-primary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">CONTAINER - GREEDY TWO POINTERS</div>
+                <div class="chart-container" id="chartContainer" style="position: relative;"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Current Area</div><div class="state-value" id="areaDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">Max Area</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int maxArea(vector<int>& height) {', id: 0 },
+            { line: '    int l = 0, r = height.size() - 1;', id: 1 },
+            { line: '    int maxArea = 0;', id: 2 },
+            { line: '    while (l < r) {', id: 3 },
+            { line: '        int area = min(height[l], height[r]) * (r - l);', id: 4 },
+            { line: '        maxArea = max(maxArea, area);', id: 5 },
+            { line: '        if (height[l] < height[r]) l++;', id: 6 },
+            { line: '        else r--;', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return maxArea;', id: 9 },
+            { line: '}', id: 10 },
+        ];
+        const height = [1, 8, 6, 2, 5, 4, 8, 3, 7];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let l = 0, r = height.length - 1, maxArea = 0;
+            steps.push({ l, r, area: 0, maxArea: 0, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: `l=0, r=${r}` }});
+            while (l < r) {
+                const area = Math.min(height[l], height[r]) * (r - l);
+                maxArea = Math.max(maxArea, area);
+                steps.push({ l, r, area, maxArea, highlightLines: [4, 5], explanation: { title: `Area = min(${height[l]}, ${height[r]}) × ${r - l} = ${area}`, text: height[l] < height[r] ? `左邊較短，l++` : `右邊較短，r--` }});
+                if (height[l] < height[r]) l++;
+                else r--;
+            }
+            steps.push({ l, r, area: 0, maxArea, highlightLines: [9], explanation: { title: 'Done!', text: `Max Area = ${maxArea}` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const states = height.map((_, i) => i === step.l ? 'current' : i === step.r ? 'calculating' : '');
+                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), height, states, { height: 200 });
+                    document.getElementById('areaDisplay').textContent = step.area;
+                    document.getElementById('maxDisplay').textContent = step.maxArea;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

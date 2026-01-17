@@ -8,5 +8,8 @@
   - [x] 建立 `/add-visualizer` workflow 文件
   - [x] 建立 `template.html` 模板
 - [ ] Phase 3: 規模化試產
-  - [ ] 選擇代表性題目 (Trapping Rain Water, Min Stack 等)
-  - [ ] 逐步推廣至其他章節
+  - [x] Arrays & Hashing (9/9) - Completed
+  - [x] Two Pointers (5/5) - Completed
+  - [x] Sliding Window (6/6) - Completed
+  - [x] Stack (7/7) - Completed
+  - [x] Binary Search (7/7) - Completed

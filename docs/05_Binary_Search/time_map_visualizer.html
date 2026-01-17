@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Based Key-Value Store Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .kv-display { font-family: monospace; text-align: center; margin: 10px 0; }
+        .entry { display: inline-block; margin: 4px; padding: 6px 10px; background: var(--viz-primary); color: white; border-radius: 4px; }
+        .entry.active { background: var(--viz-secondary); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">TIME-BASED KEY-VALUE STORE</div>
+                <div class="kv-display" id="kvDisplay"></div>
+                <div class="controls" style="margin-top: 20px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid" style="margin-top: 10px;">
+                    <div class="state-item"><div class="state-label">Query</div><div class="state-value" id="queryDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BINARY SEARCH IN TIMESTAMPS</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'class TimeMap {', id: 0 },
+            { line: '    map<string, vector<pair<int, string>>> m;', id: 1 },
+            { line: '    void set(key, value, timestamp) {', id: 2 },
+            { line: '        m[key].push_back({timestamp, value});', id: 3 },
+            { line: '    }', id: 4 },
+            { line: '    string get(key, timestamp) {', id: 5 },
+            { line: '        // Binary search for largest ts <= timestamp', id: 6 },
+            { line: '        return found ? value : "";', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '};', id: 9 },
+        ];
+        const ops = [
+            { op: 'set', key: 'foo', val: 'bar', ts: 1 },
+            { op: 'get', key: 'foo', ts: 1 },
+            { op: 'get', key: 'foo', ts: 3 },
+            { op: 'set', key: 'foo', val: 'bar2', ts: 4 },
+            { op: 'get', key: 'foo', ts: 4 },
+            { op: 'get', key: 'foo', ts: 5 },
+        ];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const store = {};
+            steps.push({ store: {}, query: '-', result: '-', highlightLines: [0, 1], explanation: { title: 'Init', text: 'Empty TimeMap' }});
+            for (const o of ops) {
+                if (o.op === 'set') {
+                    if (!store[o.key]) store[o.key] = [];
+                    store[o.key].push({ ts: o.ts, val: o.val });
+                    steps.push({ store: JSON.parse(JSON.stringify(store)), query: `set(${o.key}, ${o.val}, ${o.ts})`, result: 'null', activeTs: o.ts, highlightLines: [2, 3], explanation: { title: `set("${o.key}", "${o.val}", ${o.ts})`, text: 'Added to store' }});
+                } else {
+                    const list = store[o.key] || [];
+                    let res = '';
+                    for (const e of list) {
+                        if (e.ts <= o.ts) res = e.val;
+                    }
+                    steps.push({ store: JSON.parse(JSON.stringify(store)), query: `get(${o.key}, ${o.ts})`, result: res || '""', activeTs: o.ts, highlightLines: [5, 6, 7], explanation: { title: `get("${o.key}", ${o.ts})`, text: res ? `Found "${res}"` : 'Not found' }});
+                }
+            }
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const entries = [];
+                    for (const [k, v] of Object.entries(step.store)) {
+                        for (const e of v) {
+                            entries.push(`<span class="entry ${e.ts === step.activeTs ? 'active' : ''}">${k}@${e.ts}="${e.val}"</span>`);
+                        }
+                    }
+                    document.getElementById('kvDisplay').innerHTML = entries.join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    document.getElementById('queryDisplay').textContent = step.query;
+                    document.getElementById('resultDisplay').textContent = step.result;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

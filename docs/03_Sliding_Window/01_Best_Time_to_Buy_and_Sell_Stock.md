@@ -7,12 +7,12 @@
 請問我們最多能賺多少錢？
 如果賺不到錢 (例如股價一路跌)，回傳 0。
 
--   **Input**: `[7,1,5,3,6,4]`
--   **Output**: `5` (Day 2 buy at 1, Day 5 sell at 6).
--   **Wrong Example**: Buy at 1, Sell at 7? 不行，因為 7 在 1 之前 (時光不能倒流)。
--   **Constraints**:
-    -   $1 <= prices.length <= 10^5$。
-    -   只做一次交易 (One transaction)。
+- **Input**: `[7,1,5,3,6,4]`
+- **Output**: `5` (Day 2 buy at 1, Day 5 sell at 6).
+- **Wrong Example**: Buy at 1, Sell at 7? 不行，因為 7 在 1 之前 (時光不能倒流)。
+- **Constraints**:
+  - $1 <= prices.length <= 10^5$。
+  - 只做一次交易 (One transaction)。
 
 ---
 
@@ -22,8 +22,8 @@
 `Profit = prices[j] - prices[i]`。
 找出所有組合中的最大值。
 
--   **Time Complexity**: $O(n^2)$。
--   **Result**: TLE。
+- **Time Complexity**: $O(n^2)$。
+- **Result**: TLE。
 
 ---
 
@@ -49,6 +49,13 @@
 `Left` = 最低買點。
 `Right` = 當前賣點。
 如果 `prices[Right] < prices[Left]`，說明我們找到了一個更低的買點，直接把 `Left` 跳去 `Right` (重置窗口起點)。(因為更低的買點意味著未來潛在利潤更高)。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../buy_sell_stock_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../buy_sell_stock_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -143,10 +150,10 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n)$
-    -   只需要遍歷一次陣列。
--   **Space Complexity**: $O(1)$
-    -   只使用兩個變數 `minPrice` 和 `maxP`。
+- **Time Complexity**: $O(n)$
+  - 只需要遍歷一次陣列。
+- **Space Complexity**: $O(1)$
+  - 只使用兩個變數 `minPrice` 和 `maxP`。
 
 **延伸思考**:
 這題是 "Kadane's Algorithm" (Maximum Subarray) 的一種變形。

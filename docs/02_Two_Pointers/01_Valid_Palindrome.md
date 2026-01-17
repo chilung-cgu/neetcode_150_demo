@@ -9,16 +9,16 @@
 1.  **Case Insensitive**: 大寫字母要視為小寫（'A' == 'a'）。
 2.  **Alphanumeric Only**: 只保留字母 (a-z) 和數字 (0-9)，忽略所有其他符號（如空白、逗號、冒號等）。
 
--   **Input**: "A man, a plan, a canal: Panama"
--   **Output**: `true`
-    -   解釋：清洗後變成 "amanaplanacanalpanama"，這是一個回文。
--   **Input**: "race a car"
--   **Output**: `false`
-    -   解釋：清洗後變成 "raceacar"，reversed 是 "racaecar"，不匹配。
+- **Input**: "A man, a plan, a canal: Panama"
+- **Output**: `true`
+  - 解釋：清洗後變成 "amanaplanacanalpanama"，這是一個回文。
+- **Input**: "race a car"
+- **Output**: `false`
+  - 解釋：清洗後變成 "raceacar"，reversed 是 "racaecar"，不匹配。
 
--   **Constraints**:
-    -   $1 <= s.length <= 2 * 10^5$。
-    -   字串包含 Printable ASCII characters。
+- **Constraints**:
+  - $1 <= s.length <= 2 * 10^5$。
+  - 字串包含 Printable ASCII characters。
 
 ---
 
@@ -31,9 +31,9 @@
 3.  建立一個反轉字串 `reversed_s = reverse(filtered_s)`。
 4.  比較 `filtered_s == reversed_s`。
 
--   **Time Complexity**: $O(n)$。我們遍歷了幾次字串，但總體還是線性的。
--   **Space Complexity**: $O(n)$。我們需要額外的記憶體來儲存 `filtered_s` 和 `reversed_s`。
--   **Trade-off**: 這方法簡單易懂，但在 Embedded System 中，如果字串很長 (e.g., Log file)，分配額外記憶體可能會導致 OOM (Out of Memory) 或增加 Memory Fragmentation。我們能否原地 (In-place) 完成？
+- **Time Complexity**: $O(n)$。我們遍歷了幾次字串，但總體還是線性的。
+- **Space Complexity**: $O(n)$。我們需要額外的記憶體來儲存 `filtered_s` 和 `reversed_s`。
+- **Trade-off**: 這方法簡單易懂，但在 Embedded System 中，如果字串很長 (e.g., Log file)，分配額外記憶體可能會導致 OOM (Out of Memory) 或增加 Memory Fragmentation。我們能否原地 (In-place) 完成？
 
 ---
 
@@ -45,15 +45,22 @@
 
 1.  設定 `left` 指標在開頭，`right` 指標在結尾。
 2.  當 `left < right` 時：
-    -   如果你是指標，你會遇到什麼問題？ -> "中間有很多垃圾符號"。
-    -   所以，如果 `s[left]` 不是 alphanumeric，`left` 就一直往右移。
-    -   如果 `s[right]` 不是 alphanumeric，`right` 就一直往左移。
-    -   當兩邊都停在「有效字元」上時，比對它們（轉小寫後）。
-    -   如果不一樣 -> `return false`。
-    -   如果一樣 -> `left++`, `right--`，繼續縮小範圍。
+    - 如果你是指標，你會遇到什麼問題？ -> "中間有很多垃圾符號"。
+    - 所以，如果 `s[left]` 不是 alphanumeric，`left` 就一直往右移。
+    - 如果 `s[right]` 不是 alphanumeric，`right` 就一直往左移。
+    - 當兩邊都停在「有效字元」上時，比對它們（轉小寫後）。
+    - 如果不一樣 -> `return false`。
+    - 如果一樣 -> `left++`, `right--`，繼續縮小範圍。
 3.  如果指標交錯都沒發現錯誤，那就是 `true`。
 
--   **優點**：完全不需要額外記憶體 allocation。
+- **優點**：完全不需要額外記憶體 allocation。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../valid_palindrome_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../valid_palindrome_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -171,10 +178,10 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n)$
-    -   `left` 指標只會往右走，`right` 指標只會往左走。
-    -   兩者最多在中間相遇，總共遍歷的字元數不超過 $n$。
-    -   `isalnum` 和 `tolower` 都是 $O(1)$ 操作。
--   **Space Complexity**: $O(1)$
-    -   即使字串長度 $10^5$，我們也只用了 2 個整數變數 (`L`, `R`) 來記錄位置。
-    -   這是 **In-place** 演算法，對 Memory 非常友善。
+- **Time Complexity**: $O(n)$
+  - `left` 指標只會往右走，`right` 指標只會往左走。
+  - 兩者最多在中間相遇，總共遍歷的字元數不超過 $n$。
+  - `isalnum` 和 `tolower` 都是 $O(1)$ 操作。
+- **Space Complexity**: $O(1)$
+  - 即使字串長度 $10^5$，我們也只用了 2 個整數變數 (`L`, `R`) 來記錄位置。
+  - 這是 **In-place** 演算法，對 Memory 非常友善。

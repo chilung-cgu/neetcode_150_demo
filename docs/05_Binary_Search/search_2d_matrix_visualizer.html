@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search a 2D Matrix Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .matrix { display: grid; gap: 2px; max-width: 300px; margin: 0 auto; }
+        .cell { padding: 10px; text-align: center; font-family: monospace; background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .cell.active { background: var(--viz-secondary); color: #0f172a; }
+        .cell.found { background: var(--viz-success); color: #0f172a; }
+        .cell.searched { background: rgba(99, 102, 241, 0.3); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">2D MATRIX SEARCH (target=3)</div>
+                <div class="matrix" id="matrixDisplay" style="grid-template-columns: repeat(4, 1fr);"></div>
+                <div class="controls" style="margin-top: 20px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid" style="margin-top: 10px;">
+                    <div class="state-item"><div class="state-label">Virtual [L, R]</div><div class="state-value" id="rangeDisplay">[0, 11]</div></div>
+                    <div class="state-item"><div class="state-label">Mid → (row, col)</div><div class="state-value" id="midDisplay">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool searchMatrix(matrix, target) {', id: 0 },
+            { line: '    int m = rows, n = cols;', id: 1 },
+            { line: '    int l = 0, r = m * n - 1;', id: 2 },
+            { line: '    while (l <= r) {', id: 3 },
+            { line: '        int mid = (l + r) / 2;', id: 4 },
+            { line: '        int row = mid / n, col = mid % n;', id: 5 },
+            { line: '        if (matrix[row][col] == target) return true;', id: 6 },
+            { line: '        if (matrix[row][col] < target) l = mid + 1;', id: 7 },
+            { line: '        else r = mid - 1;', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return false;', id: 10 },
+            { line: '}', id: 11 },
+        ];
+        const matrix = [[1, 3, 5, 7], [10, 11, 16, 20], [23, 30, 34, 60]];
+        const target = 3;
+        const m = matrix.length, n = matrix[0].length;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let l = 0, r = m * n - 1;
+            steps.push({ l, r, mid: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: `Treat ${m}x${n} matrix as virtual array [0..${r}]` }});
+            while (l <= r) {
+                const mid = Math.floor((l + r) / 2);
+                const row = Math.floor(mid / n), col = mid % n;
+                const v = matrix[row][col];
+                if (v === target) {
+                    steps.push({ l, r, mid, row, col, found: true, highlightLines: [6], explanation: { title: '✓ Found!', text: `matrix[${row}][${col}] = ${target}` }});
+                    return steps;
+                }
+                steps.push({ l, r, mid, row, col, highlightLines: v < target ? [7] : [8], explanation: { title: `mid=${mid} → [${row}][${col}]=${v}`, text: v < target ? `${v} < ${target}` : `${v} > ${target}` }});
+                if (v < target) l = mid + 1;
+                else r = mid - 1;
+            }
+            steps.push({ l, r, mid: -1, highlightLines: [10], explanation: { title: 'Not Found', text: '' }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('matrixDisplay').innerHTML = matrix.flat().map((v, i) => {
+                        const r = Math.floor(i / n), c = i % n;
+                        let cls = 'cell';
+                        if (r === step.row && c === step.col) cls += step.found ? ' found' : ' active';
+                        else if (i >= step.l && i <= step.r) cls += ' searched';
+                        return `<div class="${cls}">${v}</div>`;
+                    }).join('');
+                    document.getElementById('rangeDisplay').textContent = `[${step.l}, ${step.r}]`;
+                    document.getElementById('midDisplay').textContent = step.mid >= 0 ? `${step.mid} → (${step.row}, ${step.col})` : '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
