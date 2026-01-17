@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Last Stone Weight Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .stones { display: flex; gap: 6px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+        .stone { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
+        .stone.smash { background: var(--viz-error); animation: pulse 0.3s; }
+        .stone.new { background: var(--viz-success); color: #0f172a; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">LAST STONE WEIGHT (MAX HEAP)</div>
+                <div class="stones" id="stonesDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">MAX HEAP SIMULATION</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int lastStoneWeight(vector<int>& stones) {', id: 0 },
+            { line: '    priority_queue<int> maxHeap(stones.begin(), stones.end());', id: 1 },
+            { line: '    while (maxHeap.size() > 1) {', id: 2 },
+            { line: '        int y = maxHeap.top(); maxHeap.pop();', id: 3 },
+            { line: '        int x = maxHeap.top(); maxHeap.pop();', id: 4 },
+            { line: '        if (y > x) maxHeap.push(y - x);', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return maxHeap.empty() ? 0 : maxHeap.top();', id: 7 },
+            { line: '}', id: 8 },
+        ];
+        // stones = [2,7,4,1,8,1] → sorted [8,7,4,2,1,1]
+        // 8 vs 7 → 1, [4,2,1,1,1]
+        // 4 vs 2 → 2, [2,1,1,1]
+        // 2 vs 1 → 1, [1,1,1]
+        // 1 vs 1 → 0, [1]
+        // Result: 1
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ stones: [8,7,4,2,1,1], highlightLines: [0, 1], explanation: { title: 'Build max heap', text: '[8,7,4,2,1,1]' }});
+            steps.push({ stones: [4,2,1,1,1], smash: [8, 7], newStone: 1, highlightLines: [3, 4, 5], explanation: { title: 'Smash 8 vs 7', text: '8 - 7 = 1' }});
+            steps.push({ stones: [2,1,1,1], smash: [4, 2], newStone: 2, highlightLines: [3, 4, 5], explanation: { title: 'Smash 4 vs 2', text: '4 - 2 = 2' }});
+            steps.push({ stones: [1,1,1], smash: [2, 1], newStone: 1, highlightLines: [3, 4, 5], explanation: { title: 'Smash 2 vs 1', text: '2 - 1 = 1' }});
+            steps.push({ stones: [1], smash: [1, 1], highlightLines: [3, 4, 5], explanation: { title: 'Smash 1 vs 1', text: 'Both destroyed' }});
+            steps.push({ stones: [1], highlightLines: [7], explanation: { title: 'Done!', text: 'Last stone = 1' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('stonesDisplay').innerHTML = (step.stones || []).map(s =>
+                        `<span class="stone ${s === step.newStone ? 'new' : ''}">${s}</span>`
+                    ).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

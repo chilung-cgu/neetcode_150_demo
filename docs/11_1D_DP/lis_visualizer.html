@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIS Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .nums { display: flex; gap: 4px; justify-content: center; margin: 15px 0; }
+        .num { width: 40px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: monospace; border-radius: 6px; background: var(--viz-primary); color: white; }
+        .num.in-lis { background: var(--viz-success); color: #0f172a; }
+        .num .idx { font-size: 0.7rem; opacity: 0.7; }
+        .num .dp { font-size: 0.7rem; color: var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">LONGEST INCREASING SUBSEQUENCE</div>
+                <div class="nums" id="numsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">LIS Length</div><div class="state-value" id="lisDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DP O(n²) / BINARY SEARCH O(n log n)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int lengthOfLIS(vector<int>& nums) {', id: 0 },
+            { line: '    vector<int> dp(n, 1);', id: 1 },
+            { line: '    for (int i = 1; i < n; i++) {', id: 2 },
+            { line: '        for (int j = 0; j < i; j++) {', id: 3 },
+            { line: '            if (nums[j] < nums[i])', id: 4 },
+            { line: '                dp[i] = max(dp[i], dp[j] + 1);', id: 5 },
+            { line: '        }', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return *max_element(dp.begin(), dp.end());', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const nums = [10, 9, 2, 5, 3, 7, 101, 18];
+        // LIS: 2, 3, 7, 101 or 2, 5, 7, 101 = 4
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const dp = [1, 1, 1, 2, 2, 3, 4, 4];
+            
+            steps.push({ dp: new Array(8).fill(1), lis: 1, highlightLines: [0, 1], explanation: { title: 'Init dp[]=1', text: 'Each element is LIS of length 1' }});
+            
+            for (let i = 1; i < nums.length; i++) {
+                steps.push({ dp: dp.slice(0, i + 1).concat(new Array(8 - i - 1).fill(1)), current: i, lis: Math.max(...dp.slice(0, i + 1)), highlightLines: [2, 3, 4, 5], explanation: { title: `i=${i}, nums[i]=${nums[i]}`, text: `dp[${i}] = ${dp[i]}` }});
+            }
+            
+            steps.push({ dp, lis: 4, inLis: [2, 3, 5, 6], highlightLines: [8], explanation: { title: 'Done!', text: 'LIS = [2, 3, 7, 101], length = 4' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('numsDisplay').innerHTML = nums.map((n, i) =>
+                        `<div class="num ${step.inLis?.includes(i) ? 'in-lis' : ''}" ${i === step.current ? 'style="border: 2px solid var(--viz-secondary);"' : ''}><div class="idx">${i}</div><div>${n}</div><div class="dp">dp=${step.dp?.[i] || 1}</div></div>`
+                    ).join('');
+                    document.getElementById('lisDisplay').textContent = step.lis || 1;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

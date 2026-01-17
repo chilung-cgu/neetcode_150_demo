@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Twitter Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .tweets { display: flex; flex-direction: column; gap: 6px; margin: 15px 0; align-items: center; }
+        .tweet { padding: 8px 16px; border-radius: 8px; background: var(--viz-primary); color: white; font-family: monospace; display: flex; gap: 10px; }
+        .tweet .user { color: var(--viz-secondary); }
+        .feed { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">DESIGN TWITTER (HEAP + MERGE)</div>
+                <div class="tweets" id="tweetsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">HEAP MERGE K LISTS</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'class Twitter {', id: 0 },
+            { line: '    map<int, set<int>> followers;', id: 1 },
+            { line: '    map<int, vector<pair<int,int>>> tweets;', id: 2 },
+            { line: '    int timestamp = 0;', id: 3 },
+            { line: '    void postTweet(userId, tweetId) {', id: 4 },
+            { line: '        tweets[userId].push_back({timestamp++, tweetId});', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    vector<int> getNewsFeed(userId) {', id: 7 },
+            { line: '        // Merge k sorted lists using heap', id: 8 },
+            { line: '        // Return 10 most recent tweets', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '};', id: 11 },
+        ];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ tweets: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 'Empty Twitter' }});
+            steps.push({ tweets: [{user: 1, id: 5}], highlightLines: [4, 5], explanation: { title: 'postTweet(1, 5)', text: 'User 1 posts tweet 5' }});
+            steps.push({ tweets: [{user: 1, id: 5}], action: 'follow', highlightLines: [1], explanation: { title: 'follow(1, 2)', text: 'User 1 follows User 2' }});
+            steps.push({ tweets: [{user: 1, id: 5}, {user: 2, id: 6}], highlightLines: [4, 5], explanation: { title: 'postTweet(2, 6)', text: 'User 2 posts tweet 6' }});
+            steps.push({ tweets: [{user: 1, id: 5}, {user: 2, id: 6}], feed: [6, 5], highlightLines: [7, 8, 9], explanation: { title: 'getNewsFeed(1)', text: 'Returns [6, 5] (most recent)' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    (step.tweets || []).forEach(t => {
+                        html += `<div class="tweet"><span class="user">@user${t.user}</span>Tweet #${t.id}</div>`;
+                    });
+                    if (step.feed) {
+                        html += `<div style="margin-top: 10px; color: var(--viz-text-muted);">Feed:</div>`;
+                        step.feed.forEach(id => {
+                            html += `<div class="tweet feed">Tweet #${id}</div>`;
+                        });
+                    }
+                    document.getElementById('tweetsDisplay').innerHTML = html || '<em style="color:var(--viz-text-muted)">No tweets yet</em>';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

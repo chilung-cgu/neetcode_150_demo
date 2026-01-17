@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spiral Matrix Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .grid { display: grid; gap: 2px; max-width: 200px; margin: 0 auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; border-radius: 4px; background: var(--viz-primary); color: white; }
+        .cell.visited { background: var(--viz-success); color: #0f172a; }
+        .cell.current { border: 2px solid var(--viz-error); }
+        .result { display: flex; gap: 4px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+        .result-item { padding: 4px 8px; border-radius: 4px; background: var(--viz-success); color: #0f172a; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SPIRAL MATRIX</div>
+                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(3, 40px);"></div>
+                <div class="result" id="resultDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">LAYER BY LAYER</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> spiralOrder(matrix) {', id: 0 },
+            { line: '    int top = 0, bottom = m-1;', id: 1 },
+            { line: '    int left = 0, right = n-1;', id: 2 },
+            { line: '    while (top <= bottom && left <= right) {', id: 3 },
+            { line: '        // Right', id: 4 },
+            { line: '        for (i = left to right) result.push(matrix[top][i]);', id: 5 },
+            { line: '        top++;', id: 6 },
+            { line: '        // Down', id: 7 },
+            { line: '        for (i = top to bottom) result.push(matrix[i][right]);', id: 8 },
+            { line: '        right--;', id: 9 },
+            { line: '        // Left & Up...', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return result;', id: 12 },
+            { line: '}', id: 13 },
+        ];
+        const matrix = [[1,2,3],[4,5,6],[7,8,9]];
+        const spiral = [1,2,3,6,9,8,7,4,5];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            for (let i = 0; i <= spiral.length; i++) {
+                steps.push({ visited: spiral.slice(0, i), current: spiral[i], highlightLines: i === 0 ? [0,1,2] : [5,6,8,9], explanation: { title: i === 0 ? 'Init' : `Visit ${spiral[i-1]}`, text: `Result: [${spiral.slice(0, i).join(',')}]` }});
+            }
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            const v = matrix[i][j];
+                            const visited = step.visited?.includes(v);
+                            const current = step.current === v;
+                            html += `<div class="cell ${visited ? 'visited' : ''} ${current ? 'current' : ''}">${v}</div>`;
+                        }
+                    }
+                    document.getElementById('gridDisplay').innerHTML = html;
+                    document.getElementById('resultDisplay').innerHTML = (step.visited || []).map(n => `<span class="result-item">${n}</span>`).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

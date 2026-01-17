@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Dictionary Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .trie { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 15px 0; }
+        .level { display: flex; gap: 10px; justify-content: center; }
+        .node { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
+        .node.match { background: var(--viz-success); color: #0f172a; }
+        .node.wildcard { background: var(--viz-secondary); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">WORD DICTIONARY (TRIE + DFS)</div>
+                <div class="trie" id="trieDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Query</div><div class="state-value" id="queryDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">TRIE + WILDCARD</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'class WordDictionary {', id: 0 },
+            { line: '    TrieNode* root;', id: 1 },
+            { line: '    void addWord(string word) { ... }', id: 2 },
+            { line: '    bool search(string word) {', id: 3 },
+            { line: '        return dfs(word, 0, root);', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    bool dfs(word, idx, node) {', id: 6 },
+            { line: '        if (word[idx] == \'.\') {', id: 7 },
+            { line: '            // Try all children', id: 8 },
+            { line: '            for (child : node->children)', id: 9 },
+            { line: '                if (dfs(word, idx+1, child)) return true;', id: 10 },
+            { line: '        } else {', id: 11 },
+            { line: '            // Normal char match', id: 12 },
+            { line: '        }', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '};', id: 15 },
+        ];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ words: [], query: null, highlightLines: [0, 1], explanation: { title: 'Init Trie', text: 'Empty dictionary' }});
+            steps.push({ words: ['bad'], query: null, highlightLines: [2], explanation: { title: 'addWord("bad")', text: 'Insert into Trie' }});
+            steps.push({ words: ['bad', 'dad'], query: null, highlightLines: [2], explanation: { title: 'addWord("dad")', text: 'Insert into Trie' }});
+            steps.push({ words: ['bad', 'dad', 'mad'], query: null, highlightLines: [2], explanation: { title: 'addWord("mad")', text: 'Insert into Trie' }});
+            steps.push({ words: ['bad', 'dad', 'mad'], query: '.ad', result: true, highlightLines: [7, 8, 9, 10], explanation: { title: 'search(".ad")', text: '"." matches any char → true' }});
+            steps.push({ words: ['bad', 'dad', 'mad'], query: 'b..', result: true, highlightLines: [7, 8, 9, 10], explanation: { title: 'search("b..")', text: 'Matches "bad" → true' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '<div class="level"><span class="node">*</span></div>';
+                    if (step.words?.length) {
+                        html += `<div class="level">`;
+                        const firsts = [...new Set(step.words.map(w => w[0]))];
+                        firsts.forEach(c => html += `<span class="node">${c}</span>`);
+                        html += '</div>';
+                    }
+                    document.getElementById('trieDisplay').innerHTML = html;
+                    document.getElementById('queryDisplay').textContent = step.query || '-';
+                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? (step.result ? 'true ✓' : 'false') : '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

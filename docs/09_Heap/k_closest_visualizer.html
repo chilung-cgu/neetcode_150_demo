@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K Closest Points Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .canvas-viz { width: 100%; max-width: 220px; height: 180px; margin: 0 auto; background: rgba(0,0,0,0.3); border-radius: 8px; position: relative; }
+        .point { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--viz-primary); transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: white; }
+        .point.selected { background: var(--viz-success); width: 18px; height: 18px; }
+        .origin { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--viz-error); left: 110px; top: 90px; transform: translate(-50%, -50%); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">K CLOSEST POINTS TO ORIGIN</div>
+                <div class="canvas-viz" id="canvasViz"><div class="origin"></div></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">MIN HEAP / QUICKSELECT</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<vector<int>> kClosest(points, k) {', id: 0 },
+            { line: '    // Use max heap of size k', id: 1 },
+            { line: '    priority_queue<pair<int, int>> maxHeap;', id: 2 },
+            { line: '    for (auto& p : points) {', id: 3 },
+            { line: '        int dist = p[0]*p[0] + p[1]*p[1];', id: 4 },
+            { line: '        maxHeap.push({dist, idx});', id: 5 },
+            { line: '        if (maxHeap.size() > k) maxHeap.pop();', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    // Return k points in heap', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const points = [[1,3],[-2,2],[5,8],[0,1]];
+        // distances: 10, 8, 89, 1 → k=2 closest: [0,1], [-2,2]
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ selected: [], highlightLines: [0, 1, 2], explanation: { title: 'Find k=2 closest', text: 'Use max heap of size k' }});
+            steps.push({ selected: [3], highlightLines: [4, 5], explanation: { title: '[0,1] dist=1', text: 'Add to heap' }});
+            steps.push({ selected: [1, 3], highlightLines: [4, 5], explanation: { title: '[-2,2] dist=8', text: 'Add to heap' }});
+            steps.push({ selected: [1, 3], highlightLines: [4, 5, 6], explanation: { title: '[1,3] dist=10', text: '10 > 8, pop it' }});
+            steps.push({ selected: [1, 3], highlightLines: [8], explanation: { title: 'Done!', text: 'Result: [[0,1], [-2,2]]' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const canvas = document.getElementById('canvasViz');
+                    canvas.innerHTML = '<div class="origin"></div>';
+                    points.forEach((p, i) => {
+                        const div = document.createElement('div');
+                        div.className = 'point' + (step.selected?.includes(i) ? ' selected' : '');
+                        div.style.left = (110 + p[0] * 10) + 'px';
+                        div.style.top = (90 - p[1] * 10) + 'px';
+                        canvas.appendChild(div);
+                    });
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
