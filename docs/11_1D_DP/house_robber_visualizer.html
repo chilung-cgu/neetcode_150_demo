@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Robber Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .houses { display: flex; gap: 8px; justify-content: center; margin: 15px 0; }
+        .house { width: 50px; padding: 10px 5px; border-radius: 6px; text-align: center; background: var(--viz-primary); color: white; }
+        .house.rob { background: var(--viz-success); color: #0f172a; }
+        .house.skip { opacity: 0.4; }
+        .house .value { font-size: 1.2rem; font-weight: bold; }
+        .house .dp { font-size: 0.8rem; color: rgba(255,255,255,0.7); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">HOUSE ROBBER</div>
+                <div class="houses" id="housesDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Max Loot</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DYNAMIC PROGRAMMING</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int rob(vector<int>& nums) {', id: 0 },
+            { line: '    int rob1 = 0, rob2 = 0;', id: 1 },
+            { line: '    for (int n : nums) {', id: 2 },
+            { line: '        int newRob = max(rob1 + n, rob2);', id: 3 },
+            { line: '        rob1 = rob2;', id: 4 },
+            { line: '        rob2 = newRob;', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return rob2;', id: 7 },
+            { line: '}', id: 8 },
+        ];
+        const nums = [2, 7, 9, 3, 1];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let rob1 = 0, rob2 = 0;
+            const dp = [];
+            
+            steps.push({ dp: [], rob: [], highlightLines: [0, 1], explanation: { title: 'Init', text: 'rob1=0, rob2=0' }});
+            
+            for (let i = 0; i < nums.length; i++) {
+                const n = nums[i];
+                const newRob = Math.max(rob1 + n, rob2);
+                dp.push(newRob);
+                const robThisHouse = rob1 + n > rob2;
+                steps.push({ dp: [...dp], idx: i, rob: robThisHouse ? [...(steps[steps.length - 1]?.robHouses || []), i] : (steps[steps.length - 1]?.robHouses || []), highlightLines: [3, 4, 5], explanation: { title: `House ${i}: $${n}`, text: `max(${rob1}+${n}, ${rob2}) = ${newRob}` }});
+                rob1 = rob2;
+                rob2 = newRob;
+            }
+            
+            steps.push({ dp, rob: [0, 2], max: rob2, highlightLines: [7], explanation: { title: 'Done!', text: `Max loot: $${rob2}` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('housesDisplay').innerHTML = nums.map((n, i) => {
+                        const dpVal = step.dp[i] ?? '-';
+                        return `<div class="house ${step.rob?.includes(i) ? 'rob' : ''}"><div class="value">$${n}</div><div class="dp">dp=${dpVal}</div></div>`;
+                    }).join('');
+                    document.getElementById('maxDisplay').textContent = step.max ?? (step.dp.length ? step.dp[step.dp.length - 1] : 0);
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

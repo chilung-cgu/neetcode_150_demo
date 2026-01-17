@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Missing Number Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .nums { display: flex; gap: 6px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+        .num { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
+        .num.missing { background: var(--viz-error); border: 2px dashed white; }
+        .num.found { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">MISSING NUMBER (XOR)</div>
+                <div class="nums" id="numsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">XOR</div><div class="state-value" id="xorDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">Missing</div><div class="state-value" id="missingDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">XOR ALL</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int missingNumber(vector<int>& nums) {', id: 0 },
+            { line: '    int xorAll = 0;', id: 1 },
+            { line: '    // XOR all indices and values', id: 2 },
+            { line: '    for (int i = 0; i < nums.size(); i++) {', id: 3 },
+            { line: '        xorAll ^= i ^ nums[i];', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    xorAll ^= nums.size(); // n', id: 6 },
+            { line: '    return xorAll;', id: 7 },
+            { line: '}', id: 8 },
+        ];
+        const nums = [3, 0, 1]; // missing 2
+        const full = [0, 1, 2, 3];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ found: null, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'XOR index with value, pairs cancel' }});
+            steps.push({ found: null, highlightLines: [3, 4], explanation: { title: 'XOR all', text: 'i⊕nums[i] for all i' }});
+            steps.push({ found: null, highlightLines: [6], explanation: { title: 'XOR with n', text: '⊕3 (size of array)' }});
+            steps.push({ found: 2, highlightLines: [7], explanation: { title: 'Found!', text: 'Missing = 2' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('numsDisplay').innerHTML = full.map(n => {
+                        const inArray = nums.includes(n);
+                        let cls = 'num';
+                        if (!inArray && step.found === n) cls += ' found';
+                        else if (!inArray) cls += ' missing';
+                        return `<span class="${cls}">${n}</span>`;
+                    }).join('');
+                    document.getElementById('missingDisplay').textContent = step.found ?? '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

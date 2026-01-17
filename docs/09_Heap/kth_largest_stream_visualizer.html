@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kth Largest Element in Stream Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .heap-display { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 15px 0; }
+        .heap-item { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .heap-item.top { background: var(--viz-success); color: #0f172a; }
+        .heap-item.new { border: 2px solid var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">KTH LARGEST IN STREAM (k=3)</div>
+                <div style="text-align: center; color: var(--viz-text-muted);">Min Heap (size ≤ k):</div>
+                <div class="heap-display" id="heapDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Operation</div><div class="state-value" id="opDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">Kth Largest</div><div class="state-value" id="kthDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">MIN HEAP APPROACH</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'class KthLargest {', id: 0 },
+            { line: '    priority_queue<int, vec, greater<int>> minHeap;', id: 1 },
+            { line: '    int k;', id: 2 },
+            { line: '    KthLargest(int k, vector<int>& nums) {', id: 3 },
+            { line: '        this->k = k;', id: 4 },
+            { line: '        for (int n : nums) add(n);', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    int add(int val) {', id: 7 },
+            { line: '        minHeap.push(val);', id: 8 },
+            { line: '        if (minHeap.size() > k) minHeap.pop();', id: 9 },
+            { line: '        return minHeap.top(); // kth largest', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '};', id: 12 },
+        ];
+        const k = 3;
+        const initial = [4, 5, 8, 2];
+        const adds = [3, 5, 10, 9, 4];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const heap = [];
+            
+            steps.push({ heap: [], op: 'init', kth: null, highlightLines: [0, 1, 2, 3, 4], explanation: { title: 'Init', text: `k=${k}, Min heap keeps k largest` }});
+            
+            // Add initial elements
+            for (const n of initial) {
+                heap.push(n);
+                heap.sort((a, b) => a - b);
+                if (heap.length > k) heap.shift();
+                steps.push({ heap: [...heap], op: `init add(${n})`, kth: heap[0], newVal: n, highlightLines: [5, 8, 9], explanation: { title: `Add ${n}`, text: `Heap: [${heap.join(', ')}], kth=${heap[0]}` }});
+            }
+            
+            // Stream adds
+            for (const n of adds) {
+                heap.push(n);
+                heap.sort((a, b) => a - b);
+                if (heap.length > k) heap.shift();
+                steps.push({ heap: [...heap], op: `add(${n})`, kth: heap[0], newVal: n, highlightLines: [7, 8, 9, 10], explanation: { title: `add(${n})`, text: `Return: ${heap[0]}` }});
+            }
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('heapDisplay').innerHTML = step.heap.map((v, i) =>
+                        `<span class="heap-item ${i === 0 ? 'top' : ''} ${v === step.newVal ? 'new' : ''}">${v}</span>`
+                    ).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    document.getElementById('opDisplay').textContent = step.op;
+                    document.getElementById('kthDisplay').textContent = step.kth ?? '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

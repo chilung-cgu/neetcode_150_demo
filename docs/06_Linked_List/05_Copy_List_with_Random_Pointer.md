@@ -5,16 +5,16 @@
 題目給一個 Linked List，每個節點除了 `next` 指標外，還有一個 `random` 指標，可能指向 list 中的任意節點或 null。
 請 **Deep Copy** 這個 List。
 
--   **Deep Copy**:
-    -   所有新節點必須是新創建的 (new operator)。
-    -   如果是 `val` 相同但 address 相同的節點，不算是 deep copy。
-    -   新節點的 `next` 和 `random` 必須指向**新的**對應節點。
+- **Deep Copy**:
+  - 所有新節點必須是新創建的 (new operator)。
+  - 如果是 `val` 相同但 address 相同的節點，不算是 deep copy。
+  - 新節點的 `next` 和 `random` 必須指向**新的**對應節點。
 
--   **Input**: `[[7,null],[13,0],[11,4],[10,2],[1,0]]` (val, random_index)
--   **Output**: same structure, new addresses.
--   **Constraints**:
-    -   $0 <= n <= 1000$.
-    -   $-10000 <= Node.val <= 10000$.
+- **Input**: `[[7,null],[13,0],[11,4],[10,2],[1,0]]` (val, random_index)
+- **Output**: same structure, new addresses.
+- **Constraints**:
+  - $0 <= n <= 1000$.
+  - $-10000 <= Node.val <= 10000$.
 
 ---
 
@@ -23,8 +23,8 @@
 先創建所有新節點，暫時不管 pointers。
 然後對於每個節點，遍歷整個 list 找 random 指向誰。
 
--   **Time**: $O(n^2)$。
--   **Result**: 太慢。
+- **Time**: $O(n^2)$。
+- **Result**: 太慢。
 
 ---
 
@@ -35,25 +35,34 @@
 
 1.  第一遍遍歷：創建所有 New Node，並存入 Map。`map[old] = new Node(old->val)`。
 2.  第二遍遍歷：設置 pointers。
-    -   `map[old]->next = map[old->next]`
-    -   `map[old]->random = map[old->random]`
--   **Time**: $O(n)$。
--   **Space**: $O(n)$ (Hash Map)。
+    - `map[old]->next = map[old->next]`
+    - `map[old]->random = map[old->random]`
+
+- **Time**: $O(n)$。
+- **Space**: $O(n)$ (Hash Map)。
 
 **Approach 2: Interleaving (交錯串接)** (進階，省空間)
 如果我們不能用 Hash Map 呢？
 
 1.  **Interleave**: 在每個舊節點後面插入它的複製節點。
-    -   `A -> B -> C` 變成 `A -> A' -> B -> B' -> C -> C'`。
+    - `A -> B -> C` 變成 `A -> A' -> B -> B' -> C -> C'`。
 2.  **Set Random**: `A->next->random = A->random->next`。
-    -   因為 `A'` 是 `A->next`，`A'` 的 `random` 是 `A->random` 的複製版 (也就是 `A->random->next`)。
+    - 因為 `A'` 是 `A->next`，`A'` 的 `random` 是 `A->random` 的複製版 (也就是 `A->random->next`)。
 3.  **Separate**: 拆開成兩個 lists。
-    -   `A->next = A->next->next` (A 連到 B)。
-    -   `A'->next = A'->next->next` (A' 連到 B')。
--   **Time**: $O(n)$。
--   **Space**: $O(1)$ (不計算 Output space)。
+    - `A->next = A->next->next` (A 連到 B)。
+    - `A'->next = A'->next->next` (A' 連到 B')。
+
+- **Time**: $O(n)$。
+- **Space**: $O(1)$ (不計算 Output space)。
 
 面試時，HashMap 解法通常就夠了，除非面試官要求 $O(1)$ space。我們先寫 HashMap 版本，因為實作簡單且不易出錯。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../copy_random_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../copy_random_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -232,8 +241,8 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n)$
-    -   兩次遍歷 list。
--   **Space Complexity**: $O(n)$
-    -   Hash Map 存了 n 個 entry。
-    -   如果用 Interleaving method 可以優化到 $O(1)$ extra space。
+- **Time Complexity**: $O(n)$
+  - 兩次遍歷 list。
+- **Space Complexity**: $O(n)$
+  - Hash Map 存了 n 個 entry。
+  - 如果用 Interleaving method 可以優化到 $O(1)$ extra space。

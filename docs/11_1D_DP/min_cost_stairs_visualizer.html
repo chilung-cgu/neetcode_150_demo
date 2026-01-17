@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min Cost Climbing Stairs Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">MIN COST CLIMBING STAIRS</div>
+                <div class="chart-container" id="chartContainer"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Min Cost</div><div class="state-value" id="costDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DYNAMIC PROGRAMMING</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int minCostClimbingStairs(vector<int>& cost) {', id: 0 },
+            { line: '    int n = cost.size();', id: 1 },
+            { line: '    for (int i = 2; i < n; i++) {', id: 2 },
+            { line: '        cost[i] += min(cost[i-1], cost[i-2]);', id: 3 },
+            { line: '    }', id: 4 },
+            { line: '    return min(cost[n-1], cost[n-2]);', id: 5 },
+            { line: '}', id: 6 },
+        ];
+        const cost = [10, 15, 20];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const dp = [...cost];
+            
+            steps.push({ dp: [...dp], idx: -1, minCost: '-', highlightLines: [0, 1], explanation: { title: 'Init', text: 'cost = [10, 15, 20]' }});
+            
+            for (let i = 2; i < dp.length; i++) {
+                dp[i] += Math.min(dp[i - 1], dp[i - 2]);
+                steps.push({ dp: [...dp], idx: i, minCost: '-', highlightLines: [2, 3], explanation: { title: `dp[${i}] = ${cost[i]} + min(${dp[i-1]}, ${dp[i-2]})`, text: `= ${dp[i]}` }});
+            }
+            
+            const result = Math.min(dp[dp.length - 1], dp[dp.length - 2]);
+            steps.push({ dp, idx: -1, minCost: result, highlightLines: [5], explanation: { title: 'Done!', text: `min(${dp[dp.length - 1]}, ${dp[dp.length - 2]}) = ${result}` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const states = step.dp.map((_, i) => i === step.idx ? 'current' : '');
+                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), step.dp, states, { height: 180 });
+                    document.getElementById('costDisplay').textContent = step.minCost;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

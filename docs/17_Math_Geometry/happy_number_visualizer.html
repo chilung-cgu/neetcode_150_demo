@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Number Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .sequence { display: flex; gap: 6px; justify-content: center; margin: 15px 0; flex-wrap: wrap; align-items: center; }
+        .num { padding: 10px 14px; border-radius: 8px; font-family: monospace; font-size: 1.1rem; background: var(--viz-primary); color: white; }
+        .num.current { background: var(--viz-secondary); color: #0f172a; }
+        .num.happy { background: var(--viz-success); color: #0f172a; }
+        .arrow { color: var(--viz-text-muted); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">HAPPY NUMBER</div>
+                <div class="sequence" id="sequenceDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Is Happy?</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">FLOYD'S CYCLE DETECTION</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool isHappy(int n) {', id: 0 },
+            { line: '    int slow = n, fast = n;', id: 1 },
+            { line: '    do {', id: 2 },
+            { line: '        slow = sumOfSquares(slow);', id: 3 },
+            { line: '        fast = sumOfSquares(sumOfSquares(fast));', id: 4 },
+            { line: '    } while (slow != fast);', id: 5 },
+            { line: '    return slow == 1;', id: 6 },
+            { line: '}', id: 7 },
+            { line: 'int sumOfSquares(int n) {', id: 8 },
+            { line: '    int sum = 0;', id: 9 },
+            { line: '    while (n) { int d = n % 10; sum += d*d; n /= 10; }', id: 10 },
+            { line: '    return sum;', id: 11 },
+            { line: '}', id: 12 },
+        ];
+        // 19 → 1^2+9^2=82 → 8^2+2^2=68 → 100 → 1 (happy!)
+        const sequence = [19, 82, 68, 100, 1];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            for (let i = 0; i < sequence.length; i++) {
+                const isHappy = sequence[i] === 1;
+                steps.push({ seq: sequence.slice(0, i + 1), current: i, happy: isHappy, highlightLines: i === sequence.length - 1 ? [6] : [3, 4], explanation: { title: i === 0 ? 'Start: 19' : `${sequence[i - 1]} → ${sequence[i]}`, text: i === 0 ? '1² + 9² = 82' : isHappy ? '✓ Happy number!' : `Sum of squares = ${sequence[i]}` }});
+            }
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    step.seq.forEach((n, i) => {
+                        if (i > 0) html += '<span class="arrow">→</span>';
+                        html += `<span class="num ${i === step.current ? 'current' : ''} ${n === 1 ? 'happy' : ''}">${n}</span>`;
+                    });
+                    document.getElementById('sequenceDisplay').innerHTML = html;
+                    document.getElementById('resultDisplay').textContent = step.happy ? 'Yes! 😊' : '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

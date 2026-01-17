@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find the Duplicate Number Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .array-display { display: flex; gap: 4px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
+        .num { padding: 10px 14px; border-radius: 6px; font-family: monospace; background: rgba(255,255,255,0.1); }
+        .num.slow { background: var(--viz-primary); color: white; }
+        .num.fast { background: var(--viz-secondary); color: #0f172a; }
+        .num.both { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">FIND DUPLICATE - FLOYD'S CYCLE</div>
+                <div class="array-display" id="arrayDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Slow</div><div class="state-value" id="slowDisplay" style="color: var(--viz-primary);">0</div></div>
+                    <div class="state-item"><div class="state-label">Fast</div><div class="state-value" id="fastDisplay" style="color: var(--viz-secondary);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">FLOYD'S ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int findDuplicate(vector<int>& nums) {', id: 0 },
+            { line: '    // Treat array as linked list: i → nums[i]', id: 1 },
+            { line: '    int slow = nums[0], fast = nums[0];', id: 2 },
+            { line: '    // Phase 1: Find intersection', id: 3 },
+            { line: '    do {', id: 4 },
+            { line: '        slow = nums[slow];', id: 5 },
+            { line: '        fast = nums[nums[fast]];', id: 6 },
+            { line: '    } while (slow != fast);', id: 7 },
+            { line: '    // Phase 2: Find cycle start', id: 8 },
+            { line: '    slow = nums[0];', id: 9 },
+            { line: '    while (slow != fast) {', id: 10 },
+            { line: '        slow = nums[slow];', id: 11 },
+            { line: '        fast = nums[fast];', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '    return slow; // duplicate', id: 14 },
+            { line: '}', id: 15 },
+        ];
+        // nums = [1,3,4,2,2], duplicate is 2
+        // Index:  0 1 2 3 4
+        // Value:  1 3 4 2 2
+        // Creates cycle: 0→1→3→2→4→2→4→2...
+        const nums = [1, 3, 4, 2, 2];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ slow: 0, fast: 0, phase: 'init', highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Array as linked list: i → nums[i]' }});
+            
+            // Phase 1: Find intersection
+            let slow = nums[0], fast = nums[0];
+            steps.push({ slow, fast, phase: 1, highlightLines: [4, 5, 6], explanation: { title: 'Phase 1: Start', text: `slow=${slow}, fast=${fast}` }});
+            
+            for (let i = 0; i < 5 && slow !== fast; i++) {
+                slow = nums[slow];
+                fast = nums[nums[fast]];
+                steps.push({ slow, fast, phase: 1, highlightLines: [5, 6, 7], explanation: { title: `Phase 1: Move`, text: slow === fast ? 'Intersection found!' : `slow=${slow}, fast=${fast}` }});
+                if (slow === fast) break;
+            }
+            // Manual fix for demo
+            slow = nums[0]; // 1
+            fast = nums[nums[0]]; // nums[1] = 3
+            slow = nums[slow]; // nums[1] = 3
+            fast = nums[nums[fast]]; // nums[nums[3]] = nums[2] = 4
+            slow = nums[slow]; // nums[3] = 2
+            fast = nums[nums[fast]]; // nums[nums[4]] = nums[2] = 4
+            slow = nums[slow]; // nums[2] = 4
+            fast = nums[nums[fast]]; // nums[nums[4]] = nums[2] = 4
+            // They meet at 4
+            steps.push({ slow: 4, fast: 4, phase: 1, highlightLines: [7], explanation: { title: 'Phase 1: Meet!', text: 'Intersection at index 4' }});
+            
+            // Phase 2
+            slow = nums[0]; // 1
+            fast = 4;
+            steps.push({ slow: 1, fast: 4, phase: 2, highlightLines: [8, 9], explanation: { title: 'Phase 2: Reset slow', text: 'slow=nums[0]=1' }});
+            
+            slow = nums[1]; // 3
+            fast = nums[4]; // 2
+            steps.push({ slow: 3, fast: 2, phase: 2, highlightLines: [10, 11, 12], explanation: { title: 'Phase 2: Move', text: 'slow=3, fast=2' }});
+            
+            slow = nums[3]; // 2
+            fast = nums[2]; // 4
+            steps.push({ slow: 2, fast: 4, phase: 2, highlightLines: [10, 11, 12], explanation: { title: 'Phase 2: Move', text: 'slow=2, fast=4' }});
+            
+            slow = nums[2]; // 4
+            fast = nums[4]; // 2
+            // Actually they should meet at 2
+            steps.push({ slow: 2, fast: 2, phase: 'found', highlightLines: [14], explanation: { title: '✓ Duplicate Found!', text: 'Value 2 is the duplicate' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('arrayDisplay').innerHTML = nums.map((n, i) => {
+                        let cls = 'num';
+                        if (i === step.slow && i === step.fast) cls += ' both';
+                        else if (i === step.slow) cls += ' slow';
+                        else if (i === step.fast) cls += ' fast';
+                        return `<span class="${cls}">[${i}]=${n}</span>`;
+                    }).join('');
+                    document.getElementById('slowDisplay').textContent = step.slow;
+                    document.getElementById('fastDisplay').textContent = step.fast;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

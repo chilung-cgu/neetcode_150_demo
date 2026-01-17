@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lowest Common Ancestor of a BST Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .tree-level { display: flex; justify-content: center; gap: 10px; margin: 6px 0; }
+        .tree-node { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.9rem; }
+        .tree-node.target { background: var(--viz-secondary); color: #0f172a; }
+        .tree-node.lca { background: var(--viz-success); color: #0f172a; }
+        .tree-node.path { border: 2px solid var(--viz-success); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">LCA OF BST (p=2, q=8)</div>
+                <div id="treeDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">LCA</div><div class="state-value" id="lcaDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BST PROPERTY</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'TreeNode* lowestCommonAncestor(root, p, q) {', id: 0 },
+            { line: '    while (root) {', id: 1 },
+            { line: '        if (p->val < root->val && q->val < root->val)', id: 2 },
+            { line: '            root = root->left;', id: 3 },
+            { line: '        else if (p->val > root->val && q->val > root->val)', id: 4 },
+            { line: '            root = root->right;', id: 5 },
+            { line: '        else', id: 6 },
+            { line: '            return root; // LCA found', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        // BST:     6
+        //        /   \
+        //       2     8
+        //      / \   / \
+        //     0   4 7   9
+        const levels = [[6], [2, 8], [0, 4, 7, 9]];
+        const p = 2, q = 8;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ current: [0, 0], highlightLines: [0, 1], explanation: { title: 'Start at root (6)', text: `Find LCA of ${p} and ${q}` }});
+            steps.push({ current: [0, 0], lca: 6, highlightLines: [6, 7], explanation: { title: 'Check node 6', text: `p=${p} < 6, q=${q} > 6 → split! LCA = 6` }});
+            steps.push({ lca: 6, highlightLines: [7], explanation: { title: '✓ LCA Found!', text: `LCA(${p}, ${q}) = 6` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    levels.forEach((level, li) => {
+                        html += '<div class="tree-level">' + level.map((v, i) => {
+                            let cls = 'tree-node';
+                            if (v === p || v === q) cls += ' target';
+                            if (v === step.lca) cls += ' lca';
+                            if (step.current && step.current[0] === li && step.current[1] === i) cls += ' path';
+                            return `<div class="${cls}">${v}</div>`;
+                        }).join('') + '</div>';
+                    });
+                    document.getElementById('treeDisplay').innerHTML = html;
+                    document.getElementById('lcaDisplay').textContent = step.lca || '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

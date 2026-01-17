@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Matrix Zeroes Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .grid { display: grid; gap: 2px; max-width: 200px; margin: 0 auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1rem; border-radius: 4px; }
+        .cell.zero { background: var(--viz-error); color: white; }
+        .cell.number { background: var(--viz-primary); color: white; }
+        .cell.marked { background: var(--viz-secondary); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SET MATRIX ZEROES</div>
+                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(4, 40px);"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">IN-PLACE O(1) SPACE</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'void setZeroes(matrix) {', id: 0 },
+            { line: '    bool firstRowZero = false, firstColZero = false;', id: 1 },
+            { line: '    // Mark first row/col', id: 2 },
+            { line: '    for (i, j) if (matrix[i][j] == 0) {', id: 3 },
+            { line: '        matrix[i][0] = matrix[0][j] = 0;', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    // Set cells to zero based on marks', id: 6 },
+            { line: '    for (i = 1..m, j = 1..n)', id: 7 },
+            { line: '        if (matrix[i][0] == 0 || matrix[0][j] == 0)', id: 8 },
+            { line: '            matrix[i][j] = 0;', id: 9 },
+            { line: '    // Handle first row/col', id: 10 },
+            { line: '}', id: 11 },
+        ];
+        const original = [[1,1,1,1],[1,0,1,1],[1,1,1,1]];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ grid: [[1,1,1,1],[1,0,1,1],[1,1,1,1]], marked: [], highlightLines: [0, 1], explanation: { title: 'Original', text: 'Find zeros and mark' }});
+            steps.push({ grid: [[1,0,1,1],[0,0,1,1],[1,1,1,1]], marked: [[0,1], [1,0]], highlightLines: [3, 4], explanation: { title: 'Mark', text: 'Use first row/col as markers' }});
+            steps.push({ grid: [[1,0,1,1],[0,0,0,0],[1,1,1,1]], marked: [], highlightLines: [7, 8, 9], explanation: { title: 'Zero row 1', text: 'matrix[1][0] = 0' }});
+            steps.push({ grid: [[1,0,1,1],[0,0,0,0],[1,0,1,1]], marked: [], highlightLines: [7, 8, 9], explanation: { title: 'Zero col 1', text: 'matrix[0][1] = 0' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 4; j++) {
+                            const v = step.grid[i][j];
+                            const marked = step.marked?.some(m => m[0] === i && m[1] === j);
+                            html += `<div class="cell ${v === 0 ? 'zero' : 'number'} ${marked ? 'marked' : ''}">${v}</div>`;
+                        }
+                    }
+                    document.getElementById('gridDisplay').innerHTML = html;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

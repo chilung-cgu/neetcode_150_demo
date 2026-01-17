@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotting Oranges Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .grid { display: grid; gap: 3px; max-width: 150px; margin: 0 auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 4px; background: rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">ROTTING ORANGES (BFS)</div>
+                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(3, 40px);"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Minutes</div><div class="state-value" id="timeDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">MULTI-SOURCE BFS</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int orangesRotting(grid) {', id: 0 },
+            { line: '    queue<pair<int,int>> q;', id: 1 },
+            { line: '    // Add all rotten oranges to queue', id: 2 },
+            { line: '    int fresh = 0;', id: 3 },
+            { line: '    while (!q.empty() && fresh > 0) {', id: 4 },
+            { line: '        minutes++;', id: 5 },
+            { line: '        // Process current level', id: 6 },
+            { line: '        // Rot adjacent fresh oranges', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return fresh == 0 ? minutes : -1;', id: 9 },
+            { line: '}', id: 10 },
+        ];
+        // 0 = empty, 1 = fresh 🍊, 2 = rotten 🍋
+        const states = [
+            [[2,1,1],[1,1,0],[0,1,1]],
+            [[2,2,1],[2,1,0],[0,1,1]],
+            [[2,2,2],[2,2,0],[0,1,1]],
+            [[2,2,2],[2,2,0],[0,2,1]],
+            [[2,2,2],[2,2,0],[0,2,2]],
+        ];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            for (let i = 0; i < states.length; i++) {
+                steps.push({ state: states[i], time: i, highlightLines: i === 0 ? [0, 1, 2, 3] : [5, 6, 7], explanation: { title: i === 0 ? 'Init' : `Minute ${i}`, text: i === 0 ? 'Start with rotten oranges' : 'Spread rot to neighbors' }});
+            }
+            steps.push({ state: states[4], time: 4, highlightLines: [9], explanation: { title: 'Done!', text: 'All oranges rotten in 4 minutes' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            const v = step.state[i][j];
+                            html += `<div class="cell">${v === 0 ? '' : v === 1 ? '🍊' : '🤢'}</div>`;
+                        }
+                    }
+                    document.getElementById('gridDisplay').innerHTML = html;
+                    document.getElementById('timeDisplay').textContent = step.time;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

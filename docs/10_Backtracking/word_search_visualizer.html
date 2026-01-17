@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Search Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .grid { display: grid; gap: 2px; max-width: 180px; margin: 0 auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; font-size: 1.1rem; }
+        .cell.path { background: var(--viz-secondary); color: #0f172a; }
+        .cell.found { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">WORD SEARCH: "ABCCED"</div>
+                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(4, 40px);"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Matched</div><div class="state-value" id="matchedDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DFS BACKTRACKING</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool exist(board, word) {', id: 0 },
+            { line: '    for (int i = 0; i < m; i++)', id: 1 },
+            { line: '        for (int j = 0; j < n; j++)', id: 2 },
+            { line: '            if (dfs(board, word, i, j, 0)) return true;', id: 3 },
+            { line: '    return false;', id: 4 },
+            { line: '}', id: 5 },
+            { line: 'bool dfs(board, word, i, j, k) {', id: 6 },
+            { line: '    if (k == word.size()) return true;', id: 7 },
+            { line: '    if (out of bounds || board[i][j] != word[k]) return false;', id: 8 },
+            { line: '    char tmp = board[i][j]; board[i][j] = \'#\';', id: 9 },
+            { line: '    bool found = dfs(4 directions);', id: 10 },
+            { line: '    board[i][j] = tmp; // backtrack', id: 11 },
+            { line: '    return found;', id: 12 },
+            { line: '}', id: 13 },
+        ];
+        const board = [['A','B','C','E'],['S','F','C','S'],['A','D','E','E']];
+        const word = 'ABCCED';
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            // Path: A(0,0) → B(0,1) → C(0,2) → C(1,2) → E(2,2) → D(2,1)
+            const path = [[0,0], [0,1], [0,2], [1,2], [2,2], [2,1]];
+            
+            steps.push({ path: [], matched: '', highlightLines: [0, 1, 2], explanation: { title: 'Start', text: 'Find "ABCCED" in grid' }});
+            
+            for (let i = 0; i < path.length; i++) {
+                const p = path.slice(0, i + 1);
+                const matched = word.slice(0, i + 1);
+                steps.push({ path: p, matched, highlightLines: [9, 10], explanation: { title: `Match '${word[i]}'`, text: `Path: ${matched}` }});
+            }
+            
+            steps.push({ path, matched: word, found: true, highlightLines: [7], explanation: { title: '✓ Found!', text: '"ABCCED" exists in grid' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 4; j++) {
+                            const onPath = step.path.some(p => p[0] === i && p[1] === j);
+                            html += `<div class="cell ${onPath ? (step.found ? 'found' : 'path') : ''}">${board[i][j]}</div>`;
+                        }
+                    }
+                    document.getElementById('gridDisplay').innerHTML = html;
+                    document.getElementById('matchedDisplay').textContent = step.matched || '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

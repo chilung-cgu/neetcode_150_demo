@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimum Interval Query Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .intervals { display: flex; flex-direction: column; gap: 4px; margin: 15px 0; }
+        .interval { height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.75rem; color: white; background: var(--viz-primary); position: relative; }
+        .queries { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+        .query { padding: 6px 12px; border-radius: 4px; font-family: monospace; background: rgba(255,255,255,0.1); }
+        .query.current { background: var(--viz-secondary); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">MINIMUM INTERVAL TO INCLUDE QUERY</div>
+                <div class="intervals" id="intervalsDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted);">Queries:</div>
+                <div class="queries" id="queriesDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">SORT + HEAP</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> minInterval(intervals, queries) {', id: 0 },
+            { line: '    sort(intervals by start);', id: 1 },
+            { line: '    sort(queries with original indices);', id: 2 },
+            { line: '    priority_queue<pair<int,int>, vec, greater<>> minHeap;', id: 3 },
+            { line: '    for each query q:', id: 4 },
+            { line: '        // Add all intervals starting <= q', id: 5 },
+            { line: '        // Remove intervals ending < q', id: 6 },
+            { line: '        // Answer = minHeap.top().first (smallest size)', id: 7 },
+            { line: '    return result;', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const intervals = [[1, 4], [2, 4], [3, 6], [4, 4]];
+        const queries = [2, 3, 4, 5];
+        const answers = [3, 3, 1, 4]; // sizes of min intervals
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ q: -1, answers: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 'Sort intervals and queries' }});
+            
+            for (let i = 0; i < queries.length; i++) {
+                steps.push({ q: i, answers: answers.slice(0, i + 1), highlightLines: [4, 5, 6, 7], explanation: { title: `Query ${queries[i]}`, text: `Min interval size = ${answers[i]}` }});
+            }
+            
+            steps.push({ q: -1, answers, highlightLines: [8], explanation: { title: 'Done!', text: `Result: [${answers.join(', ')}]` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const scale = 30;
+                    let html = '';
+                    intervals.forEach((int) => {
+                        const width = (int[1] - int[0] + 1) * scale;
+                        const left = (int[0] - 1) * scale;
+                        html += `<div class="interval" style="margin-left: ${left}px; width: ${width}px;">[${int[0]},${int[1]}] size=${int[1] - int[0] + 1}</div>`;
+                    });
+                    document.getElementById('intervalsDisplay').innerHTML = html;
+                    document.getElementById('queriesDisplay').innerHTML = queries.map((q, i) =>
+                        `<span class="query ${i === step.q ? 'current' : ''}">${q}${step.answers[i] !== undefined ? '→' + step.answers[i] : ''}</span>`
+                    ).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

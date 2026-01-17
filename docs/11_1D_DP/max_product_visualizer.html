@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximum Product Subarray Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">MAXIMUM PRODUCT SUBARRAY</div>
+                <div class="chart-container" id="chartContainer"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Max</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">1</div></div>
+                    <div class="state-item"><div class="state-label">Min</div><div class="state-value" id="minDisplay" style="color: var(--viz-error);">1</div></div>
+                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resultDisplay">1</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">TRACK MIN & MAX</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int maxProduct(vector<int>& nums) {', id: 0 },
+            { line: '    int result = nums[0], maxP = 1, minP = 1;', id: 1 },
+            { line: '    for (int n : nums) {', id: 2 },
+            { line: '        int tmp = maxP * n;', id: 3 },
+            { line: '        maxP = max({n, maxP * n, minP * n});', id: 4 },
+            { line: '        minP = min({n, tmp, minP * n});', id: 5 },
+            { line: '        result = max(result, maxP);', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return result;', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const nums = [2, 3, -2, 4];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let maxP = 1, minP = 1, result = nums[0];
+            
+            steps.push({ idx: -1, maxP: 1, minP: 1, result: nums[0], highlightLines: [0, 1], explanation: { title: 'Init', text: 'Track both max and min (for negatives)' }});
+            
+            for (let i = 0; i < nums.length; i++) {
+                const n = nums[i];
+                const tmp = maxP * n;
+                maxP = Math.max(n, maxP * n, minP * n);
+                minP = Math.min(n, tmp, minP * n);
+                result = Math.max(result, maxP);
+                steps.push({ idx: i, maxP, minP, result, highlightLines: [3, 4, 5, 6], explanation: { title: `n=${n}`, text: `maxP=${maxP}, minP=${minP}` }});
+            }
+            
+            steps.push({ idx: -1, maxP, minP, result, highlightLines: [8], explanation: { title: 'Done!', text: `Max product = ${result}` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const states = nums.map((_, i) => i === step.idx ? 'current' : '');
+                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), nums.map(n => Math.abs(n)), states, { height: 150 });
+                    document.getElementById('maxDisplay').textContent = step.maxP;
+                    document.getElementById('minDisplay').textContent = step.minP;
+                    document.getElementById('resultDisplay').textContent = step.result;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Maximum Path Sum Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .tree-level { display: flex; justify-content: center; gap: 15px; margin: 8px 0; }
+        .tree-node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
+        .tree-node.path { background: var(--viz-success); color: #0f172a; }
+        .tree-node.current { border: 3px solid var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">BINARY TREE MAXIMUM PATH SUM</div>
+                <div id="treeDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Max Path Sum</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">-∞</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DFS APPROACH</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int maxPathSum(TreeNode* root) {', id: 0 },
+            { line: '    int maxSum = INT_MIN;', id: 1 },
+            { line: '    dfs(root, maxSum);', id: 2 },
+            { line: '    return maxSum;', id: 3 },
+            { line: '}', id: 4 },
+            { line: 'int dfs(TreeNode* node, int& maxSum) {', id: 5 },
+            { line: '    if (!node) return 0;', id: 6 },
+            { line: '    int left = max(0, dfs(node->left, maxSum));', id: 7 },
+            { line: '    int right = max(0, dfs(node->right, maxSum));', id: 8 },
+            { line: '    maxSum = max(maxSum, node->val + left + right);', id: 9 },
+            { line: '    return node->val + max(left, right);', id: 10 },
+            { line: '}', id: 11 },
+        ];
+        // Tree:    -10
+        //         /    \
+        //        9      20
+        //              /  \
+        //             15   7
+        const levels = [[-10], [9, 20], ['', '', 15, 7]];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ maxSum: -Infinity, highlightLines: [0, 1, 2], explanation: { title: 'Start', text: 'Path can start and end at any node' }});
+            steps.push({ current: [1, 0], maxSum: 9, highlightLines: [7, 8, 9], explanation: { title: 'Visit 9 (leaf)', text: 'Single node path: 9' }});
+            steps.push({ current: [2, 2], maxSum: 15, highlightLines: [7, 8, 9], explanation: { title: 'Visit 15 (leaf)', text: 'Single node path: 15' }});
+            steps.push({ current: [2, 3], maxSum: 15, highlightLines: [7, 8, 9], explanation: { title: 'Visit 7 (leaf)', text: 'Path: 7' }});
+            steps.push({ current: [1, 1], path: [[2, 2], [1, 1], [2, 3]], maxSum: 42, highlightLines: [9], explanation: { title: 'At node 20', text: '15 + 20 + 7 = 42 → new max!' }});
+            steps.push({ current: [0, 0], path: [[2, 2], [1, 1], [2, 3]], maxSum: 42, highlightLines: [9], explanation: { title: 'At root -10', text: '-10 + 9 + 35 = 34 < 42' }});
+            steps.push({ path: [[2, 2], [1, 1], [2, 3]], maxSum: 42, highlightLines: [3], explanation: { title: 'Done!', text: 'Max path sum = 42 (15→20→7)' }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    levels.forEach((level, li) => {
+                        html += '<div class="tree-level">' + level.map((v, i) => {
+                            if (v === '') return '<div style="width:40px"></div>';
+                            let cls = 'tree-node';
+                            if (step.path?.some(p => p[0] === li && p[1] === i)) cls += ' path';
+                            if (step.current && step.current[0] === li && step.current[1] === i) cls += ' current';
+                            return `<div class="${cls}">${v}</div>`;
+                        }).join('') + '</div>';
+                    });
+                    document.getElementById('treeDisplay').innerHTML = html;
+                    document.getElementById('maxDisplay').textContent = step.maxSum === -Infinity ? '-∞' : step.maxSum;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

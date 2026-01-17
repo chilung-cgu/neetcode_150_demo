@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copy List with Random Pointer Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .node-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0; }
+        .node { padding: 8px 12px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; text-align: center; min-width: 50px; }
+        .node.copy { background: var(--viz-success); color: #0f172a; }
+        .node .random { font-size: 0.7rem; color: rgba(255,255,255,0.7); }
+        .arrow { color: var(--viz-text-muted); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">COPY LIST WITH RANDOM POINTER</div>
+                <div id="listDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">HASH MAP APPROACH</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'Node* copyRandomList(Node* head) {', id: 0 },
+            { line: '    unordered_map<Node*, Node*> oldToNew;', id: 1 },
+            { line: '    // Pass 1: Create all nodes', id: 2 },
+            { line: '    Node* cur = head;', id: 3 },
+            { line: '    while (cur) {', id: 4 },
+            { line: '        oldToNew[cur] = new Node(cur->val);', id: 5 },
+            { line: '        cur = cur->next;', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    // Pass 2: Connect next and random', id: 8 },
+            { line: '    cur = head;', id: 9 },
+            { line: '    while (cur) {', id: 10 },
+            { line: '        oldToNew[cur]->next = oldToNew[cur->next];', id: 11 },
+            { line: '        oldToNew[cur]->random = oldToNew[cur->random];', id: 12 },
+            { line: '        cur = cur->next;', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '    return oldToNew[head];', id: 15 },
+            { line: '}', id: 16 },
+        ];
+        const nodes = [{val: 7, random: null}, {val: 13, random: 0}, {val: 11, random: 4}, {val: 10, random: 2}, {val: 1, random: 0}];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ phase: 'init', created: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: 'HashMap: oldNode → newNode' }});
+            
+            // Pass 1: Create nodes
+            for (let i = 0; i <= nodes.length; i++) {
+                steps.push({ phase: 'pass1', created: i, highlightLines: [4, 5, 6], explanation: { title: `Pass 1: Create node ${i < nodes.length ? nodes[i].val : 'done'}`, text: i < nodes.length ? `Map[old${i}] = new Node(${nodes[i].val})` : 'All nodes created' }});
+            }
+            
+            // Pass 2: Connect
+            steps.push({ phase: 'pass2', connected: true, highlightLines: [8, 9, 10, 11, 12], explanation: { title: 'Pass 2: Connect pointers', text: 'Set next and random using HashMap lookup' }});
+            
+            steps.push({ phase: 'done', highlightLines: [15], explanation: { title: 'Done!', text: 'Deep copy complete with all random pointers preserved' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '<div style="margin-bottom: 10px; color: var(--viz-text-muted);">Original:</div><div class="node-row">';
+                    html += nodes.map((n, i) => `<span class="node">${n.val}<div class="random">↗${n.random !== null ? nodes[n.random].val : 'null'}</div></span>`).join('<span class="arrow">→</span>');
+                    html += '</div>';
+                    
+                    if (step.phase !== 'init') {
+                        html += '<div style="margin: 10px 0; color: var(--viz-text-muted);">Copy:</div><div class="node-row">';
+                        const copyCount = step.phase === 'done' || step.connected ? nodes.length : Math.min(step.created, nodes.length);
+                        html += nodes.slice(0, copyCount).map((n, i) => `<span class="node copy">${n.val}'<div class="random">↗${step.connected && n.random !== null ? nodes[n.random].val + "'" : '?'}</div></span>`).join('<span class="arrow">→</span>');
+                        html += '</div>';
+                    }
+                    
+                    document.getElementById('listDisplay').innerHTML = html;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

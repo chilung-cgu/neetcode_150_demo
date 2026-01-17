@@ -61,6 +61,13 @@ LeetCode 通常使用 Level Order (BFS) 來表示，例如 `[1,2,3,null,null,4,5
 **Why Preorder?**
 因為 Root 永遠在最前面，我們一讀就知道當前子樹的 Root 是誰，然後可以直接開始遞迴構造左子樹，剩下的就是右子樹。
 
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../serialize_tree_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../serialize_tree_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
+
 ---
 
 ## 4. 💻 Implementation (程式碼)

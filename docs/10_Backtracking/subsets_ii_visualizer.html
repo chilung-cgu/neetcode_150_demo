@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subsets II Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .nums-display { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
+        .num { padding: 8px 14px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .num.skip { opacity: 0.3; text-decoration: line-through; }
+        .num.current { background: var(--viz-secondary); color: #0f172a; }
+        .results { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
+        .result { padding: 4px 8px; border-radius: 4px; font-family: monospace; background: var(--viz-success); color: #0f172a; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SUBSETS II (with duplicates)</div>
+                <div style="text-align: center; color: var(--viz-text-muted);">Sorted Array:</div>
+                <div class="nums-display" id="numsDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Current Subset:</div>
+                <div class="nums-display" id="currentDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">All Subsets:</div>
+                <div class="results" id="resultsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">SKIP DUPLICATES</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'void backtrack(nums, start, path, result) {', id: 0 },
+            { line: '    result.push_back(path);', id: 1 },
+            { line: '    for (int i = start; i < nums.size(); i++) {', id: 2 },
+            { line: '        // Skip duplicates', id: 3 },
+            { line: '        if (i > start && nums[i] == nums[i-1]) continue;', id: 4 },
+            { line: '        path.push_back(nums[i]);', id: 5 },
+            { line: '        backtrack(nums, i + 1, path, result);', id: 6 },
+            { line: '        path.pop_back();', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const nums = [1, 2, 2]; // sorted
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const results = [[], [1], [1, 2], [1, 2, 2], [2], [2, 2]];
+            
+            steps.push({ current: [], results: [[]], idx: -1, highlightLines: [0, 1], explanation: { title: 'Start', text: 'Add empty subset []' }});
+            steps.push({ current: [1], results: [[], [1]], idx: 0, highlightLines: [5, 6], explanation: { title: 'Add 1', text: 'Subset: [1]' }});
+            steps.push({ current: [1, 2], results: [[], [1], [1, 2]], idx: 1, highlightLines: [5, 6], explanation: { title: 'Add 2', text: 'Subset: [1, 2]' }});
+            steps.push({ current: [1, 2, 2], results: [[], [1], [1, 2], [1, 2, 2]], idx: 2, highlightLines: [5, 6], explanation: { title: 'Add second 2', text: 'Subset: [1, 2, 2]' }});
+            steps.push({ current: [2], results: [[], [1], [1, 2], [1, 2, 2], [2]], idx: 1, highlightLines: [5, 6], explanation: { title: 'Reset, add 2', text: 'Subset: [2]' }});
+            steps.push({ current: [2, 2], results: [[], [1], [1, 2], [1, 2, 2], [2], [2, 2]], idx: 2, highlightLines: [5, 6], explanation: { title: 'Add second 2', text: 'Subset: [2, 2]' }});
+            steps.push({ current: [], results: results, idx: -1, skip: true, highlightLines: [4], explanation: { title: 'Skip duplicate start', text: 'i > start && nums[2] == nums[1]' }});
+            steps.push({ current: [], results: results, idx: -1, highlightLines: [9], explanation: { title: 'Done!', text: `${results.length} unique subsets` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('numsDisplay').innerHTML = nums.map((n, i) =>
+                        `<span class="num ${i === step.idx ? 'current' : ''} ${step.skip && i === 2 ? 'skip' : ''}">${n}</span>`
+                    ).join('');
+                    document.getElementById('currentDisplay').innerHTML = step.current.map(n =>
+                        `<span class="num current">${n}</span>`
+                    ).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    document.getElementById('resultsDisplay').innerHTML = step.results.map(r =>
+                        `<span class="result">[${r.join(',')}]</span>`
+                    ).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

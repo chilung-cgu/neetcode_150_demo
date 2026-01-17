@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Rooms II Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .rooms { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
+        .room { display: flex; gap: 4px; align-items: center; }
+        .room-label { width: 60px; font-size: 0.8rem; color: var(--viz-text-muted); }
+        .meeting { height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.75rem; color: white; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">MEETING ROOMS II (Min Rooms)</div>
+                <div class="rooms" id="roomsDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Rooms Needed</div><div class="state-value" id="roomsCountDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">MIN HEAP</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int minMeetingRooms(intervals) {', id: 0 },
+            { line: '    sort(intervals by start);', id: 1 },
+            { line: '    priority_queue<int, vec, greater<int>> minHeap;', id: 2 },
+            { line: '    for (auto& i : intervals) {', id: 3 },
+            { line: '        if (!minHeap.empty() && minHeap.top() <= i[0])', id: 4 },
+            { line: '            minHeap.pop(); // reuse room', id: 5 },
+            { line: '        minHeap.push(i[1]); // assign room', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return minHeap.size();', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const intervals = [[0, 30], [5, 10], [15, 20]];
+        const colors = ['#ef4444', '#3b82f6', '#22c55e'];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const sorted = [[0, 30], [5, 10], [15, 20]];
+            
+            steps.push({ rooms: [], highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Min heap tracks room end times' }});
+            steps.push({ rooms: [[sorted[0]]], highlightLines: [6], explanation: { title: 'Meeting [0,30]', text: 'Assign Room 1' }});
+            steps.push({ rooms: [[sorted[0]], [sorted[1]]], highlightLines: [6], explanation: { title: 'Meeting [5,10]', text: '5 < 30, need new Room 2' }});
+            steps.push({ rooms: [[sorted[0]], [sorted[1], sorted[2]]], highlightLines: [4, 5, 6], explanation: { title: 'Meeting [15,20]', text: '15 >= 10, reuse Room 2' }});
+            steps.push({ rooms: [[sorted[0]], [sorted[1], sorted[2]]], highlightLines: [8], explanation: { title: 'Done!', text: 'Min rooms = 2' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const scale = 8;
+                    let html = '';
+                    (step.rooms || []).forEach((room, ri) => {
+                        let roomHtml = `<div class="room"><span class="room-label">Room ${ri + 1}</span>`;
+                        room.forEach((m) => {
+                            const width = (m[1] - m[0]) * scale;
+                            const left = m[0] * scale;
+                            roomHtml += `<div class="meeting" style="margin-left: ${left}px; width: ${width}px; background: ${colors[intervals.findIndex(i => i[0] === m[0] && i[1] === m[1])]}">[${m[0]},${m[1]}]</div>`;
+                        });
+                        roomHtml += '</div>';
+                        html += roomHtml;
+                    });
+                    document.getElementById('roomsDisplay').innerHTML = html || '<em style="color:var(--viz-text-muted)">No rooms yet</em>';
+                    document.getElementById('roomsCountDisplay').textContent = step.rooms?.length || 0;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

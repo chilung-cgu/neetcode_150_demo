@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Single Number (XOR) Visualization</title>
+    <title>Single Number Visualization</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .num-row { display: flex; gap: 8px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
-        .num { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .nums { display: flex; gap: 6px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+        .num { padding: 10px 16px; border-radius: 6px; font-family: monospace; font-size: 1.1rem; background: var(--viz-primary); color: white; }
+        .num.processed { opacity: 0.4; }
         .num.current { background: var(--viz-secondary); color: #0f172a; }
-        .num.result { background: var(--viz-success); color: #0f172a; }
-        .binary { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
+        .xor-display { text-align: center; font-family: monospace; font-size: 1.5rem; color: var(--viz-success); margin: 15px 0; }
     </style>
 </head>
 <body>
@@ -18,16 +18,13 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">SINGLE NUMBER (XOR)</div>
-                <div class="num-row" id="numsDisplay"></div>
-                <div class="controls" style="margin-top: 15px;">
+                <div class="nums" id="numsDisplay"></div>
+                <div class="xor-display" id="xorDisplay">XOR = 0</div>
+                <div class="controls">
                     <button class="viz-btn" id="prevBtn">← Prev</button>
                     <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">Next →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">XOR Result</div><div class="state-value" id="xorDisplay" style="color: var(--viz-success);">0</div></div>
-                    <div class="state-item"><div class="state-label">Binary</div><div class="state-value" id="binaryDisplay" style="font-size: 0.9rem;">0000</div></div>
                 </div>
             </div>
             <div class="viz-card">
@@ -37,7 +34,7 @@
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM</div>
+                <div class="viz-title">XOR PROPERTY</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -48,22 +45,28 @@
             { line: 'int singleNumber(vector<int>& nums) {', id: 0 },
             { line: '    int result = 0;', id: 1 },
             { line: '    for (int n : nums) {', id: 2 },
-            { line: '        result ^= n; // XOR', id: 3 },
+            { line: '        result ^= n;', id: 3 },
             { line: '    }', id: 4 },
             { line: '    return result;', id: 5 },
             { line: '}', id: 6 },
+            { line: '// Key insight: a ^ a = 0, a ^ 0 = a', id: 7 },
         ];
         const nums = [4, 1, 2, 1, 2];
+        // XOR: 4^1=5, 5^2=7, 7^1=6, 6^2=4
 
         function generateAlgorithmSteps() {
             const steps = [];
-            let result = 0;
-            steps.push({ idx: -1, result, highlightLines: [0, 1], explanation: { title: 'Init', text: 'result = 0' }});
+            let xor = 0;
+            
+            steps.push({ processed: -1, xor: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: 'a⊕a=0, a⊕0=a' }});
+            
             for (let i = 0; i < nums.length; i++) {
-                result ^= nums[i];
-                steps.push({ idx: i, result, highlightLines: [3], explanation: { title: `XOR with ${nums[i]}`, text: `result = ${result} (${(result >>> 0).toString(2).padStart(4, '0')})` }});
+                xor ^= nums[i];
+                steps.push({ processed: i, xor, highlightLines: [3], explanation: { title: `XOR with ${nums[i]}`, text: `result = ${xor}` }});
             }
-            steps.push({ idx: -1, result, done: true, highlightLines: [5], explanation: { title: 'Done!', text: `Single number = ${result}` }});
+            
+            steps.push({ processed: nums.length - 1, xor: 4, highlightLines: [5], explanation: { title: 'Done!', text: 'Single number = 4' }});
+            
             return steps;
         }
 
@@ -72,9 +75,10 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('numsDisplay').innerHTML = nums.map((n, i) => `<span class="num ${i === step.idx ? 'current' : ''} ${step.done && n === step.result ? 'result' : ''}">${n}</span>`).join('');
-                    document.getElementById('xorDisplay').textContent = step.result;
-                    document.getElementById('binaryDisplay').textContent = (step.result >>> 0).toString(2).padStart(4, '0');
+                    document.getElementById('numsDisplay').innerHTML = nums.map((n, i) =>
+                        `<span class="num ${i < step.processed ? 'processed' : ''} ${i === step.processed ? 'current' : ''}">${n}</span>`
+                    ).join('');
+                    document.getElementById('xorDisplay').textContent = `XOR = ${step.xor}`;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

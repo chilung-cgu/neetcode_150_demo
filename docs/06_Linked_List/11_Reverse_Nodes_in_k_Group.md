@@ -7,15 +7,15 @@
 如果最後剩餘的節點不滿 `k` 個，則保持原樣，不反轉。
 空間複雜度必須是 $O(1)$。
 
--   **Input**: `head = [1,2,3,4,5], k = 2`
--   **Output**: `[2,1,4,3,5]`
-    -   `[1,2]` reverse -> `[2,1]`
-    -   `[3,4]` reverse -> `[4,3]`
-    -   `[5]` remain -> `[5]`
--   **Input**: `head = [1,2,3,4,5], k = 3`
--   **Output**: `[3,2,1,4,5]`
-    -   `[1,2,3]` reverse -> `[3,2,1]`
-    -   `[4,5]` remain -> `[4,5]`
+- **Input**: `head = [1,2,3,4,5], k = 2`
+- **Output**: `[2,1,4,3,5]`
+  - `[1,2]` reverse -> `[2,1]`
+  - `[3,4]` reverse -> `[4,3]`
+  - `[5]` remain -> `[5]`
+- **Input**: `head = [1,2,3,4,5], k = 3`
+- **Output**: `[3,2,1,4,5]`
+  - `[1,2,3]` reverse -> `[3,2,1]`
+  - `[4,5]` remain -> `[4,5]`
 
 ---
 
@@ -23,9 +23,9 @@
 
 用 Stack。每收集 k 個，就 pop 出來建成新 list。
 
--   **Time**: $O(n)$。
--   **Space**: $O(k)$ for stack.
--   **Result**: 題目要求 $O(1)$ space。
+- **Time**: $O(n)$。
+- **Space**: $O(k)$ for stack.
+- **Result**: 題目要求 $O(1)$ space。
 
 ---
 
@@ -45,17 +45,24 @@
 
 1.  從 `head` 開始遍歷。
 2.  找到第 `k` 個節點 `kth`。
-    -   如果找不到 (不滿 k 個)，直接結束。
+    - 如果找不到 (不滿 k 個)，直接結束。
 3.  **Reverse** `groupPrev->next` 到 `kth` 之間的節點。
-    -   這是一個標準的 reverse 操作，但需要小心邊界。
-    -   原本的 `first` (groupPrev->next) 會變成 `last`。
-    -   反轉後，讓 `groupPrev->next` 指向新的 head (`kth`)。
-    -   讓原本的 `first` 指向 `groupNext`。
+    - 這是一個標準的 reverse 操作，但需要小心邊界。
+    - 原本的 `first` (groupPrev->next) 會變成 `last`。
+    - 反轉後，讓 `groupPrev->next` 指向新的 head (`kth`)。
+    - 讓原本的 `first` 指向 `groupNext`。
 4.  更新 `groupPrev` 到下一組的起點前 (也就是剛反轉完的 tail)。
 5.  重複。
 
 **Dummy Node**:
 因為 Head 也會變，所以用 Dummy Node `dummy->next = head` 很重要。`groupPrev` 初始為 `dummy`。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../reverse_k_group_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../reverse_k_group_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -224,8 +231,8 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n)$
-    -   每個節點被尋訪兩次：一次是 `getKth` 確認長度，一次是反轉指針。
-    -   $O(2n) = O(n)$。
--   **Space Complexity**: $O(1)$
-    -   使用固定數量的指針。
+- **Time Complexity**: $O(n)$
+  - 每個節點被尋訪兩次：一次是 `getKth` 確認長度，一次是反轉指針。
+  - $O(2n) = O(n)$。
+- **Space Complexity**: $O(1)$
+  - 使用固定數量的指針。

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Rooms Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .timeline { display: flex; flex-direction: column; gap: 6px; margin: 15px 0; }
+        .meeting { display: flex; align-items: center; gap: 10px; }
+        .bar { height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.8rem; color: white; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">MEETING ROOMS</div>
+                <div class="timeline" id="timelineDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Can Attend All?</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">CHECK OVERLAP</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool canAttendMeetings(intervals) {', id: 0 },
+            { line: '    sort(intervals);', id: 1 },
+            { line: '    for (int i = 1; i < intervals.size(); i++) {', id: 2 },
+            { line: '        if (intervals[i][0] < intervals[i-1][1])', id: 3 },
+            { line: '            return false; // overlap!', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    return true;', id: 6 },
+            { line: '}', id: 7 },
+        ];
+        const intervals = [[0, 30], [5, 10], [15, 20]];
+        const colors = ['#ef4444', '#3b82f6', '#22c55e'];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const sorted = [[0, 30], [5, 10], [15, 20]];
+            
+            steps.push({ compare: [], highlightLines: [0, 1], explanation: { title: 'Sort by start', text: '[[0,30], [5,10], [15,20]]' }});
+            steps.push({ compare: [0, 1], overlap: true, highlightLines: [3, 4], explanation: { title: 'Compare [0,30] & [5,10]', text: '5 < 30 → OVERLAP!' }});
+            steps.push({ compare: [0, 1], result: false, highlightLines: [4], explanation: { title: 'Cannot attend all', text: 'Meetings overlap' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const scale = 8;
+                    let html = '';
+                    intervals.forEach((int, i) => {
+                        const width = (int[1] - int[0]) * scale;
+                        const left = int[0] * scale;
+                        const highlight = step.compare?.includes(i);
+                        html += `<div class="meeting"><div class="bar" style="margin-left: ${left}px; width: ${width}px; background: ${colors[i]}; ${highlight ? 'border: 2px solid white;' : ''}">[${int[0]},${int[1]}]</div></div>`;
+                    });
+                    document.getElementById('timelineDisplay').innerHTML = html;
+                    document.getElementById('resultDisplay').textContent = step.result === false ? 'No' : '-';
+                    document.getElementById('resultDisplay').style.color = step.result === false ? 'var(--viz-error)' : 'var(--viz-success)';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combination Sum II Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .candidates { display: flex; gap: 4px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
+        .cand { padding: 6px 12px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.9rem; }
+        .cand.used { background: var(--viz-secondary); color: #0f172a; }
+        .cand.skip { opacity: 0.3; text-decoration: line-through; }
+        .results { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
+        .result { padding: 4px 8px; border-radius: 4px; font-family: monospace; background: var(--viz-success); color: #0f172a; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">COMBINATION SUM II (target=8)</div>
+                <div style="text-align: center; color: var(--viz-text-muted);">Candidates (sorted):</div>
+                <div class="candidates" id="candidatesDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Current Path:</div>
+                <div class="candidates" id="pathDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Found Combinations:</div>
+                <div class="results" id="resultsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Sum</div><div class="state-value" id="sumDisplay">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BACKTRACKING</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'void backtrack(candidates, target, start, path, result) {', id: 0 },
+            { line: '    if (target == 0) { result.push_back(path); return; }', id: 1 },
+            { line: '    for (int i = start; i < candidates.size(); i++) {', id: 2 },
+            { line: '        if (i > start && candidates[i] == candidates[i-1]) continue;', id: 3 },
+            { line: '        if (candidates[i] > target) break;', id: 4 },
+            { line: '        path.push_back(candidates[i]);', id: 5 },
+            { line: '        backtrack(candidates, target-candidates[i], i+1, path, result);', id: 6 },
+            { line: '        path.pop_back();', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const candidates = [1, 1, 2, 5, 6, 7, 10]; // sorted
+        const target = 8;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const results = [[1, 1, 6], [1, 2, 5], [1, 7], [2, 6]];
+            let idx = 0;
+            
+            steps.push({ path: [], sum: 0, results: [], highlightLines: [0], explanation: { title: 'Start', text: 'Each number used at most once' }});
+            steps.push({ path: [1, 1, 6], sum: 8, results: [[1, 1, 6]], highlightLines: [1], explanation: { title: '✓ Found!', text: '[1, 1, 6] = 8' }});
+            steps.push({ path: [1, 2, 5], sum: 8, results: [[1, 1, 6], [1, 2, 5]], highlightLines: [1], explanation: { title: '✓ Found!', text: '[1, 2, 5] = 8' }});
+            steps.push({ path: [1, 7], sum: 8, results: [[1, 1, 6], [1, 2, 5], [1, 7]], highlightLines: [1], explanation: { title: '✓ Found!', text: '[1, 7] = 8' }});
+            steps.push({ path: [], sum: 0, skip: 1, results: [[1, 1, 6], [1, 2, 5], [1, 7]], highlightLines: [3], explanation: { title: 'Skip duplicate 1', text: 'i > start && nums[1] == nums[0]' }});
+            steps.push({ path: [2, 6], sum: 8, results: results, highlightLines: [1], explanation: { title: '✓ Found!', text: '[2, 6] = 8' }});
+            steps.push({ path: [], sum: 0, results: results, highlightLines: [9], explanation: { title: 'Done!', text: '4 unique combinations' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('candidatesDisplay').innerHTML = candidates.map((c, i) =>
+                        `<span class="cand ${step.path.includes(c) ? 'used' : ''} ${step.skip === i ? 'skip' : ''}">${c}</span>`
+                    ).join('');
+                    document.getElementById('pathDisplay').innerHTML = step.path.map(c =>
+                        `<span class="cand used">${c}</span>`
+                    ).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    document.getElementById('resultsDisplay').innerHTML = step.results.map(r =>
+                        `<span class="result">[${r.join(',')}]</span>`
+                    ).join('');
+                    document.getElementById('sumDisplay').textContent = step.sum;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

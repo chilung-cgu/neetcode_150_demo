@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clone Graph Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .graph { display: flex; gap: 10px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+        .node { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1.2rem; }
+        .node.original { background: var(--viz-primary); color: white; }
+        .node.cloned { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">CLONE GRAPH (DFS)</div>
+                <div style="text-align: center; color: var(--viz-text-muted);">Original:</div>
+                <div class="graph" id="originalDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted);">Cloned:</div>
+                <div class="graph" id="clonedDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DFS + HASHMAP</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'Node* cloneGraph(Node* node) {', id: 0 },
+            { line: '    unordered_map<Node*, Node*> visited;', id: 1 },
+            { line: '    return dfs(node, visited);', id: 2 },
+            { line: '}', id: 3 },
+            { line: 'Node* dfs(Node* node, map& visited) {', id: 4 },
+            { line: '    if (visited.count(node)) return visited[node];', id: 5 },
+            { line: '    Node* clone = new Node(node->val);', id: 6 },
+            { line: '    visited[node] = clone;', id: 7 },
+            { line: '    for (auto* neighbor : node->neighbors)', id: 8 },
+            { line: '        clone->neighbors.push_back(dfs(neighbor, visited));', id: 9 },
+            { line: '    return clone;', id: 10 },
+            { line: '}', id: 11 },
+        ];
+        const nodes = [1, 2, 3, 4];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ cloned: [], highlightLines: [0, 1, 2], explanation: { title: 'Start DFS', text: 'Track visited to avoid cycles' }});
+            for (let i = 0; i < nodes.length; i++) {
+                steps.push({ cloned: nodes.slice(0, i + 1), highlightLines: [6, 7, 8, 9], explanation: { title: `Clone node ${nodes[i]}`, text: 'Create copy and recurse' }});
+            }
+            steps.push({ cloned: nodes, highlightLines: [10], explanation: { title: 'Done!', text: 'Deep copy created' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('originalDisplay').innerHTML = nodes.map(n =>
+                        `<div class="node original">${n}</div>`
+                    ).join('');
+                    document.getElementById('clonedDisplay').innerHTML = (step.cloned || []).map(n =>
+                        `<div class="node cloned">${n}'</div>`
+                    ).join('') || '<em style="color:var(--viz-text-muted)">-</em>';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pow(x, n) Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .calc { text-align: center; margin: 20px 0; }
+        .formula { font-family: monospace; font-size: 1.5rem; color: var(--viz-secondary); }
+        .result { font-family: monospace; font-size: 2rem; color: var(--viz-success); margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">POW(X, N) - FAST EXPONENTIATION</div>
+                <div class="calc">
+                    <div class="formula" id="formulaDisplay">2^10</div>
+                    <div class="result" id="resultDisplay">= ?</div>
+                </div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BINARY EXPONENTIATION</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'double myPow(double x, int n) {', id: 0 },
+            { line: '    if (n == 0) return 1;', id: 1 },
+            { line: '    if (n < 0) { x = 1/x; n = -n; }', id: 2 },
+            { line: '    double result = 1;', id: 3 },
+            { line: '    while (n > 0) {', id: 4 },
+            { line: '        if (n & 1) result *= x;', id: 5 },
+            { line: '        x *= x;', id: 6 },
+            { line: '        n >>= 1;', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return result;', id: 9 },
+            { line: '}', id: 10 },
+        ];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            // 2^10: n=10 (1010 in binary)
+            // Step 1: n=10, x=2, result=1 (n&1=0, skip)
+            // Step 2: n=5, x=4, result=4 (n&1=1, result*=4)
+            // Step 3: n=2, x=16, result=4 (n&1=0, skip)
+            // Step 4: n=1, x=256, result=1024 (n&1=1, result*=256)
+            
+            steps.push({ n: 10, x: 2, result: 1, highlightLines: [0, 1, 2, 3], explanation: { title: '2^10', text: 'n=10 (binary: 1010)' }});
+            steps.push({ n: 10, x: 2, result: 1, highlightLines: [5, 6, 7], explanation: { title: 'n&1=0', text: 'Skip multiply, x=2×2=4, n=5' }});
+            steps.push({ n: 5, x: 4, result: 4, highlightLines: [5, 6, 7], explanation: { title: 'n&1=1', text: 'result=1×4=4, x=16, n=2' }});
+            steps.push({ n: 2, x: 16, result: 4, highlightLines: [5, 6, 7], explanation: { title: 'n&1=0', text: 'Skip, x=256, n=1' }});
+            steps.push({ n: 1, x: 256, result: 1024, highlightLines: [5, 6, 7], explanation: { title: 'n&1=1', text: 'result=4×256=1024' }});
+            steps.push({ n: 0, x: 256, result: 1024, highlightLines: [9], explanation: { title: 'Done!', text: '2^10 = 1024' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('formulaDisplay').textContent = `2^10 (n=${step.n}, x=${step.x})`;
+                    document.getElementById('resultDisplay').textContent = `result = ${step.result}`;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

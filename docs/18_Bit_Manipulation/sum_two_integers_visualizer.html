@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sum of Two Integers Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .calc { text-align: center; margin: 20px 0; }
+        .formula { font-family: monospace; font-size: 1.2rem; color: var(--viz-text-muted); margin: 5px 0; }
+        .result { font-family: monospace; font-size: 2rem; color: var(--viz-success); margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SUM OF TWO INTEGERS (NO + or -)</div>
+                <div class="calc" id="calcDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BIT MANIPULATION</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int getSum(int a, int b) {', id: 0 },
+            { line: '    while (b != 0) {', id: 1 },
+            { line: '        int carry = a & b;', id: 2 },
+            { line: '        a = a ^ b;         // sum without carry', id: 3 },
+            { line: '        b = carry << 1;    // carry shifted left', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    return a;', id: 6 },
+            { line: '}', id: 7 },
+        ];
+        // 2 + 3 = 5
+        // a=2 (010), b=3 (011)
+        // carry = 010 & 011 = 010, a = 010 ^ 011 = 001, b = 010 << 1 = 100
+        // carry = 001 & 100 = 000, a = 001 ^ 100 = 101, b = 000
+        
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ a: 2, b: 3, highlightLines: [0], explanation: { title: '2 + 3', text: 'a=2 (010), b=3 (011)' }});
+            steps.push({ a: 1, b: 4, carry: 2, highlightLines: [2, 3, 4], explanation: { title: 'Iteration 1', text: 'carry=2&3=2, a=2^3=1, b=2<<1=4' }});
+            steps.push({ a: 5, b: 0, carry: 0, highlightLines: [2, 3, 4], explanation: { title: 'Iteration 2', text: 'carry=1&4=0, a=1^4=5, b=0' }});
+            steps.push({ a: 5, b: 0, highlightLines: [6], explanation: { title: 'Done!', text: '2 + 3 = 5' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const toBin = n => (n >>> 0).toString(2).padStart(4, '0');
+                    document.getElementById('calcDisplay').innerHTML = `
+                        <div class="formula">a = ${step.a} (${toBin(step.a)})</div>
+                        <div class="formula">b = ${step.b} (${toBin(step.b)})</div>
+                        ${step.b === 0 ? `<div class="result">${step.a}</div>` : ''}
+                    `;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

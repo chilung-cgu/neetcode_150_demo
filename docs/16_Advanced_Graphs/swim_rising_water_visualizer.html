@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swim in Rising Water Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .grid { display: grid; gap: 2px; max-width: 180px; margin: 0 auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; border-radius: 4px; color: white; }
+        .cell.path { background: var(--viz-success) !important; color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SWIM IN RISING WATER</div>
+                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(3, 40px);"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Time</div><div class="state-value" id="timeDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DIJKSTRA / BINARY SEARCH</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int swimInWater(grid) {', id: 0 },
+            { line: '    // Modified Dijkstra', id: 1 },
+            { line: '    priority_queue<tuple<int,int,int>, vec, greater<>> pq;', id: 2 },
+            { line: '    pq.push({grid[0][0], 0, 0});', id: 3 },
+            { line: '    while (!pq.empty()) {', id: 4 },
+            { line: '        auto [t, r, c] = pq.top(); pq.pop();', id: 5 },
+            { line: '        if (r == n-1 && c == n-1) return t;', id: 6 },
+            { line: '        for (4 directions) {', id: 7 },
+            { line: '            int newT = max(t, grid[nr][nc]);', id: 8 },
+            { line: '            pq.push({newT, nr, nc});', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '}', id: 12 },
+        ];
+        const grid = [[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const paths = [[[0, 0]], [[0, 0], [0, 1]], [[0, 0], [0, 1], [0, 2]], [[0, 0], [0, 1], [0, 2], [1, 2]], [[0, 0], [0, 1], [0, 2], [1, 2], [2, 2]]];
+            const times = [0, 1, 2, 5, 8];
+            
+            for (let i = 0; i < paths.length; i++) {
+                steps.push({ path: paths[i], time: times[i], highlightLines: i === 0 ? [0, 1, 2, 3] : [5, 6, 7, 8, 9], explanation: { title: i === 0 ? 'Start at (0,0)' : `Move to ${JSON.stringify(paths[i][paths[i].length - 1])}`, text: `Max elevation: ${times[i]}` }});
+            }
+            steps.push({ path: paths[4], time: 8, highlightLines: [6], explanation: { title: 'Reached end!', text: 'Min time = 8' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            const onPath = step.path?.some(p => p[0] === i && p[1] === j);
+                            const intensity = grid[i][j] / 8;
+                            html += `<div class="cell ${onPath ? 'path' : ''}" style="background: rgba(59, 130, 246, ${0.3 + intensity * 0.7})">${grid[i][j]}</div>`;
+                        }
+                    }
+                    document.getElementById('gridDisplay').innerHTML = html;
+                    document.getElementById('timeDisplay').textContent = step.time;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

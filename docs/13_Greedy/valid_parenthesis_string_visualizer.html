@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valid Parenthesis String Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .str-display { display: flex; gap: 3px; justify-content: center; margin: 15px 0; }
+        .char { width: 30px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1.2rem; border-radius: 4px; background: var(--viz-primary); color: white; }
+        .char.open { background: var(--viz-success); color: #0f172a; }
+        .char.close { background: var(--viz-error); }
+        .char.star { background: var(--viz-secondary); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">VALID PARENTHESIS STRING</div>
+                <div class="str-display" id="strDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Min Open</div><div class="state-value" id="minDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">Max Open</div><div class="state-value" id="maxDisplay">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">GREEDY RANGE</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool checkValidString(string s) {', id: 0 },
+            { line: '    int minOpen = 0, maxOpen = 0;', id: 1 },
+            { line: '    for (char c : s) {', id: 2 },
+            { line: '        if (c == \'(\') { minOpen++; maxOpen++; }', id: 3 },
+            { line: '        else if (c == \')\') { minOpen--; maxOpen--; }', id: 4 },
+            { line: '        else { minOpen--; maxOpen++; } // *', id: 5 },
+            { line: '        if (maxOpen < 0) return false;', id: 6 },
+            { line: '        minOpen = max(minOpen, 0);', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return minOpen == 0;', id: 9 },
+            { line: '}', id: 10 },
+        ];
+        const str = '(*))';
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let minOpen = 0, maxOpen = 0;
+            
+            steps.push({ idx: -1, minOpen: 0, maxOpen: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: 'Track range [min, max] of open parens' }});
+            
+            for (let i = 0; i < str.length; i++) {
+                const c = str[i];
+                if (c === '(') { minOpen++; maxOpen++; }
+                else if (c === ')') { minOpen--; maxOpen--; }
+                else { minOpen--; maxOpen++; }
+                minOpen = Math.max(minOpen, 0);
+                steps.push({ idx: i, minOpen, maxOpen, highlightLines: c === '(' ? [3] : c === ')' ? [4] : [5], explanation: { title: `'${c}'`, text: `Range: [${minOpen}, ${maxOpen}]` }});
+            }
+            
+            steps.push({ idx: -1, minOpen, maxOpen, highlightLines: [9], explanation: { title: 'Done!', text: `minOpen=0? ${minOpen === 0 ? '✓' : '✗'}` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('strDisplay').innerHTML = [...str].map((c, i) => {
+                        let cls = 'char';
+                        if (c === '(') cls += ' open';
+                        else if (c === ')') cls += ' close';
+                        else cls += ' star';
+                        return `<span class="${cls}">${c}</span>`;
+                    }).join('');
+                    document.getElementById('minDisplay').textContent = step.minOpen;
+                    document.getElementById('maxDisplay').textContent = step.maxOpen;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

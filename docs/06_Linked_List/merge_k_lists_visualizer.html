@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge k Sorted Lists Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .lists-container { margin: 10px 0; }
+        .list-row { display: flex; align-items: center; gap: 4px; margin: 5px 0; }
+        .list-label { width: 30px; color: var(--viz-text-muted); font-size: 0.85rem; }
+        .node { padding: 6px 10px; border-radius: 4px; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.9rem; }
+        .node.merged { background: var(--viz-success); color: #0f172a; }
+        .node.current { background: var(--viz-secondary); color: #0f172a; }
+        .arrow { color: var(--viz-text-muted); font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">MERGE K SORTED LISTS (MIN HEAP)</div>
+                <div class="lists-container" id="listsDisplay"></div>
+                <div style="margin-top: 10px; text-align: center;">
+                    <strong>Merged:</strong> <span id="mergedDisplay"></span>
+                </div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">MIN HEAP APPROACH</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'ListNode* mergeKLists(vector<ListNode*>& lists) {', id: 0 },
+            { line: '    priority_queue<pair<int,ListNode*>, vec, greater> pq;', id: 1 },
+            { line: '    // Add head of each list to heap', id: 2 },
+            { line: '    for (auto list : lists)', id: 3 },
+            { line: '        if (list) pq.push({list->val, list});', id: 4 },
+            { line: '    ListNode dummy(0), *tail = &dummy;', id: 5 },
+            { line: '    while (!pq.empty()) {', id: 6 },
+            { line: '        auto [val, node] = pq.top(); pq.pop();', id: 7 },
+            { line: '        tail->next = node;', id: 8 },
+            { line: '        tail = tail->next;', id: 9 },
+            { line: '        if (node->next) pq.push({node->next->val, node->next});', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return dummy.next;', id: 12 },
+            { line: '}', id: 13 },
+        ];
+        const lists = [[1, 4, 5], [1, 3, 4], [2, 6]];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const remaining = lists.map(l => [...l]);
+            const merged = [];
+            
+            steps.push({ remaining: remaining.map(l => [...l]), merged: [], heap: [1, 1, 2], highlightLines: [0, 1, 2, 3, 4], explanation: { title: 'Init Heap', text: 'Push head of each list: [1, 1, 2]' }});
+            
+            // Simulate merging
+            const all = lists.flat().sort((a, b) => a - b);
+            for (let i = 0; i < all.length; i++) {
+                const val = all[i];
+                merged.push(val);
+                // Remove from remaining
+                for (let j = 0; j < remaining.length; j++) {
+                    const idx = remaining[j].indexOf(val);
+                    if (idx === 0) {
+                        remaining[j].shift();
+                        break;
+                    }
+                }
+                steps.push({ remaining: remaining.map(l => [...l]), merged: [...merged], current: val, highlightLines: [7, 8, 9, 10], explanation: { title: `Pop min: ${val}`, text: `Add to merged list` }});
+            }
+            
+            steps.push({ remaining: [[], [], []], merged, highlightLines: [12], explanation: { title: 'Done!', text: `Merged: ${merged.join('→')}` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    step.remaining.forEach((list, i) => {
+                        html += `<div class="list-row"><span class="list-label">L${i+1}:</span>`;
+                        html += list.length ? list.map(n => `<span class="node">${n}</span>`).join('<span class="arrow">→</span>') : '<em style="color:var(--viz-text-muted)">empty</em>';
+                        html += '</div>';
+                    });
+                    document.getElementById('listsDisplay').innerHTML = html;
+                    document.getElementById('mergedDisplay').innerHTML = step.merged.map(n => `<span class="node merged">${n}</span>`).join('<span class="arrow">→</span>') || '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Two Numbers Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .lists { display: flex; gap: 20px; justify-content: center; margin: 15px 0; flex-direction: column; align-items: center; }
+        .list { display: flex; gap: 4px; align-items: center; }
+        .node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1.2rem; background: var(--viz-primary); color: white; }
+        .node.result { background: var(--viz-success); color: #0f172a; }
+        .arrow { color: var(--viz-text-muted); }
+        .label { width: 80px; text-align: right; margin-right: 10px; color: var(--viz-text-muted); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">ADD TWO NUMBERS (Linked List)</div>
+                <div class="lists" id="listsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Carry</div><div class="state-value" id="carryDisplay">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ELEMENTARY ADDITION</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'ListNode* addTwoNumbers(l1, l2) {', id: 0 },
+            { line: '    ListNode dummy(0);', id: 1 },
+            { line: '    ListNode* curr = &dummy;', id: 2 },
+            { line: '    int carry = 0;', id: 3 },
+            { line: '    while (l1 || l2 || carry) {', id: 4 },
+            { line: '        int sum = carry;', id: 5 },
+            { line: '        if (l1) { sum += l1->val; l1 = l1->next; }', id: 6 },
+            { line: '        if (l2) { sum += l2->val; l2 = l2->next; }', id: 7 },
+            { line: '        carry = sum / 10;', id: 8 },
+            { line: '        curr->next = new ListNode(sum % 10);', id: 9 },
+            { line: '        curr = curr->next;', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return dummy.next;', id: 12 },
+            { line: '}', id: 13 },
+        ];
+        // 342 + 465 = 807, stored as 2->4->3 + 5->6->4 = 7->0->8
+        const l1 = [2, 4, 3], l2 = [5, 6, 4];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const result = [];
+            let carry = 0;
+            
+            steps.push({ l1, l2, result: [], carry: 0, highlightLines: [0, 1, 2, 3], explanation: { title: '342 + 465', text: 'Stored in reverse order' }});
+            
+            for (let i = 0; i < 3; i++) {
+                const sum = (l1[i] || 0) + (l2[i] || 0) + carry;
+                carry = Math.floor(sum / 10);
+                result.push(sum % 10);
+                steps.push({ l1, l2, result: [...result], carry, idx: i, highlightLines: [5, 6, 7, 8, 9], explanation: { title: `Digit ${i + 1}`, text: `${l1[i]} + ${l2[i]} + ${carry === 0 && i === 0 ? 0 : steps[steps.length - 1]?.carry || 0} = ${sum}` }});
+            }
+            
+            steps.push({ l1, l2, result: [7, 0, 8], carry: 0, highlightLines: [12], explanation: { title: 'Done!', text: '7->0->8 = 807' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    html += `<div class="list"><span class="label">L1 (342):</span>`;
+                    l1.forEach((n, i) => { if (i > 0) html += '<span class="arrow">→</span>'; html += `<span class="node">${n}</span>`; });
+                    html += '</div>';
+                    html += `<div class="list"><span class="label">L2 (465):</span>`;
+                    l2.forEach((n, i) => { if (i > 0) html += '<span class="arrow">→</span>'; html += `<span class="node">${n}</span>`; });
+                    html += '</div>';
+                    html += `<div class="list"><span class="label">Result:</span>`;
+                    (step.result || []).forEach((n, i) => { if (i > 0) html += '<span class="arrow">→</span>'; html += `<span class="node result">${n}</span>`; });
+                    if (!step.result?.length) html += '<em style="color:var(--viz-text-muted)">-</em>';
+                    html += '</div>';
+                    document.getElementById('listsDisplay').innerHTML = html;
+                    document.getElementById('carryDisplay').textContent = step.carry || 0;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

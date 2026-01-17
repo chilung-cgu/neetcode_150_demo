@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Distance Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .grid { display: grid; gap: 2px; margin: 0 auto; max-width: 300px; }
+        .cell { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: rgba(255,255,255,0.1); border-radius: 3px; font-size: 0.9rem; }
+        .cell.header { background: var(--viz-primary); color: white; }
+        .cell.current { background: var(--viz-success); color: #0f172a; }
+        .cell.path { background: var(--viz-secondary); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">EDIT DISTANCE: "horse" → "ros"</div>
+                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(5, 35px);"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">2D DP</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int minDistance(string word1, string word2) {', id: 0 },
+            { line: '    int m = word1.size(), n = word2.size();', id: 1 },
+            { line: '    vector<vector<int>> dp(m+1, vector<int>(n+1));', id: 2 },
+            { line: '    // Base cases', id: 3 },
+            { line: '    for (int i = 0; i <= m; i++) dp[i][0] = i;', id: 4 },
+            { line: '    for (int j = 0; j <= n; j++) dp[0][j] = j;', id: 5 },
+            { line: '    for (int i = 1; i <= m; i++) {', id: 6 },
+            { line: '        for (int j = 1; j <= n; j++) {', id: 7 },
+            { line: '            if (word1[i-1] == word2[j-1])', id: 8 },
+            { line: '                dp[i][j] = dp[i-1][j-1];', id: 9 },
+            { line: '            else', id: 10 },
+            { line: '                dp[i][j] = 1 + min({dp[i-1][j], dp[i][j-1], dp[i-1][j-1]});', id: 11 },
+            { line: '        }', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '    return dp[m][n];', id: 14 },
+            { line: '}', id: 15 },
+        ];
+        const word1 = 'ros', word2 = 'horse'.slice(0, 3); // Simplified for display
+        const w1 = 'ros', w2 = 'hor';
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const m = w1.length, n = w2.length;
+            const dp = Array.from({ length: m + 1 }, (_, i) => Array.from({ length: n + 1 }, (_, j) => i === 0 ? j : j === 0 ? i : 0));
+            
+            steps.push({ dp: dp.map(r => [...r]), current: null, highlightLines: [0, 1, 2, 3, 4, 5], explanation: { title: 'Init base cases', text: 'dp[i][0]=i, dp[0][j]=j' }});
+            
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (w1[i - 1] === w2[j - 1]) {
+                        dp[i][j] = dp[i - 1][j - 1];
+                    } else {
+                        dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+                    }
+                }
+            }
+            steps.push({ dp: dp.map(r => [...r]), current: [m, n], highlightLines: [6, 7, 8, 9, 10, 11], explanation: { title: 'Fill DP table', text: 'Compare chars, take min operation' }});
+            
+            steps.push({ dp, current: [m, n], highlightLines: [14], explanation: { title: 'Done!', text: `Edit distance = ${dp[m][n]}` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const headers = ['', ...w2.split('')];
+                    const rows = ['', ...w1.split('')];
+                    let html = '';
+                    for (let i = 0; i <= w1.length; i++) {
+                        for (let j = 0; j <= w2.length; j++) {
+                            if (i === 0 && j === 0) html += '<div class="cell header"></div>';
+                            else if (i === 0) html += `<div class="cell header">${w2[j - 1]}</div>`;
+                            else if (j === 0) html += `<div class="cell header">${w1[i - 1]}</div>`;
+                            else {
+                                let cls = 'cell';
+                                if (step.current && step.current[0] === i && step.current[1] === j) cls += ' current';
+                                html += `<div class="${cls}">${step.dp[i][j]}</div>`;
+                            }
+                        }
+                    }
+                    document.getElementById('gridDisplay').innerHTML = html;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

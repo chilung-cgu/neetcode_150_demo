@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Schedule II Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .courses { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
+        .course { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
+        .course.processed { background: var(--viz-success); color: #0f172a; }
+        .order { display: flex; gap: 4px; justify-content: center; margin-top: 10px; }
+        .order-item { padding: 8px 12px; border-radius: 4px; font-family: monospace; background: var(--viz-secondary); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">COURSE SCHEDULE II (TOPOLOGICAL SORT)</div>
+                <div class="courses" id="coursesDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted);">Order:</div>
+                <div class="order" id="orderDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">KAHN'S ALGORITHM (BFS)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> findOrder(numCourses, prerequisites) {', id: 0 },
+            { line: '    // Build graph and indegree array', id: 1 },
+            { line: '    queue<int> q;', id: 2 },
+            { line: '    for (nodes with indegree 0) q.push(node);', id: 3 },
+            { line: '    while (!q.empty()) {', id: 4 },
+            { line: '        int node = q.front(); q.pop();', id: 5 },
+            { line: '        result.push_back(node);', id: 6 },
+            { line: '        for (auto& next : graph[node]) {', id: 7 },
+            { line: '            if (--indegree[next] == 0)', id: 8 },
+            { line: '                q.push(next);', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return result.size() == n ? result : {};', id: 12 },
+            { line: '}', id: 13 },
+        ];
+        const courses = [0, 1, 2, 3];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ processed: [], order: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 'Find nodes with indegree 0' }});
+            steps.push({ processed: [0], order: [0], highlightLines: [5, 6], explanation: { title: 'Process 0', text: 'Add to order' }});
+            steps.push({ processed: [0, 1], order: [0, 1], highlightLines: [5, 6], explanation: { title: 'Process 1', text: 'Add to order' }});
+            steps.push({ processed: [0, 1, 2], order: [0, 1, 2], highlightLines: [5, 6], explanation: { title: 'Process 2', text: 'Add to order' }});
+            steps.push({ processed: [0, 1, 2, 3], order: [0, 1, 2, 3], highlightLines: [12], explanation: { title: 'Done!', text: 'Order: [0, 1, 2, 3]' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('coursesDisplay').innerHTML = courses.map(c =>
+                        `<div class="course ${step.processed?.includes(c) ? 'processed' : ''}">${c}</div>`
+                    ).join('');
+                    document.getElementById('orderDisplay').innerHTML = (step.order || []).map(c =>
+                        `<span class="order-item">${c}</span>`
+                    ).join('') || '<em style="color:var(--viz-text-muted)">-</em>';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

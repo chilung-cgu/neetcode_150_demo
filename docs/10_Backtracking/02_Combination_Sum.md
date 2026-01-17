@@ -48,6 +48,13 @@ Base case:
 -   如果 `target < candidates[i]`，且 candidates 是 **sorted** 的，那後面的都不用看了 (因為都比當前大)。
 -   這題 Constraints 很小 (target <= 40)，所以就算不 sorting，基本的 backtracking 也能過。
 
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../combination_sum_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../combination_sum_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
+
 ---
 
 ## 4. 💻 Implementation (程式碼)

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distinct Subsequences Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .strings { text-align: center; margin: 10px 0; }
+        .str { display: inline-flex; gap: 2px; margin: 5px 10px; }
+        .char { width: 28px; height: 32px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 3px; }
+        .char.matched { background: var(--viz-success); color: #0f172a; }
+        .ways { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 10px; }
+        .way { padding: 4px 8px; border-radius: 4px; font-family: monospace; background: rgba(255,255,255,0.1); font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">DISTINCT SUBSEQUENCES</div>
+                <div class="strings">
+                    <div>s: <span class="str" id="sDisplay"></span></div>
+                    <div>t: <span class="str" id="tDisplay"></span></div>
+                </div>
+                <div style="text-align: center; color: var(--viz-text-muted);">Ways to form t:</div>
+                <div class="ways" id="waysDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Count</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">2D DP</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int numDistinct(string s, string t) {', id: 0 },
+            { line: '    vector<vector<long>> dp(m+1, vector<long>(n+1, 0));', id: 1 },
+            { line: '    for (int i = 0; i <= m; i++) dp[i][0] = 1;', id: 2 },
+            { line: '    for (int i = 1; i <= m; i++) {', id: 3 },
+            { line: '        for (int j = 1; j <= n; j++) {', id: 4 },
+            { line: '            dp[i][j] = dp[i-1][j];', id: 5 },
+            { line: '            if (s[i-1] == t[j-1])', id: 6 },
+            { line: '                dp[i][j] += dp[i-1][j-1];', id: 7 },
+            { line: '        }', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return dp[m][n];', id: 10 },
+            { line: '}', id: 11 },
+        ];
+        const s = 'rabbbit', t = 'rabbit';
+        const ways = [
+            [0, 1, 2, 3, 4, 6], // rabb_it
+            [0, 1, 2, 4, 5, 6], // rab_bit
+            [0, 1, 3, 4, 5, 6], // ra_bbit
+        ];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ matched: [], waysFound: [], highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Count subsequences of s that equal t' }});
+            
+            for (let i = 0; i < ways.length; i++) {
+                steps.push({ matched: ways[i], waysFound: ways.slice(0, i + 1), highlightLines: [6, 7], explanation: { title: `Way ${i + 1}`, text: 'Match characters' }});
+            }
+            
+            steps.push({ matched: [], waysFound: ways, highlightLines: [10], explanation: { title: 'Done!', text: `${ways.length} distinct subsequences` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('sDisplay').innerHTML = [...s].map((c, i) =>
+                        `<span class="char ${step.matched?.includes(i) ? 'matched' : ''}">${c}</span>`
+                    ).join('');
+                    document.getElementById('tDisplay').innerHTML = [...t].map(c =>
+                        `<span class="char">${c}</span>`
+                    ).join('');
+                    document.getElementById('waysDisplay').innerHTML = (step.waysFound || []).map((w, i) =>
+                        `<span class="way">${i + 1}: ${w.map(j => s[j]).join('')}</span>`
+                    ).join('');
+                    document.getElementById('countDisplay').textContent = step.waysFound?.length || 0;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

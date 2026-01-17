@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cheapest Flights Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .cities { display: flex; gap: 15px; justify-content: center; margin: 15px 0; }
+        .city { text-align: center; }
+        .city-circle { width: 50px; height: 50px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.9rem; background: var(--viz-primary); color: white; }
+        .city-circle.source { background: var(--viz-secondary); color: #0f172a; }
+        .city-circle.dest { background: var(--viz-success); color: #0f172a; }
+        .city-dist { font-size: 0.75rem; color: var(--viz-text-muted); margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">CHEAPEST FLIGHTS (K STOPS)</div>
+                <div class="cities" id="citiesDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Stops</div><div class="state-value" id="stopsDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">Cost</div><div class="state-value" id="costDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BELLMAN-FORD VARIANT</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int findCheapestPrice(n, flights, src, dst, k) {', id: 0 },
+            { line: '    vector<int> dist(n, INT_MAX);', id: 1 },
+            { line: '    dist[src] = 0;', id: 2 },
+            { line: '    for (int i = 0; i <= k; i++) {', id: 3 },
+            { line: '        vector<int> temp = dist;', id: 4 },
+            { line: '        for (auto& [u, v, w] : flights) {', id: 5 },
+            { line: '            if (dist[u] != INT_MAX)', id: 6 },
+            { line: '                temp[v] = min(temp[v], dist[u] + w);', id: 7 },
+            { line: '        }', id: 8 },
+            { line: '        dist = temp;', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    return dist[dst] == INT_MAX ? -1 : dist[dst];', id: 11 },
+            { line: '}', id: 12 },
+        ];
+        const cities = ['SRC', 'A', 'B', 'DST'];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const dists = [
+                ['0', '∞', '∞', '∞'],
+                ['0', '100', '200', '∞'],
+                ['0', '100', '200', '300'],
+            ];
+            
+            steps.push({ dist: dists[0], stop: 0, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Source distance = 0' }});
+            steps.push({ dist: dists[1], stop: 1, highlightLines: [5, 6, 7], explanation: { title: 'Iteration 1', text: 'Relax edges' }});
+            steps.push({ dist: dists[2], stop: 2, highlightLines: [5, 6, 7], explanation: { title: 'Iteration 2', text: 'Found path to DST' }});
+            steps.push({ dist: dists[2], stop: 2, highlightLines: [11], explanation: { title: 'Done!', text: 'Cheapest = $300 with ≤k stops' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('citiesDisplay').innerHTML = cities.map((c, i) =>
+                        `<div class="city"><div class="city-circle ${i === 0 ? 'source' : ''} ${i === 3 ? 'dest' : ''}">${c}</div><div class="city-dist">$${step.dist?.[i] || '∞'}</div></div>`
+                    ).join('');
+                    document.getElementById('stopsDisplay').textContent = step.stop || 0;
+                    document.getElementById('costDisplay').textContent = step.dist?.[3] || '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

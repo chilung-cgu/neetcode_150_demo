@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Integer Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .numbers { text-align: center; margin: 20px 0; }
+        .num { font-family: monospace; font-size: 2rem; padding: 10px 20px; border-radius: 8px; margin: 5px; display: inline-block; }
+        .num.input { background: var(--viz-primary); color: white; }
+        .num.output { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">REVERSE INTEGER</div>
+                <div class="numbers" id="numbersDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">MODULO & DIVIDE</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int reverse(int x) {', id: 0 },
+            { line: '    int result = 0;', id: 1 },
+            { line: '    while (x != 0) {', id: 2 },
+            { line: '        int digit = x % 10;', id: 3 },
+            { line: '        x /= 10;', id: 4 },
+            { line: '        // Check overflow before multiply', id: 5 },
+            { line: '        if (result > INT_MAX/10 || result < INT_MIN/10)', id: 6 },
+            { line: '            return 0;', id: 7 },
+            { line: '        result = result * 10 + digit;', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return result;', id: 10 },
+            { line: '}', id: 11 },
+        ];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            // 123 -> 321
+            steps.push({ input: 123, output: 0, highlightLines: [0, 1], explanation: { title: 'Reverse 123', text: 'Extract digits from right' }});
+            steps.push({ input: 12, output: 3, digit: 3, highlightLines: [3, 4, 8], explanation: { title: '123 % 10 = 3', text: 'result = 0 * 10 + 3 = 3' }});
+            steps.push({ input: 1, output: 32, digit: 2, highlightLines: [3, 4, 8], explanation: { title: '12 % 10 = 2', text: 'result = 3 * 10 + 2 = 32' }});
+            steps.push({ input: 0, output: 321, digit: 1, highlightLines: [3, 4, 8], explanation: { title: '1 % 10 = 1', text: 'result = 32 * 10 + 1 = 321' }});
+            steps.push({ input: 0, output: 321, highlightLines: [10], explanation: { title: 'Done!', text: '123 → 321' }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('numbersDisplay').innerHTML = `
+                        <div><span style="color: var(--viz-text-muted);">x = </span><span class="num input">${step.input}</span></div>
+                        <div style="margin-top: 10px;"><span style="color: var(--viz-text-muted);">result = </span><span class="num output">${step.output}</span></div>
+                    `;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

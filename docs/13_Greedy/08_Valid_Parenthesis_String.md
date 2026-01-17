@@ -63,6 +63,13 @@ Greedy 的思路非常巧妙：
 -   如果 `minOpen == 0`，代表我們可以通過某種組合讓左括號剛好被抵消。
 -   (注意：我們只關心是否 *包含* 0，而 `minOpen` 一旦被重置為 0，就代表 0 在範圍內)。
 
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../valid_parenthesis_string_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../valid_parenthesis_string_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
+
 ---
 
 ## 4. 💻 Implementation (程式碼)

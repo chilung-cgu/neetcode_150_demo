@@ -5,17 +5,17 @@
 題目給一個 Linked List 的 `head` 和一個整數 `n`。
 請刪除倒數第 `n` 個節點，並回傳新的 `head`。
 
--   **Input**: `head = [1,2,3,4,5], n = 2`
--   **Output**: `[1,2,3,5]` (移除倒數第 2 個，也就是 4)
--   **Input**: `head = [1], n = 1`
--   **Output**: `[]`
--   **Input**: `head = [1,2], n = 1`
--   **Output**: `[1]`
--   **Constraints**:
-    -   $1 <= sz <= 30$.
-    -   $0 <= Node.val <= 100$.
-    -   $1 <= n <= sz$.
-    -   **Challenge**: Could you do this in one pass? (一次遍歷)
+- **Input**: `head = [1,2,3,4,5], n = 2`
+- **Output**: `[1,2,3,5]` (移除倒數第 2 個，也就是 4)
+- **Input**: `head = [1], n = 1`
+- **Output**: `[]`
+- **Input**: `head = [1,2], n = 1`
+- **Output**: `[1]`
+- **Constraints**:
+  - $1 <= sz <= 30$.
+  - $0 <= Node.val <= 100$.
+  - $1 <= n <= sz$.
+  - **Challenge**: Could you do this in one pass? (一次遍歷)
 
 ---
 
@@ -24,8 +24,9 @@
 1.  第一次遍歷算長度 `L`。
 2.  目標是刪除第 `L - n` 個節點 (0-indexed)。
 3.  第二次遍歷走到前一個節點，執行刪除。
--   **Time**: $O(2L) = O(L)$。
--   **Result**: 雖然仍是 $O(L)$，但兩次遍歷有點多了。題目希望一次。
+
+- **Time**: $O(2L) = O(L)$。
+- **Result**: 雖然仍是 $O(L)$，但兩次遍歷有點多了。題目希望一次。
 
 ---
 
@@ -38,13 +39,20 @@
 此時 `slow` 剛好會在「被刪除節點」的 **前一個 (prev)** 位置。
 為什麼？
 
--   假設我們想刪除倒數第 `n` 個。
--   如果要刪除它，我們需要停在它前面的節點。
--   所以 `slow` 和 `tail` 的距離應該要是 `n + 1` (包含被刪除的那個)。
--   所以 `fast` 比 `slow` 領先 `n + 1` 步。當 `fast` 到底，`slow` 就到位了。
+- 假設我們想刪除倒數第 `n` 個。
+- 如果要刪除它，我們需要停在它前面的節點。
+- 所以 `slow` 和 `tail` 的距離應該要是 `n + 1` (包含被刪除的那個)。
+- 所以 `fast` 比 `slow` 領先 `n + 1` 步。當 `fast` 到底，`slow` 就到位了。
 
 **Dummy Node**:
 如果我们要刪除的是 **Head** (倒數第 L 個)，就需要 Dummy Node 來處理這種 edge case。`dummy->next = head`。我們讓 `slow` 從 `dummy` 開始。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../remove_nth_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../remove_nth_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -165,7 +173,7 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(L)$
-    -   我們只遍歷了 list 一次。
--   **Space Complexity**: $O(1)$
-    -   只使用固定指針。
+- **Time Complexity**: $O(L)$
+  - 我們只遍歷了 list 一次。
+- **Space Complexity**: $O(1)$
+  - 只使用固定指針。

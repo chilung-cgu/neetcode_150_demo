@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Nth Node From End Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .list-display { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 15px 0; }
+        .node { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; position: relative; }
+        .node.slow { border: 3px solid var(--viz-success); }
+        .node.fast { border: 3px solid var(--viz-secondary); }
+        .node.remove { background: var(--viz-error); text-decoration: line-through; }
+        .arrow { color: var(--viz-text-muted); }
+        .pointer-label { position: absolute; top: -20px; font-size: 0.7rem; color: var(--viz-text-muted); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">REMOVE NTH NODE FROM END (n=2)</div>
+                <div class="list-display" id="listDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Gap</div><div class="state-value" id="gapDisplay">n = 2</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">TWO POINTERS</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'ListNode* removeNthFromEnd(head, n) {', id: 0 },
+            { line: '    ListNode dummy(0, head);', id: 1 },
+            { line: '    ListNode *slow = &dummy, *fast = &dummy;', id: 2 },
+            { line: '    // Move fast n+1 steps ahead', id: 3 },
+            { line: '    for (int i = 0; i <= n; i++) fast = fast->next;', id: 4 },
+            { line: '    // Move both until fast reaches end', id: 5 },
+            { line: '    while (fast) {', id: 6 },
+            { line: '        slow = slow->next;', id: 7 },
+            { line: '        fast = fast->next;', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    // slow->next is the node to remove', id: 10 },
+            { line: '    slow->next = slow->next->next;', id: 11 },
+            { line: '    return dummy.next;', id: 12 },
+            { line: '}', id: 13 },
+        ];
+        const list = [1, 2, 3, 4, 5];
+        const n = 2;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ list: [...list], slow: -1, fast: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'dummy→1→2→3→4→5, n=2' }});
+            
+            // Move fast n+1 steps
+            steps.push({ list: [...list], slow: -1, fast: 2, highlightLines: [3, 4], explanation: { title: 'Advance fast by n+1=3', text: 'fast at node 3' }});
+            
+            // Move both
+            steps.push({ list: [...list], slow: 0, fast: 3, highlightLines: [6, 7, 8], explanation: { title: 'Move both', text: 'slow→1, fast→4' }});
+            steps.push({ list: [...list], slow: 1, fast: 4, highlightLines: [6, 7, 8], explanation: { title: 'Move both', text: 'slow→2, fast→5' }});
+            steps.push({ list: [...list], slow: 2, fast: 5, highlightLines: [6, 7, 8], explanation: { title: 'fast reaches end', text: 'slow→3, fast→null' }});
+            
+            // Remove
+            steps.push({ list: [...list], slow: 2, remove: 3, highlightLines: [10, 11], explanation: { title: 'Remove slow.next (4)', text: 'Node 4 is 2nd from end' }});
+            
+            // Result
+            steps.push({ list: [1, 2, 3, 5], highlightLines: [12], explanation: { title: 'Done!', text: 'Result: 1→2→3→5' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const display = step.list.map((n, i) => {
+                        let cls = 'node';
+                        let label = '';
+                        if (i === step.slow) { cls += ' slow'; label = '<span class="pointer-label">slow</span>'; }
+                        if (i === step.fast) { cls += ' fast'; label += '<span class="pointer-label">fast</span>'; }
+                        if (i === step.remove) cls += ' remove';
+                        return `<span class="${cls}">${label}${n}</span>`;
+                    }).join('<span class="arrow">→</span>');
+                    document.getElementById('listDisplay').innerHTML = display;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

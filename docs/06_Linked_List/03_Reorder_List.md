@@ -8,13 +8,13 @@
 簡單來說，就是把後半段反轉，然後像「拉鍊」一樣跟前半段交叉合併。
 **要求**：In-place modify，不能改變 node values，必須移動 nodes 本身。
 
--   **Input**: `head = [1,2,3,4]`
--   **Output**: `[1,4,2,3]`
--   **Input**: `head = [1,2,3,4,5]`
--   **Output**: `[1,5,2,4,3]`
--   **Constraints**:
-    -   $1 <= n <= 5 \cdot 10^4$.
-    -   $1 <= Node.val <= 1000$.
+- **Input**: `head = [1,2,3,4]`
+- **Output**: `[1,4,2,3]`
+- **Input**: `head = [1,2,3,4,5]`
+- **Output**: `[1,5,2,4,3]`
+- **Constraints**:
+  - $1 <= n <= 5 \cdot 10^4$.
+  - $1 <= Node.val <= 1000$.
 
 ---
 
@@ -23,9 +23,9 @@
 用一個 `deque` (Double-ended queue) 存所有的 nodes。
 然後交替從 `front` 和 `back` 取出 node 串接。
 
--   **Time**: $O(n)$。
--   **Space**: $O(n)$ (因為存了 pointers)。
--   **Result**: 雖然可以過，但是題目通常期望 $O(1)$ Space。
+- **Time**: $O(n)$。
+- **Space**: $O(n)$ (因為存了 pointers)。
+- **Result**: 雖然可以過，但是題目通常期望 $O(1)$ Space。
 
 ---
 
@@ -34,19 +34,26 @@
 這題可以拆解成三個標準的 Linked List 子問題：
 
 1.  **Find Middle**: 使用 **Slow & Fast Pointers** 找到鏈表的中點。
-    -   `1->2->3->4->5` 中的 `3`。
+    - `1->2->3->4->5` 中的 `3`。
 2.  **Reverse Second Half**: 將中點之後的鏈表反轉。
-    -   `3->4->5` 變成 `3<-4<-5` (或者 `3->null`, `5->4->null`)。
-    -   通常我們斷開連結：`1->2->3` 和 `5->4`。
+    - `3->4->5` 變成 `3<-4<-5` (或者 `3->null`, `5->4->null`)。
+    - 通常我們斷開連結：`1->2->3` 和 `5->4`。
 3.  **Merge Two Lists**: 將前半段 (`1->2->3`) 和反轉後的後半段 (`5->4`) 交替合併。
-    -   `1->5->2->4->3`。
+    - `1->5->2->4->3`。
 
 **步驟細節**：
 
--   **Find Mid**: `slow` 走一步，`fast` 走兩步。
--   **Split**: `mid = slow->next`; `slow->next = nullptr`.
--   **Reverse**: 標準 reverse linked list。
--   **Merge**: `temp1 = l1->next`, `temp2 = l2->next`, `l1->next = l2`, `l2->next = temp1`...
+- **Find Mid**: `slow` 走一步，`fast` 走兩步。
+- **Split**: `mid = slow->next`; `slow->next = nullptr`.
+- **Reverse**: 標準 reverse linked list。
+- **Merge**: `temp1 = l1->next`, `temp2 = l2->next`, `l1->next = l2`, `l2->next = temp1`...
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../reorder_list_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../reorder_list_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -203,10 +210,10 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n)$
-    -   Find Mid: $O(n/2)$.
-    -   Reverse: $O(n/2)$.
-    -   Merge: $O(n/2)$.
-    -   Total: $O(n)$.
--   **Space Complexity**: $O(1)$
-    -   In-place operation，只用了指標變數。
+- **Time Complexity**: $O(n)$
+  - Find Mid: $O(n/2)$.
+  - Reverse: $O(n/2)$.
+  - Merge: $O(n/2)$.
+  - Total: $O(n)$.
+- **Space Complexity**: $O(1)$
+  - In-place operation，只用了指標變數。

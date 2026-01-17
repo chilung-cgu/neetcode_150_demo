@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serialize and Deserialize Binary Tree Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .tree-level { display: flex; justify-content: center; gap: 10px; margin: 6px 0; }
+        .tree-node { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.85rem; }
+        .tree-node.current { background: var(--viz-secondary); color: #0f172a; }
+        .tree-node.null { background: transparent; border: 2px dashed var(--viz-text-muted); color: var(--viz-text-muted); }
+        .serial-display { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+        .serial-item { padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 0.8rem; background: rgba(255,255,255,0.1); }
+        .serial-item.added { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SERIALIZE & DESERIALIZE BINARY TREE</div>
+                <div id="treeDisplay"></div>
+                <div style="margin-top: 15px; text-align: center; color: var(--viz-text-muted);">Serialized (Level-Order):</div>
+                <div class="serial-display" id="serialDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BFS APPROACH</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'string serialize(TreeNode* root) {', id: 0 },
+            { line: '    string result;', id: 1 },
+            { line: '    queue<TreeNode*> q; q.push(root);', id: 2 },
+            { line: '    while (!q.empty()) {', id: 3 },
+            { line: '        auto node = q.front(); q.pop();', id: 4 },
+            { line: '        if (node) {', id: 5 },
+            { line: '            result += to_string(node->val) + ",";', id: 6 },
+            { line: '            q.push(node->left);', id: 7 },
+            { line: '            q.push(node->right);', id: 8 },
+            { line: '        } else result += "null,";', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    return result;', id: 11 },
+            { line: '}', id: 12 },
+        ];
+        // Tree:     1
+        //          / \
+        //         2   3
+        //            / \
+        //           4   5
+        const levels = [[1], [2, 3], ['', '', 4, 5]];
+        const serial = ['1', '2', '3', 'null', 'null', '4', '5'];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ serialized: [], currentSerial: -1, highlightLines: [0, 1, 2], explanation: { title: 'Start BFS', text: 'Level-order traversal' }});
+            for (let i = 0; i < serial.length; i++) {
+                steps.push({ serialized: serial.slice(0, i + 1), currentSerial: i, highlightLines: serial[i] === 'null' ? [9] : [6, 7, 8], explanation: { title: `Add "${serial[i]}"`, text: `Queue processes level by level` }});
+            }
+            steps.push({ serialized: serial, done: true, highlightLines: [11], explanation: { title: 'Done!', text: `Serialized: "${serial.join(',')}"` }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    levels.forEach((level) => {
+                        html += '<div class="tree-level">' + level.map(v => v ? `<div class="tree-node">${v}</div>` : '<div class="tree-node null">∅</div>').join('') + '</div>';
+                    });
+                    document.getElementById('treeDisplay').innerHTML = html;
+                    document.getElementById('serialDisplay').innerHTML = step.serialized.map((s, i) =>
+                        `<span class="serial-item ${i === step.currentSerial ? 'added' : ''}">${s}</span>`
+                    ).join('') || '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -8,10 +8,10 @@
 
 **Constraints / Requirements**:
 
--   You must not modify the array (assume the array is read-only).
--   You must use only constant, $O(1)$ extra space.
--   Your runtime complexity should be less than $O(n^2)$.
--   $1 <= n <= 10^5$.
+- You must not modify the array (assume the array is read-only).
+- You must use only constant, $O(1)$ extra space.
+- Your runtime complexity should be less than $O(n^2)$.
+- $1 <= n <= 10^5$.
 
 這題雖然給的是 Array，但它其實是 **Legacy Interview Question** 的變形，核心解法跟 Linked List 有關。
 
@@ -20,13 +20,13 @@
 ## 2. 🐢 Brute Force Approach (暴力解)
 
 1.  **Count Iteration**: 對於 `1` 到 `n` 的每個數字，計算它在 array 出現幾次。
-    -   **Time**: $O(n^2)$。符合題目 "less than O(n^2)" 的邊緣，但不是最佳。
+    - **Time**: $O(n^2)$。符合題目 "less than O(n^2)" 的邊緣，但不是最佳。
 2.  **Sorting**: 排序後檢查相鄰元素。
-    -   **Time**: $O(n \log n)$。
-    -   **Violation**: 修改了 array。
+    - **Time**: $O(n \log n)$。
+    - **Violation**: 修改了 array。
 3.  **Hash Set**:
-    -   **Time**: $O(n)$。
-    -   **Violation**: Space $O(n)$。
+    - **Time**: $O(n)$。
+    - **Violation**: Space $O(n)$。
 
 ---
 
@@ -44,19 +44,26 @@
 **Floyd's Algorithm (Turtle and Hare)**:
 
 1.  **Phase 1**: 判斷是否有環（一定有）。
-    -   `slow = nums[slow]`, `fast = nums[nums[fast]]`。
-    -   他們會相遇。
+    - `slow = nums[slow]`, `fast = nums[nums[fast]]`。
+    - 他們會相遇。
 2.  **Phase 2**: 找出環的入口。
-    -   將 `slow` 重置回起點 (`nums[0]` 或 `0`)。
-    -   `fast` 保持在相遇點。
-    -   兩者同時每次走一步：`slow = nums[slow]`, `fast = nums[fast]`。
-    -   他們再次相遇的點，就是環的入口，也就是重複的數字。
+    - 將 `slow` 重置回起點 (`nums[0]` 或 `0`)。
+    - `fast` 保持在相遇點。
+    - 兩者同時每次走一步：`slow = nums[slow]`, `fast = nums[fast]`。
+    - 他們再次相遇的點，就是環的入口，也就是重複的數字。
 
 **為什麼 Phase 2 有效？** (數學證明略，這是經典算法性質)：
 設起點到環入口距離為 `a`，環長為 `L`。相遇點距離環入口為 `b`。
 Fast 走了 `2(a+b)`，Slow 走了 `a+b`。
 Fast 也在 `a + b + kL` 處。
 可以推導出 `a = kL - b`。這意味著從起點走 `a` 步，和從相遇點走 `a` 步 (實際上是 `kL - b`，也就是倒退 `b` 步或者往前走互補距離)，會在入口相遇。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../find_duplicate_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../find_duplicate_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -176,7 +183,7 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n)$
-    -   Floyd 演算法是線性的。
--   **Space Complexity**: $O(1)$
-    -   沒有修改 array，沒有額外空間。
+- **Time Complexity**: $O(n)$
+  - Floyd 演算法是線性的。
+- **Space Complexity**: $O(1)$
+  - 沒有修改 array，沒有額外空間。

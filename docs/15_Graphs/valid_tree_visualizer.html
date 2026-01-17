@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Valid Tree Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .nodes { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
+        .node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
+        .node.connected { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">GRAPH VALID TREE</div>
+                <div class="nodes" id="nodesDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Is Tree?</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">UNION-FIND & EDGE COUNT</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool validTree(int n, edges) {', id: 0 },
+            { line: '    // Tree has exactly n-1 edges', id: 1 },
+            { line: '    if (edges.size() != n - 1) return false;', id: 2 },
+            { line: '    UnionFind uf(n);', id: 3 },
+            { line: '    for (auto& e : edges) {', id: 4 },
+            { line: '        if (!uf.union(e[0], e[1]))', id: 5 },
+            { line: '            return false; // cycle detected', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return true; // connected & no cycle', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const nodes = [0, 1, 2, 3, 4];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ connected: [], highlightLines: [0, 1, 2], explanation: { title: 'Check edge count', text: 'edges = 4 = n-1 ✓' }});
+            steps.push({ connected: [0, 1], highlightLines: [5], explanation: { title: 'Union(0,1)', text: 'OK' }});
+            steps.push({ connected: [0, 1, 2], highlightLines: [5], explanation: { title: 'Union(0,2)', text: 'OK' }});
+            steps.push({ connected: [0, 1, 2, 3], highlightLines: [5], explanation: { title: 'Union(0,3)', text: 'OK' }});
+            steps.push({ connected: [0, 1, 2, 3, 4], highlightLines: [5], explanation: { title: 'Union(0,4)', text: 'OK' }});
+            steps.push({ connected: [0, 1, 2, 3, 4], result: true, highlightLines: [8], explanation: { title: 'Valid Tree!', text: 'Connected & no cycle' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('nodesDisplay').innerHTML = nodes.map(n =>
+                        `<div class="node ${step.connected?.includes(n) ? 'connected' : ''}">${n}</div>`
+                    ).join('');
+                    document.getElementById('resultDisplay').textContent = step.result ? 'Yes ✓' : '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

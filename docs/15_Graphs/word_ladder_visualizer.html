@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Ladder Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .ladder { display: flex; gap: 8px; justify-content: center; margin: 15px 0; flex-wrap: wrap; align-items: center; }
+        .word { padding: 10px 14px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .word.current { background: var(--viz-secondary); color: #0f172a; }
+        .word.path { background: var(--viz-success); color: #0f172a; }
+        .arrow { color: var(--viz-text-muted); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">WORD LADDER (BFS)</div>
+                <div class="ladder" id="ladderDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Length</div><div class="state-value" id="lengthDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BFS SHORTEST PATH</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int ladderLength(beginWord, endWord, wordList) {', id: 0 },
+            { line: '    set<string> wordSet(wordList.begin(), wordList.end());', id: 1 },
+            { line: '    queue<pair<string, int>> q;', id: 2 },
+            { line: '    q.push({beginWord, 1});', id: 3 },
+            { line: '    while (!q.empty()) {', id: 4 },
+            { line: '        auto [word, len] = q.front(); q.pop();', id: 5 },
+            { line: '        if (word == endWord) return len;', id: 6 },
+            { line: '        for each position, try a-z:', id: 7 },
+            { line: '            if (wordSet.count(newWord)) {', id: 8 },
+            { line: '                q.push({newWord, len + 1});', id: 9 },
+            { line: '                wordSet.erase(newWord);', id: 10 },
+            { line: '            }', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    return 0;', id: 13 },
+            { line: '}', id: 14 },
+        ];
+        const path = ['hit', 'hot', 'dot', 'dog', 'cog'];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            for (let i = 0; i < path.length; i++) {
+                steps.push({ path: path.slice(0, i + 1), current: i, highlightLines: i === 0 ? [0, 1, 2, 3] : [5, 6, 7, 8, 9], explanation: { title: i === 0 ? 'Start' : `Step ${i}`, text: path.slice(0, i + 1).join(' → ') }});
+            }
+            steps.push({ path, highlightLines: [6], explanation: { title: 'Found!', text: `Shortest path length = ${path.length}` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    step.path.forEach((w, i) => {
+                        if (i > 0) html += '<span class="arrow">→</span>';
+                        html += `<span class="word ${i === step.current ? 'current' : 'path'}">${w}</span>`;
+                    });
+                    document.getElementById('ladderDisplay').innerHTML = html;
+                    document.getElementById('lengthDisplay').textContent = step.path.length;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

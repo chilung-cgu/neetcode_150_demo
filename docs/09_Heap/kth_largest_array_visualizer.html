@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kth Largest Element in Array Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">KTH LARGEST (QUICKSELECT) k=2</div>
+                <div class="chart-container" id="chartContainer"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Pivot</div><div class="state-value" id="pivotDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">QUICKSELECT O(n)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int findKthLargest(nums, k) {', id: 0 },
+            { line: '    // Convert to kth smallest index', id: 1 },
+            { line: '    k = nums.size() - k;', id: 2 },
+            { line: '    return quickSelect(nums, 0, n-1, k);', id: 3 },
+            { line: '}', id: 4 },
+            { line: 'int quickSelect(nums, l, r, k) {', id: 5 },
+            { line: '    int pivot = partition(nums, l, r);', id: 6 },
+            { line: '    if (pivot == k) return nums[pivot];', id: 7 },
+            { line: '    if (pivot < k) return quickSelect(nums, pivot+1, r, k);', id: 8 },
+            { line: '    return quickSelect(nums, l, pivot-1, k);', id: 9 },
+            { line: '}', id: 10 },
+        ];
+        const nums = [3, 2, 1, 5, 6, 4];
+        const k = 2;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const arr = [...nums];
+            const targetIdx = nums.length - k; // 4 (5th element in sorted = 5)
+            
+            steps.push({ arr: [...arr], pivot: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: `Find ${k}th largest = ${nums.length - k}th smallest index` }});
+            
+            // Simulated quickselect
+            arr.sort((a, b) => a - b); // [1,2,3,4,5,6]
+            steps.push({ arr: [3, 2, 1, 5, 6, 4], pivotVal: 4, pivotIdx: 3, highlightLines: [6], explanation: { title: 'Partition with pivot 4', text: 'Elements < 4 go left, > 4 go right' }});
+            steps.push({ arr: [1, 2, 3, 4, 5, 6], pivotIdx: 3, highlightLines: [8], explanation: { title: 'pivot(3) < target(4)', text: 'Search right half' }});
+            steps.push({ arr: [1, 2, 3, 4, 5, 6], pivotIdx: 4, result: 5, highlightLines: [7], explanation: { title: 'Found!', text: `2nd largest = ${arr[targetIdx]}` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const states = step.arr.map((_, i) => i === step.pivotIdx ? 'current' : (step.result && step.arr[i] === step.result ? 'in-stack' : ''));
+                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), step.arr, states, { height: 180 });
+                    document.getElementById('pivotDisplay').textContent = step.pivotVal ?? '-';
+                    document.getElementById('resultDisplay').textContent = step.result ?? '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

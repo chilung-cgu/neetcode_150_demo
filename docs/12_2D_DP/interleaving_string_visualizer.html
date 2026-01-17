@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interleaving String Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .strings { text-align: center; margin: 10px 0; }
+        .str { display: inline-flex; gap: 2px; margin: 5px 10px; }
+        .char { width: 24px; height: 28px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 3px; }
+        .char.s1 { background: var(--viz-secondary); color: #0f172a; }
+        .char.s2 { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">INTERLEAVING STRING</div>
+                <div class="strings">
+                    <div>s1: <span class="str" id="s1Display"></span></div>
+                    <div>s2: <span class="str" id="s2Display"></span></div>
+                    <div>s3: <span class="str" id="s3Display"></span></div>
+                </div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">2D DP</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool isInterleave(s1, s2, s3) {', id: 0 },
+            { line: '    if (s1.size() + s2.size() != s3.size()) return false;', id: 1 },
+            { line: '    vector<vector<bool>> dp(m+1, vector<bool>(n+1, false));', id: 2 },
+            { line: '    dp[0][0] = true;', id: 3 },
+            { line: '    for (int i = 0; i <= m; i++) {', id: 4 },
+            { line: '        for (int j = 0; j <= n; j++) {', id: 5 },
+            { line: '            if (i > 0 && s1[i-1] == s3[i+j-1])', id: 6 },
+            { line: '                dp[i][j] = dp[i][j] || dp[i-1][j];', id: 7 },
+            { line: '            if (j > 0 && s2[j-1] == s3[i+j-1])', id: 8 },
+            { line: '                dp[i][j] = dp[i][j] || dp[i][j-1];', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return dp[m][n];', id: 12 },
+            { line: '}', id: 13 },
+        ];
+        const s1 = 'aab', s2 = 'xyz', s3 = 'axayzbOLD'; // will show simpler example
+        const s1ex = 'ab', s2ex = 'cd', s3ex = 'acbd';
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const sources = ['s1', 's1', 's2', 's2']; // a from s1, c from s2, b from s1, d from s2
+            
+            steps.push({ s3sources: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 's1="ab", s2="cd", s3="acbd"' }});
+            steps.push({ s3sources: ['s1'], highlightLines: [6, 7], explanation: { title: 'Match "a"', text: 'From s1' }});
+            steps.push({ s3sources: ['s1', 's2'], highlightLines: [8, 9], explanation: { title: 'Match "c"', text: 'From s2' }});
+            steps.push({ s3sources: ['s1', 's2', 's1'], highlightLines: [6, 7], explanation: { title: 'Match "b"', text: 'From s1' }});
+            steps.push({ s3sources: ['s1', 's2', 's1', 's2'], highlightLines: [8, 9], explanation: { title: 'Match "d"', text: 'From s2' }});
+            steps.push({ s3sources: sources, result: true, highlightLines: [12], explanation: { title: 'Done!', text: 'Valid interleaving ✓' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('s1Display').innerHTML = [...s1ex].map(c => `<span class="char s1">${c}</span>`).join('');
+                    document.getElementById('s2Display').innerHTML = [...s2ex].map(c => `<span class="char s2">${c}</span>`).join('');
+                    document.getElementById('s3Display').innerHTML = [...s3ex].map((c, i) => {
+                        const src = step.s3sources?.[i];
+                        return `<span class="char ${src || ''}">${c}</span>`;
+                    }).join('');
+                    document.getElementById('resultDisplay').textContent = step.result ? 'true' : '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

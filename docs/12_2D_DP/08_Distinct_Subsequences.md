@@ -50,6 +50,13 @@
 **Space Optimization**:
 只需要前一列 `dp[j]`。但更新時要注意：如果用 1D 陣列，當 `s[i] == t[j]` 時，我們需要 `dp[j-1]` (來自上一輪 `i-1`)。所以如果要用 1D 陣列，內層迴圈需要**從後往前**遍歷，或者使用變數暫存 `prev`。
 
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../distinct_subsequences_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../distinct_subsequences_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
+
 ---
 
 ## 4. 💻 Implementation (程式碼)

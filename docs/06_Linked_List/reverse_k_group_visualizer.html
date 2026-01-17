@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Nodes in k-Group Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .list-display { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 15px 0; flex-wrap: wrap; }
+        .node { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .node.group { background: var(--viz-secondary); color: #0f172a; }
+        .node.reversed { background: var(--viz-success); color: #0f172a; }
+        .arrow { color: var(--viz-text-muted); }
+        .group-bracket { color: var(--viz-secondary); font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">REVERSE NODES IN K-GROUP (k=3)</div>
+                <div class="list-display" id="listDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'ListNode* reverseKGroup(ListNode* head, int k) {', id: 0 },
+            { line: '    ListNode dummy(0, head);', id: 1 },
+            { line: '    ListNode* groupPrev = &dummy;', id: 2 },
+            { line: '    while (true) {', id: 3 },
+            { line: '        // Check if k nodes exist', id: 4 },
+            { line: '        ListNode* kth = getKth(groupPrev, k);', id: 5 },
+            { line: '        if (!kth) break;', id: 6 },
+            { line: '        ListNode* groupNext = kth->next;', id: 7 },
+            { line: '        // Reverse group [groupPrev+1, kth]', id: 8 },
+            { line: '        reverse(groupPrev->next, groupNext);', id: 9 },
+            { line: '        // Reconnect', id: 10 },
+            { line: '        tmp = groupPrev->next;', id: 11 },
+            { line: '        groupPrev->next = kth;', id: 12 },
+            { line: '        groupPrev = tmp;', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '    return dummy.next;', id: 15 },
+            { line: '}', id: 16 },
+        ];
+        const original = [1, 2, 3, 4, 5];
+        const k = 3;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ list: [...original], groups: [], highlightLines: [0, 1, 2], explanation: { title: 'Original', text: '1→2→3→4→5, k=3' }});
+            
+            // Group 1: [1,2,3]
+            steps.push({ list: [...original], currentGroup: [0, 1, 2], highlightLines: [4, 5], explanation: { title: 'Find k=3 nodes', text: 'Group: [1, 2, 3]' }});
+            
+            // Reverse group 1
+            steps.push({ list: [3, 2, 1, 4, 5], reversedIdx: [0, 1, 2], highlightLines: [8, 9], explanation: { title: 'Reverse group', text: '1→2→3 becomes 3→2→1' }});
+            
+            // Group 2: [4,5] - not enough
+            steps.push({ list: [3, 2, 1, 4, 5], reversedIdx: [0, 1, 2], currentGroup: [3, 4], notEnough: true, highlightLines: [5, 6], explanation: { title: 'Check next group', text: 'Only 2 nodes left, k=3 needed → stop' }});
+            
+            steps.push({ list: [3, 2, 1, 4, 5], reversedIdx: [0, 1, 2], highlightLines: [15], explanation: { title: 'Done!', text: 'Result: 3→2→1→4→5' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    step.list.forEach((n, i) => {
+                        let cls = 'node';
+                        if (step.currentGroup && step.currentGroup.includes(i)) cls += ' group';
+                        if (step.reversedIdx && step.reversedIdx.includes(i)) cls += ' reversed';
+                        html += `<span class="${cls}">${n}</span>`;
+                        if (i < step.list.length - 1) html += '<span class="arrow">→</span>';
+                    });
+                    document.getElementById('listDisplay').innerHTML = html;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

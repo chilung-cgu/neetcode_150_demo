@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Palindromic Substring Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .str-display { display: flex; gap: 3px; justify-content: center; margin: 15px 0; }
+        .char { width: 28px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; }
+        .char.center { border: 2px solid var(--viz-secondary); }
+        .char.palindrome { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">LONGEST PALINDROMIC SUBSTRING</div>
+                <div class="str-display" id="strDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Best</div><div class="state-value" id="bestDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">EXPAND AROUND CENTER</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'string longestPalindrome(string s) {', id: 0 },
+            { line: '    int start = 0, maxLen = 1;', id: 1 },
+            { line: '    for (int i = 0; i < s.size(); i++) {', id: 2 },
+            { line: '        // Odd length palindrome', id: 3 },
+            { line: '        expand(s, i, i);', id: 4 },
+            { line: '        // Even length palindrome', id: 5 },
+            { line: '        expand(s, i, i + 1);', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return s.substr(start, maxLen);', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const str = 'babad';
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ center: -1, range: [], best: '', highlightLines: [0, 1], explanation: { title: 'Start', text: 'Expand around each center' }});
+            steps.push({ center: 0, range: [0, 0], best: 'b', highlightLines: [4], explanation: { title: 'Center: b', text: 'Palindrome: "b"' }});
+            steps.push({ center: 1, range: [0, 2], best: 'bab', highlightLines: [4], explanation: { title: 'Center: a', text: 'Expand → "bab" ✓' }});
+            steps.push({ center: 2, range: [1, 3], best: 'bab', highlightLines: [4], explanation: { title: 'Center: b', text: '"aba" found, same length' }});
+            steps.push({ center: 3, range: [2, 4], best: 'bab', highlightLines: [4], explanation: { title: 'Center: a', text: '"bad" not palindrome' }});
+            steps.push({ center: -1, range: [0, 2], best: 'bab', highlightLines: [8], explanation: { title: 'Done!', text: 'Longest: "bab" (or "aba")' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('strDisplay').innerHTML = [...str].map((c, i) => {
+                        let cls = 'char';
+                        if (i === step.center) cls += ' center';
+                        if (step.range.length && i >= step.range[0] && i <= step.range[1]) cls += ' palindrome';
+                        return `<span class="${cls}">${c}</span>`;
+                    }).join('');
+                    document.getElementById('bestDisplay').textContent = step.best || '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

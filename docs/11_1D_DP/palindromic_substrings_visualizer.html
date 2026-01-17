@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Palindromic Substrings Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css" />
+    <style>
+      .str-display {
+        display: flex;
+        gap: 3px;
+        justify-content: center;
+        margin: 15px 0;
+      }
+      .char {
+        width: 30px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: monospace;
+        background: var(--viz-primary);
+        color: white;
+        border-radius: 4px;
+      }
+      .char.in-range {
+        background: var(--viz-success);
+        color: #0f172a;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main-layout">
+      <div class="canvas-area">
+        <div class="viz-card">
+          <div class="viz-title">COUNT PALINDROMIC SUBSTRINGS</div>
+          <div class="str-display" id="strDisplay"></div>
+          <div class="controls">
+            <button class="viz-btn" id="prevBtn">← Prev</button>
+            <div class="step-indicator">
+              Step <span id="currentStep">0</span> /
+              <span id="totalSteps">0</span>
+            </div>
+            <button class="viz-btn primary" id="nextBtn">Next →</button>
+            <button class="viz-btn" onclick="resetVisualization()">
+              ↻ Reset
+            </button>
+          </div>
+          <div class="state-grid">
+            <div class="state-item">
+              <div class="state-label">Count</div>
+              <div
+                class="state-value"
+                id="countDisplay"
+                style="color: var(--viz-success)"
+              >
+                0
+              </div>
+            </div>
+            <div class="state-item">
+              <div class="state-label">Current</div>
+              <div class="state-value" id="currentDisplay">-</div>
+            </div>
+          </div>
+        </div>
+        <div class="viz-card">
+          <div class="viz-title">EXPLANATION</div>
+          <div class="explanation" id="explanation"></div>
+        </div>
+      </div>
+      <div class="code-area">
+        <div class="viz-card" style="height: 100%; box-sizing: border-box">
+          <div class="viz-title">EXPAND AROUND CENTER</div>
+          <div class="code-panel" id="codeDisplay"></div>
+        </div>
+      </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+      const codeStructure = [
+        { line: "int countSubstrings(string s) {", id: 0 },
+        { line: "    int count = 0;", id: 1 },
+        { line: "    for (int i = 0; i < s.size(); i++) {", id: 2 },
+        { line: "        count += expand(s, i, i);     // odd", id: 3 },
+        { line: "        count += expand(s, i, i + 1); // even", id: 4 },
+        { line: "    }", id: 5 },
+        { line: "    return count;", id: 6 },
+        { line: "}", id: 7 },
+      ];
+      const str = "aaa";
+      // Palindromes: a(0), a(1), a(2), aa(0-1), aa(1-2), aaa(0-2) = 6
+
+      function generateAlgorithmSteps() {
+        const steps = [];
+        const palindromes = [
+          [0, 0],
+          [1, 1],
+          [2, 2],
+          [0, 1],
+          [1, 2],
+          [0, 2],
+        ];
+
+        steps.push({
+          range: [],
+          count: 0,
+          highlightLines: [0, 1],
+          explanation: {
+            title: "Start",
+            text: "Count all palindromic substrings",
+          },
+        });
+
+        let count = 0;
+        for (const [l, r] of palindromes) {
+          count++;
+          steps.push({
+            range: [l, r],
+            count,
+            current: str.slice(l, r + 1),
+            highlightLines: [3, 4],
+            explanation: {
+              title: `Found: "${str.slice(l, r + 1)}"`,
+              text: `Count = ${count}`,
+            },
+          });
+        }
+
+        steps.push({
+          range: [],
+          count: 6,
+          highlightLines: [6],
+          explanation: { title: "Done!", text: "6 palindromic substrings" },
+        });
+
+        return steps;
+      }
+
+      let viz;
+      function init() {
+        viz = new AlgorithmVisualizer({
+          codeLines: codeStructure,
+          onStepChange: (step) => {
+            document.getElementById("strDisplay").innerHTML = [...str]
+              .map((c, i) => {
+                const inRange =
+                  step.range.length && i >= step.range[0] && i <= step.range[1];
+                return `<span class="char ${inRange ? "in-range" : ""}">${c}</span>`;
+              })
+              .join("");
+            document.getElementById("countDisplay").textContent = step.count;
+            document.getElementById("currentDisplay").textContent =
+              step.current || "-";
+          },
+        });
+        viz.setSteps(generateAlgorithmSteps());
+      }
+      function resetVisualization() {
+        init();
+      }
+      window.addEventListener("load", init);
+    </script>
+  </body>
+</html>

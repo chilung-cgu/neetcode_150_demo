@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letter Combinations of Phone Number Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .phone-display { display: flex; gap: 10px; justify-content: center; margin: 10px 0; }
+        .digit { padding: 10px 15px; border-radius: 8px; text-align: center; background: var(--viz-primary); color: white; }
+        .digit .num { font-size: 1.2rem; font-weight: bold; }
+        .digit .letters { font-size: 0.8rem; color: rgba(255,255,255,0.7); }
+        .digit.current { background: var(--viz-secondary); color: #0f172a; }
+        .digit.current .letters { color: rgba(0,0,0,0.6); }
+        .combinations { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
+        .comb { padding: 6px 12px; border-radius: 4px; font-family: monospace; background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">LETTER COMBINATIONS: "23"</div>
+                <div class="phone-display" id="phoneDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Current Combination:</div>
+                <div style="text-align: center; font-family: monospace; font-size: 1.5rem;" id="currentDisplay">-</div>
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">All Combinations:</div>
+                <div class="combinations" id="combDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BACKTRACKING</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'void backtrack(digits, idx, path, result) {', id: 0 },
+            { line: '    if (idx == digits.size()) { result.push_back(path); return; }', id: 1 },
+            { line: '    string letters = mapping[digits[idx]];', id: 2 },
+            { line: '    for (char c : letters) {', id: 3 },
+            { line: '        backtrack(digits, idx + 1, path + c, result);', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '}', id: 6 },
+        ];
+        const digits = ['2', '3'];
+        const mapping = { '2': 'abc', '3': 'def' };
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const combs = ['ad', 'ae', 'af', 'bd', 'be', 'bf', 'cd', 'ce', 'cf'];
+            
+            steps.push({ current: '', digitIdx: -1, results: [], highlightLines: [0], explanation: { title: 'Start', text: '2→"abc", 3→"def"' }});
+            
+            for (let i = 0; i < combs.length; i++) {
+                const c = combs[i];
+                steps.push({ current: c[0], digitIdx: 0, results: combs.slice(0, i), highlightLines: [3, 4], explanation: { title: `Choose '${c[0]}' from "abc"`, text: '' }});
+                steps.push({ current: c, digitIdx: 1, results: combs.slice(0, i + 1), highlightLines: [1], explanation: { title: `Add '${c[1]}' → "${c}"`, text: '✓ Complete' }});
+            }
+            
+            steps.push({ current: '', digitIdx: -1, results: combs, highlightLines: [6], explanation: { title: 'Done!', text: `${combs.length} combinations` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('phoneDisplay').innerHTML = digits.map((d, i) =>
+                        `<div class="digit ${i === step.digitIdx ? 'current' : ''}"><div class="num">${d}</div><div class="letters">${mapping[d]}</div></div>`
+                    ).join('');
+                    document.getElementById('currentDisplay').textContent = step.current || '-';
+                    document.getElementById('combDisplay').innerHTML = step.results.map(c =>
+                        `<span class="comb">${c}</span>`
+                    ).join('') || '<em style="color:var(--viz-text-muted)">None</em>';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

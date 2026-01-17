@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regular Expression Matching Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .strings { text-align: center; margin: 15px 0; }
+        .str { display: inline-flex; gap: 3px; margin: 5px 10px; }
+        .char { width: 30px; height: 34px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1.1rem; background: var(--viz-primary); color: white; border-radius: 4px; }
+        .char.matched { background: var(--viz-success); color: #0f172a; }
+        .char.pattern { background: var(--viz-secondary); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">REGULAR EXPRESSION MATCHING</div>
+                <div class="strings">
+                    <div>Text: <span class="str" id="textDisplay"></span></div>
+                    <div>Pattern: <span class="str" id="patternDisplay"></span></div>
+                </div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Match</div><div class="state-value" id="matchDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">2D DP</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool isMatch(string s, string p) {', id: 0 },
+            { line: '    vector<vector<bool>> dp(m+1, vector<bool>(n+1, false));', id: 1 },
+            { line: '    dp[0][0] = true;', id: 2 },
+            { line: '    // Handle patterns like a*, a*b*, etc.', id: 3 },
+            { line: '    for (int i = 0; i <= m; i++) {', id: 4 },
+            { line: '        for (int j = 1; j <= n; j++) {', id: 5 },
+            { line: '            if (p[j-1] == \'*\') {', id: 6 },
+            { line: '                dp[i][j] = dp[i][j-2]; // zero match', id: 7 },
+            { line: '                if (matches(s[i-1], p[j-2]))', id: 8 },
+            { line: '                    dp[i][j] = dp[i][j] || dp[i-1][j];', id: 9 },
+            { line: '            } else if (matches(s[i-1], p[j-1]))', id: 10 },
+            { line: '                dp[i][j] = dp[i-1][j-1];', id: 11 },
+            { line: '        }', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '    return dp[m][n];', id: 14 },
+            { line: '}', id: 15 },
+        ];
+        const text = 'aa', pattern = 'a*';
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ textMatched: 0, patternMatched: 0, highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: '. matches any, * matches 0+ of prev' }});
+            steps.push({ textMatched: 0, patternMatched: 2, highlightLines: [6, 7], explanation: { title: 'a* can match ""', text: 'Zero occurrences' }});
+            steps.push({ textMatched: 1, patternMatched: 2, highlightLines: [8, 9], explanation: { title: 'a* matches "a"', text: 'One occurrence' }});
+            steps.push({ textMatched: 2, patternMatched: 2, highlightLines: [8, 9], explanation: { title: 'a* matches "aa"', text: 'Two occurrences' }});
+            steps.push({ textMatched: 2, patternMatched: 2, match: true, highlightLines: [14], explanation: { title: 'Done!', text: '"aa" matches "a*" ✓' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('textDisplay').innerHTML = [...text].map((c, i) =>
+                        `<span class="char ${i < step.textMatched ? 'matched' : ''}">${c}</span>`
+                    ).join('');
+                    document.getElementById('patternDisplay').innerHTML = [...pattern].map((c, i) =>
+                        `<span class="char pattern">${c}</span>`
+                    ).join('');
+                    document.getElementById('matchDisplay').textContent = step.match ? 'true' : '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

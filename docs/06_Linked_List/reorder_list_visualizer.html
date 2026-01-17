@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reorder List Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .list-display { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 15px 0; flex-wrap: wrap; }
+        .node { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .node.highlight { background: var(--viz-secondary); color: #0f172a; }
+        .node.done { background: var(--viz-success); color: #0f172a; }
+        .arrow { color: var(--viz-text-muted); font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">REORDER LIST: L0→Ln→L1→Ln-1→...</div>
+                <div class="list-display" id="listDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'void reorderList(ListNode* head) {', id: 0 },
+            { line: '    // Step 1: Find middle using slow/fast', id: 1 },
+            { line: '    ListNode *slow = head, *fast = head;', id: 2 },
+            { line: '    while (fast && fast->next) { ... }', id: 3 },
+            { line: '    // Step 2: Reverse second half', id: 4 },
+            { line: '    ListNode* second = reverse(slow->next);', id: 5 },
+            { line: '    slow->next = nullptr;', id: 6 },
+            { line: '    // Step 3: Merge alternately', id: 7 },
+            { line: '    ListNode* first = head;', id: 8 },
+            { line: '    while (second) {', id: 9 },
+            { line: '        tmp1 = first->next; tmp2 = second->next;', id: 10 },
+            { line: '        first->next = second;', id: 11 },
+            { line: '        second->next = tmp1;', id: 12 },
+            { line: '        first = tmp1; second = tmp2;', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '}', id: 15 },
+        ];
+        const original = [1, 2, 3, 4, 5];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ list: [...original], phase: 'init', highlightLines: [0, 1], explanation: { title: 'Original List', text: '1→2→3→4→5' }});
+            
+            // Step 1: Find middle
+            steps.push({ list: [...original], midIdx: 2, phase: 'findMid', highlightLines: [2, 3], explanation: { title: 'Step 1: Find Middle', text: 'slow/fast pointers → middle at node 3' }});
+            
+            // Step 2: Reverse second half
+            const firstHalf = [1, 2, 3];
+            const secondHalf = [5, 4]; // reversed
+            steps.push({ firstHalf, secondHalf, phase: 'reverse', highlightLines: [4, 5, 6], explanation: { title: 'Step 2: Reverse Second Half', text: 'First: 1→2→3, Second: 5→4 (reversed)' }});
+            
+            // Step 3: Merge alternately
+            const merging = [];
+            let f = 0, s = 0;
+            const fh = [1, 2, 3], sh = [5, 4];
+            while (f < fh.length || s < sh.length) {
+                if (f < fh.length) merging.push(fh[f++]);
+                if (s < sh.length) merging.push(sh[s++]);
+            }
+            steps.push({ list: [1, 5], phase: 'merge1', highlightLines: [10, 11, 12], explanation: { title: 'Merge: 1→5', text: 'First element from each half' }});
+            steps.push({ list: [1, 5, 2, 4], phase: 'merge2', highlightLines: [10, 11, 12], explanation: { title: 'Merge: 1→5→2→4', text: 'Continue interleaving' }});
+            steps.push({ list: [1, 5, 2, 4, 3], phase: 'done', highlightLines: [15], explanation: { title: 'Done!', text: 'Final: 1→5→2→4→3' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    if (step.firstHalf && step.secondHalf) {
+                        html = '<div style="margin-bottom:10px"><strong>First:</strong> ' + step.firstHalf.map(n => `<span class="node">${n}</span>`).join('<span class="arrow">→</span>') + '</div>';
+                        html += '<div><strong>Second:</strong> ' + step.secondHalf.map(n => `<span class="node highlight">${n}</span>`).join('<span class="arrow">→</span>') + '</div>';
+                    } else {
+                        const list = step.list || [];
+                        html = list.map((n, i) => `<span class="node ${step.phase === 'done' ? 'done' : ''}">${n}</span>`).join('<span class="arrow">→</span>');
+                    }
+                    document.getElementById('listDisplay').innerHTML = html || '<em>Empty</em>';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

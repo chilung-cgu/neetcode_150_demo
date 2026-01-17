@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Bits Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .binary-row { display: flex; gap: 2px; justify-content: center; margin: 10px 0; }
+        .bit { width: 20px; height: 26px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.8rem; background: var(--viz-primary); color: white; border-radius: 3px; }
+        .bit.one { background: var(--viz-success); color: #0f172a; }
+        .label { text-align: center; color: var(--viz-text-muted); font-size: 0.85rem; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">REVERSE BITS</div>
+                <div class="label">Input:</div>
+                <div class="binary-row" id="inputDisplay"></div>
+                <div class="label" style="margin-top: 15px;">Output:</div>
+                <div class="binary-row" id="outputDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BIT BY BIT</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'uint32_t reverseBits(uint32_t n) {', id: 0 },
+            { line: '    uint32_t result = 0;', id: 1 },
+            { line: '    for (int i = 0; i < 32; i++) {', id: 2 },
+            { line: '        result <<= 1;        // shift left', id: 3 },
+            { line: '        result |= (n & 1);   // add last bit', id: 4 },
+            { line: '        n >>= 1;             // shift input right', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return result;', id: 7 },
+            { line: '}', id: 8 },
+        ];
+        const input = '00000000000000000000000000001011'; // 11
+        const output = '11010000000000000000000000000000'; // reversed
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const inputArr = input.split('');
+            
+            steps.push({ processed: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: 'Input: 11 (1011 in binary)' }});
+            steps.push({ processed: 8, highlightLines: [3, 4, 5], explanation: { title: 'Process 8 bits', text: 'Shift and copy bits' }});
+            steps.push({ processed: 16, highlightLines: [3, 4, 5], explanation: { title: 'Process 16 bits', text: 'Continue reversing' }});
+            steps.push({ processed: 32, highlightLines: [7], explanation: { title: 'Done!', text: 'Reversed all 32 bits' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('inputDisplay').innerHTML = input.split('').map(b =>
+                        `<span class="bit ${b === '1' ? 'one' : ''}">${b}</span>`
+                    ).join('');
+                    const processedOutput = step.processed === 32 ? output : output.slice(0, step.processed).padEnd(32, '0');
+                    document.getElementById('outputDisplay').innerHTML = processedOutput.split('').map(b =>
+                        `<span class="bit ${b === '1' ? 'one' : ''}">${b}</span>`
+                    ).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

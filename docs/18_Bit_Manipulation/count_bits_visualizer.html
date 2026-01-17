@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number of 1 Bits Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .binary { display: flex; gap: 3px; justify-content: center; margin: 15px 0; }
+        .bit { width: 28px; height: 32px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; }
+        .bit.one { background: var(--viz-success); color: #0f172a; }
+        .bit.current { border: 2px solid var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">NUMBER OF 1 BITS (HAMMING WEIGHT)</div>
+                <div class="binary" id="binaryDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Count</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BRIAN KERNIGHAN'S</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int hammingWeight(uint32_t n) {', id: 0 },
+            { line: '    int count = 0;', id: 1 },
+            { line: '    while (n) {', id: 2 },
+            { line: '        n &= (n - 1); // clear rightmost 1', id: 3 },
+            { line: '        count++;', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    return count;', id: 6 },
+            { line: '}', id: 7 },
+        ];
+        // 11 = 1011 in binary, has 3 ones
+        const binary = '00001011';
+        const onePositions = [0, 1, 3]; // positions of 1s from right
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ cleared: [], count: 0, highlightLines: [0, 1], explanation: { title: 'n = 11 (1011)', text: 'Count 1 bits' }});
+            steps.push({ cleared: [0], count: 1, highlightLines: [3, 4], explanation: { title: 'n &= (n-1)', text: '1011 & 1010 = 1010' }});
+            steps.push({ cleared: [0, 1], count: 2, highlightLines: [3, 4], explanation: { title: 'n &= (n-1)', text: '1010 & 1001 = 1000' }});
+            steps.push({ cleared: [0, 1, 3], count: 3, highlightLines: [3, 4], explanation: { title: 'n &= (n-1)', text: '1000 & 0111 = 0000' }});
+            steps.push({ cleared: [0, 1, 3], count: 3, highlightLines: [6], explanation: { title: 'Done!', text: 'Hamming weight = 3' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const bits = binary.split('').reverse();
+                    document.getElementById('binaryDisplay').innerHTML = bits.reverse().map((b, i) => {
+                        const pos = 7 - i;
+                        const isOne = b === '1';
+                        const isCleared = step.cleared?.includes(pos);
+                        return `<span class="bit ${isOne && !isCleared ? 'one' : ''}">${isCleared ? '0' : b}</span>`;
+                    }).join('');
+                    document.getElementById('countDisplay').textContent = step.count;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

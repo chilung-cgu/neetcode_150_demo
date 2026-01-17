@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Same Tree Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .trees-container { display: flex; gap: 30px; justify-content: center; }
+        .tree-box { text-align: center; }
+        .tree-label { color: var(--viz-text-muted); margin-bottom: 8px; }
+        .tree-level { display: flex; justify-content: center; gap: 10px; margin: 5px 0; }
+        .tree-node { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.9rem; }
+        .tree-node.match { background: var(--viz-success); color: #0f172a; }
+        .tree-node.mismatch { background: var(--viz-error); }
+        .tree-node.current { border: 3px solid var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SAME TREE</div>
+                <div class="trees-container" id="treesDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Same?</div><div class="state-value" id="resultDisplay">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">RECURSIVE DFS</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool isSameTree(TreeNode* p, TreeNode* q) {', id: 0 },
+            { line: '    if (!p && !q) return true;', id: 1 },
+            { line: '    if (!p || !q) return false;', id: 2 },
+            { line: '    if (p->val != q->val) return false;', id: 3 },
+            { line: '    return isSameTree(p->left, q->left) &&', id: 4 },
+            { line: '           isSameTree(p->right, q->right);', id: 5 },
+            { line: '}', id: 6 },
+        ];
+        const tree1 = [[1], [2, 3]];
+        const tree2 = [[1], [2, 3]];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ current: null, matched: [], highlightLines: [0], explanation: { title: 'Start', text: 'Compare two trees recursively' }});
+            steps.push({ current: [0, 0], matched: [], highlightLines: [3], explanation: { title: 'Compare roots', text: '1 == 1 ✓' }});
+            steps.push({ current: [1, 0], matched: [[0, 0]], highlightLines: [4], explanation: { title: 'Compare left children', text: '2 == 2 ✓' }});
+            steps.push({ current: [1, 1], matched: [[0, 0], [1, 0]], highlightLines: [5], explanation: { title: 'Compare right children', text: '3 == 3 ✓' }});
+            steps.push({ matched: 'all', result: true, highlightLines: [4, 5], explanation: { title: 'Done!', text: 'Trees are identical ✓' }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    function renderTree(tree, label) {
+                        let html = `<div class="tree-box"><div class="tree-label">${label}</div>`;
+                        tree.forEach((level, li) => {
+                            html += '<div class="tree-level">' + level.map((v, i) => {
+                                let cls = 'tree-node';
+                                if (step.matched === 'all' || step.matched?.some(m => m[0] === li && m[1] === i)) cls += ' match';
+                                if (step.current && step.current[0] === li && step.current[1] === i) cls += ' current';
+                                return `<div class="${cls}">${v}</div>`;
+                            }).join('') + '</div>';
+                        });
+                        return html + '</div>';
+                    }
+                    document.getElementById('treesDisplay').innerHTML = renderTree(tree1, 'Tree P') + renderTree(tree2, 'Tree Q');
+                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? (step.result ? '✓ Yes' : '✗ No') : '-';
+                    document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

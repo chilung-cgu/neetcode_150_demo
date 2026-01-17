@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unique Paths Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .grid { display: grid; gap: 2px; max-width: 250px; margin: 0 auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; font-size: 0.9rem; }
+        .cell.start { background: var(--viz-secondary); color: #0f172a; }
+        .cell.end { background: var(--viz-success); color: #0f172a; }
+        .cell.current { border: 2px solid var(--viz-error); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">UNIQUE PATHS (3x7 grid)</div>
+                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(7, 40px);"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">2D DP</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int uniquePaths(int m, int n) {', id: 0 },
+            { line: '    vector<vector<int>> dp(m, vector<int>(n, 1));', id: 1 },
+            { line: '    // First row and column are all 1s', id: 2 },
+            { line: '    for (int i = 1; i < m; i++) {', id: 3 },
+            { line: '        for (int j = 1; j < n; j++) {', id: 4 },
+            { line: '            dp[i][j] = dp[i-1][j] + dp[i][j-1];', id: 5 },
+            { line: '        }', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return dp[m-1][n-1];', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const m = 3, n = 7;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const dp = Array.from({ length: m }, () => Array(n).fill(1));
+            
+            steps.push({ dp: dp.map(r => [...r]), current: null, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'First row and column = 1' }});
+            
+            for (let i = 1; i < m; i++) {
+                for (let j = 1; j < n; j++) {
+                    dp[i][j] = dp[i - 1][j] + dp[i][j - 1];
+                    if ((i === 1 && j <= 2) || (i === 2 && j <= 2) || (i === m - 1 && j === n - 1)) {
+                        steps.push({ dp: dp.map(r => [...r]), current: [i, j], highlightLines: [5], explanation: { title: `dp[${i}][${j}]`, text: `= dp[${i-1}][${j}] + dp[${i}][${j-1}] = ${dp[i][j]}` }});
+                    }
+                }
+            }
+            
+            steps.push({ dp, current: [m - 1, n - 1], highlightLines: [8], explanation: { title: 'Done!', text: `${dp[m - 1][n - 1]} unique paths` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    for (let i = 0; i < m; i++) {
+                        for (let j = 0; j < n; j++) {
+                            let cls = 'cell';
+                            if (i === 0 && j === 0) cls += ' start';
+                            if (i === m - 1 && j === n - 1) cls += ' end';
+                            if (step.current && step.current[0] === i && step.current[1] === j) cls += ' current';
+                            html += `<div class="${cls}">${step.dp[i][j]}</div>`;
+                        }
+                    }
+                    document.getElementById('gridDisplay').innerHTML = html;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

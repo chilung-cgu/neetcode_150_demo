@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palindrome Partitioning Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .str-display { display: flex; justify-content: center; gap: 2px; margin: 10px 0; }
+        .char { width: 30px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; }
+        .char.current { background: var(--viz-secondary); color: #0f172a; }
+        .partition { display: inline-block; margin: 0 4px; padding: 4px 8px; background: var(--viz-success); color: #0f172a; border-radius: 4px; font-family: monospace; }
+        .results { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; max-height: 80px; overflow-y: auto; }
+        .result { padding: 4px 8px; border-radius: 4px; font-family: monospace; background: var(--viz-success); color: #0f172a; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">PALINDROME PARTITIONING: "aab"</div>
+                <div class="str-display" id="strDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Current Partition:</div>
+                <div style="text-align: center;" id="currentDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">All Partitions:</div>
+                <div class="results" id="resultsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BACKTRACKING</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'void backtrack(s, start, path, result) {', id: 0 },
+            { line: '    if (start == s.size()) { result.push_back(path); return; }', id: 1 },
+            { line: '    for (int end = start; end < s.size(); end++) {', id: 2 },
+            { line: '        if (isPalindrome(s, start, end)) {', id: 3 },
+            { line: '            path.push_back(s.substr(start, end-start+1));', id: 4 },
+            { line: '            backtrack(s, end + 1, path, result);', id: 5 },
+            { line: '            path.pop_back();', id: 6 },
+            { line: '        }', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '}', id: 9 },
+        ];
+        const str = 'aab';
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const results = [['a', 'a', 'b'], ['aa', 'b']];
+            
+            steps.push({ current: [], range: [], results: [], highlightLines: [0], explanation: { title: 'Start', text: 'Partition "aab" into palindromes' }});
+            steps.push({ current: ['a'], range: [0, 0], results: [], highlightLines: [3, 4], explanation: { title: '"a" is palindrome', text: 'Add to path' }});
+            steps.push({ current: ['a', 'a'], range: [1, 1], results: [], highlightLines: [3, 4], explanation: { title: '"a" is palindrome', text: 'Add to path' }});
+            steps.push({ current: ['a', 'a', 'b'], range: [2, 2], results: [['a', 'a', 'b']], highlightLines: [1], explanation: { title: '✓ Found!', text: '["a", "a", "b"]' }});
+            steps.push({ current: ['aa'], range: [0, 1], results: [['a', 'a', 'b']], highlightLines: [3, 4], explanation: { title: '"aa" is palindrome', text: 'Try longer substring' }});
+            steps.push({ current: ['aa', 'b'], range: [2, 2], results: results, highlightLines: [1], explanation: { title: '✓ Found!', text: '["aa", "b"]' }});
+            steps.push({ current: [], range: [], results: results, highlightLines: [9], explanation: { title: 'Done!', text: '2 partitions found' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let currentIdx = 0;
+                    document.getElementById('strDisplay').innerHTML = [...str].map((c, i) => {
+                        const inRange = step.range.length && i >= step.range[0] && i <= step.range[1];
+                        return `<span class="char ${inRange ? 'current' : ''}">${c}</span>`;
+                    }).join('');
+                    document.getElementById('currentDisplay').innerHTML = step.current.map(p =>
+                        `<span class="partition">${p}</span>`
+                    ).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    document.getElementById('resultsDisplay').innerHTML = step.results.map(r =>
+                        `<span class="result">[${r.map(p => `"${p}"`).join(', ')}]</span>`
+                    ).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

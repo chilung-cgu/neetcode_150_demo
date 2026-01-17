@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reconstruct Itinerary Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .path { display: flex; gap: 6px; justify-content: center; margin: 15px 0; flex-wrap: wrap; align-items: center; }
+        .city { padding: 10px 14px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .city.current { background: var(--viz-success); color: #0f172a; }
+        .arrow { color: var(--viz-text-muted); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">RECONSTRUCT ITINERARY (EULERIAN PATH)</div>
+                <div class="path" id="pathDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">HIERHOLZER'S ALGORITHM</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<string> findItinerary(tickets) {', id: 0 },
+            { line: '    // Build adjacency list (sorted)', id: 1 },
+            { line: '    map<string, priority_queue<string, vec, greater<>>> graph;', id: 2 },
+            { line: '    for (auto& t : tickets) graph[t[0]].push(t[1]);', id: 3 },
+            { line: '    vector<string> result;', id: 4 },
+            { line: '    stack<string> stk; stk.push("JFK");', id: 5 },
+            { line: '    while (!stk.empty()) {', id: 6 },
+            { line: '        string curr = stk.top();', id: 7 },
+            { line: '        if (graph[curr].empty()) { result.push_back(curr); stk.pop(); }', id: 8 },
+            { line: '        else { stk.push(graph[curr].top()); graph[curr].pop(); }', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    reverse(result.begin(), result.end());', id: 11 },
+            { line: '    return result;', id: 12 },
+            { line: '}', id: 13 },
+        ];
+        const itinerary = ["JFK", "MUC", "LHR", "SFO", "SJC"];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            for (let i = 0; i <= itinerary.length; i++) {
+                steps.push({ path: itinerary.slice(0, i), current: i - 1, highlightLines: i === 0 ? [0, 1, 2, 3, 4, 5] : [7, 8, 9], explanation: { title: i === 0 ? 'Start from JFK' : `Visit ${itinerary[i-1]}`, text: i === itinerary.length ? 'Complete itinerary!' : 'Follow lexicographically smallest' }});
+            }
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    step.path.forEach((city, i) => {
+                        if (i > 0) html += '<span class="arrow">→</span>';
+                        html += `<span class="city ${i === step.current ? 'current' : ''}">${city}</span>`;
+                    });
+                    document.getElementById('pathDisplay').innerHTML = html || '<em style="color:var(--viz-text-muted)">-</em>';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

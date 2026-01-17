@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Right Side View Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .tree-level { display: flex; justify-content: center; gap: 12px; margin: 6px 0; position: relative; }
+        .tree-node { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
+        .tree-node.rightmost { background: var(--viz-success); color: #0f172a; }
+        .level-label { position: absolute; left: 10px; color: var(--viz-text-muted); font-size: 0.8rem; }
+        .result-display { display: flex; gap: 8px; justify-content: center; margin-top: 15px; }
+        .result-item { padding: 8px 14px; background: var(--viz-success); color: #0f172a; border-radius: 6px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">BINARY TREE RIGHT SIDE VIEW (BFS)</div>
+                <div id="treeDisplay"></div>
+                <div style="margin-top: 15px; text-align: center; color: var(--viz-text-muted);">Right Side View:</div>
+                <div class="result-display" id="resultDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BFS APPROACH</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> rightSideView(TreeNode* root) {', id: 0 },
+            { line: '    vector<int> result;', id: 1 },
+            { line: '    queue<TreeNode*> q;', id: 2 },
+            { line: '    q.push(root);', id: 3 },
+            { line: '    while (!q.empty()) {', id: 4 },
+            { line: '        int size = q.size();', id: 5 },
+            { line: '        for (int i = 0; i < size; i++) {', id: 6 },
+            { line: '            auto node = q.front(); q.pop();', id: 7 },
+            { line: '            if (i == size - 1) result.push_back(node->val);', id: 8 },
+            { line: '            if (node->left) q.push(node->left);', id: 9 },
+            { line: '            if (node->right) q.push(node->right);', id: 10 },
+            { line: '        }', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    return result;', id: 13 },
+            { line: '}', id: 14 },
+        ];
+        const levels = [[1], [2, 3], ['', 5, '', 4]];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ result: [], currentLevel: -1, highlightLines: [0, 1, 2, 3], explanation: { title: 'Init BFS', text: 'Queue with root' }});
+            steps.push({ result: [1], currentLevel: 0, rightmost: [[0, 0]], highlightLines: [8], explanation: { title: 'Level 0', text: 'Rightmost: 1' }});
+            steps.push({ result: [1, 3], currentLevel: 1, rightmost: [[0, 0], [1, 1]], highlightLines: [8], explanation: { title: 'Level 1', text: 'Rightmost: 3' }});
+            steps.push({ result: [1, 3, 4], currentLevel: 2, rightmost: [[0, 0], [1, 1], [2, 3]], highlightLines: [8], explanation: { title: 'Level 2', text: 'Rightmost: 4' }});
+            steps.push({ result: [1, 3, 4], done: true, rightmost: [[0, 0], [1, 1], [2, 3]], highlightLines: [13], explanation: { title: 'Done!', text: 'Right side view: [1, 3, 4]' }});
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    levels.forEach((level, li) => {
+                        html += `<div class="tree-level"><span class="level-label">L${li}</span>`;
+                        html += level.map((v, i) => {
+                            if (!v) return '<div style="width:36px"></div>';
+                            let cls = 'tree-node';
+                            if (step.rightmost?.some(r => r[0] === li && r[1] === i)) cls += ' rightmost';
+                            return `<div class="${cls}">${v}</div>`;
+                        }).join('');
+                        html += '</div>';
+                    });
+                    document.getElementById('treeDisplay').innerHTML = html;
+                    document.getElementById('resultDisplay').innerHTML = step.result.map(v => `<span class="result-item">${v}</span>`).join('') || '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

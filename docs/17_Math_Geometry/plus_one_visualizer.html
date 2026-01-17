@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plus One Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .digits { display: flex; gap: 4px; justify-content: center; margin: 15px 0; }
+        .digit { width: 40px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1.5rem; background: var(--viz-primary); color: white; }
+        .digit.changed { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">PLUS ONE</div>
+                <div class="digits" id="digitsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">CARRY PROPAGATION</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> plusOne(vector<int>& digits) {', id: 0 },
+            { line: '    for (int i = digits.size() - 1; i >= 0; i--) {', id: 1 },
+            { line: '        if (digits[i] < 9) {', id: 2 },
+            { line: '            digits[i]++;', id: 3 },
+            { line: '            return digits;', id: 4 },
+            { line: '        }', id: 5 },
+            { line: '        digits[i] = 0;', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    digits.insert(digits.begin(), 1);', id: 8 },
+            { line: '    return digits;', id: 9 },
+            { line: '}', id: 10 },
+        ];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ digits: [1, 2, 3], changed: [], highlightLines: [0, 1], explanation: { title: '123 + 1', text: 'Start from rightmost' }});
+            steps.push({ digits: [1, 2, 4], changed: [2], highlightLines: [2, 3, 4], explanation: { title: '3 < 9', text: 'Simply increment → 124' }});
+            
+            steps.push({ digits: [9, 9, 9], changed: [], highlightLines: [0, 1], explanation: { title: '999 + 1', text: 'Start from rightmost' }});
+            steps.push({ digits: [9, 9, 0], changed: [2], highlightLines: [6], explanation: { title: '9 → 0', text: 'Carry' }});
+            steps.push({ digits: [9, 0, 0], changed: [1, 2], highlightLines: [6], explanation: { title: '9 → 0', text: 'Carry' }});
+            steps.push({ digits: [0, 0, 0], changed: [0, 1, 2], highlightLines: [6], explanation: { title: '9 → 0', text: 'Carry' }});
+            steps.push({ digits: [1, 0, 0, 0], changed: [0], highlightLines: [8], explanation: { title: 'Insert 1', text: 'Result: 1000' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('digitsDisplay').innerHTML = step.digits.map((d, i) =>
+                        `<span class="digit ${step.changed?.includes(i) ? 'changed' : ''}">${d}</span>`
+                    ).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

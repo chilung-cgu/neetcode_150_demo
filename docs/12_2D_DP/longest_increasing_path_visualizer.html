@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Increasing Path Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .grid { display: grid; gap: 2px; max-width: 180px; margin: 0 auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; font-size: 1rem; }
+        .cell.path { background: var(--viz-success); color: #0f172a; }
+        .cell.current { border: 2px solid var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">LONGEST INCREASING PATH IN MATRIX</div>
+                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(3, 40px);"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Path Length</div><div class="state-value" id="lengthDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">DFS + MEMOIZATION</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int longestIncreasingPath(matrix) {', id: 0 },
+            { line: '    vector<vector<int>> dp(m, vector<int>(n, 0));', id: 1 },
+            { line: '    int maxLen = 0;', id: 2 },
+            { line: '    for (int i = 0; i < m; i++)', id: 3 },
+            { line: '        for (int j = 0; j < n; j++)', id: 4 },
+            { line: '            maxLen = max(maxLen, dfs(matrix, i, j, dp));', id: 5 },
+            { line: '    return maxLen;', id: 6 },
+            { line: '}', id: 7 },
+            { line: 'int dfs(matrix, i, j, dp) {', id: 8 },
+            { line: '    if (dp[i][j]) return dp[i][j];', id: 9 },
+            { line: '    // Explore 4 directions if larger', id: 10 },
+            { line: '    return dp[i][j] = 1 + max(neighbors);', id: 11 },
+            { line: '}', id: 12 },
+        ];
+        const matrix = [[9, 9, 4], [6, 6, 8], [2, 1, 1]];
+        // Longest path: 1 → 2 → 6 → 9 = 4
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const path = [[2, 1], [2, 0], [1, 0], [0, 0]]; // 1 → 2 → 6 → 9
+            
+            steps.push({ path: [], highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'DFS from each cell with memoization' }});
+            
+            for (let i = 1; i <= path.length; i++) {
+                const currentPath = path.slice(0, i);
+                const values = currentPath.map(([r, c]) => matrix[r][c]);
+                steps.push({ path: currentPath, current: path[i - 1], highlightLines: [8, 9, 10, 11], explanation: { title: `Step ${i}`, text: `Path: ${values.join(' → ')}` }});
+            }
+            
+            steps.push({ path, highlightLines: [6], explanation: { title: 'Done!', text: 'Longest path: 1→2→6→9 = 4' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            let cls = 'cell';
+                            if (step.path?.some(p => p[0] === i && p[1] === j)) cls += ' path';
+                            if (step.current && step.current[0] === i && step.current[1] === j) cls += ' current';
+                            html += `<div class="${cls}">${matrix[i][j]}</div>`;
+                        }
+                    }
+                    document.getElementById('gridDisplay').innerHTML = html;
+                    document.getElementById('lengthDisplay').textContent = step.path?.length || 0;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

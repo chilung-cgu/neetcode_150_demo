@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number of Connected Components Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .nodes { display: flex; gap: 10px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+        .node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">NUMBER OF CONNECTED COMPONENTS</div>
+                <div class="nodes" id="nodesDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Components</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">UNION-FIND</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int countComponents(int n, edges) {', id: 0 },
+            { line: '    UnionFind uf(n);', id: 1 },
+            { line: '    for (auto& e : edges) {', id: 2 },
+            { line: '        uf.union(e[0], e[1]);', id: 3 },
+            { line: '    }', id: 4 },
+            { line: '    return uf.count;', id: 5 },
+            { line: '}', id: 6 },
+        ];
+        const nodes = [0, 1, 2, 3, 4];
+        const colors = ['#ef4444', '#ef4444', '#ef4444', '#3b82f6', '#3b82f6'];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ components: [[0], [1], [2], [3], [4]], count: 5, highlightLines: [0, 1], explanation: { title: 'Init', text: '5 separate components' }});
+            steps.push({ components: [[0, 1], [2], [3], [4]], count: 4, highlightLines: [3], explanation: { title: 'Union(0, 1)', text: '4 components' }});
+            steps.push({ components: [[0, 1, 2], [3], [4]], count: 3, highlightLines: [3], explanation: { title: 'Union(1, 2)', text: '3 components' }});
+            steps.push({ components: [[0, 1, 2], [3, 4]], count: 2, highlightLines: [3], explanation: { title: 'Union(3, 4)', text: '2 components' }});
+            steps.push({ components: [[0, 1, 2], [3, 4]], count: 2, highlightLines: [5], explanation: { title: 'Done!', text: '2 connected components' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('nodesDisplay').innerHTML = nodes.map(n => {
+                        const comp = step.components?.findIndex(c => c.includes(n)) ?? 0;
+                        const color = comp === 0 ? '#ef4444' : '#3b82f6';
+                        return `<div class="node" style="background: ${color}; color: white;">${n}</div>`;
+                    }).join('');
+                    document.getElementById('countDisplay').textContent = step.count;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

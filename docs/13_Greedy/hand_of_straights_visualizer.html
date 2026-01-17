@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand of Straights Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .cards { display: flex; gap: 4px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
+        .card { width: 32px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .card.grouped { opacity: 0.4; }
+        .groups { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+        .group { padding: 6px 10px; border-radius: 6px; font-family: monospace; background: var(--viz-success); color: #0f172a; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">HAND OF STRAIGHTS (groupSize=3)</div>
+                <div class="cards" id="cardsDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Groups:</div>
+                <div class="groups" id="groupsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">GREEDY + MAP</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool isNStraightHand(hand, groupSize) {', id: 0 },
+            { line: '    if (hand.size() % groupSize != 0) return false;', id: 1 },
+            { line: '    map<int, int> count;', id: 2 },
+            { line: '    for (int c : hand) count[c]++;', id: 3 },
+            { line: '    while (!count.empty()) {', id: 4 },
+            { line: '        int start = count.begin()->first;', id: 5 },
+            { line: '        for (int i = 0; i < groupSize; i++) {', id: 6 },
+            { line: '            if (count[start + i] == 0) return false;', id: 7 },
+            { line: '            if (--count[start + i] == 0)', id: 8 },
+            { line: '                count.erase(start + i);', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return true;', id: 12 },
+            { line: '}', id: 13 },
+        ];
+        const hand = [1, 2, 3, 6, 2, 3, 4, 7, 8];
+        const groupSize = 3;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const groups = [[1, 2, 3], [2, 3, 4], [6, 7, 8]];
+            let usedIndices = [];
+            
+            steps.push({ grouped: [], groups: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 'Count each card' }});
+            
+            const sorted = [...hand].sort((a, b) => a - b);
+            for (let g = 0; g < groups.length; g++) {
+                const newGrouped = [...usedIndices];
+                for (const card of groups[g]) {
+                    const idx = sorted.findIndex((c, i) => c === card && !newGrouped.includes(i));
+                    if (idx >= 0) newGrouped.push(idx);
+                }
+                usedIndices = newGrouped;
+                steps.push({ grouped: usedIndices, groups: groups.slice(0, g + 1), highlightLines: [5, 6, 7, 8], explanation: { title: `Group ${g + 1}`, text: `[${groups[g].join(', ')}]` }});
+            }
+            
+            steps.push({ grouped: usedIndices, groups, highlightLines: [12], explanation: { title: 'Done!', text: 'All grouped successfully ✓' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            const sorted = [...hand].sort((a, b) => a - b);
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('cardsDisplay').innerHTML = sorted.map((c, i) =>
+                        `<div class="card ${step.grouped?.includes(i) ? 'grouped' : ''}">${c}</div>`
+                    ).join('');
+                    document.getElementById('groupsDisplay').innerHTML = (step.groups || []).map(g =>
+                        `<span class="group">[${g.join(',')}]</span>`
+                    ).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

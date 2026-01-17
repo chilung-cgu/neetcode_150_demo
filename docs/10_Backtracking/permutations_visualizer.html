@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permutations Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .perm-display { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
+        .num { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .num.used { opacity: 0.3; }
+        .num.current { background: var(--viz-secondary); color: #0f172a; }
+        .results { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; max-height: 80px; overflow-y: auto; }
+        .result { padding: 4px 8px; border-radius: 4px; font-family: monospace; background: var(--viz-success); color: #0f172a; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">PERMUTATIONS [1, 2, 3]</div>
+                <div style="text-align: center; color: var(--viz-text-muted);">Available:</div>
+                <div class="perm-display" id="availableDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Current Permutation:</div>
+                <div class="perm-display" id="currentDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">All Permutations:</div>
+                <div class="results" id="resultsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">BACKTRACKING</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'void backtrack(nums, path, used, result) {', id: 0 },
+            { line: '    if (path.size() == nums.size()) {', id: 1 },
+            { line: '        result.push_back(path); return;', id: 2 },
+            { line: '    }', id: 3 },
+            { line: '    for (int i = 0; i < nums.size(); i++) {', id: 4 },
+            { line: '        if (used[i]) continue;', id: 5 },
+            { line: '        used[i] = true;', id: 6 },
+            { line: '        path.push_back(nums[i]);', id: 7 },
+            { line: '        backtrack(nums, path, used, result);', id: 8 },
+            { line: '        path.pop_back(); used[i] = false;', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '}', id: 11 },
+        ];
+        const nums = [1, 2, 3];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const results = [];
+            const perms = [[1,2,3], [1,3,2], [2,1,3], [2,3,1], [3,1,2], [3,2,1]];
+            
+            steps.push({ path: [], used: [false, false, false], results: [], highlightLines: [0], explanation: { title: 'Start', text: 'Generate all permutations' }});
+            
+            for (const perm of perms) {
+                for (let i = 1; i <= perm.length; i++) {
+                    const path = perm.slice(0, i);
+                    const used = nums.map(n => path.includes(n));
+                    if (i === perm.length) {
+                        results.push(perm);
+                        steps.push({ path, used, results: [...results], highlightLines: [1, 2], explanation: { title: '✓ Found!', text: `[${perm.join(', ')}]` }});
+                    } else {
+                        steps.push({ path, used, results: [...results], highlightLines: [6, 7], explanation: { title: `Add ${path[path.length - 1]}`, text: `Path: [${path.join(', ')}]` }});
+                    }
+                }
+            }
+            
+            steps.push({ path: [], used: [false, false, false], results, highlightLines: [11], explanation: { title: 'Done!', text: `${results.length} permutations found` }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('availableDisplay').innerHTML = nums.map((n, i) =>
+                        `<span class="num ${step.used[i] ? 'used' : ''}">${n}</span>`
+                    ).join('');
+                    document.getElementById('currentDisplay').innerHTML = step.path.map(n =>
+                        `<span class="num current">${n}</span>`
+                    ).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    document.getElementById('resultsDisplay').innerHTML = step.results.map(r =>
+                        `<span class="result">[${r.join(',')}]</span>`
+                    ).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

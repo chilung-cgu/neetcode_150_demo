@@ -49,6 +49,13 @@
 4.  最後檢查 `Count == 1`。如果只剩一個分量，說明全連通 -> 回傳 `true`。
     -   (其實如果第一步 `Diff != n-1` 檢查過了，且無環，那最後 Count 必然是 1。因為無環且邊數 n-1 的圖必然連通)。
 
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../valid_tree_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;"><a href="../valid_tree_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
+
 ---
 
 ## 4. 💻 Implementation (程式碼)

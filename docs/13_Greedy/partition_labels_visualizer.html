@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partition Labels Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .str-display { display: flex; gap: 2px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
+        .char { width: 24px; height: 28px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.85rem; border-radius: 3px; }
+        .parts { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+        .part { padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">PARTITION LABELS</div>
+                <div class="str-display" id="strDisplay"></div>
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Partitions:</div>
+                <div class="parts" id="partsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">GREEDY</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> partitionLabels(string s) {', id: 0 },
+            { line: '    unordered_map<char, int> lastIdx;', id: 1 },
+            { line: '    for (int i = 0; i < s.size(); i++)', id: 2 },
+            { line: '        lastIdx[s[i]] = i;', id: 3 },
+            { line: '    vector<int> result;', id: 4 },
+            { line: '    int start = 0, end = 0;', id: 5 },
+            { line: '    for (int i = 0; i < s.size(); i++) {', id: 6 },
+            { line: '        end = max(end, lastIdx[s[i]]);', id: 7 },
+            { line: '        if (i == end) {', id: 8 },
+            { line: '            result.push_back(end - start + 1);', id: 9 },
+            { line: '            start = i + 1;', id: 10 },
+            { line: '        }', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    return result;', id: 13 },
+            { line: '}', id: 14 },
+        ];
+        const str = 'ababcbacadefegdehijhklij';
+        const colors = ['#ef4444', '#3b82f6', '#22c55e'];
+        const partitions = [[0, 8], [9, 14], [15, 23]]; // ranges
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ parts: [], highlightLines: [0, 1, 2, 3, 4, 5], explanation: { title: 'Init', text: 'Find last index of each char' }});
+            steps.push({ parts: [[0, 8]], highlightLines: [8, 9, 10], explanation: { title: 'Partition 1', text: '"ababcbaca" (9 chars)' }});
+            steps.push({ parts: [[0, 8], [9, 14]], highlightLines: [8, 9, 10], explanation: { title: 'Partition 2', text: '"defegd" (6 chars)' }});
+            steps.push({ parts: [[0, 8], [9, 14], [15, 23]], highlightLines: [8, 9, 10], explanation: { title: 'Partition 3', text: '"hijhklij" (8 chars)' }});
+            steps.push({ parts: partitions, highlightLines: [13], explanation: { title: 'Done!', text: '[9, 6, 8]' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('strDisplay').innerHTML = [...str].map((c, i) => {
+                        const partIdx = step.parts?.findIndex(p => i >= p[0] && i <= p[1]);
+                        const bg = partIdx >= 0 ? colors[partIdx] : 'var(--viz-primary)';
+                        return `<span class="char" style="background: ${bg}; color: white;">${c}</span>`;
+                    }).join('');
+                    document.getElementById('partsDisplay').innerHTML = (step.parts || []).map((p, i) =>
+                        `<span class="part" style="background: ${colors[i]}; color: white;">${p[1] - p[0] + 1}</span>`
+                    ).join('');
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

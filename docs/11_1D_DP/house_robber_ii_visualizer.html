@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Robber II Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .circle-houses { display: flex; gap: 6px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+        .house { width: 45px; padding: 8px 4px; border-radius: 50%; text-align: center; background: var(--viz-primary); color: white; }
+        .house.skip { opacity: 0.3; }
+        .house.rob { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">HOUSE ROBBER II (CIRCULAR)</div>
+                <div class="circle-houses" id="housesDisplay"></div>
+                <div class="controls">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Case 1</div><div class="state-value" id="case1Display">-</div></div>
+                    <div class="state-item"><div class="state-label">Case 2</div><div class="state-value" id="case2Display">-</div></div>
+                    <div class="state-item"><div class="state-label">Max</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">TWO CASES</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int rob(vector<int>& nums) {', id: 0 },
+            { line: '    if (nums.size() == 1) return nums[0];', id: 1 },
+            { line: '    // Case 1: Rob houses [0..n-2]', id: 2 },
+            { line: '    int case1 = robLinear(nums[0..n-2]);', id: 3 },
+            { line: '    // Case 2: Rob houses [1..n-1]', id: 4 },
+            { line: '    int case2 = robLinear(nums[1..n-1]);', id: 5 },
+            { line: '    return max(case1, case2);', id: 6 },
+            { line: '}', id: 7 },
+        ];
+        const nums = [2, 3, 2];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            
+            steps.push({ skip: [], highlightLines: [0, 1], explanation: { title: 'Circular houses', text: 'First and last are adjacent' }});
+            steps.push({ skip: [2], case: 1, highlightLines: [2, 3], explanation: { title: 'Case 1: Skip last', text: 'Rob [2, 3] → max = 3' }});
+            steps.push({ skip: [0], case: 2, highlightLines: [4, 5], explanation: { title: 'Case 2: Skip first', text: 'Rob [3, 2] → max = 3' }});
+            steps.push({ skip: [], case1: 3, case2: 3, max: 3, highlightLines: [6], explanation: { title: 'Done!', text: 'max(3, 3) = 3' }});
+            
+            return steps;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('housesDisplay').innerHTML = nums.map((n, i) =>
+                        `<div class="house ${step.skip?.includes(i) ? 'skip' : ''}">${n}</div>`
+                    ).join('');
+                    document.getElementById('case1Display').textContent = step.case1 ?? '-';
+                    document.getElementById('case2Display').textContent = step.case2 ?? '-';
+                    document.getElementById('maxDisplay').textContent = step.max ?? '-';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
