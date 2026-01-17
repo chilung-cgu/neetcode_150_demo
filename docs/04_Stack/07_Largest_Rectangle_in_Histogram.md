@@ -5,15 +5,15 @@
 題目給一個整數陣列 `heights`，代表直方圖中每個柱子的高度（寬度為 1）。
 請找出直方圖中最大的矩形面積。
 
--   **Input**: `[2,1,5,6,2,3]`
--   **Output**: `10`
-    -   解釋：由此圖能看到，index 2 和 3 的高度分別是 5 和 6。
-    -   我們可以取出一個高度為 5、寬度為 2 的矩形（涵蓋 index 2, 3）。面積 10。
-    -   或者高度為 6 的矩形（只含 index 3），面積 6。
-    -   或者高度為 2 的矩形（涵蓋 index 2, 3, 4, 5），面積 2 * 4 = 8。
--   **Constraints**:
-    -   $1 <= heights.length <= 10^5$.
-    -   $0 <= heights[i] <= 10^4$.
+- **Input**: `[2,1,5,6,2,3]`
+- **Output**: `10`
+  - 解釋：由此圖能看到，index 2 和 3 的高度分別是 5 和 6。
+  - 我們可以取出一個高度為 5、寬度為 2 的矩形（涵蓋 index 2, 3）。面積 10。
+  - 或者高度為 6 的矩形（只含 index 3），面積 6。
+  - 或者高度為 2 的矩形（涵蓋 index 2, 3, 4, 5），面積 2 \* 4 = 8。
+- **Constraints**:
+  - $1 <= heights.length <= 10^5$.
+  - $0 <= heights[i] <= 10^4$.
 
 ---
 
@@ -21,10 +21,10 @@
 
 對於每一根柱子 `i`，我們把它當作是「矩形的高度」，然後盡可能的往左和往右延伸，直到遇到比它矮的柱子為止。
 
--   `width = right_limit - left_limit - 1`
--   `area = heights[i] * width`
--   **Time**: $O(n^2)$。
--   **Result**: TLE。
+- `width = right_limit - left_limit - 1`
+- `area = heights[i] * width`
+- **Time**: $O(n^2)$。
+- **Result**: TLE。
 
 ---
 
@@ -41,20 +41,36 @@
 
 1.  維護一個 Stack，存 `(index, height)`。保持 Stack 中的高度 **單調遞增**。
 2.  遍歷每個柱子 `current_h` at `i`：
-    -   while Stack 頂端的高度 `stack_h > current_h`：
-        -   **Pop**: 這根柱子被當前柱子 `h` 擋住了，可以結算了。
-        -   **Height**: `H = stack_h`
-        -   **Width**:
-            -   右邊界是 `i` (因為是 `i` 把這根柱子擋住的)。
-            -   左邊界呢？是 Stack 中新的頂端元素！
-            -   為什麼？因為我們是單調遞增棧，Stack 中新的 Top 一定是當初擋住 `H` 往左延伸的那個矮柱子 (或者說是 `H` 左邊第一個比它矮的)。
-            -   所以 `W = i - stack.top().index - 1`。
-        -   `MaxArea = max(MaxArea, H * W)`。
-    -   Push `i` 入 Stack。
+    - while Stack 頂端的高度 `stack_h > current_h`：
+      - **Pop**: 這根柱子被當前柱子 `h` 擋住了，可以結算了。
+      - **Height**: `H = stack_h`
+      - **Width**:
+        - 右邊界是 `i` (因為是 `i` 把這根柱子擋住的)。
+        - 左邊界呢？是 Stack 中新的頂端元素！
+        - 為什麼？因為我們是單調遞增棧，Stack 中新的 Top 一定是當初擋住 `H` 往左延伸的那個矮柱子 (或者說是 `H` 左邊第一個比它矮的)。
+        - 所以 `W = i - stack.top().index - 1`。
+      - `MaxArea = max(MaxArea, H * W)`。
+    - Push `i` 入 Stack。
 3.  **剩餘處理**：遍歷結束後，Stack 中可能還有殘留元素（這些柱子一直延伸到最右邊都没被挡住）。
-    -   對這些元素做同樣的結算，右邊界視為 `n`。
+    - 對這些元素做同樣的結算，右邊界視為 `n`。
 
 ---
+
+---
+
+## 3.5. 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="leetcode_84_visualizer.html" 
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
+            loading="lazy">
+    </iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;">
+    <a href="leetcode_84_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;">
+        <span>⤢</span> 全螢幕開啟視覺化
+    </a>
+</p>
 
 ## 4. 💻 Implementation (程式碼)
 
@@ -169,7 +185,7 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n)$
-    -   每個柱子最多進 Stack 一次，出 Stack 一次。
--   **Space Complexity**: $O(n)$
-    -   最壞情況 (單調遞增陣列)，Stack 會存所有的 indices。
+- **Time Complexity**: $O(n)$
+  - 每個柱子最多進 Stack 一次，出 Stack 一次。
+- **Space Complexity**: $O(n)$
+  - 最壞情況 (單調遞增陣列)，Stack 會存所有的 indices。
