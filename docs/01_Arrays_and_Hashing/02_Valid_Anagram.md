@@ -4,9 +4,9 @@
 
 題目要求判斷兩個字串 `s` 和 `t` 是否為彼此的重組字 (Anagram)。也就是說，它們必須包含完全相同的字元，且每個字元的出現次數也必須相同。
 
--   **Input Constraints**: 字串只包含小寫英文字母嗎？(題目通常說是，但確認 Unicode/ASCII 總是加分題)。
-    -   *長度檢查*：如果 `s.length() != t.length()`，直接回傳 `false`。這是最快的 check。
--   **Follow-up**: "What if the inputs contain Unicode characters?" (例如中文)。這時 `vector<int>(26)` 就不夠用了，需要 `unordered_map`。
+- **Input Constraints**: 字串只包含小寫英文字母嗎？(題目通常說是，但確認 Unicode/ASCII 總是加分題)。
+  - _長度檢查_：如果 `s.length() != t.length()`，直接回傳 `false`。這是最快的 check。
+- **Follow-up**: "What if the inputs contain Unicode characters?" (例如中文)。這時 `vector<int>(26)` 就不夠用了，需要 `unordered_map`。
 
 ---
 
@@ -23,9 +23,9 @@ bool isAnagram(string s, string t) {
 }
 ```
 
--   **Time Complexity**: $O(n \log n)$，被 Sorting 主導。
--   **Space Complexity**: $O(1)$ 或 $O(\log n)$ (視 sort 實作而定)。
--   **評論**: 雖然不是最佳解，但在字串很短的情況下，這寫法最乾淨、最不容易寫出 Bug。
+- **Time Complexity**: $O(n \log n)$，被 Sorting 主導。
+- **Space Complexity**: $O(1)$ 或 $O(\log n)$ (視 sort 實作而定)。
+- **評論**: 雖然不是最佳解，但在字串很短的情況下，這寫法最乾淨、最不容易寫出 Bug。
 
 ---
 
@@ -40,11 +40,25 @@ Match!
 **思路引導**:
 
 1.  **Hash Map (Generic Approach)**: 用兩個 Map 分別統計，最後比對 Map。
-    -   Cost: $O(n)$ Time, $O(n)$ Space (如果字元集很大)。
+    - Cost: $O(n)$ Time, $O(n)$ Space (如果字元集很大)。
 2.  **Frequency Array (Optimized for lowercase English)**:
-    -   因為只有 26 個小寫字母，我們可以用一個大小為 26 的整數陣列來代替 Map。
-    -   Index 0 代表 'a', Index 1 代表 'b'...
-    -   我們不需要兩個 Array。遍歷 `s` 時 `+1`，遍歷 `t` 時 `-1`。最後檢查 Array 是否全為 0。
+    - 因為只有 26 個小寫字母，我們可以用一個大小為 26 的整數陣列來代替 Map。
+    - Index 0 代表 'a', Index 1 代表 'b'...
+    - 我們不需要兩個 Array。遍歷 `s` 時 `+1`，遍歷 `t` 時 `-1`。最後檢查 Array 是否全為 0。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../valid_anagram_visualizer.html" 
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
+            loading="lazy">
+    </iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;">
+    <a href="../valid_anagram_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;">
+        <span>⤢</span> 全螢幕開啟視覺化
+    </a>
+</p>
 
 ---
 
@@ -170,12 +184,14 @@ public:
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
 ### Frequency Array Approach
--   **Time Complexity**: $O(n)$
-    -   $n$ 是字串長度。我們遍歷字串一次，再遍歷 Array (26次)，所以是 $O(n + 26) \approx O(n)$。
--   **Space Complexity**: $O(1)$
-    -   雖然我們用了額外空間，但這個空間大小是固定的 (26)，不隨 $n$ 增長而變大。
-    -   嚴格來說是 $O(\Sigma)$，其中 $\Sigma$ 是字元集大小。
+
+- **Time Complexity**: $O(n)$
+  - $n$ 是字串長度。我們遍歷字串一次，再遍歷 Array (26次)，所以是 $O(n + 26) \approx O(n)$。
+- **Space Complexity**: $O(1)$
+  - 雖然我們用了額外空間，但這個空間大小是固定的 (26)，不隨 $n$ 增長而變大。
+  - 嚴格來說是 $O(\Sigma)$，其中 $\Sigma$ 是字元集大小。
 
 ### Sorting Approach
--   **Time Complexity**: $O(n \log n)$
--   **Space Complexity**: $O(1)$ 或 $O(\log n)$
+
+- **Time Complexity**: $O(n \log n)$
+- **Space Complexity**: $O(1)$ 或 $O(\log n)$

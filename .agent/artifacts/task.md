@@ -1,0 +1,12 @@
+- [x] Phase 1: 基礎建設與 LeetCode 84 重構
+  - [x] 建立共用樣式庫 `docs/assets/visualizer/style.css`
+  - [x] 建立核心邏輯庫 `docs/assets/visualizer/core.js`
+  - [x] 重構 `leetcode_84_visualizer.html` 引用共用資源
+  - [x] 整合至 `07_Largest_Rectangle_in_Histogram.md`
+  - [x] 優化佈局 (55/45 split) 與章節結構
+- [x] Phase 2: 自動化工具
+  - [x] 建立 `/add-visualizer` workflow 文件
+  - [x] 建立 `template.html` 模板
+- [ ] Phase 3: 規模化試產
+  - [ ] 選擇代表性題目 (Trapping Rain Water, Min Stack 等)
+  - [ ] 逐步推廣至其他章節

@@ -5,13 +5,13 @@
 這是 LeetCode 的第一題，經典中的經典。
 題目給我一個整數陣列 `nums` 和一個目標值 `target`，要我找出兩個數字，相加等於 `target`，並回傳它們的 **index**。
 
--   **Constraints**:
-    -   只會有 **唯一解** (Exactly one solution)。這簡化了很多事情。
-    -   不可以重複使用同一個元素 (Can't use the same element twice)。
--   **Clarification**:
-    -   陣列是排序好的嗎？(通常沒有)
-    -   可能有負數嗎？(有)
-    -   這題很重要，因為它不僅考你程式能力，還考你對 `Hash Map` 應用場景的直覺。
+- **Constraints**:
+  - 只會有 **唯一解** (Exactly one solution)。這簡化了很多事情。
+  - 不可以重複使用同一個元素 (Can't use the same element twice)。
+- **Clarification**:
+  - 陣列是排序好的嗎？(通常沒有)
+  - 可能有負數嗎？(有)
+  - 這題很重要，因為它不僅考你程式能力，還考你對 `Hash Map` 應用場景的直覺。
 
 ---
 
@@ -32,9 +32,9 @@ vector<int> twoSum(vector<int>& nums, int target) {
 }
 ```
 
--   **Time Complexity**: $O(n^2)$。
--   **Space Complexity**: $O(1)$。
--   **問題**: 隨著 `n` 變大，效率急劇下降。
+- **Time Complexity**: $O(n^2)$。
+- **Space Complexity**: $O(1)$。
+- **問題**: 隨著 `n` 變大，效率急劇下降。
 
 ---
 
@@ -49,10 +49,24 @@ vector<int> twoSum(vector<int>& nums, int target) {
 
 1.  計算我們需要的另一半：`diff = target - n`。
 2.  問 Hash Map： "你裡面用過 `diff` 嗎？"
-    -   如果有，太棒了！我們找到了答案 `{map[diff], current_index}`。
-    -   如果沒有，把現在這個數字 `n` 和它的 `index` 存進 Hash Map，留給後面的人配對。
+    - 如果有，太棒了！我們找到了答案 `{map[diff], current_index}`。
+    - 如果沒有，把現在這個數字 `n` 和它的 `index` 存進 Hash Map，留給後面的人配對。
 
 **這就是 One-pass Hash Map 策略。**
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../two_sum_visualizer.html" 
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
+            loading="lazy">
+    </iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;">
+    <a href="../two_sum_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;">
+        <span>⤢</span> 全螢幕開啟視覺化
+    </a>
+</p>
 
 ---
 
@@ -143,14 +157,16 @@ public:
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
 ### Hash Map Approach
--   **Time Complexity**: $O(n)$
-    -   我們只需遍歷陣列一次。每次 Hash Map 的查找與插入平均是 $O(1)$。
--   **Space Complexity**: $O(n)$
-    -   Hash Map 最多儲存 `n` 個元素。
+
+- **Time Complexity**: $O(n)$
+  - 我們只需遍歷陣列一次。每次 Hash Map 的查找與插入平均是 $O(1)$。
+- **Space Complexity**: $O(n)$
+  - Hash Map 最多儲存 `n` 個元素。
 
 ### Brute Force Approach
--   **Time Complexity**: $O(n^2)$
--   **Space Complexity**: $O(1)$
+
+- **Time Complexity**: $O(n^2)$
+- **Space Complexity**: $O(1)$
 
 **Trade-off**:
 我們用了 $O(n)$ 的空間，換取了從 $O(n^2)$ 到 $O(n)$ 的時間進步。這在現代軟體開發中通常是非常划算的交易。

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valid Sudoku Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .sudoku-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 1px; background: var(--viz-border); max-width: 320px; margin: 0 auto; border: 2px solid var(--viz-text-muted); }
+        .sudoku-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--viz-card-bg); font-family: monospace; font-size: 0.9rem; }
+        .sudoku-cell:nth-child(3n) { border-right: 2px solid var(--viz-text-muted); }
+        .sudoku-cell:nth-child(n+19):nth-child(-n+27), .sudoku-cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid var(--viz-text-muted); }
+        .sudoku-cell.current { background: var(--viz-secondary); color: #0f172a; }
+        .sudoku-cell.conflict { background: var(--viz-error); color: white; }
+        .set-display { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; font-family: monospace; font-size: 0.8rem; }
+        .set-item { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">SUDOKU VALIDATION</div>
+                <div class="sudoku-grid" id="sudokuGrid"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid" style="margin-top: 10px;">
+                    <div class="state-item"><div class="state-label">Row Set</div><div class="set-display" id="rowSet"></div></div>
+                    <div class="state-item"><div class="state-label">Col Set</div><div class="set-display" id="colSet"></div></div>
+                    <div class="state-item"><div class="state-label">Box Set</div><div class="set-display" id="boxSet"></div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool isValidSudoku(vector<vector<char>>& board) {', id: 0 },
+            { line: '    bool rows[9][9]={0}, cols[9][9]={0}, boxes[9][9]={0};', id: 1 },
+            { line: '    for (int r = 0; r < 9; r++)', id: 2 },
+            { line: '        for (int c = 0; c < 9; c++) {', id: 3 },
+            { line: '            if (board[r][c] == \'.\') continue;', id: 4 },
+            { line: '            int num = board[r][c] - \'1\';', id: 5 },
+            { line: '            int boxIdx = (r/3)*3 + (c/3);', id: 6 },
+            { line: '            if (rows[r][num] || cols[c][num]', id: 7 },
+            { line: '                || boxes[boxIdx][num]) return false;', id: 8 },
+            { line: '            rows[r][num]=cols[c][num]=boxes[boxIdx][num]=true;', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    return true;', id: 11 },
+            { line: '}', id: 12 },
+        ];
+
+        const board = [
+            ['5','3','.','.','7','.','.','.','.'],
+            ['6','.','.','1','9','5','.','.','.'],
+            ['.','9','8','.','.','.','.','6','.'],
+            ['8','.','.','.','6','.','.','.','3'],
+            ['4','.','.','8','.','3','.','.','1'],
+            ['7','.','.','.','2','.','.','.','6'],
+            ['.','6','.','.','.','.','2','8','.'],
+            ['.','.','.','4','1','9','.','.','5'],
+            ['.','.','.','.','8','.','.','7','9']
+        ];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const rows = Array.from({length:9}, () => new Set());
+            const cols = Array.from({length:9}, () => new Set());
+            const boxes = Array.from({length:9}, () => new Set());
+
+            steps.push({ r: -1, c: -1, rows: rows.map(s => [...s]), cols: cols.map(s => [...s]), boxes: boxes.map(s => [...s]), conflict: false, highlightLines: [0, 1],
+                explanation: { title: 'Initialization', text: '初始化 rows, cols, boxes 三個 Set 陣列。' }});
+
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (board[r][c] === '.') continue;
+                    const num = board[r][c];
+                    const boxIdx = Math.floor(r/3)*3 + Math.floor(c/3);
+
+                    const conflict = rows[r].has(num) || cols[c].has(num) || boxes[boxIdx].has(num);
+                    steps.push({ r, c, rows: rows.map(s => [...s]), cols: cols.map(s => [...s]), boxes: boxes.map(s => [...s]), conflict, activeRow: r, activeCol: c, activeBox: boxIdx, highlightLines: conflict ? [7, 8] : [5, 6, 9],
+                        explanation: { title: `Check (${r}, ${c}) = ${num}`, text: conflict ? `衝突！${num} 已存在於 Row/Col/Box。` : `${num} 有效，加入 Row ${r}, Col ${c}, Box ${boxIdx}。` }});
+
+                    if (conflict) return steps;
+                    rows[r].add(num); cols[c].add(num); boxes[boxIdx].add(num);
+                }
+            }
+
+            steps.push({ r: -1, c: -1, rows: rows.map(s => [...s]), cols: cols.map(s => [...s]), boxes: boxes.map(s => [...s]), conflict: false, valid: true, highlightLines: [11],
+                explanation: { title: '✓ Valid Sudoku!', text: '所有格子檢查完畢，沒有衝突。' }});
+
+            return steps;
+        }
+
+        function renderGrid(step) {
+            document.getElementById('sudokuGrid').innerHTML = board.flat().map((v, i) => {
+                const r = Math.floor(i / 9), c = i % 9;
+                const isCurrent = r === step.r && c === step.c;
+                const isConflict = isCurrent && step.conflict;
+                return `<div class="sudoku-cell ${isCurrent ? (isConflict ? 'conflict' : 'current') : ''}">${v === '.' ? '' : v}</div>`;
+            }).join('');
+        }
+
+        function renderSets(step) {
+            const r = step.activeRow ?? 0, c = step.activeCol ?? 0, b = step.activeBox ?? 0;
+            document.getElementById('rowSet').innerHTML = step.rows[r]?.map(n => `<span class="set-item">${n}</span>`).join('') || '-';
+            document.getElementById('colSet').innerHTML = step.cols[c]?.map(n => `<span class="set-item">${n}</span>`).join('') || '-';
+            document.getElementById('boxSet').innerHTML = step.boxes[b]?.map(n => `<span class="set-item">${n}</span>`).join('') || '-';
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => { renderGrid(step); renderSets(step); }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

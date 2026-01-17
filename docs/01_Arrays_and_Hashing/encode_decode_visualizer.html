@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encode and Decode Strings Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .string-box { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-family: monospace; margin: 8px 0; word-break: break-all; }
+        .encoded-char { display: inline; }
+        .encoded-char.length { color: var(--viz-success); }
+        .encoded-char.delimiter { color: var(--viz-secondary); font-weight: bold; }
+        .encoded-char.content { color: var(--viz-text-main); }
+        .encoded-char.active { background: var(--viz-secondary); color: #0f172a; padding: 0 2px; border-radius: 2px; }
+        .input-list { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .input-item { background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 6px; }
+        .input-item.active { background: var(--viz-secondary); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">ENCODE / DECODE</div>
+                <div style="text-align: center; margin-bottom: 10px;"><strong>Input Strings:</strong></div>
+                <div class="input-list" id="inputList"></div>
+                <div style="text-align: center; margin: 15px 0;"><strong>Encoded Result:</strong></div>
+                <div class="string-box" id="encodedBox"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'string encode(vector<string>& strs) {', id: 0 },
+            { line: '    string encoded = "";', id: 1 },
+            { line: '    for (const string& s : strs)', id: 2 },
+            { line: '        encoded += to_string(s.length()) + "#" + s;', id: 3 },
+            { line: '    return encoded;', id: 4 },
+            { line: '}', id: 5 },
+            { line: '', id: 6 },
+            { line: 'vector<string> decode(string s) {', id: 7 },
+            { line: '    vector<string> decoded; int i = 0;', id: 8 },
+            { line: '    while (i < s.length()) {', id: 9 },
+            { line: '        int j = i; while (s[j] != \'#\') j++;', id: 10 },
+            { line: '        int len = stoi(s.substr(i, j-i));', id: 11 },
+            { line: '        decoded.push_back(s.substr(j+1, len));', id: 12 },
+            { line: '        i = j + 1 + len;', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '    return decoded;', id: 15 },
+            { line: '}', id: 16 },
+        ];
+
+        const strs = ["hello", "world", "test#123"];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            let encoded = "";
+
+            steps.push({ phase: 'encode_init', activeStr: -1, encoded: "", highlightLines: [0, 1],
+                explanation: { title: 'Start Encoding', text: `輸入: [${strs.map(s => `"${s}"`).join(', ')}]` }});
+
+            strs.forEach((s, idx) => {
+                const chunk = s.length + "#" + s;
+                encoded += chunk;
+                steps.push({ phase: 'encode', activeStr: idx, encoded, chunkStart: encoded.length - chunk.length, chunkEnd: encoded.length, highlightLines: [2, 3],
+                    explanation: { title: `Encode "${s}"`, text: `長度=${s.length} → "${chunk}"` }});
+            });
+
+            steps.push({ phase: 'encode_done', activeStr: -1, encoded, highlightLines: [4],
+                explanation: { title: 'Encoding Complete', text: `編碼結果: "${encoded}"` }});
+
+            let i = 0, decoded = [];
+            steps.push({ phase: 'decode_init', decoded: [], pointer: 0, highlightLines: [7, 8],
+                explanation: { title: 'Start Decoding', text: `開始解碼編碼後的字串。` }});
+
+            while (i < encoded.length) {
+                let j = i;
+                while (encoded[j] !== '#') j++;
+                const len = parseInt(encoded.substring(i, j));
+                const str = encoded.substring(j + 1, j + 1 + len);
+                decoded.push(str);
+                steps.push({ phase: 'decode', decoded: [...decoded], pointer: i, lenEnd: j, contentEnd: j + 1 + len, encoded, highlightLines: [10, 11, 12],
+                    explanation: { title: `Decode: len=${len}`, text: `讀取 ${len} 個字元 → "${str}"` }});
+                i = j + 1 + len;
+            }
+
+            steps.push({ phase: 'done', decoded, encoded, highlightLines: [15],
+                explanation: { title: 'Decoding Complete', text: `解碼結果: [${decoded.map(s => `"${s}"`).join(', ')}]` }});
+
+            return steps;
+        }
+
+        function renderInputList(activeStr) {
+            document.getElementById('inputList').innerHTML = strs.map((s, i) => 
+                `<div class="input-item ${i === activeStr ? 'active' : ''}">"${s}"</div>`
+            ).join('');
+        }
+
+        function renderEncoded(step) {
+            if (!step.encoded) { document.getElementById('encodedBox').innerHTML = '<em style="color:var(--viz-text-muted)">Empty</em>'; return; }
+            let html = '';
+            for (let i = 0; i < step.encoded.length; i++) {
+                const c = step.encoded[i];
+                const isActive = step.pointer !== undefined && i >= step.pointer && i < (step.contentEnd || step.encoded.length);
+                const cls = c === '#' ? 'delimiter' : /\d/.test(c) && (step.lenEnd === undefined || i < step.lenEnd) ? 'length' : 'content';
+                html += `<span class="encoded-char ${cls} ${isActive ? 'active' : ''}">${c}</span>`;
+            }
+            document.getElementById('encodedBox').innerHTML = html;
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => { renderInputList(step.activeStr ?? -1); renderEncoded(step); }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -4,16 +4,16 @@
 
 題目給一個整數陣列 `nums`，回傳一個陣列 `answer`，其中 `answer[i]` 等於 `nums` 中除了 `nums[i]` 之外所有元素的乘積。
 
--   **Input**: `[1,2,3,4]`
--   **Output**: `[24,12,8,6]`
-    -   24 = 2*3*4
-    -   12 = 1*3*4
-    -   8 = 1*2*4
-    -   6 = 1*2*3
--   **Constraints**:
-    -   時間複雜度必須是 $O(n)$。
-    -   **不能使用除法 (Division)**。
-    -   **Follow-up**: 能否達到 $O(1)$ Space Complexity? (Output array 不算空間)
+- **Input**: `[1,2,3,4]`
+- **Output**: `[24,12,8,6]`
+  - 24 = 2*3*4
+  - 12 = 1*3*4
+  - 8 = 1*2*4
+  - 6 = 1*2*3
+- **Constraints**:
+  - 時間複雜度必須是 $O(n)$。
+  - **不能使用除法 (Division)**。
+  - **Follow-up**: 能否達到 $O(1)$ Space Complexity? (Output array 不算空間)
 
 ---
 
@@ -21,14 +21,15 @@
 
 對於每一個 `i`，跑一遍陣列把其他數字乘起來。
 
--   **Time Complexity**: $O(n^2)$。
--   **Result**: Time Limit Exceeded (TLE)。題目要求 $O(n)$。
+- **Time Complexity**: $O(n^2)$。
+- **Result**: Time Limit Exceeded (TLE)。題目要求 $O(n)$。
 
 ### Approach 1.5: Division (Not Allowed)
+
 算出所有數字的總乘積 `P`，然後 `answer[i] = P / nums[i]`。
 
--   **問題 1**: 題目 **禁止使用除法**。
--   **問題 2**: 如果陣列中有 **0**，你會遇到 Divide by Zero (除以零) 的錯誤。即便處理 0，邏輯也會變得很複雜 (如果有兩個 0，結果全為 0；如果有一個 0，除了那個 0 的位置是其他數乘積，其他位置都是 0)。
+- **問題 1**: 題目 **禁止使用除法**。
+- **問題 2**: 如果陣列中有 **0**，你會遇到 Divide by Zero (除以零) 的錯誤。即便處理 0，邏輯也會變得很複雜 (如果有兩個 0，結果全為 0；如果有一個 0，除了那個 0 的位置是其他數乘積，其他位置都是 0)。
 
 ---
 
@@ -45,13 +46,27 @@
 我們可以分兩次遍歷計算：
 
 1.  **第一次遍歷 (Left -> Right)**:
-    -   計算所有 `i` 左邊的乘積，存入 `answer[i]`。
-    -   `answer[i] = nums[0] * ... * nums[i-1]`
+    - 計算所有 `i` 左邊的乘積，存入 `answer[i]`。
+    - `answer[i] = nums[0] * ... * nums[i-1]`
 2.  **第二次遍歷 (Right -> Left)**:
-    -   計算所有 `i` 右邊的乘積，並 **乘** 到 `answer[i]` 上。
-    -   我們不需要一個額外的陣列來存 Right Product，只需要一個變數 `postfix` 隨路累積即可。
+    - 計算所有 `i` 右邊的乘積，並 **乘** 到 `answer[i]` 上。
+    - 我們不需要一個額外的陣列來存 Right Product，只需要一個變數 `postfix` 隨路累積即可。
 
 這樣我們就達成了 $O(n)$ Time 和 $O(1)$ Extra Space。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../product_of_array_visualizer.html" 
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
+            loading="lazy">
+    </iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;">
+    <a href="../product_of_array_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;">
+        <span>⤢</span> 全螢幕開啟視覺化
+    </a>
+</p>
 
 ---
 
@@ -95,17 +110,25 @@ public:
 ```python
 class Solution:
     def productExceptSelf(self, nums: List[int]) -> List[int]:
+        # Step 1: 初始化結果陣列 (Allocation)
+        # [1] * N 會產生一個長度為 N 的 list，裡面填滿 1
+        # C++: vector<int> res(nums.size(), 1);
         res = [1] * (len(nums))
 
         prefix = 1
+        # Step 2: Prefix Pass (由左往右)
+        # 目的：算出每個位置「左邊所有數字」的乘積
         for i in range(len(nums)):
-            res[i] = prefix
-            prefix *= nums[i]
+            res[i] = prefix   # 將目前的 prefix 存入 res[i] (此時 res[i] 只有左邊的乘積)
+            prefix *= nums[i] # 更新 prefix，把當前數字乘進去，給下一個位置用
 
         postfix = 1
+        # Step 3: Postfix Pass (由右往左)
+        # 目的：算出每個位置「右邊所有數字」的乘積，並直接乘上原本 res[i] 內的左邊乘積
+        # range(start, stop, step): 從最後一個 index (len-1) 倒數到 0 (stop=-1 不包含)
         for i in range(len(nums) - 1, -1, -1):
-            res[i] *= postfix
-            postfix *= nums[i]
+            res[i] *= postfix # 關鍵：res[i] = (左邊乘積) * (右邊乘積)
+            postfix *= nums[i] # 更新 postfix，給前一個位置用
 
         return res
 ```
@@ -153,14 +176,16 @@ public:
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
 ### Time Complexity
--   **$O(n)$**:
-    -   第一個迴圈遍歷一次 (Prefix)。
-    -   第二個迴圈遍歷一次 (Postfix)。
-    -   總共 $2n \approx O(n)$。
+
+- **$O(n)$**:
+  - 第一個迴圈遍歷一次 (Prefix)。
+  - 第二個迴圈遍歷一次 (Postfix)。
+  - 總共 $2n \approx O(n)$。
 
 ### Space Complexity
--   **$O(1)$** (Extra Space):
-    -   題目定義 output array 不算額外空間。
-    -   我們只使用了 `prefix`, `postfix`, `n`, `i` 幾個變數。
-    -   因此 Space Complexity 是 $O(1)$。
-    -   (如果不算 Output 優化，我們理論上需要兩個陣列 `prefix[]` 和 `suffix[]`，那樣就是 $O(n)$)。
+
+- **$O(1)$** (Extra Space):
+  - 題目定義 output array 不算額外空間。
+  - 我們只使用了 `prefix`, `postfix`, `n`, `i` 幾個變數。
+  - 因此 Space Complexity 是 $O(1)$。
+  - (如果不算 Output 優化，我們理論上需要兩個陣列 `prefix[]` 和 `suffix[]`，那樣就是 $O(n)$)。

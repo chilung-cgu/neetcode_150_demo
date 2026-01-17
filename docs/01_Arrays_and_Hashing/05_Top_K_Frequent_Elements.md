@@ -4,11 +4,11 @@
 
 題目給一個整數陣列 `nums` 和一個整數 `k`，要求回傳出現頻率最高的 `k` 個元素。
 
--   **Input**: `nums = [1,1,1,2,2,3], k = 2`
--   **Output**: `[1,2]`
--   **Constraints**:
-    -   $k$ 在有效範圍內。
-    -   題目要求時間複雜度 **優於** $O(n \log n)$。這是一個很大的提示！(這是否決 Sorting 解法的紅牌)。
+- **Input**: `nums = [1,1,1,2,2,3], k = 2`
+- **Output**: `[1,2]`
+- **Constraints**:
+  - $k$ 在有效範圍內。
+  - 題目要求時間複雜度 **優於** $O(n \log n)$。這是一個很大的提示！(這是否決 Sorting 解法的紅牌)。
 
 ---
 
@@ -19,8 +19,8 @@
 3.  根據 Count 進行 Sorting (Descending)。
 4.  取前 `k` 個。
 
--   **Time Complexity**: $O(n \log n)$ (因為 Sorting)。
--   **Result**: 雖然能解，但題目明確說要比這更快，所以這不是滿分答案。
+- **Time Complexity**: $O(n \log n)$ (因為 Sorting)。
+- **Result**: 雖然能解，但題目明確說要比這更快，所以這不是滿分答案。
 
 ---
 
@@ -30,24 +30,38 @@
 
 **思路 1: Max Heap (Priority Queue)**
 
--   我們不需要對 *所有* 元素排序，我們只需要前 `k` 個。
--   建立一個 Max Heap，把所有 `(Count, Number)` 丟進去。
--   Pop `k` 次。
--   **Cost**: Build Heap $O(N)$, Pop $k$ times $O(k \log n)$。總共 $O(N + k \log n)$。這比 Sort 好。
+- 我們不需要對 _所有_ 元素排序，我們只需要前 `k` 個。
+- 建立一個 Max Heap，把所有 `(Count, Number)` 丟進去。
+- Pop `k` 次。
+- **Cost**: Build Heap $O(N)$, Pop $k$ times $O(k \log n)$。總共 $O(N + k \log n)$。這比 Sort 好。
 
 **思路 2: Bucket Sort (Linear Time)**
 
--   頻率的範圍是多少？一個數字最多出現 `n` 次 (陣列長度)。
--   我們可以建立一個陣列 `buckets`，大小為 `n + 1`。
--   `buckets[i]` 存放「出現了 `i` 次的所有數字」。
--   例如：`nums = [1,1,1,2,2,3]`
-    -   1 出現 3 次 -> `bucket[3].push(1)`
-    -   2 出現 2 次 -> `bucket[2].push(2)`
-    -   3 出現 1 次 -> `bucket[1].push(3)`
--   最後從 `bucket[n]` 往回走到 `bucket[1]`，收集 `k` 個數字。
+- 頻率的範圍是多少？一個數字最多出現 `n` 次 (陣列長度)。
+- 我們可以建立一個陣列 `buckets`，大小為 `n + 1`。
+- `buckets[i]` 存放「出現了 `i` 次的所有數字」。
+- 例如：`nums = [1,1,1,2,2,3]`
+  - 1 出現 3 次 -> `bucket[3].push(1)`
+  - 2 出現 2 次 -> `bucket[2].push(2)`
+  - 3 出現 1 次 -> `bucket[1].push(3)`
+- 最後從 `bucket[n]` 往回走到 `bucket[1]`，收集 `k` 個數字。
 
 **Decision**:
 Bucket Sort 是 $O(n)$，這是真正的最佳解。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../top_k_frequent_visualizer.html" 
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
+            loading="lazy">
+    </iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;">
+    <a href="../top_k_frequent_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;">
+        <span>⤢</span> 全螢幕開啟視覺化
+    </a>
+</p>
 
 ---
 
@@ -136,16 +150,39 @@ public:
 
 ```python
 class Solution:
+    # Python 的型別提示 (Type Hint) 類似 C++ 的函數簽名，但僅供 IDE 參考，執行時不會強制檢查
+    # List[int] 等同於 std::vector<int>
     def topKFrequent(self, nums: List[int], k: int) -> List[int]:
+
+        # 1. 建立 Hash Map (C++: unordered_map<int, int>)
         count = {}
+
+        # 2. 建立 Buckets (二維陣列)
+        # 語法：List Comprehension (列表推導式)
+        # 邏輯：生成 len(nums) + 1 個獨立的空 list
+        # C++ 對照：vector<vector<int>> freq(nums.size() + 1);
+        # 注意：不能寫 [[]] * N，那會導致所有 bucket 指向同一個記憶體位址 (Shallow Copy)
         freq = [[] for i in range(len(nums) + 1)]
 
+        # 3. 統計頻率
         for n in nums:
+            # .get(n, 0): 嘗試取值，若 key 不存在則回傳預設值 0
+            # Python 的 dict[key] 若不存在會 crash，不像 C++ map[key] 會自動初始化為 0
             count[n] = count.get(n, 0) + 1
+
+        # 4. 填入 Buckets
+        # .items() 回傳 (key, value) 的 tuple 列表
+        # n, c 對應 key, value (類似 C++17 的 Structured Binding: for (auto [n, c] : count))
         for n, c in count.items():
-            freq[c].append(n)
+            freq[c].append(n) # append 等同於 push_back
 
         res = []
+
+        # 5. 反向遍歷 Buckets 收集結果
+        # range(start, stop, step) 是「左閉右開」區間 [start, stop)
+        # start: len(freq) - 1 (最後一個 index，最高頻率)
+        # stop: 0 (因為不包含 0，所以迴圈會執行到 index 1 結束)
+        # step: -1 (每次遞減)
         for i in range(len(freq) - 1, 0, -1):
             for n in freq[i]:
                 res.append(n)
@@ -209,18 +246,20 @@ public:
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
 ### Bucket Sort
--   **Time Complexity**: $O(n)$
-    -   統計頻率：$O(n)$
-    -   放入 Buckets：$O(n)$ (遍歷 map)
-    -   讀取 Buckets：$O(n)$ (最差情況下 bucket 是空的，但我們還是要 iterate index。所有的數字加起來總數是 distinct elements，也小於 $n$)
-    -   總合：$O(n)$ (Linear Time)
--   **Space Complexity**: $O(n)$
-    -   Hash Map + Buckets 陣列。
+
+- **Time Complexity**: $O(n)$
+  - 統計頻率：$O(n)$
+  - 放入 Buckets：$O(n)$ (遍歷 map)
+  - 讀取 Buckets：$O(n)$ (最差情況下 bucket 是空的，但我們還是要 iterate index。所有的數字加起來總數是 distinct elements，也小於 $n$)
+  - 總合：$O(n)$ (Linear Time)
+- **Space Complexity**: $O(n)$
+  - Hash Map + Buckets 陣列。
 
 ### Min Heap Approach
--   **Time Complexity**: $O(n \log k)$
-    -   遍歷 Map (size $m \le n$)，每次 push/pop heap 是 $\log k$。
-    -   所以是 $O(n \log k)$。當 $k$ 接近 $n$ 時，退化成 $O(n \log n)$。
--   **Space Complexity**: $O(n)$ (Map) + $O(k)$ (Heap)。
+
+- **Time Complexity**: $O(n \log k)$
+  - 遍歷 Map (size $m \le n$)，每次 push/pop heap 是 $\log k$。
+  - 所以是 $O(n \log k)$。當 $k$ 接近 $n$ 時，退化成 $O(n \log n)$。
+- **Space Complexity**: $O(n)$ (Map) + $O(k)$ (Heap)。
 
 **結論**: Bucket Sort 是理論最優解，展現了對數據特性的深刻理解 (頻率是有上限的)。

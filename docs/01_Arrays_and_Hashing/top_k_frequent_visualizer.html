@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top K Frequent Elements Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .bucket-container { display: flex; flex-direction: column; gap: 4px; }
+        .bucket-row { display: flex; align-items: center; gap: 8px; }
+        .bucket-freq { width: 30px; text-align: right; color: var(--viz-success); font-family: monospace; }
+        .bucket-items { display: flex; gap: 4px; flex-wrap: wrap; }
+        .bucket-item { background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 4px; font-family: monospace; }
+        .bucket-item.collected { background: var(--viz-secondary); color: #0f172a; }
+        .count-map { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 10px 0; }
+        .count-chip { background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">FREQUENCY COUNT</div>
+                <div class="count-map" id="countMap"></div>
+                <div class="viz-title" style="margin-top: 15px;">BUCKETS (freq → numbers)</div>
+                <div class="bucket-container" id="buckets"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid" style="margin-top: 10px;">
+                    <div class="state-item"><div class="state-label">Result (Top K)</div><div class="state-value" id="resultDisplay" style="font-size: 1rem;">[ ]</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> topKFrequent(vector<int>& nums, int k) {', id: 0 },
+            { line: '    unordered_map<int, int> countMap;', id: 1 },
+            { line: '    for (int n : nums) countMap[n]++;', id: 2 },
+            { line: '    vector<vector<int>> buckets(nums.size() + 1);', id: 3 },
+            { line: '    for (auto& [num, cnt] : countMap)', id: 4 },
+            { line: '        buckets[cnt].push_back(num);', id: 5 },
+            { line: '    vector<int> result;', id: 6 },
+            { line: '    for (int i = buckets.size()-1; i > 0; i--)', id: 7 },
+            { line: '        for (int n : buckets[i]) {', id: 8 },
+            { line: '            result.push_back(n);', id: 9 },
+            { line: '            if (result.size() == k) return result;', id: 10 },
+            { line: '        }', id: 11 },
+            { line: '    return result;', id: 12 },
+            { line: '}', id: 13 },
+        ];
+
+        const nums = [1, 1, 1, 2, 2, 3];
+        const k = 2;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const countMap = new Map();
+            nums.forEach(n => countMap.set(n, (countMap.get(n) || 0) + 1));
+
+            steps.push({ phase: 'count', countMap: new Map(countMap), buckets: [], result: [], highlightLines: [0, 1, 2],
+                explanation: { title: 'Step 1: Count Frequencies', text: `統計每個數字的出現次數。` }});
+
+            const buckets = Array.from({ length: nums.length + 1 }, () => []);
+            countMap.forEach((cnt, num) => buckets[cnt].push(num));
+
+            steps.push({ phase: 'bucket', countMap: new Map(countMap), buckets: buckets.map(b => [...b]), result: [], highlightLines: [3, 4, 5],
+                explanation: { title: 'Step 2: Fill Buckets', text: `將數字按頻率放入對應的 Bucket。` }});
+
+            const result = [];
+            for (let i = buckets.length - 1; i > 0 && result.length < k; i--) {
+                for (const n of buckets[i]) {
+                    result.push(n);
+                    steps.push({ phase: 'collect', countMap: new Map(countMap), buckets: buckets.map(b => [...b]), result: [...result], collectIdx: i, highlightLines: [7, 8, 9, 10],
+                        explanation: { title: `Collect from bucket[${i}]`, text: `頻率 ${i} 的數字 ${n} 加入結果。Result = [${result.join(', ')}]` }});
+                    if (result.length === k) break;
+                }
+            }
+
+            steps.push({ phase: 'done', countMap: new Map(countMap), buckets: buckets.map(b => [...b]), result: [...result], highlightLines: [12],
+                explanation: { title: 'Done!', text: `Top ${k} 高頻元素: [${result.join(', ')}]` }});
+
+            return steps;
+        }
+
+        function renderCountMap(countMap) {
+            document.getElementById('countMap').innerHTML = [...countMap.entries()].map(([num, cnt]) => 
+                `<div class="count-chip">${num}: ${cnt}次</div>`
+            ).join('');
+        }
+
+        function renderBuckets(buckets, result) {
+            const collected = new Set(result);
+            document.getElementById('buckets').innerHTML = buckets.slice().reverse().filter(b => b.length > 0).map((b, ri) => {
+                const freq = buckets.length - 1 - ri;
+                return `<div class="bucket-row"><div class="bucket-freq">${freq}:</div><div class="bucket-items">${b.map(n => 
+                    `<div class="bucket-item ${collected.has(n) ? 'collected' : ''}">${n}</div>`
+                ).join('')}</div></div>`;
+            }).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    renderCountMap(step.countMap);
+                    renderBuckets(step.buckets, step.result);
+                    document.getElementById('resultDisplay').textContent = `[${step.result.join(', ')}]`;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

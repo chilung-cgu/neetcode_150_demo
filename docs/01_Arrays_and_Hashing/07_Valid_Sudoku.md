@@ -9,11 +9,11 @@
 2.  每一列 (Col) 必須包含 1-9 不重複。
 3.  每一個 $3 \times 3$ 的宮格 (Sub-box) 必須包含 1-9 不重複。
 
--   **Input**: `vector<vector<char>> board`。
--   **Clarification**:
-    -   棋盤可能沒填滿 (會有 `.` )。
-    -   **我們不需要解數獨**，只需要判斷「現有的數字」有沒有衝突。
-    -   即使有效，也不代表這個數獨真的有解 (Is solvable)，這題不在乎 solvable，只在乎 valid。
+- **Input**: `vector<vector<char>> board`。
+- **Clarification**:
+  - 棋盤可能沒填滿 (會有 `.` )。
+  - **我們不需要解數獨**，只需要判斷「現有的數字」有沒有衝突。
+  - 即使有效，也不代表這個數獨真的有解 (Is solvable)，這題不在乎 solvable，只在乎 valid。
 
 ---
 
@@ -25,8 +25,8 @@
 2.  迴圈 0-8 檢查每一 Col。 -> OK.
 3.  迴圈 0-8 檢查每一 Box。 -> 座標計算比較麻煩。
 
--   **Time Complexity**: $O(9^2)$ (如果我們視 $N=9$ 為常數，則是 $O(1)$; 如果視 $N$ 為變數，則是 $O(N^2)$)。
--   **問題**: 程式碼會很冗長，要寫三次類似的邏輯。
+- **Time Complexity**: $O(9^2)$ (如果我們視 $N=9$ 為常數，則是 $O(1)$; 如果視 $N$ 為變數，則是 $O(N^2)$)。
+- **問題**: 程式碼會很冗長，要寫三次類似的邏輯。
 
 ---
 
@@ -42,15 +42,29 @@
 
 我們可以用 **Hash Set** (或 Boolean Array) 來即時記錄這三個維度的狀態。
 
--   `rows[9][9]`：記錄第 `i` 行是否出現過數字 `num`。
--   `cols[9][9]`：記錄第 `j` 列是否出現過數字 `num`。
--   `boxes[3][3][9]`：記錄第 `r/3`, `c/3` 個 Box 是否出現過數字 `num`。
+- `rows[9][9]`：記錄第 `i` 行是否出現過數字 `num`。
+- `cols[9][9]`：記錄第 `j` 列是否出現過數字 `num`。
+- `boxes[3][3][9]`：記錄第 `r/3`, `c/3` 個 Box 是否出現過數字 `num`。
 
 這樣我們只需要雙層迴圈遍歷 `i` 和 `j`，檢查這三個 Look-up table 即可。
 
 **Boxes Indexing**:
 也可以把 $3 \times 3$ 的 boxes 展平成 9 個 index。
 `boxIndex = (i / 3) * 3 + (j / 3)`
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../valid_sudoku_visualizer.html" 
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
+            loading="lazy">
+    </iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;">
+    <a href="../valid_sudoku_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;">
+        <span>⤢</span> 全螢幕開啟視覺化
+    </a>
+</p>
 
 ---
 
@@ -105,18 +119,35 @@ public:
 ```python
 class Solution:
     def isValidSudoku(self, board: List[List[str]]) -> bool:
+        # 1. 初始化 Hash Maps
+        # collections.defaultdict(set): 這是一種特殊的 Dictionary。
+        # 當你存取一個不存在的 Key 時，它會自動呼叫 set() 創建一個空的 Hash Set。
+        # C++ 類比: 類似 unordered_map<int, unordered_set<char>>，但 Python 會自動處理初始化。
+        # 注意: Python 的 set 底層是 Hash Table，對應 C++ 的 std::unordered_set (O(1))，而非 std::set (Red-Black Tree, O(logN))。
         cols = collections.defaultdict(set)
         rows = collections.defaultdict(set)
-        squares = collections.defaultdict(set) # key = (r // 3, c // 3)
+
+        # key 是一個 Tuple (row_idx, col_idx)，代表 3x3 的區塊座標
+        squares = collections.defaultdict(set)
 
         for r in range(9):
             for c in range(9):
+                # 跳過空白格
                 if board[r][c] == ".":
                     continue
+
+                # 2. 檢查衝突 (Lookup)
+                # 語法 check: "val in set" 是 O(1) 操作。
+                # C++ 類比: rows[r].find(val) != rows[r].end()
+                # 這裡的 key (r // 3, c // 3) 利用了 Tuple 可以被 Hash 的特性
+                # 在 C++ 中要用 std::pair 當 unordered_map 的 key 需要手寫 Hash Function，Python 直接支援。
                 if (board[r][c] in rows[r] or
                     board[r][c] in cols[c] or
                     board[r][c] in squares[(r // 3, c // 3)]):
                     return False
+
+                # 3. 插入記錄 (Insert)
+                # set.add() 對應 C++ 的 set.insert()
                 cols[c].add(board[r][c])
                 rows[r].add(board[r][c])
                 squares[(r // 3, c // 3)].add(board[r][c])
@@ -168,13 +199,74 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(1)$
-    -   因為棋盤大小固定是 $9 \times 9 = 81$。我們只遍歷一次。
-    -   如果棋盤大小是 $N \times N$，則是 $O(N^2)$。
--   **Space Complexity**: $O(1)$
-    -   我們使用了固定大小的 Array (`3 * 9 * 9` booleans)。
-    -   如果 $N$ 是變數，則是 $O(N^2)$。
+- **Time Complexity**: $O(1)$
+  - 因為棋盤大小固定是 $9 \times 9 = 81$。我們只遍歷一次。
+  - 如果棋盤大小是 $N \times N$，則是 $O(N^2)$。
+- **Space Complexity**: $O(1)$
+  - 我們使用了固定大小的 Array (`3 * 9 * 9` booleans)。
+  - 如果 $N$ 是變數，則是 $O(N^2)$。
 
 **Bitwise Optimization (Optional)**:
 可以使用一個 `int` (32 bits) 來代替 `bool array[9]`，透過 bitmask 來記錄 1-9 的出現狀況。
 例如 `row[r] |= (1 << num)`。這樣可以進一步壓縮空間，但在 $9 \times 9$ 規模下差異極小。
+
+## 7. 💻 Other Solutions
+
+```cpp
+#include <vector>
+using namespace std;
+
+class Solution {
+public:
+    bool isValidSudoku(vector<vector<char>>& board) {
+        // 優化重點：用 int (32 bits) 代替 bool array
+        // 變數說明：
+        // rows[i]: 第 i 列的 bitmask，第 k 個 bit 為 1 代表數字 k+1 已出現
+        // cols[i]: 第 i 行的 bitmask
+        // boxes[i]: 第 i 個九宮格的 bitmask
+        // 空間複雜度：從 O(N^2) 降為 O(N) (雖然 N 固定為 9，但概念上更省)
+        vector<int> rows(9, 0);
+        vector<int> cols(9, 0);
+        vector<int> boxes(9, 0);
+
+        for (int r = 0; r < 9; r++) {
+            for (int c = 0; c < 9; c++) {
+                // 遇到空白則跳過
+                if (board[r][c] == '.') continue;
+
+                // Step 1: 將字元 '1'-'9' 轉換為整數 0-8
+                // 這是為了配合 bit shifting (位移運算)
+                int val = board[r][c] - '1';
+
+                // Step 2: 產生 Mask
+                // 例如數字是 '3' (val=2)，mask = 1 << 2 = 000...0100 (binary)
+                // 只有第 2 個 bit 是 1，其餘為 0
+                int mask = 1 << val;
+
+                // Step 3: 計算九宮格索引 (Box Index)
+                // 公式解析：
+                // (r / 3) * 3 : 決定是哪一層 (Top/Middle/Bottom)，每層跨度為 3
+                // (c / 3)     : 決定是哪一列 (Left/Center/Right)
+                // 結果範圍 0~8
+                int boxIndex = (r / 3) * 3 + (c / 3);
+
+                // Step 4: 衝突檢查 (Bitwise Check)
+                // 使用 AND (&) 運算：若 rows[r] 的該 bit 已經是 1，結果就不會是 0
+                // 只要 row, col 或 box 任一處有衝突，即回傳 false
+                if ((rows[r] & mask) || (cols[c] & mask) || (boxes[boxIndex] & mask)) {
+                    return false;
+                }
+
+                // Step 5: 更新狀態 (Bitwise Set)
+                // 使用 OR (|) 運算：將該 bit 設定為 1，保留其他 bits 不變
+                rows[r] |= mask;
+                cols[c] |= mask;
+                boxes[boxIndex] |= mask;
+            }
+        }
+
+        return true;
+    }
+};
+
+```

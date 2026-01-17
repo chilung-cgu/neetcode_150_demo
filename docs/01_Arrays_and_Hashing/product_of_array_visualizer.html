@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product of Array Except Self Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .array-row { display: flex; gap: 4px; justify-content: center; margin: 8px 0; }
+        .array-cell { background: rgba(255,255,255,0.1); padding: 10px 16px; border-radius: 6px; font-family: monospace; min-width: 40px; text-align: center; }
+        .array-cell.active { background: var(--viz-secondary); color: #0f172a; }
+        .array-label { width: 80px; text-align: right; color: var(--viz-text-muted); font-size: 0.85rem; padding-right: 10px; }
+        .pass-indicator { text-align: center; margin: 10px 0; padding: 6px 12px; border-radius: 20px; display: inline-block; }
+        .pass-indicator.prefix { background: rgba(74, 222, 128, 0.2); color: var(--viz-success); }
+        .pass-indicator.postfix { background: rgba(251, 146, 60, 0.2); color: var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">PREFIX & POSTFIX PRODUCTS</div>
+                <div style="text-align: center;"><span class="pass-indicator" id="passIndicator">Initializing</span></div>
+                <div style="display: flex; align-items: center; margin-top: 15px;">
+                    <div class="array-label">nums:</div>
+                    <div class="array-row" id="numsRow"></div>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <div class="array-label">result:</div>
+                    <div class="array-row" id="resultRow"></div>
+                </div>
+                <div class="controls" style="margin-top: 20px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+                <div class="state-grid" style="margin-top: 15px;">
+                    <div class="state-item"><div class="state-label">Prefix</div><div class="state-value" id="prefixDisplay" style="color: var(--viz-success);">1</div></div>
+                    <div class="state-item"><div class="state-label">Postfix</div><div class="state-value" id="postfixDisplay" style="color: var(--viz-secondary);">1</div></div>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> productExceptSelf(vector<int>& nums) {', id: 0 },
+            { line: '    int n = nums.size();', id: 1 },
+            { line: '    vector<int> res(n, 1);', id: 2 },
+            { line: '    int prefix = 1;', id: 3 },
+            { line: '    for (int i = 0; i < n; i++) {', id: 4 },
+            { line: '        res[i] = prefix;', id: 5 },
+            { line: '        prefix *= nums[i];', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    int postfix = 1;', id: 8 },
+            { line: '    for (int i = n-1; i >= 0; i--) {', id: 9 },
+            { line: '        res[i] *= postfix;', id: 10 },
+            { line: '        postfix *= nums[i];', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    return res;', id: 13 },
+            { line: '}', id: 14 },
+        ];
+
+        const nums = [1, 2, 3, 4];
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const n = nums.length;
+            let res = new Array(n).fill(1);
+            let prefix = 1, postfix = 1;
+
+            steps.push({ phase: 'init', idx: -1, res: [...res], prefix: 1, postfix: 1, highlightLines: [0, 1, 2, 3],
+                explanation: { title: 'Initialization', text: `初始化 result 陣列為 [1, 1, 1, 1]。prefix = 1。` }});
+
+            for (let i = 0; i < n; i++) {
+                res[i] = prefix;
+                steps.push({ phase: 'prefix', idx: i, res: [...res], prefix, postfix: 1, highlightLines: [4, 5],
+                    explanation: { title: `Prefix Pass: i=${i}`, text: `res[${i}] = prefix = ${prefix}` }});
+                prefix *= nums[i];
+                steps.push({ phase: 'prefix', idx: i, res: [...res], prefix, postfix: 1, highlightLines: [6],
+                    explanation: { title: `Update Prefix`, text: `prefix *= nums[${i}] → prefix = ${prefix}` }});
+            }
+
+            steps.push({ phase: 'postfix_init', idx: -1, res: [...res], prefix, postfix: 1, highlightLines: [8],
+                explanation: { title: 'Start Postfix Pass', text: `Prefix 完成。現在從右邊開始計算 Postfix。postfix = 1。` }});
+
+            for (let i = n - 1; i >= 0; i--) {
+                res[i] *= postfix;
+                steps.push({ phase: 'postfix', idx: i, res: [...res], prefix, postfix, highlightLines: [9, 10],
+                    explanation: { title: `Postfix Pass: i=${i}`, text: `res[${i}] *= postfix → res[${i}] = ${res[i]}` }});
+                postfix *= nums[i];
+                steps.push({ phase: 'postfix', idx: i, res: [...res], prefix, postfix, highlightLines: [11],
+                    explanation: { title: `Update Postfix`, text: `postfix *= nums[${i}] → postfix = ${postfix}` }});
+            }
+
+            steps.push({ phase: 'done', idx: -1, res: [...res], prefix, postfix, highlightLines: [13],
+                explanation: { title: 'Done!', text: `Result = [${res.join(', ')}]。每個位置 = 左邊乘積 × 右邊乘積。` }});
+
+            return steps;
+        }
+
+        function renderArrays(step) {
+            document.getElementById('numsRow').innerHTML = nums.map((n, i) => 
+                `<div class="array-cell ${i === step.idx ? 'active' : ''}">${n}</div>`
+            ).join('');
+            document.getElementById('resultRow').innerHTML = step.res.map((r, i) => 
+                `<div class="array-cell ${i === step.idx ? 'active' : ''}">${r}</div>`
+            ).join('');
+            const indicator = document.getElementById('passIndicator');
+            indicator.className = 'pass-indicator ' + (step.phase.includes('prefix') ? 'prefix' : step.phase.includes('postfix') ? 'postfix' : '');
+            indicator.textContent = step.phase === 'init' ? 'Initializing' : step.phase.includes('prefix') ? '← Prefix Pass (L→R)' : step.phase.includes('postfix') ? '→ Postfix Pass (R→L)' : 'Complete';
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    renderArrays(step);
+                    document.getElementById('prefixDisplay').textContent = step.prefix;
+                    document.getElementById('postfixDisplay').textContent = step.postfix;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

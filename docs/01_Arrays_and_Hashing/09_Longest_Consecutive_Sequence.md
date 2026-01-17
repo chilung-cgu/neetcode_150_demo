@@ -6,9 +6,9 @@
 例如：`[100, 4, 200, 1, 3, 2]`
 連續序列是 `[1, 2, 3, 4]`，長度為 4。
 
--   **Constraints**:
-    -   題目強制要求 **$O(n)$** Time Complexity。
-    -   這直接封殺了 Sorting 解法 ($O(n \log n)$)。
+- **Constraints**:
+  - 題目強制要求 **$O(n)$** Time Complexity。
+  - 這直接封殺了 Sorting 解法 ($O(n \log n)$)。
 
 ---
 
@@ -31,12 +31,26 @@
 1.  把所有數字丟進 `unordered_set`。能快速知道某個數字存不存在。
 2.  遍歷陣列中的每一個數字 `num`。
 3.  **關鍵判斷**：我們怎麼知道 `num` 是不是一個序列的**開頭**？
-    -   檢查 `num - 1` 是否存在於 Set 中。
-    -   如果 `num - 1` **不存在**，那 `num` 肯定是序列的第一個數字 (e.g., 1 沒有 0，所以 1 是開頭)。
-    -   如果 `num - 1` **存在**，那 `num` 就不是開頭，我們直接跳過 (因為之後處理 `num-1` 或更前面的數字時，自然會算到 `num`)。
+    - 檢查 `num - 1` 是否存在於 Set 中。
+    - 如果 `num - 1` **不存在**，那 `num` 肯定是序列的第一個數字 (e.g., 1 沒有 0，所以 1 是開頭)。
+    - 如果 `num - 1` **存在**，那 `num` 就不是開頭，我們直接跳過 (因為之後處理 `num-1` 或更前面的數字時，自然會算到 `num`)。
 4.  如果是開頭，就開始 `while` loop 往上數：`num + 1` 在不在？ `num + 2` 在不在？... 直到斷掉。
 
 這樣每個數字最多被 access 兩次 (一次是 check start，一次是 being counted)，所以是嚴格的 $O(n)$。
+
+### 🎬 Visualization (演算法視覺化)
+
+<div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
+    <iframe src="../longest_consecutive_visualizer.html" 
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
+            loading="lazy">
+    </iframe>
+</div>
+<p style="text-align: right; margin-top: 8px;">
+    <a href="../longest_consecutive_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;">
+        <span>⤢</span> 全螢幕開啟視覺化
+    </a>
+</p>
 
 ---
 
@@ -136,14 +150,14 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n)$
-    -   建構 Set: $O(n)$。
-    -   遍歷 Set: 雖然有一個 `while` 在 `for` 裡面，看起來像 $O(n^2)$，但實際上，只有當數字是 Sequence Start 時才會進入 `while`。
-    -   舉例：`[1, 2, 3, 4]`。
-        -   `1`: 是 start. While loop 跑 4 次 (count 1,2,3,4)。
-        -   `2`: 不是 start (1 exists). Skip.
-        -   `3`: 不是 start. Skip.
-        -   `4`: 不是 start. Skip.
-    -   總操作次數是 $n + n = 2n$，所以是線性時間。
--   **Space Complexity**: $O(n)$
-    -   Hash Set 儲存所有 unique numbers。
+- **Time Complexity**: $O(n)$
+  - 建構 Set: $O(n)$。
+  - 遍歷 Set: 雖然有一個 `while` 在 `for` 裡面，看起來像 $O(n^2)$，但實際上，只有當數字是 Sequence Start 時才會進入 `while`。
+  - 舉例：`[1, 2, 3, 4]`。
+    - `1`: 是 start. While loop 跑 4 次 (count 1,2,3,4)。
+    - `2`: 不是 start (1 exists). Skip.
+    - `3`: 不是 start. Skip.
+    - `4`: 不是 start. Skip.
+  - 總操作次數是 $n + n = 2n$，所以是線性時間。
+- **Space Complexity**: $O(n)$
+  - Hash Set 儲存所有 unique numbers。

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two Sum Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .map-container { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 10px 0; }
+        .map-item { background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 6px; font-family: monospace; }
+        .map-item .key { color: var(--viz-success); }
+        .map-item .value { color: var(--viz-text-muted); }
+        .target-display { text-align: center; font-size: 1.2rem; margin: 10px 0; }
+        .target-display span { color: var(--viz-secondary); font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">ARRAY & HASHMAP</div>
+                <div class="target-display">Target = <span id="targetVal">9</span></div>
+                <div class="chart-container" id="chartContainer"></div>
+                <div class="viz-title" style="margin-top: 15px;">HashMap (value → index)</div>
+                <div class="map-container" id="mapDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> twoSum(vector<int>& nums, int target) {', id: 0 },
+            { line: '    unordered_map<int, int> numMap;', id: 1 },
+            { line: '    for (int i = 0; i < nums.size(); i++) {', id: 2 },
+            { line: '        int complement = target - nums[i];', id: 3 },
+            { line: '        if (numMap.find(complement) != numMap.end()) {', id: 4 },
+            { line: '            return {numMap[complement], i};', id: 5 },
+            { line: '        }', id: 6 },
+            { line: '        numMap[nums[i]] = i;', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return {};', id: 9 },
+            { line: '}', id: 10 },
+        ];
+
+        const nums = [2, 7, 11, 15];
+        const target = 9;
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const map = new Map();
+
+            steps.push({ idx: -1, map: new Map(), complement: null, found: false, highlightLines: [0, 1],
+                explanation: { title: 'Initialization', text: `初始化空的 HashMap。Target = ${target}` }});
+
+            for (let i = 0; i < nums.length; i++) {
+                const complement = target - nums[i];
+                
+                steps.push({ idx: i, map: new Map(map), complement, found: false, highlightLines: [2, 3, 4],
+                    explanation: { title: `Check nums[${i}] = ${nums[i]}`, text: `需要找的補數 = ${target} - ${nums[i]} = ${complement}。HashMap 中有 ${complement} 嗎？` }});
+
+                if (map.has(complement)) {
+                    steps.push({ idx: i, map: new Map(map), complement, found: true, result: [map.get(complement), i], highlightLines: [5],
+                        explanation: { title: '🎯 Found!', text: `發現 ${complement} 在 index ${map.get(complement)}！回傳 [${map.get(complement)}, ${i}]。` }});
+                    return steps;
+                }
+
+                map.set(nums[i], i);
+                steps.push({ idx: i, map: new Map(map), complement: null, found: false, highlightLines: [7],
+                    explanation: { title: `Store ${nums[i]} → ${i}`, text: `將 nums[${i}]=${nums[i]} 存入 HashMap，留給後續配對。` }});
+            }
+
+            steps.push({ idx: -1, map: new Map(map), complement: null, found: false, highlightLines: [9],
+                explanation: { title: 'No Solution', text: '遍歷完成，沒有找到符合的配對。' }});
+            return steps;
+        }
+
+        function renderArray(container, idx, complement, found) {
+            container.innerHTML = '';
+            nums.forEach((n, i) => {
+                const div = document.createElement('div');
+                div.className = 'bar';
+                div.style.width = `${100 / nums.length}%`;
+                let stateClass = i === idx ? (found ? 'calculating' : 'current') : '';
+                div.innerHTML = `<div class="bar-fill ${stateClass}" style="height: 80px;">${n}</div><div class="bar-index">${i}</div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function renderMap(container, map, complement) {
+            if (map.size === 0) { container.innerHTML = '<em style="color:var(--viz-text-muted)">Empty</em>'; return; }
+            container.innerHTML = [...map.entries()].map(([k, v]) => 
+                `<div class="map-item ${k === complement ? 'style="border:2px solid var(--viz-secondary)"' : ''}"><span class="key">${k}</span> → <span class="value">${v}</span></div>`
+            ).join('');
+        }
+
+        let viz;
+        function init() {
+            document.getElementById('targetVal').textContent = target;
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    renderArray(document.getElementById('chartContainer'), step.idx, step.complement, step.found);
+                    renderMap(document.getElementById('mapDisplay'), step.map, step.complement);
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

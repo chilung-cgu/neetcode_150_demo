@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valid Anagram Visualization</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .freq-container { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+        .freq-item { background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 0.8rem; }
+        .freq-item.positive { color: var(--viz-success); }
+        .freq-item.negative { color: var(--viz-error); }
+        .freq-item.zero { color: var(--viz-text-muted); opacity: 0.5; }
+        .string-display { font-family: monospace; font-size: 1.2rem; display: flex; justify-content: center; gap: 2px; margin: 10px 0; }
+        .char-box { padding: 8px 12px; border-radius: 4px; background: rgba(255,255,255,0.1); }
+        .char-box.active-s { background: var(--viz-success); color: #0f172a; }
+        .char-box.active-t { background: var(--viz-secondary); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">STRINGS COMPARISON</div>
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <div style="color: var(--viz-success);">String S:</div>
+                    <div class="string-display" id="stringS"></div>
+                    <div style="color: var(--viz-secondary); margin-top: 10px;">String T:</div>
+                    <div class="string-display" id="stringT"></div>
+                </div>
+                <div class="viz-title" style="margin-top: 20px;">FREQUENCY COUNT</div>
+                <div class="freq-container" id="freqDisplay"></div>
+                <div class="controls" style="margin-top: 20px;">
+                    <button class="viz-btn" id="prevBtn">← Prev</button>
+                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">Next →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                </div>
+            </div>
+            <div class="viz-card">
+                <div class="viz-title">EXPLANATION</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+                <div class="viz-title">ALGORITHM (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool isAnagram(string s, string t) {', id: 0 },
+            { line: '    if (s.length() != t.length()) return false;', id: 1 },
+            { line: '    int count[26] = {0};', id: 2 },
+            { line: '    for (int i = 0; i < s.length(); i++) {', id: 3 },
+            { line: '        count[s[i] - \'a\']++;', id: 4 },
+            { line: '        count[t[i] - \'a\']--;', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    for (int i = 0; i < 26; i++) {', id: 7 },
+            { line: '        if (count[i] != 0) return false;', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return true;', id: 10 },
+            { line: '}', id: 11 },
+        ];
+
+        const strS = "anagram";
+        const strT = "nagaram";
+
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const count = new Array(26).fill(0);
+
+            steps.push({ sIdx: -1, tIdx: -1, count: [...count], phase: 'init', highlightLines: [0, 1, 2],
+                explanation: { title: 'Initialization', text: `初始化長度為 26 的計數陣列 (a-z)。s="${strS}", t="${strT}"` }});
+
+            for (let i = 0; i < strS.length; i++) {
+                const sChar = strS[i], tChar = strT[i];
+                count[sChar.charCodeAt(0) - 97]++;
+                count[tChar.charCodeAt(0) - 97]--;
+                steps.push({ sIdx: i, tIdx: i, count: [...count], phase: 'counting', highlightLines: [3, 4, 5],
+                    explanation: { title: `Processing index ${i}`, text: `s[${i}]='${sChar}' → count['${sChar}']++，t[${i}]='${tChar}' → count['${tChar}']--` }});
+            }
+
+            const allZero = count.every(c => c === 0);
+            steps.push({ sIdx: -1, tIdx: -1, count: [...count], phase: 'verify', result: allZero, highlightLines: allZero ? [10] : [8],
+                explanation: { title: allZero ? '✓ Valid Anagram!' : '✗ Not Anagram', text: allZero ? '所有計數皆為 0，回傳 true。' : '存在非零計數，回傳 false。' }});
+
+            return steps;
+        }
+
+        function renderStrings(sIdx, tIdx) {
+            document.getElementById('stringS').innerHTML = [...strS].map((c, i) => `<div class="char-box ${i === sIdx ? 'active-s' : ''}">${c}</div>`).join('');
+            document.getElementById('stringT').innerHTML = [...strT].map((c, i) => `<div class="char-box ${i === tIdx ? 'active-t' : ''}">${c}</div>`).join('');
+        }
+
+        function renderFreq(count) {
+            const nonZero = count.map((c, i) => ({ char: String.fromCharCode(97 + i), count: c })).filter(x => x.count !== 0 || 'aeiou'.includes(x.char));
+            document.getElementById('freqDisplay').innerHTML = count.map((c, i) => {
+                const char = String.fromCharCode(97 + i);
+                if (c === 0 && !'aeiou'.includes(char) && !strS.includes(char) && !strT.includes(char)) return '';
+                const cls = c > 0 ? 'positive' : c < 0 ? 'negative' : 'zero';
+                return `<div class="freq-item ${cls}">${char}: ${c >= 0 ? '+' : ''}${c}</div>`;
+            }).join('');
+        }
+
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    renderStrings(step.sIdx, step.tIdx);
+                    renderFreq(step.count);
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
