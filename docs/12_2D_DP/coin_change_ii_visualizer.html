@@ -3,40 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coin Change II Visualization</title>
+    <title>Coin Change II 零錢兌換 II - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .coins { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
-        .coin { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
-        .coin.used { background: var(--viz-success); color: #0f172a; }
-        .dp-row { display: flex; gap: 3px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
-        .dp-cell { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border-radius: 4px; background: rgba(255,255,255,0.1); font-family: monospace; }
-        .dp-cell.current { background: var(--viz-success); color: #0f172a; }
+        .coins { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+        .coin { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-warning); color: #0f172a; font-size: 1.1rem; transition: all 0.3s; }
+        .coin.current { border: 3px solid var(--viz-success); }
+        .dp-row { display: flex; gap: 4px; justify-content: center; margin: 10px 0; }
+        .dp-cell { width: 35px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); font-size: 0.9rem; }
+        .dp-cell.updated { background: var(--viz-success); color: #0f172a; }
+        .dp-cell.header { background: var(--viz-primary); color: white; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">COIN CHANGE II (amount=5)</div>
+                <div class="viz-title">零錢兌換 II（完全背包）</div>
                 <div class="coins" id="coinsDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted);">DP Array:</div>
+                <div style="text-align: center; color: var(--text-muted);">dp[j] = 湊出金額 j 的組合數</div>
                 <div class="dp-row" id="dpDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">目標金額</div><div class="state-value">5</div></div>
+                    <div class="state-item"><div class="state-label">組合數</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">UNBOUNDED KNAPSACK</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -46,7 +48,7 @@
         const codeStructure = [
             { line: 'int change(int amount, vector<int>& coins) {', id: 0 },
             { line: '    vector<int> dp(amount + 1, 0);', id: 1 },
-            { line: '    dp[0] = 1;', id: 2 },
+            { line: '    dp[0] = 1; // 空組合', id: 2 },
             { line: '    for (int coin : coins) {', id: 3 },
             { line: '        for (int j = coin; j <= amount; j++) {', id: 4 },
             { line: '            dp[j] += dp[j - coin];', id: 5 },
@@ -57,38 +59,34 @@
         ];
         const coins = [1, 2, 5];
         const amount = 5;
-
         function generateAlgorithmSteps() {
             const steps = [];
-            let dp = new Array(amount + 1).fill(0);
-            dp[0] = 1;
-            
-            steps.push({ dp: [...dp], coinIdx: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'dp[0] = 1' }});
-            
-            for (let c = 0; c < coins.length; c++) {
-                const coin = coins[c];
-                for (let j = coin; j <= amount; j++) {
-                    dp[j] += dp[j - coin];
-                }
-                steps.push({ dp: [...dp], coinIdx: c, highlightLines: [3, 4, 5], explanation: { title: `Use coin ${coin}`, text: `dp = [${dp.join(', ')}]` }});
-            }
-            
-            steps.push({ dp, coinIdx: -1, highlightLines: [8], explanation: { title: 'Done!', text: `${dp[amount]} ways to make ${amount}` }});
-            
+            let dp = [1, 0, 0, 0, 0, 0];
+            steps.push({ dp: [...dp], currentCoin: -1, highlightLines: [0,1,2], explanation: { title: '初始化', text: `coins = [1, 2, 5]<br>amount = 5<br><br>dp[0] = 1 (空組合)<br>外層遍歷硬幣，避免重複計算` } });
+            // coin = 1
+            dp = [1, 1, 1, 1, 1, 1];
+            steps.push({ dp: [...dp], currentCoin: 0, highlightLines: [3,4,5], explanation: { title: '使用硬幣 1', text: '每個金額都可以用 1 湊出<br>dp = [1,1,1,1,1,1]', formula: 'dp[j] += dp[j-1]' } });
+            // coin = 2
+            dp = [1, 1, 2, 2, 3, 3];
+            steps.push({ dp: [...dp], currentCoin: 1, highlightLines: [3,4,5], explanation: { title: '使用硬幣 2', text: 'dp[2] += dp[0] = 2 (1+1, 2)<br>dp[4] += dp[2] = 3 (1+1+1+1, 1+1+2, 2+2)', formula: 'dp[j] += dp[j-2]' } });
+            // coin = 5
+            dp = [1, 1, 2, 2, 3, 4];
+            steps.push({ dp: [...dp], currentCoin: 2, highlightLines: [3,4,5], explanation: { title: '使用硬幣 5', text: 'dp[5] += dp[0] = 4<br>多了一種：直接用 5', formula: 'dp[5] += dp[0]' } });
+            steps.push({ dp: [...dp], result: 4, final: true, highlightLines: [8], explanation: { title: '🎉 完成！', text: '共 4 種組合：<br>1+1+1+1+1<br>1+1+1+2<br>1+2+2<br>5<br><br>時間：O(amount × coins)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('coinsDisplay').innerHTML = coins.map((c, i) =>
-                        `<div class="coin ${i <= (step.coinIdx ?? -1) ? 'used' : ''}">${c}</div>`
-                    ).join('');
-                    document.getElementById('dpDisplay').innerHTML = step.dp.map((v, i) =>
-                        `<span class="dp-cell ${i === amount && step.coinIdx === coins.length - 1 ? 'current' : ''}">${v}</span>`
-                    ).join('');
+                    document.getElementById('coinsDisplay').innerHTML = coins.map((c, i) => `<div class="coin${i === step.currentCoin ? ' current' : ''}">${c}</div>`).join('');
+                    let html = '';
+                    (step.dp || []).forEach((d, i) => {
+                        html += `<div class="dp-cell${d > 0 ? ' updated' : ''}">${d}</div>`;
+                    });
+                    document.getElementById('dpDisplay').innerHTML = html;
+                    document.getElementById('resultDisplay').textContent = step.result ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

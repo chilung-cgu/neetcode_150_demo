@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Break Visualization</title>
+    <title>Word Break 單詞拆分 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .str-display { display: flex; gap: 2px; justify-content: center; margin: 15px 0; }
-        .char { width: 28px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; }
+        .string { display: flex; gap: 4px; justify-content: center; margin: 20px 0; }
+        .char { width: 35px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-primary); color: white; font-size: 1.1rem; }
         .char.matched { background: var(--viz-success); color: #0f172a; }
-        .char.checking { background: var(--viz-secondary); color: #0f172a; }
-        .dict { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 10px 0; }
-        .word { padding: 4px 10px; border-radius: 4px; font-family: monospace; background: rgba(255,255,255,0.1); font-size: 0.9rem; }
+        .char.checking { background: var(--viz-warning); color: #0f172a; }
+        .dp-row { display: flex; gap: 4px; justify-content: center; margin: 10px 0; }
+        .dp-cell { width: 35px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); font-size: 0.9rem; }
+        .dp-cell.true { background: var(--viz-success); color: #0f172a; }
+        .dp-cell.false { background: var(--viz-error); opacity: 0.5; }
+        .dict { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .word { background: var(--viz-primary); color: white; padding: 4px 10px; border-radius: 4px; }
         .word.used { background: var(--viz-success); color: #0f172a; }
     </style>
 </head>
@@ -19,25 +23,27 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">WORD BREAK</div>
-                <div class="str-display" id="strDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted);">Dictionary:</div>
+                <div class="viz-title">單詞拆分（DP）</div>
+                <div style="text-align: center; color: var(--text-muted);">字典</div>
                 <div class="dict" id="dictDisplay"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="string" id="stringDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">dp[i] = s[0..i-1] 可被拆分</div>
+                <div class="dp-row" id="dpDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">DYNAMIC PROGRAMMING</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -46,47 +52,50 @@
     <script>
         const codeStructure = [
             { line: 'bool wordBreak(string s, vector<string>& wordDict) {', id: 0 },
-            { line: '    set<string> words(wordDict.begin(), wordDict.end());', id: 1 },
-            { line: '    vector<bool> dp(n + 1, false);', id: 2 },
-            { line: '    dp[0] = true;', id: 3 },
-            { line: '    for (int i = 1; i <= n; i++) {', id: 4 },
-            { line: '        for (int j = 0; j < i; j++) {', id: 5 },
-            { line: '            if (dp[j] && words.count(s.substr(j, i-j))) {', id: 6 },
-            { line: '                dp[i] = true; break;', id: 7 },
-            { line: '            }', id: 8 },
-            { line: '        }', id: 9 },
-            { line: '    }', id: 10 },
-            { line: '    return dp[n];', id: 11 },
-            { line: '}', id: 12 },
+            { line: '    unordered_set<string> dict(wordDict.begin(), wordDict.end());', id: 1 },
+            { line: '    int n = s.size();', id: 2 },
+            { line: '    vector<bool> dp(n + 1, false);', id: 3 },
+            { line: '    dp[0] = true;', id: 4 },
+            { line: '    for (int i = 1; i <= n; i++) {', id: 5 },
+            { line: '        for (int j = 0; j < i; j++) {', id: 6 },
+            { line: '            if (dp[j] && dict.count(s.substr(j, i-j))) {', id: 7 },
+            { line: '                dp[i] = true; break;', id: 8 },
+            { line: '            }', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return dp[n];', id: 12 },
+            { line: '}', id: 13 },
         ];
-        const str = 'leetcode';
-        const dict = ['leet', 'code'];
-
+        const s = "leetcode";
+        const dict = ["leet", "code"];
         function generateAlgorithmSteps() {
             const steps = [];
-            
-            steps.push({ matched: 0, checking: [], used: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 'dp[0] = true' }});
-            steps.push({ matched: 4, checking: [0, 3], used: ['leet'], highlightLines: [6, 7], explanation: { title: '"leet" found', text: 'dp[4] = true' }});
-            steps.push({ matched: 8, checking: [4, 7], used: ['leet', 'code'], highlightLines: [6, 7], explanation: { title: '"code" found', text: 'dp[8] = true' }});
-            steps.push({ matched: 8, used: ['leet', 'code'], highlightLines: [11], explanation: { title: 'Done!', text: '"leetcode" can be segmented' }});
-            
+            const dp = [true, false, false, false, false, false, false, false, false];
+            steps.push({ dp: [...dp], usedWords: [], highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: `s = "leetcode"<br>字典：["leet", "code"]<br><br>dp[0] = true (空字串)<br>找 dp[j]=true 且 s[j..i] 在字典中` } });
+            // i=4: "leet" found
+            dp[4] = true;
+            steps.push({ dp: [...dp], matched: [0,1,2,3], usedWords: ['leet'], highlightLines: [5,6,7,8], explanation: { title: 'i=4: 找到 "leet"', text: 'dp[0]=true<br>s[0..4)="leet" 在字典中<br><br>dp[4] = true', formula: 'dp[0] && "leet" ∈ dict → dp[4]=true' } });
+            // i=8: "code" found
+            dp[8] = true;
+            steps.push({ dp: [...dp], matched: [0,1,2,3,4,5,6,7], usedWords: ['leet','code'], highlightLines: [5,6,7,8], explanation: { title: 'i=8: 找到 "code"', text: 'dp[4]=true<br>s[4..8)="code" 在字典中<br><br>dp[8] = true', formula: 'dp[4] && "code" ∈ dict → dp[8]=true' } });
+            steps.push({ dp: [...dp], matched: [0,1,2,3,4,5,6,7], usedWords: ['leet','code'], result: true, final: true, highlightLines: [12], explanation: { title: '🎉 可以拆分！', text: '"leetcode" = "leet" + "code"<br><br>時間：O(n² × m)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('strDisplay').innerHTML = [...str].map((c, i) => {
+                    document.getElementById('dictDisplay').innerHTML = dict.map(w => `<span class="word${step.usedWords?.includes(w) ? ' used' : ''}">${w}</span>`).join('');
+                    let html = '';
+                    for (let i = 0; i < s.length; i++) {
                         let cls = 'char';
-                        if (i < step.matched) cls += ' matched';
-                        else if (step.checking?.length && i >= step.checking[0] && i <= step.checking[1]) cls += ' checking';
-                        return `<span class="${cls}">${c}</span>`;
-                    }).join('');
-                    document.getElementById('dictDisplay').innerHTML = dict.map(w =>
-                        `<span class="word ${step.used?.includes(w) ? 'used' : ''}">${w}</span>`
-                    ).join('');
+                        if (step.matched?.includes(i)) cls += ' matched';
+                        html += `<div class="${cls}">${s[i]}</div>`;
+                    }
+                    document.getElementById('stringDisplay').innerHTML = html;
+                    document.getElementById('dpDisplay').innerHTML = (step.dp || []).map((d, i) => `<div class="dp-cell ${d ? 'true' : ''}">${d ? 'T' : 'F'}</div>`).join('');
+                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

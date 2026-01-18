@@ -3,40 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Decode Ways Visualization</title>
+    <title>Decode Ways 解碼方法 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .str-display { display: flex; gap: 4px; justify-content: center; margin: 15px 0; }
-        .digit { width: 35px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1.2rem; background: var(--viz-primary); color: white; border-radius: 4px; }
-        .digit.current { background: var(--viz-secondary); color: #0f172a; }
-        .dp-display { display: flex; gap: 4px; justify-content: center; margin: 10px 0; }
-        .dp-item { padding: 6px 12px; border-radius: 4px; font-family: monospace; background: rgba(255,255,255,0.1); }
-        .dp-item.current { background: var(--viz-success); color: #0f172a; }
+        .string { display: flex; gap: 6px; justify-content: center; margin: 20px 0; }
+        .char { width: 40px; height: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .char .val { font-weight: bold; font-size: 1.2rem; }
+        .char .idx { font-size: 0.6rem; opacity: 0.7; }
+        .char.current { background: var(--viz-secondary); color: #0f172a; }
+        .char.pair { border: 3px solid var(--viz-warning); }
+        .dp-row { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
+        .dp-cell { width: 40px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); }
+        .dp-cell.active { background: var(--viz-success); color: #0f172a; }
+        .mappings { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 10px 0; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">DECODE WAYS: "226"</div>
-                <div class="str-display" id="strDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted);">DP Array:</div>
-                <div class="dp-display" id="dpDisplay"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">解碼方法（1D DP）</div>
+                <div class="mappings">A=1, B=2, ..., Z=26</div>
+                <div class="string" id="stringDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">dp[i] = 解碼 s[0..i-1] 的方法數</div>
+                <div class="dp-row" id="dpDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">解碼方法數</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">DYNAMIC PROGRAMMING</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -45,41 +50,49 @@
     <script>
         const codeStructure = [
             { line: 'int numDecodings(string s) {', id: 0 },
-            { line: '    vector<int> dp(n + 1, 0);', id: 1 },
-            { line: '    dp[0] = 1; dp[1] = s[0] != \'0\' ? 1 : 0;', id: 2 },
-            { line: '    for (int i = 2; i <= n; i++) {', id: 3 },
-            { line: '        if (s[i-1] != \'0\') dp[i] += dp[i-1];', id: 4 },
-            { line: '        int two = stoi(s.substr(i-2, 2));', id: 5 },
-            { line: '        if (two >= 10 && two <= 26) dp[i] += dp[i-2];', id: 6 },
-            { line: '    }', id: 7 },
-            { line: '    return dp[n];', id: 8 },
-            { line: '}', id: 9 },
+            { line: '    if (s[0] == \'0\') return 0;', id: 1 },
+            { line: '    int n = s.size();', id: 2 },
+            { line: '    vector<int> dp(n + 1, 0);', id: 3 },
+            { line: '    dp[0] = 1; dp[1] = 1;', id: 4 },
+            { line: '    for (int i = 2; i <= n; i++) {', id: 5 },
+            { line: '        if (s[i-1] != \'0\')', id: 6 },
+            { line: '            dp[i] += dp[i-1]; // 單字元', id: 7 },
+            { line: '        int two = stoi(s.substr(i-2, 2));', id: 8 },
+            { line: '        if (two >= 10 && two <= 26)', id: 9 },
+            { line: '            dp[i] += dp[i-2]; // 雙字元', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return dp[n];', id: 12 },
+            { line: '}', id: 13 },
         ];
-        const str = '226';
-        // Decodings: 2|2|6 = BZ, 22|6 = VF, 2|26 = BZ → 3 ways
-
+        const s = "226";
         function generateAlgorithmSteps() {
             const steps = [];
-            
-            steps.push({ dp: [1, 1], idx: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'dp[0]=1 (empty), dp[1]=1 (2→B)' }});
-            steps.push({ dp: [1, 1, 2], idx: 2, highlightLines: [4, 5, 6], explanation: { title: 'i=2: "22"', text: '2→B (dp[1]) + 22→V (dp[0]) = 2' }});
-            steps.push({ dp: [1, 1, 2, 3], idx: 3, highlightLines: [4, 5, 6], explanation: { title: 'i=3: "226"', text: '6→F (dp[2]) + 26→Z (dp[1]) = 3' }});
-            steps.push({ dp: [1, 1, 2, 3], idx: -1, highlightLines: [8], explanation: { title: 'Done!', text: '3 ways: BZ, VF, BZ' }});
-            
+            const dp = [1, 1];
+            steps.push({ dp: [1, 1], current: -1, highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: `s = "226"<br><br>dp[0]=1 (空字串)<br>dp[1]=1 (第一個字元)<br><br>每次可解碼 1 或 2 位數` } });
+            // i = 2
+            dp.push(2);
+            steps.push({ dp: [...dp], current: 1, pair: [0,1], highlightLines: [5,6,7,8,9,10], explanation: { title: 'i=2: 考慮 "22"', text: '"2" → dp[1]=1<br>"22" (=22, 10-26) → dp[0]=1<br><br>dp[2] = 1+1 = 2', formula: 'dp[2] = dp[1] + dp[0] = 2' } });
+            // i = 3
+            dp.push(3);
+            steps.push({ dp: [...dp], current: 2, pair: [1,2], highlightLines: [5,6,7,8,9,10], explanation: { title: 'i=3: 考慮 "26"', text: '"6" → dp[2]=2<br>"26" (=26, 10-26) → dp[1]=1<br><br>dp[3] = 2+1 = 3', formula: 'dp[3] = dp[2] + dp[1] = 3' } });
+            steps.push({ dp: [...dp], current: -1, result: 3, final: true, highlightLines: [12], explanation: { title: '🎉 完成！', text: '共 3 種解碼方式：<br>"2-2-6" → BBF<br>"22-6" → VF<br>"2-26" → BZ<br><br>時間：O(n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('strDisplay').innerHTML = [...str].map((c, i) =>
-                        `<span class="digit ${i + 1 === step.idx ? 'current' : ''}">${c}</span>`
-                    ).join('');
-                    document.getElementById('dpDisplay').innerHTML = step.dp.map((d, i) =>
-                        `<span class="dp-item ${i === step.idx ? 'current' : ''}">dp[${i}]=${d}</span>`
-                    ).join('');
+                    let html = '';
+                    for (let i = 0; i < s.length; i++) {
+                        let cls = 'char';
+                        if (i === step.current) cls += ' current';
+                        if (step.pair?.includes(i)) cls += ' pair';
+                        html += `<div class="${cls}"><div class="val">${s[i]}</div><div class="idx">[${i}]</div></div>`;
+                    }
+                    document.getElementById('stringDisplay').innerHTML = html;
+                    document.getElementById('dpDisplay').innerHTML = (step.dp || []).map((d, i) => `<div class="dp-cell${i === step.dp.length-1 ? ' active' : ''}">${d}</div>`).join('');
+                    document.getElementById('resultDisplay').textContent = step.result ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());
