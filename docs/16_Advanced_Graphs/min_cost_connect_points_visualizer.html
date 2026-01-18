@@ -3,38 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Min Cost to Connect All Points Visualization</title>
+    <title>Min Cost to Connect All Points - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .canvas-viz { width: 100%; max-width: 250px; height: 200px; margin: 0 auto; background: rgba(0,0,0,0.3); border-radius: 8px; position: relative; }
-        .point { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: var(--viz-primary); transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: white; }
+        .graph { position: relative; height: 250px; margin: 20px 0; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .point { position: absolute; width: 30px; height: 30px; border-radius: 50%; background: var(--viz-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; }
         .point.connected { background: var(--viz-success); color: #0f172a; }
+        .edge { position: absolute; background: var(--viz-warning); height: 3px; transform-origin: left center; }
+        .edge.mst { background: var(--viz-success); height: 4px; }
+        .heap { display: flex; gap: 6px; justify-content: center; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; flex-wrap: wrap; }
+        .heap-item { background: var(--viz-warning); color: #0f172a; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">MIN COST TO CONNECT ALL POINTS (PRIM'S)</div>
-                <div class="canvas-viz" id="canvasViz"></div>
+                <div class="viz-title">連接所有點的最小成本（PRIM'S MST）</div>
+                <div class="graph" id="graphDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">Min Heap（距離, 點）</div>
+                <div class="heap" id="heapDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Total Cost</div><div class="state-value" id="costDisplay" style="color: var(--viz-success);">0</div></div>
+                    <div class="state-item"><div class="state-label">總成本</div><div class="state-value" id="costDisplay" style="color: var(--viz-success);">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">PRIM'S MST</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -42,51 +45,53 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int minCostConnectPoints(points) {', id: 0 },
-            { line: '    priority_queue<pair<int,int>, vec, greater<>> pq;', id: 1 },
-            { line: '    pq.push({0, 0}); // start from point 0', id: 2 },
-            { line: '    vector<bool> visited(n, false);', id: 3 },
-            { line: '    int cost = 0;', id: 4 },
-            { line: '    while (!pq.empty() && count < n) {', id: 5 },
+            { line: 'int minCostConnectPoints(vector<vector<int>>& points) {', id: 0 },
+            { line: '    int n = points.size(), cost = 0;', id: 1 },
+            { line: '    vector<bool> visited(n, false);', id: 2 },
+            { line: '    priority_queue<pair<int,int>, vector<...>, greater<>> pq;', id: 3 },
+            { line: '    pq.push({0, 0}); // {距離, 點}', id: 4 },
+            { line: '    while (!pq.empty()) {', id: 5 },
             { line: '        auto [d, u] = pq.top(); pq.pop();', id: 6 },
             { line: '        if (visited[u]) continue;', id: 7 },
             { line: '        visited[u] = true; cost += d;', id: 8 },
-            { line: '        // Add edges to unvisited neighbors', id: 9 },
-            { line: '    }', id: 10 },
-            { line: '    return cost;', id: 11 },
-            { line: '}', id: 12 },
+            { line: '        for (int v = 0; v < n; v++) {', id: 9 },
+            { line: '            if (!visited[v]) {', id: 10 },
+            { line: '                int dist = |x1-x2| + |y1-y2|;', id: 11 },
+            { line: '                pq.push({dist, v});', id: 12 },
+            { line: '            }', id: 13 },
+            { line: '        }', id: 14 },
+            { line: '    }', id: 15 },
+            { line: '    return cost;', id: 16 },
+            { line: '}', id: 17 },
         ];
-        const points = [[0, 0], [2, 2], [3, 10], [5, 2], [7, 0]];
-
+        const points = [[0,0],[2,2],[3,10],[5,2],[7,0]];
         function generateAlgorithmSteps() {
             const steps = [];
-            const connected = [[], [0], [0, 1], [0, 1, 3], [0, 1, 3, 4], [0, 1, 2, 3, 4]];
-            const costs = [0, 0, 4, 7, 11, 20];
-            
-            for (let i = 0; i < connected.length; i++) {
-                steps.push({ connected: connected[i], cost: costs[i], highlightLines: i === 0 ? [0, 1, 2, 3, 4] : [6, 7, 8, 9], explanation: { title: i === 0 ? 'Init' : `Connect point ${connected[i][connected[i].length - 1]}`, text: `Total cost: ${costs[i]}` }});
-            }
-            steps.push({ connected: [0, 1, 2, 3, 4], cost: 20, highlightLines: [11], explanation: { title: 'Done!', text: 'MST cost = 20' }});
-            
+            steps.push({ visited: [], edges: [], cost: 0, heap: [[0,0]], highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: `5 個點：${JSON.stringify(points)}<br><br>Prim's Algorithm (MST)<br>從點 0 開始，每次選最短邊` } });
+            steps.push({ visited: [0], edges: [], cost: 0, heap: [[4,1],[13,2],[7,3],[7,4]], highlightLines: [5,6,7,8,9,10,11,12], explanation: { title: '連接點 0', text: '加入點 0<br>將所有鄰居加入 heap' } });
+            steps.push({ visited: [0,1], edges: [[0,1]], cost: 4, heap: [[4,3],[7,4],[13,2]], highlightLines: [6,7,8], explanation: { title: '連接點 1', text: '選 (4, 1)<br>cost += 4 = 4', formula: '|0-2| + |0-2| = 4' } });
+            steps.push({ visited: [0,1,3], edges: [[0,1],[1,3]], cost: 4+3, heap: [[7,4],[11,2]], highlightLines: [6,7,8], explanation: { title: '連接點 3', text: '選 (3, 3)（從點1）<br>cost += 3 = 7', formula: '|2-5| + |2-2| = 3' } });
+            steps.push({ visited: [0,1,3,4], edges: [[0,1],[1,3],[3,4]], cost: 4+3+4, heap: [[11,2]], highlightLines: [6,7,8], explanation: { title: '連接點 4', text: '選 (4, 4)（從點3）<br>cost += 4 = 11', formula: '|5-7| + |2-0| = 4' } });
+            steps.push({ visited: [0,1,3,4,2], edges: [[0,1],[1,3],[3,4],[3,2]], cost: 4+3+4+10, final: true, highlightLines: [16], explanation: { title: '🎉 完成！', text: '總成本 = 4+3+4+10 = 21<br><br>時間：O(n² log n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const canvas = document.getElementById('canvasViz');
-                    canvas.innerHTML = '';
+                    const container = document.getElementById('graphDisplay');
+                    let html = '';
+                    // Draw points
                     points.forEach((p, i) => {
-                        const div = document.createElement('div');
-                        div.className = 'point' + (step.connected?.includes(i) ? ' connected' : '');
-                        div.style.left = (p[0] * 25 + 30) + 'px';
-                        div.style.top = (180 - p[1] * 15) + 'px';
-                        div.textContent = i;
-                        canvas.appendChild(div);
+                        const x = 30 + p[0] * 25;
+                        const y = 200 - p[1] * 18;
+                        const cls = step.visited?.includes(i) ? 'point connected' : 'point';
+                        html += `<div class="${cls}" style="left:${x}px;top:${y}px">${i}</div>`;
                     });
-                    document.getElementById('costDisplay').textContent = step.cost;
+                    container.innerHTML = html;
+                    document.getElementById('heapDisplay').innerHTML = (step.heap || []).map(h => `<span class="heap-item">(${h[0]},${h[1]})</span>`).join('') || '空';
+                    document.getElementById('costDisplay').textContent = step.cost ?? 0;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

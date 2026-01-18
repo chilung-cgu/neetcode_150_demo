@@ -3,39 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spiral Matrix Visualization</title>
+    <title>Spiral Matrix 螺旋矩陣 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: grid; gap: 2px; max-width: 200px; margin: 0 auto; }
-        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; border-radius: 4px; background: var(--viz-primary); color: white; }
+        .matrix { display: inline-grid; gap: 3px; margin: 20px auto; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .cell { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-primary); color: white; transition: all 0.3s; }
         .cell.visited { background: var(--viz-success); color: #0f172a; }
-        .cell.current { border: 2px solid var(--viz-error); }
-        .result { display: flex; gap: 4px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
-        .result-item { padding: 4px 8px; border-radius: 4px; background: var(--viz-success); color: #0f172a; font-family: monospace; }
+        .cell.current { background: var(--viz-warning); color: #0f172a; animation: pulse 0.3s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .result { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .result-item { background: var(--viz-success); color: #0f172a; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SPIRAL MATRIX</div>
-                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(3, 40px);"></div>
+                <div class="viz-title">螺旋矩陣</div>
+                <div style="text-align: center;"><div class="matrix" id="matrixDisplay"></div></div>
+                <div style="text-align: center; color: var(--text-muted);">輸出順序</div>
                 <div class="result" id="resultDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">方向</div><div class="state-value" id="dirDisplay">→</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">LAYER BY LAYER</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -43,48 +45,53 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'vector<int> spiralOrder(matrix) {', id: 0 },
-            { line: '    int top = 0, bottom = m-1;', id: 1 },
-            { line: '    int left = 0, right = n-1;', id: 2 },
+            { line: 'vector<int> spiralOrder(vector<vector<int>>& matrix) {', id: 0 },
+            { line: '    vector<int> result;', id: 1 },
+            { line: '    int top = 0, bottom = m-1, left = 0, right = n-1;', id: 2 },
             { line: '    while (top <= bottom && left <= right) {', id: 3 },
-            { line: '        // Right', id: 4 },
-            { line: '        for (i = left to right) result.push(matrix[top][i]);', id: 5 },
+            { line: '        for (int i = left; i <= right; i++) // →', id: 4 },
+            { line: '            result.push_back(matrix[top][i]);', id: 5 },
             { line: '        top++;', id: 6 },
-            { line: '        // Down', id: 7 },
-            { line: '        for (i = top to bottom) result.push(matrix[i][right]);', id: 8 },
+            { line: '        for (int i = top; i <= bottom; i++) // ↓', id: 7 },
+            { line: '            result.push_back(matrix[i][right]);', id: 8 },
             { line: '        right--;', id: 9 },
-            { line: '        // Left & Up...', id: 10 },
+            { line: '        // ... ← 和 ↑ 類似', id: 10 },
             { line: '    }', id: 11 },
             { line: '    return result;', id: 12 },
             { line: '}', id: 13 },
         ];
         const matrix = [[1,2,3],[4,5,6],[7,8,9]];
         const spiral = [1,2,3,6,9,8,7,4,5];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            for (let i = 0; i <= spiral.length; i++) {
-                steps.push({ visited: spiral.slice(0, i), current: spiral[i], highlightLines: i === 0 ? [0,1,2] : [5,6,8,9], explanation: { title: i === 0 ? 'Init' : `Visit ${spiral[i-1]}`, text: `Result: [${spiral.slice(0, i).join(',')}]` }});
+            steps.push({ visited: [], current: null, result: [], dir: '→', highlightLines: [0,1,2,3], explanation: { title: '初始化', text: '3×3 矩陣<br><br>順時針螺旋：<br>→ 右 → ↓ 下 → ← 左 → ↑ 上<br>重複直到遍歷完' } });
+            const dirs = ['→','→','→','↓','↓','←','←','↑','→'];
+            for (let i = 0; i < spiral.length; i++) {
+                steps.push({ visited: spiral.slice(0, i), current: spiral[i], result: spiral.slice(0, i+1), dir: dirs[i], highlightLines: [4,5,7,8], explanation: { title: `訪問 ${spiral[i]}`, text: `方向：${dirs[i]}` } });
             }
+            steps.push({ visited: spiral, current: null, result: spiral, final: true, highlightLines: [12], explanation: { title: '🎉 完成！', text: `輸出：[${spiral.join(',')}]<br><br>時間：O(m×n)` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
+                    const grid = document.getElementById('matrixDisplay');
+                    grid.style.gridTemplateColumns = 'repeat(3, 45px)';
                     let html = '';
-                    for (let i = 0; i < 3; i++) {
-                        for (let j = 0; j < 3; j++) {
-                            const v = matrix[i][j];
-                            const visited = step.visited?.includes(v);
-                            const current = step.current === v;
-                            html += `<div class="cell ${visited ? 'visited' : ''} ${current ? 'current' : ''}">${v}</div>`;
+                    for (let r = 0; r < 3; r++) {
+                        for (let c = 0; c < 3; c++) {
+                            const val = matrix[r][c];
+                            let cls = 'cell';
+                            if (val === step.current) cls += ' current';
+                            else if (step.visited?.includes(val)) cls += ' visited';
+                            html += `<div class="${cls}">${val}</div>`;
                         }
                     }
-                    document.getElementById('gridDisplay').innerHTML = html;
-                    document.getElementById('resultDisplay').innerHTML = (step.visited || []).map(n => `<span class="result-item">${n}</span>`).join('');
+                    grid.innerHTML = html;
+                    document.getElementById('resultDisplay').innerHTML = (step.result || []).map(v => `<span class="result-item">${v}</span>`).join('') || '-';
+                    document.getElementById('dirDisplay').textContent = step.dir || '→';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

@@ -3,39 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Rooms II Visualization</title>
+    <title>Meeting Rooms II 會議室 II - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .rooms { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
-        .room { display: flex; gap: 4px; align-items: center; }
-        .room-label { width: 60px; font-size: 0.8rem; color: var(--viz-text-muted); }
-        .meeting { height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.75rem; color: white; }
+        .timeline { position: relative; height: 160px; margin: 20px 0; background: var(--viz-bg-secondary); border-radius: 8px; padding: 10px; }
+        .meeting { position: absolute; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; color: white; }
+        .room-label { position: absolute; left: 5px; font-size: 0.7rem; color: var(--text-muted); }
+        .heap { display: flex; gap: 6px; justify-content: center; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; min-height: 40px; }
+        .heap-item { background: var(--viz-warning); color: #0f172a; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">MEETING ROOMS II (Min Rooms)</div>
-                <div class="rooms" id="roomsDisplay"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">會議室 II（MIN HEAP）</div>
+                <div class="timeline" id="timelineDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">Min Heap（結束時間）</div>
+                <div class="heap" id="heapDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Rooms Needed</div><div class="state-value" id="roomsCountDisplay" style="color: var(--viz-success);">0</div></div>
+                    <div class="state-item"><div class="state-label">會議室數</div><div class="state-value" id="roomsDisplay" style="color: var(--viz-success);">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">MIN HEAP</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -43,52 +43,51 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int minMeetingRooms(intervals) {', id: 0 },
-            { line: '    sort(intervals by start);', id: 1 },
-            { line: '    priority_queue<int, vec, greater<int>> minHeap;', id: 2 },
+            { line: 'int minMeetingRooms(vector<vector<int>>& intervals) {', id: 0 },
+            { line: '    sort(intervals.begin(), intervals.end());', id: 1 },
+            { line: '    priority_queue<int, vector<int>, greater<int>> pq;', id: 2 },
             { line: '    for (auto& i : intervals) {', id: 3 },
-            { line: '        if (!minHeap.empty() && minHeap.top() <= i[0])', id: 4 },
-            { line: '            minHeap.pop(); // reuse room', id: 5 },
-            { line: '        minHeap.push(i[1]); // assign room', id: 6 },
-            { line: '    }', id: 7 },
-            { line: '    return minHeap.size();', id: 8 },
-            { line: '}', id: 9 },
+            { line: '        if (!pq.empty() && pq.top() <= i[0]) {', id: 4 },
+            { line: '            pq.pop(); // 可以復用會議室', id: 5 },
+            { line: '        }', id: 6 },
+            { line: '        pq.push(i[1]); // 加入結束時間', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return pq.size();', id: 9 },
+            { line: '}', id: 10 },
         ];
-        const intervals = [[0, 30], [5, 10], [15, 20]];
-        const colors = ['#ef4444', '#3b82f6', '#22c55e'];
-
+        const meetings = [[0,30],[5,10],[15,20]];
+        const colors = ['#3b82f6', '#22c55e', '#f59e0b'];
         function generateAlgorithmSteps() {
             const steps = [];
-            const sorted = [[0, 30], [5, 10], [15, 20]];
-            
-            steps.push({ rooms: [], highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Min heap tracks room end times' }});
-            steps.push({ rooms: [[sorted[0]]], highlightLines: [6], explanation: { title: 'Meeting [0,30]', text: 'Assign Room 1' }});
-            steps.push({ rooms: [[sorted[0]], [sorted[1]]], highlightLines: [6], explanation: { title: 'Meeting [5,10]', text: '5 < 30, need new Room 2' }});
-            steps.push({ rooms: [[sorted[0]], [sorted[1], sorted[2]]], highlightLines: [4, 5, 6], explanation: { title: 'Meeting [15,20]', text: '15 >= 10, reuse Room 2' }});
-            steps.push({ rooms: [[sorted[0]], [sorted[1], sorted[2]]], highlightLines: [8], explanation: { title: 'Done!', text: 'Min rooms = 2' }});
-            
+            steps.push({ heap: [], rooms: 0, assigned: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: `會議：[[0,30],[5,10],[15,20]]<br><br>Min Heap 存各會議室的結束時間<br>Heap 大小 = 需要的會議室數` } });
+            steps.push({ heap: [30], rooms: 1, assigned: [{m:0,r:0}], highlightLines: [3,4,7], explanation: { title: '[0,30] - 新會議室', text: 'Heap 為空<br>開新會議室，push(30)<br>rooms = 1' } });
+            steps.push({ heap: [10,30], rooms: 2, assigned: [{m:0,r:0},{m:1,r:1}], highlightLines: [3,4,7], explanation: { title: '[5,10] - 新會議室', text: 'top=30 > 5（衝突）<br>需要新會議室，push(10)<br>rooms = 2', formula: '30 > 5 → 衝突' } });
+            steps.push({ heap: [20,30], rooms: 2, assigned: [{m:0,r:0},{m:1,r:1},{m:2,r:1}], highlightLines: [3,4,5,7], explanation: { title: '[15,20] - 復用', text: 'top=10 ≤ 15（不衝突）<br>pop(10)，復用該會議室<br>push(20)', formula: '10 ≤ 15 → 可復用' } });
+            steps.push({ heap: [20,30], rooms: 2, assigned: [{m:0,r:0},{m:1,r:1},{m:2,r:1}], final: true, highlightLines: [9], explanation: { title: '完成！', text: '最少需要 2 間會議室<br><br>時間：O(n log n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const scale = 8;
+                    const container = document.getElementById('timelineDisplay');
+                    const width = container.clientWidth - 20;
+                    const maxVal = 35;
                     let html = '';
-                    (step.rooms || []).forEach((room, ri) => {
-                        let roomHtml = `<div class="room"><span class="room-label">Room ${ri + 1}</span>`;
-                        room.forEach((m) => {
-                            const width = (m[1] - m[0]) * scale;
-                            const left = m[0] * scale;
-                            roomHtml += `<div class="meeting" style="margin-left: ${left}px; width: ${width}px; background: ${colors[intervals.findIndex(i => i[0] === m[0] && i[1] === m[1])]}">[${m[0]},${m[1]}]</div>`;
-                        });
-                        roomHtml += '</div>';
-                        html += roomHtml;
+                    for (let r = 0; r < 2; r++) {
+                        html += `<span class="room-label" style="top:${15+r*35}px">Room ${r+1}</span>`;
+                    }
+                    (step.assigned || []).forEach(a => {
+                        const m = meetings[a.m];
+                        const left = (m[0] / maxVal) * width + 50;
+                        const w = ((m[1] - m[0]) / maxVal) * width;
+                        const top = 10 + a.r * 35;
+                        html += `<div class="meeting" style="left:${left}px;top:${top}px;width:${w}px;background:${colors[a.m]}">[${m[0]},${m[1]}]</div>`;
                     });
-                    document.getElementById('roomsDisplay').innerHTML = html || '<em style="color:var(--viz-text-muted)">No rooms yet</em>';
-                    document.getElementById('roomsCountDisplay').textContent = step.rooms?.length || 0;
+                    container.innerHTML = html;
+                    document.getElementById('heapDisplay').innerHTML = (step.heap || []).map(h => `<span class="heap-item">${h}</span>`).join('') || '空';
+                    document.getElementById('roomsDisplay').textContent = step.rooms ?? 0;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

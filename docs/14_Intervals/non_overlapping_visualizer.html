@@ -3,39 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Non-overlapping Intervals Visualization</title>
+    <title>Non-overlapping Intervals 無重疊區間 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .timeline { width: 100%; height: 100px; background: rgba(0,0,0,0.3); border-radius: 8px; position: relative; margin: 15px 0; overflow: hidden; }
-        .interval { position: absolute; height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.7rem; color: white; }
-        .interval.keep { background: var(--viz-success); color: #0f172a; }
-        .interval.remove { background: var(--viz-error); opacity: 0.5; }
+        .intervals { position: relative; height: 180px; margin: 20px 0; background: var(--viz-bg-secondary); border-radius: 8px; padding: 10px; }
+        .interval { position: absolute; height: 30px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: white; transition: all 0.3s; }
+        .interval.kept { background: var(--viz-success); color: #0f172a; }
+        .interval.removed { background: var(--viz-error); opacity: 0.5; text-decoration: line-through; }
+        .interval.current { border: 3px solid var(--viz-warning); }
+        .interval.normal { background: var(--viz-primary); }
+        .timeline { position: absolute; bottom: 10px; left: 10px; right: 10px; height: 2px; background: var(--text-muted); }
+        .tick { position: absolute; bottom: 5px; font-size: 0.7rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">NON-OVERLAPPING INTERVALS</div>
-                <div class="timeline" id="timelineDisplay"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">無重疊區間（GREEDY）</div>
+                <div class="intervals" id="intervalsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Removed</div><div class="state-value" id="removedDisplay" style="color: var(--viz-error);">0</div></div>
+                    <div class="state-item"><div class="state-label">上一個結束點</div><div class="state-value" id="endDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">移除數量</div><div class="state-value" id="removeDisplay" style="color: var(--viz-error);">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">GREEDY</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -43,52 +45,59 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int eraseOverlapIntervals(intervals) {', id: 0 },
-            { line: '    sort(intervals by end time);', id: 1 },
-            { line: '    int count = 0, prevEnd = INT_MIN;', id: 2 },
-            { line: '    for (auto& i : intervals) {', id: 3 },
-            { line: '        if (i[0] >= prevEnd) {', id: 4 },
-            { line: '            prevEnd = i[1]; // keep', id: 5 },
-            { line: '        } else {', id: 6 },
-            { line: '            count++; // remove', id: 7 },
-            { line: '        }', id: 8 },
-            { line: '    }', id: 9 },
-            { line: '    return count;', id: 10 },
-            { line: '}', id: 11 },
+            { line: 'int eraseOverlapIntervals(vector<vector<int>>& intervals) {', id: 0 },
+            { line: '    sort(intervals.begin(), intervals.end(),', id: 1 },
+            { line: '         [](auto& a, auto& b) { return a[1] < b[1]; });', id: 2 },
+            { line: '    int count = 0, end = INT_MIN;', id: 3 },
+            { line: '    for (auto& i : intervals) {', id: 4 },
+            { line: '        if (i[0] >= end) {', id: 5 },
+            { line: '            end = i[1]; // 保留此區間', id: 6 },
+            { line: '        } else {', id: 7 },
+            { line: '            count++;    // 移除此區間', id: 8 },
+            { line: '        }', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    return count;', id: 11 },
+            { line: '}', id: 12 },
         ];
-        const intervals = [[1, 2], [2, 3], [3, 4], [1, 3]];
-        // Sorted by end: [1,2], [2,3], [1,3], [3,4]
-        // Keep: [1,2], [2,3], [3,4]. Remove: [1,3]
-
+        // intervals = [[1,2],[2,3],[3,4],[1,3]]
+        // sorted by end: [[1,2],[2,3],[1,3],[3,4]]
+        const intervals = [[1,2],[2,3],[1,3],[3,4]];
+        const sorted = [[1,2],[2,3],[1,3],[3,4]];
         function generateAlgorithmSteps() {
             const steps = [];
-            const sorted = [[1, 2], [2, 3], [1, 3], [3, 4]];
-            
-            steps.push({ keep: [], remove: [], highlightLines: [0, 1, 2], explanation: { title: 'Sort by end time', text: '' }});
-            steps.push({ keep: [0], remove: [], highlightLines: [4, 5], explanation: { title: 'Keep [1,2]', text: 'First interval' }});
-            steps.push({ keep: [0, 1], remove: [], highlightLines: [4, 5], explanation: { title: 'Keep [2,3]', text: '2 >= 2 ✓' }});
-            steps.push({ keep: [0, 1], remove: [2], highlightLines: [6, 7], explanation: { title: 'Remove [1,3]', text: '1 < 3 → overlaps' }});
-            steps.push({ keep: [0, 1, 3], remove: [2], highlightLines: [4, 5], explanation: { title: 'Keep [3,4]', text: '3 >= 3 ✓' }});
-            steps.push({ keep: [0, 1, 3], remove: [2], highlightLines: [10], explanation: { title: 'Done!', text: 'Remove 1 interval' }});
-            
+            steps.push({ intervals: sorted, kept: [], removed: [], end: null, count: 0, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `區間：[[1,2],[2,3],[3,4],[1,3]]<br>按結束點排序後：[[1,2],[2,3],[1,3],[3,4]]<br><br>貪心：優先保留結束早的區間` } });
+            steps.push({ intervals: sorted, current: 0, kept: [0], removed: [], end: 2, count: 0, highlightLines: [4,5,6], explanation: { title: '[1,2] - 保留', text: '1 ≥ -∞ ✓<br>保留，end = 2', formula: '1 ≥ -∞ → 保留' } });
+            steps.push({ intervals: sorted, current: 1, kept: [0,1], removed: [], end: 3, count: 0, highlightLines: [4,5,6], explanation: { title: '[2,3] - 保留', text: '2 ≥ 2 ✓<br>保留，end = 3', formula: '2 ≥ 2 → 保留' } });
+            steps.push({ intervals: sorted, current: 2, kept: [0,1], removed: [2], end: 3, count: 1, highlightLines: [4,5,7,8], explanation: { title: '[1,3] - 移除', text: '1 < 3 ✗ 重疊！<br>移除，count++', formula: '1 < 3 → 移除' } });
+            steps.push({ intervals: sorted, current: 3, kept: [0,1,3], removed: [2], end: 4, count: 1, highlightLines: [4,5,6], explanation: { title: '[3,4] - 保留', text: '3 ≥ 3 ✓<br>保留，end = 4', formula: '3 ≥ 3 → 保留' } });
+            steps.push({ intervals: sorted, kept: [0,1,3], removed: [2], end: 4, count: 1, final: true, highlightLines: [11], explanation: { title: '完成！', text: '需要移除 1 個區間<br><br>時間：O(n log n)' } });
             return steps;
         }
-
         let viz;
         function init() {
-            const sorted = [[1, 2], [2, 3], [1, 3], [3, 4]];
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    sorted.forEach((int, i) => {
-                        const left = int[0] * 40 + 10;
-                        const width = (int[1] - int[0]) * 40;
-                        const cls = step.remove?.includes(i) ? 'remove' : (step.keep?.includes(i) ? 'keep' : '');
-                        html += `<div class="interval ${cls}" style="left: ${left}px; top: ${10 + i * 22}px; width: ${Math.max(width, 40)}px; background: ${!cls ? 'var(--viz-primary)' : ''}">[${int[0]},${int[1]}]</div>`;
+                    const container = document.getElementById('intervalsDisplay');
+                    const width = container.clientWidth - 20;
+                    const maxVal = 5;
+                    let html = '<div class="timeline"></div>';
+                    for (let i = 0; i <= maxVal; i++) {
+                        html += `<span class="tick" style="left:${(i/maxVal)*100}%">${i}</span>`;
+                    }
+                    (step.intervals || sorted).forEach((interval, idx) => {
+                        const left = (interval[0] / maxVal) * width;
+                        const w = ((interval[1] - interval[0]) / maxVal) * width;
+                        const top = 20 + idx * 35;
+                        let cls = 'interval normal';
+                        if (step.kept?.includes(idx)) cls = 'interval kept';
+                        if (step.removed?.includes(idx)) cls = 'interval removed';
+                        if (idx === step.current) cls += ' current';
+                        html += `<div class="${cls}" style="left:${left+10}px;top:${top}px;width:${w}px">[${interval[0]},${interval[1]}]</div>`;
                     });
-                    document.getElementById('timelineDisplay').innerHTML = html;
-                    document.getElementById('removedDisplay').textContent = step.remove?.length || 0;
+                    container.innerHTML = html;
+                    document.getElementById('endDisplay').textContent = step.end ?? '-';
+                    document.getElementById('removeDisplay').textContent = step.count ?? 0;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

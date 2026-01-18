@@ -3,38 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pow(x, n) Visualization</title>
+    <title>Pow(x, n) 快速冪 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .calc { text-align: center; margin: 20px 0; }
-        .formula { font-family: monospace; font-size: 1.5rem; color: var(--viz-secondary); }
-        .result { font-family: monospace; font-size: 2rem; color: var(--viz-success); margin-top: 10px; }
+        .calc .expr { font-size: 2rem; font-weight: bold; color: var(--viz-secondary); }
+        .calc .result { font-size: 1.5rem; color: var(--viz-success); margin-top: 10px; }
+        .steps-list { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .step-item { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 6px; }
+        .step-item.current { background: var(--viz-warning); color: #0f172a; }
+        .step-item.done { background: var(--viz-success); color: #0f172a; }
+        .step-item .n { font-weight: bold; min-width: 40px; }
+        .step-item .op { color: var(--text-muted); }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">POW(X, N) - FAST EXPONENTIATION</div>
+                <div class="viz-title">快速冪（分治法）</div>
                 <div class="calc">
-                    <div class="formula" id="formulaDisplay">2^10</div>
+                    <div class="expr" id="exprDisplay">2^10</div>
                     <div class="result" id="resultDisplay">= ?</div>
                 </div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="steps-list" id="stepsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BINARY EXPONENTIATION</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -44,42 +48,42 @@
         const codeStructure = [
             { line: 'double myPow(double x, int n) {', id: 0 },
             { line: '    if (n == 0) return 1;', id: 1 },
-            { line: '    if (n < 0) { x = 1/x; n = -n; }', id: 2 },
-            { line: '    double result = 1;', id: 3 },
-            { line: '    while (n > 0) {', id: 4 },
-            { line: '        if (n & 1) result *= x;', id: 5 },
-            { line: '        x *= x;', id: 6 },
-            { line: '        n >>= 1;', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '    return result;', id: 9 },
+            { line: '    if (n < 0) {', id: 2 },
+            { line: '        x = 1 / x; n = -n;', id: 3 },
+            { line: '    }', id: 4 },
+            { line: '    double half = myPow(x, n / 2);', id: 5 },
+            { line: '    if (n % 2 == 0)', id: 6 },
+            { line: '        return half * half;', id: 7 },
+            { line: '    else', id: 8 },
+            { line: '        return half * half * x;', id: 9 },
             { line: '}', id: 10 },
         ];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            // 2^10: n=10 (1010 in binary)
-            // Step 1: n=10, x=2, result=1 (n&1=0, skip)
-            // Step 2: n=5, x=4, result=4 (n&1=1, result*=4)
-            // Step 3: n=2, x=16, result=4 (n&1=0, skip)
-            // Step 4: n=1, x=256, result=1024 (n&1=1, result*=256)
-            
-            steps.push({ n: 10, x: 2, result: 1, highlightLines: [0, 1, 2, 3], explanation: { title: '2^10', text: 'n=10 (binary: 1010)' }});
-            steps.push({ n: 10, x: 2, result: 1, highlightLines: [5, 6, 7], explanation: { title: 'n&1=0', text: 'Skip multiply, x=2×2=4, n=5' }});
-            steps.push({ n: 5, x: 4, result: 4, highlightLines: [5, 6, 7], explanation: { title: 'n&1=1', text: 'result=1×4=4, x=16, n=2' }});
-            steps.push({ n: 2, x: 16, result: 4, highlightLines: [5, 6, 7], explanation: { title: 'n&1=0', text: 'Skip, x=256, n=1' }});
-            steps.push({ n: 1, x: 256, result: 1024, highlightLines: [5, 6, 7], explanation: { title: 'n&1=1', text: 'result=4×256=1024' }});
-            steps.push({ n: 0, x: 256, result: 1024, highlightLines: [9], explanation: { title: 'Done!', text: '2^10 = 1024' }});
-            
+            steps.push({ n: 10, result: null, stack: [], highlightLines: [0,5], explanation: { title: '初始化', text: '計算 2^10<br><br>暴力：O(n) 次乘法<br>快速冪：O(log n) 次<br><br>關鍵：x^n = (x^(n/2))²' } });
+            steps.push({ n: 10, stack: [{n:10,op:'half²'}], highlightLines: [5,6,7], explanation: { title: 'n=10（偶數）', text: '2^10 = (2^5)²<br>遞迴計算 2^5', formula: '2^10 = (2^5)²' } });
+            steps.push({ n: 5, stack: [{n:10,op:'half²'},{n:5,op:'half²×x'}], highlightLines: [5,6,8,9], explanation: { title: 'n=5（奇數）', text: '2^5 = (2^2)² × 2<br>遞迴計算 2^2', formula: '2^5 = (2^2)² × 2' } });
+            steps.push({ n: 2, stack: [{n:10,op:'half²'},{n:5,op:'half²×x'},{n:2,op:'half²'}], highlightLines: [5,6,7], explanation: { title: 'n=2（偶數）', text: '2^2 = (2^1)²<br>遞迴計算 2^1', formula: '2^2 = (2^1)²' } });
+            steps.push({ n: 1, stack: [{n:10},{n:5},{n:2},{n:1,op:'half²×x',val:2}], highlightLines: [5,6,8,9], explanation: { title: 'n=1（奇數）', text: '2^1 = (2^0)² × 2 = 1 × 2 = 2', formula: '2^1 = 1² × 2 = 2' } });
+            steps.push({ n: 2, stack: [{n:10},{n:5},{n:2,val:4}], result: 4, highlightLines: [7], explanation: { title: '回溯 n=2', text: '2^2 = 2² = 4', formula: '2² = 4' } });
+            steps.push({ n: 5, stack: [{n:10},{n:5,val:32}], result: 32, highlightLines: [9], explanation: { title: '回溯 n=5', text: '2^5 = 4² × 2 = 32', formula: '4² × 2 = 32' } });
+            steps.push({ n: 10, stack: [{n:10,val:1024}], result: 1024, final: true, highlightLines: [7], explanation: { title: '🎉 完成！', text: '2^10 = 32² = 1024<br><br>只用了 4 次乘法！<br>時間：O(log n)', formula: '32² = 1024' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('formulaDisplay').textContent = `2^10 (n=${step.n}, x=${step.x})`;
-                    document.getElementById('resultDisplay').textContent = `result = ${step.result}`;
+                    document.getElementById('exprDisplay').textContent = `2^${step.n}`;
+                    document.getElementById('resultDisplay').textContent = step.result ? `= ${step.result}` : '= ?';
+                    let html = '';
+                    (step.stack || []).forEach((s, i) => {
+                        const isCurrent = i === step.stack.length - 1;
+                        const cls = s.val ? 'step-item done' : (isCurrent ? 'step-item current' : 'step-item');
+                        html += `<div class="${cls}"><span class="n">n=${s.n}</span><span class="op">${s.op || ''}</span>${s.val ? `<span>= ${s.val}</span>` : ''}</div>`;
+                    });
+                    document.getElementById('stepsDisplay').innerHTML = html || '<div style="text-align:center;color:var(--text-muted)">等待開始...</div>';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

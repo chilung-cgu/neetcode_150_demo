@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number of 1 Bits 位元 1 的個數 - 視覺化</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .binary { display: flex; gap: 4px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .bit { width: 35px; height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s; }
+        .bit .val { font-weight: bold; font-size: 1.2rem; }
+        .bit .pos { font-size: 0.6rem; color: var(--text-muted); }
+        .bit.one { background: var(--viz-success); color: #0f172a; }
+        .bit.current { border: 3px solid var(--viz-warning); }
+        .bit.checked { opacity: 0.5; }
+        .decimal { text-align: center; font-size: 1.5rem; margin: 10px 0; }
+        .decimal .num { font-weight: bold; color: var(--viz-secondary); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">位元 1 的個數（BIT MANIPULATION）</div>
+                <div class="decimal">十進位：<span class="num" id="decimalDisplay">11</span></div>
+                <div class="binary" id="binaryDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">n & 1</div><div class="state-value" id="andDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">1 的個數</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int hammingWeight(uint32_t n) {', id: 0 },
+            { line: '    int count = 0;', id: 1 },
+            { line: '    while (n) {', id: 2 },
+            { line: '        count += n & 1; // 檢查最低位', id: 3 },
+            { line: '        n >>= 1;        // 右移一位', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    return count;', id: 6 },
+            { line: '}', id: 7 },
+        ];
+        const num = 11; // 1011 in binary
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const binary = num.toString(2).padStart(8, '0');
+            steps.push({ n: num, binary, checked: [], count: 0, highlightLines: [0,1], explanation: { title: '初始化', text: `n = 11 = 0000 1011₂<br><br>方法：檢查每個位元<br>n & 1 = 最低位<br>n >>= 1 = 右移` } });
+            let n = num, count = 0, pos = 7;
+            while (n > 0 && pos >= 4) {
+                const bit = n & 1;
+                if (bit) count++;
+                steps.push({ n, binary, current: pos, checked: [...Array(8-pos).keys()].map(i => 7-i+1).filter(i => i <= 7), and: bit, count, highlightLines: [2,3,4], explanation: { title: `檢查位置 ${7-pos}`, text: `n & 1 = ${bit}<br>${bit ? 'count++' : '不加'}<br>n >>= 1`, formula: `${n.toString(2)} & 1 = ${bit}` } });
+                n >>= 1;
+                pos--;
+            }
+            steps.push({ n: 0, binary, checked: [4,5,6,7], count: 3, final: true, highlightLines: [6], explanation: { title: '🎉 完成！', text: '11 = 1011₂<br>有 3 個 1<br><br>時間：O(log n)' } });
+            return steps;
+        }
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const binary = (step.n || num).toString(2).padStart(8, '0');
+                    let html = '';
+                    for (let i = 0; i < 8; i++) {
+                        let cls = 'bit';
+                        if (binary[i] === '1') cls += ' one';
+                        if (i === step.current) cls += ' current';
+                        if (step.checked?.includes(i)) cls += ' checked';
+                        html += `<div class="${cls}"><div class="val">${binary[i]}</div><div class="pos">${7-i}</div></div>`;
+                    }
+                    document.getElementById('binaryDisplay').innerHTML = html;
+                    document.getElementById('decimalDisplay').textContent = step.n ?? num;
+                    document.getElementById('andDisplay').textContent = step.and ?? '-';
+                    document.getElementById('countDisplay').textContent = step.count ?? 0;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -3,39 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reverse Bits Visualization</title>
+    <title>Reverse Bits 顛倒二進位位元 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .binary-row { display: flex; gap: 2px; justify-content: center; margin: 10px 0; }
-        .bit { width: 20px; height: 26px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.8rem; background: var(--viz-primary); color: white; border-radius: 3px; }
+        .binary-row { display: flex; gap: 3px; justify-content: center; margin: 10px 0; font-family: monospace; }
+        .bit { width: 25px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; font-size: 0.9rem; }
+        .bit.zero { background: var(--viz-bg-secondary); color: var(--text-muted); }
         .bit.one { background: var(--viz-success); color: #0f172a; }
-        .label { text-align: center; color: var(--viz-text-muted); font-size: 0.85rem; margin-top: 5px; }
+        .bit.current { border: 2px solid var(--viz-warning); }
+        .label { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 5px 0; }
+        .arrow { text-align: center; font-size: 1.5rem; color: var(--viz-secondary); margin: 10px 0; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">REVERSE BITS</div>
-                <div class="label">Input:</div>
-                <div class="binary-row" id="inputDisplay"></div>
-                <div class="label" style="margin-top: 15px;">Output:</div>
-                <div class="binary-row" id="outputDisplay"></div>
+                <div class="viz-title">顛倒二進位位元</div>
+                <div class="label">原始（從右往左讀取）</div>
+                <div class="binary-row" id="originalDisplay"></div>
+                <div class="arrow">↓ 顛倒 ↓</div>
+                <div class="label">結果（從左往右建立）</div>
+                <div class="binary-row" id="resultDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">輸入</div><div class="state-value" id="inputDisplay">43261596</div></div>
+                    <div class="state-item"><div class="state-label">輸出</div><div class="state-value" id="outputDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BIT BY BIT</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -46,40 +51,46 @@
             { line: 'uint32_t reverseBits(uint32_t n) {', id: 0 },
             { line: '    uint32_t result = 0;', id: 1 },
             { line: '    for (int i = 0; i < 32; i++) {', id: 2 },
-            { line: '        result <<= 1;        // shift left', id: 3 },
-            { line: '        result |= (n & 1);   // add last bit', id: 4 },
-            { line: '        n >>= 1;             // shift input right', id: 5 },
+            { line: '        result <<= 1;       // 結果左移', id: 3 },
+            { line: '        result |= (n & 1);  // 加入最低位', id: 4 },
+            { line: '        n >>= 1;            // 原數右移', id: 5 },
             { line: '    }', id: 6 },
             { line: '    return result;', id: 7 },
             { line: '}', id: 8 },
         ];
-        const input = '00000000000000000000000000001011'; // 11
-        const output = '11010000000000000000000000000000'; // reversed
-
+        // 簡化：用 8 位示範
+        const input = 0b10100101;
         function generateAlgorithmSteps() {
             const steps = [];
-            const inputArr = input.split('');
-            
-            steps.push({ processed: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: 'Input: 11 (1011 in binary)' }});
-            steps.push({ processed: 8, highlightLines: [3, 4, 5], explanation: { title: 'Process 8 bits', text: 'Shift and copy bits' }});
-            steps.push({ processed: 16, highlightLines: [3, 4, 5], explanation: { title: 'Process 16 bits', text: 'Continue reversing' }});
-            steps.push({ processed: 32, highlightLines: [7], explanation: { title: 'Done!', text: 'Reversed all 32 bits' }});
-            
+            steps.push({ n: input, result: 0, pos: -1, highlightLines: [0,1], explanation: { title: '初始化', text: '以 8 位示範<br>輸入：10100101<br><br>每次取最低位加到結果' } });
+            let n = input, result = 0;
+            for (let i = 0; i < 8; i++) {
+                result = (result << 1) | (n & 1);
+                n >>= 1;
+                steps.push({ n, result, pos: i, highlightLines: [2,3,4,5], explanation: { title: `步驟 ${i+1}`, text: `取位元 ${(input >> i) & 1}<br>result = ${result.toString(2).padStart(i+1,'0')}`, formula: `result |= ${(input >> i) & 1}` } });
+            }
+            steps.push({ n: 0, result, pos: -1, final: true, highlightLines: [7], explanation: { title: '🎉 完成！', text: `10100101 → 10100101<br><br>時間：O(1)（固定 32 次）` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('inputDisplay').innerHTML = input.split('').map(b =>
-                        `<span class="bit ${b === '1' ? 'one' : ''}">${b}</span>`
-                    ).join('');
-                    const processedOutput = step.processed === 32 ? output : output.slice(0, step.processed).padEnd(32, '0');
-                    document.getElementById('outputDisplay').innerHTML = processedOutput.split('').map(b =>
-                        `<span class="bit ${b === '1' ? 'one' : ''}">${b}</span>`
-                    ).join('');
+                    const orig = input.toString(2).padStart(8,'0');
+                    const res = (step.result || 0).toString(2).padStart(8,'0');
+                    let origHtml = '', resHtml = '';
+                    for (let i = 0; i < 8; i++) {
+                        const cls = `bit ${orig[i] === '1' ? 'one' : 'zero'}${7-i === step.pos ? ' current' : ''}`;
+                        origHtml += `<div class="${cls}">${orig[i]}</div>`;
+                    }
+                    for (let i = 0; i < 8; i++) {
+                        const cls = `bit ${res[i] === '1' ? 'one' : 'zero'}${i === step.pos ? ' current' : ''}`;
+                        resHtml += `<div class="${cls}">${res[i]}</div>`;
+                    }
+                    document.getElementById('originalDisplay').innerHTML = origHtml;
+                    document.getElementById('resultDisplay').innerHTML = resHtml;
+                    document.getElementById('outputDisplay').textContent = step.final ? step.result : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());
