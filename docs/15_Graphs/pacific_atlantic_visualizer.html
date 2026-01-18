@@ -3,38 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pacific Atlantic Water Flow Visualization</title>
+    <title>Pacific Atlantic Water Flow - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: grid; gap: 2px; max-width: 200px; margin: 0 auto; }
-        .cell { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-family: monospace; border-radius: 3px; font-size: 0.85rem; background: var(--viz-primary); color: white; }
-        .cell.pacific { background: #3b82f6; }
-        .cell.atlantic { background: #f59e0b; color: #0f172a; }
+        .grid { display: inline-grid; gap: 2px; margin: 15px auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); transition: all 0.3s; font-size: 0.9rem; }
+        .cell.pacific { background: rgba(59, 130, 246, 0.5); }
+        .cell.atlantic { background: rgba(234, 179, 8, 0.5); }
         .cell.both { background: var(--viz-success); color: #0f172a; }
+        .cell.current { border: 3px solid var(--viz-error); }
+        .legend { display: flex; gap: 15px; justify-content: center; margin: 10px 0; font-size: 0.85rem; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-box { width: 20px; height: 20px; border-radius: 4px; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">PACIFIC ATLANTIC WATER FLOW</div>
-                <div style="text-align: center; font-size: 0.8rem; color: var(--viz-text-muted);">Pacific ← Top/Left, Atlantic → Bottom/Right</div>
-                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(5, 35px);"></div>
+                <div class="viz-title">太平洋大西洋水流問題（DFS）</div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-box" style="background:rgba(59,130,246,0.5)"></div>太平洋</div>
+                    <div class="legend-item"><div class="legend-box" style="background:rgba(234,179,8,0.5)"></div>大西洋</div>
+                    <div class="legend-item"><div class="legend-box" style="background:var(--viz-success)"></div>兩者皆可</div>
+                </div>
+                <div style="text-align: center;"><div class="grid" id="gridDisplay"></div></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">結果數量</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">REVERSE DFS</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -42,52 +50,61 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'vector<vector<int>> pacificAtlantic(heights) {', id: 0 },
-            { line: '    set<pair<int,int>> pacific, atlantic;', id: 1 },
-            { line: '    // DFS from Pacific borders (top, left)', id: 2 },
-            { line: '    // DFS from Atlantic borders (bottom, right)', id: 3 },
-            { line: '    // Return intersection', id: 4 },
-            { line: '    vector<vector<int>> result;', id: 5 },
-            { line: '    for each cell in both sets:', id: 6 },
-            { line: '        result.push_back({i, j});', id: 7 },
-            { line: '    return result;', id: 8 },
-            { line: '}', id: 9 },
+            { line: 'vector<vector<int>> pacificAtlantic(vector<vector<int>>& heights) {', id: 0 },
+            { line: '    int m = heights.size(), n = heights[0].size();', id: 1 },
+            { line: '    vector<vector<bool>> pacific(m, vector<bool>(n));', id: 2 },
+            { line: '    vector<vector<bool>> atlantic(m, vector<bool>(n));', id: 3 },
+            { line: '    // 從邊界反向 DFS', id: 4 },
+            { line: '    for (int i = 0; i < m; i++) {', id: 5 },
+            { line: '        dfs(heights, pacific, i, 0);   // 左邊界-太平洋', id: 6 },
+            { line: '        dfs(heights, atlantic, i, n-1); // 右邊界-大西洋', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    for (int j = 0; j < n; j++) {', id: 9 },
+            { line: '        dfs(heights, pacific, 0, j);   // 上邊界-太平洋', id: 10 },
+            { line: '        dfs(heights, atlantic, m-1, j); // 下邊界-大西洋', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    // 找交集', id: 13 },
+            { line: '    vector<vector<int>> result;', id: 14 },
+            { line: '    for (int i = 0; i < m; i++)', id: 15 },
+            { line: '        for (int j = 0; j < n; j++)', id: 16 },
+            { line: '            if (pacific[i][j] && atlantic[i][j])', id: 17 },
+            { line: '                result.push_back({i, j});', id: 18 },
+            { line: '    return result;', id: 19 },
+            { line: '}', id: 20 },
         ];
-        const grid = [[1,2,2,3,5],[3,2,3,4,4],[2,4,5,3,1],[6,7,1,4,5],[5,1,1,2,4]];
-
+        const heights = [[1,2,2,3,5],[3,2,3,4,4],[2,4,5,3,1],[6,7,1,4,5],[5,1,1,2,4]];
         function generateAlgorithmSteps() {
             const steps = [];
-            const pacific = [[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]];
-            const atlantic = [[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]];
-            const both = [[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]];
-            
-            steps.push({ pacific: [], atlantic: [], highlightLines: [0, 1], explanation: { title: 'Init', text: 'Reverse DFS from oceans' }});
-            steps.push({ pacific: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,0],[2,0],[3,0],[4,0]], atlantic: [], highlightLines: [2], explanation: { title: 'Pacific DFS', text: 'Blue = reachable from Pacific' }});
-            steps.push({ pacific: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,0],[2,0],[3,0],[4,0]], atlantic: [[4,4],[4,3],[4,2],[4,1],[4,0],[3,4],[2,4],[1,4],[0,4]], highlightLines: [3], explanation: { title: 'Atlantic DFS', text: 'Orange = reachable from Atlantic' }});
-            steps.push({ both: [[0,4],[3,0],[4,0]], highlightLines: [6, 7], explanation: { title: 'Intersection', text: 'Green = both oceans' }});
-            
+            steps.push({ pacific: [], atlantic: [], both: [], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: '5×5 高度矩陣<br><br>關鍵思路：從海洋邊界反向 DFS<br>找出能流到該海洋的所有格子' } });
+            steps.push({ pacific: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,0],[2,0],[3,0],[4,0]], atlantic: [], highlightLines: [5,6,9,10], explanation: { title: '太平洋 DFS', text: '從上邊界和左邊界開始<br>反向 DFS（往高處走）' } });
+            steps.push({ pacific: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,0],[2,0],[3,0],[4,0],[1,1],[1,2],[1,3],[2,1],[2,2],[3,1]], atlantic: [], highlightLines: [6,10], explanation: { title: '太平洋擴展', text: '標記所有能流到太平洋的格子' } });
+            steps.push({ pacific: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,0],[2,0],[3,0],[4,0],[1,1],[1,2],[1,3],[2,1],[2,2],[3,1]], atlantic: [[4,0],[4,1],[4,2],[4,3],[4,4],[0,4],[1,4],[2,4],[3,4]], highlightLines: [7,11], explanation: { title: '大西洋 DFS', text: '從下邊界和右邊界開始' } });
+            steps.push({ pacific: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,0],[2,0],[3,0],[4,0]], atlantic: [[4,0],[4,1],[4,2],[4,3],[4,4],[0,4],[1,4],[2,4],[3,4]], both: [[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]], highlightLines: [13,14,15,16,17,18], explanation: { title: '找交集', text: '能同時流到兩個海洋的格子' } });
+            steps.push({ both: [[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]], final: true, highlightLines: [19], explanation: { title: '完成！', text: '共 7 個格子能流到兩個海洋<br><br>時間：O(m×n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
+                    const grid = document.getElementById('gridDisplay');
+                    grid.style.gridTemplateColumns = `repeat(${heights[0].length}, 40px)`;
                     let html = '';
-                    for (let i = 0; i < 5; i++) {
-                        for (let j = 0; j < 5; j++) {
-                            const inBoth = step.both?.some(c => c[0] === i && c[1] === j);
-                            const inPacific = step.pacific?.some(c => c[0] === i && c[1] === j);
-                            const inAtlantic = step.atlantic?.some(c => c[0] === i && c[1] === j);
+                    for (let r = 0; r < heights.length; r++) {
+                        for (let c = 0; c < heights[0].length; c++) {
                             let cls = 'cell';
-                            if (inBoth) cls += ' both';
-                            else if (inPacific) cls += ' pacific';
-                            else if (inAtlantic) cls += ' atlantic';
-                            html += `<div class="${cls}">${grid[i][j]}</div>`;
+                            const inP = step.pacific?.some(p => p[0]===r && p[1]===c);
+                            const inA = step.atlantic?.some(p => p[0]===r && p[1]===c);
+                            const inB = step.both?.some(p => p[0]===r && p[1]===c);
+                            if (inB) cls += ' both';
+                            else if (inP) cls += ' pacific';
+                            else if (inA) cls += ' atlantic';
+                            html += `<div class="${cls}">${heights[r][c]}</div>`;
                         }
                     }
-                    document.getElementById('gridDisplay').innerHTML = html;
+                    grid.innerHTML = html;
+                    document.getElementById('countDisplay').textContent = step.both?.length ?? 0;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

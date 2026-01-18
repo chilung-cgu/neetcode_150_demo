@@ -3,39 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clone Graph Visualization</title>
+    <title>Clone Graph 克隆圖 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .graph { display: flex; gap: 10px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
-        .node { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1.2rem; }
+        .graphs { display: flex; gap: 40px; justify-content: center; margin: 20px 0; }
+        .graph-box { text-align: center; }
+        .graph-label { color: var(--text-muted); margin-bottom: 10px; }
+        .nodes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .node { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; transition: all 0.3s; }
         .node.original { background: var(--viz-primary); color: white; }
         .node.cloned { background: var(--viz-success); color: #0f172a; }
+        .node.current { border: 3px solid var(--viz-warning); }
+        .node.processing { animation: pulse 0.5s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        .hashmap { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .map-item { display: flex; align-items: center; gap: 5px; padding: 4px 10px; background: var(--viz-bg-primary); border-radius: 4px; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">CLONE GRAPH (DFS)</div>
-                <div style="text-align: center; color: var(--viz-text-muted);">Original:</div>
-                <div class="graph" id="originalDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted);">Cloned:</div>
-                <div class="graph" id="clonedDisplay"></div>
+                <div class="viz-title">克隆圖（BFS/DFS + HASH MAP）</div>
+                <div class="graphs">
+                    <div class="graph-box"><div class="graph-label">原圖</div><div class="nodes" id="originalNodes"></div></div>
+                    <div class="graph-box"><div class="graph-label">克隆圖</div><div class="nodes" id="clonedNodes"></div></div>
+                </div>
+                <div style="text-align: center; color: var(--text-muted);">HashMap: 原節點 → 克隆節點</div>
+                <div class="hashmap" id="hashmapDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">DFS + HASHMAP</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -44,43 +51,51 @@
     <script>
         const codeStructure = [
             { line: 'Node* cloneGraph(Node* node) {', id: 0 },
-            { line: '    unordered_map<Node*, Node*> visited;', id: 1 },
-            { line: '    return dfs(node, visited);', id: 2 },
-            { line: '}', id: 3 },
-            { line: 'Node* dfs(Node* node, map& visited) {', id: 4 },
-            { line: '    if (visited.count(node)) return visited[node];', id: 5 },
-            { line: '    Node* clone = new Node(node->val);', id: 6 },
-            { line: '    visited[node] = clone;', id: 7 },
-            { line: '    for (auto* neighbor : node->neighbors)', id: 8 },
-            { line: '        clone->neighbors.push_back(dfs(neighbor, visited));', id: 9 },
-            { line: '    return clone;', id: 10 },
-            { line: '}', id: 11 },
+            { line: '    if (!node) return nullptr;', id: 1 },
+            { line: '    unordered_map<Node*, Node*> cloned;', id: 2 },
+            { line: '    queue<Node*> q;', id: 3 },
+            { line: '    q.push(node);', id: 4 },
+            { line: '    cloned[node] = new Node(node->val);', id: 5 },
+            { line: '    while (!q.empty()) {', id: 6 },
+            { line: '        Node* cur = q.front(); q.pop();', id: 7 },
+            { line: '        for (Node* neighbor : cur->neighbors) {', id: 8 },
+            { line: '            if (!cloned.count(neighbor)) {', id: 9 },
+            { line: '                cloned[neighbor] = new Node(neighbor->val);', id: 10 },
+            { line: '                q.push(neighbor);', id: 11 },
+            { line: '            }', id: 12 },
+            { line: '            cloned[cur]->neighbors.push_back(cloned[neighbor]);', id: 13 },
+            { line: '        }', id: 14 },
+            { line: '    }', id: 15 },
+            { line: '    return cloned[node];', id: 16 },
+            { line: '}', id: 17 },
         ];
-        const nodes = [1, 2, 3, 4];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            
-            steps.push({ cloned: [], highlightLines: [0, 1, 2], explanation: { title: 'Start DFS', text: 'Track visited to avoid cycles' }});
-            for (let i = 0; i < nodes.length; i++) {
-                steps.push({ cloned: nodes.slice(0, i + 1), highlightLines: [6, 7, 8, 9], explanation: { title: `Clone node ${nodes[i]}`, text: 'Create copy and recurse' }});
-            }
-            steps.push({ cloned: nodes, highlightLines: [10], explanation: { title: 'Done!', text: 'Deep copy created' }});
-            
+            steps.push({ original: [1,2,3,4], cloned: [], map: {}, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: '圖：1-2-3-4（環形連接）<br><br>BFS 遍歷並克隆<br>HashMap 避免重複克隆' } });
+            steps.push({ original: [1,2,3,4], cloned: [1], map: {1:1}, current: 1, highlightLines: [4,5], explanation: { title: '克隆節點 1', text: 'cloned[1] = new Node(1)<br>加入 queue' } });
+            steps.push({ original: [1,2,3,4], cloned: [1,2,4], map: {1:1,2:2,4:4}, current: 1, highlightLines: [7,8,9,10,11], explanation: { title: '處理節點 1 的鄰居', text: '鄰居：2, 4<br>克隆並加入 queue' } });
+            steps.push({ original: [1,2,3,4], cloned: [1,2,4,3], map: {1:1,2:2,4:4,3:3}, current: 2, highlightLines: [7,8,9,10,11,13], explanation: { title: '處理節點 2 的鄰居', text: '鄰居：1（已克隆）, 3（新）<br>連接鄰居關係' } });
+            steps.push({ original: [1,2,3,4], cloned: [1,2,3,4], map: {1:1,2:2,3:3,4:4}, final: true, highlightLines: [16], explanation: { title: '完成！', text: '所有節點已克隆<br>鄰居關係已建立<br><br>時間：O(V+E)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('originalDisplay').innerHTML = nodes.map(n =>
-                        `<div class="node original">${n}</div>`
-                    ).join('');
-                    document.getElementById('clonedDisplay').innerHTML = (step.cloned || []).map(n =>
-                        `<div class="node cloned">${n}'</div>`
-                    ).join('') || '<em style="color:var(--viz-text-muted)">-</em>';
+                    document.getElementById('originalNodes').innerHTML = (step.original || []).map(n => {
+                        let cls = 'node original';
+                        if (n === step.current) cls += ' current';
+                        return `<div class="${cls}">${n}</div>`;
+                    }).join('');
+                    document.getElementById('clonedNodes').innerHTML = (step.cloned || []).map(n => {
+                        let cls = 'node cloned';
+                        if (n === step.current) cls += ' processing';
+                        return `<div class="${cls}">${n}'</div>`;
+                    }).join('') || '<span style="color:var(--text-muted)">空</span>';
+                    document.getElementById('hashmapDisplay').innerHTML = Object.entries(step.map || {}).map(([k,v]) => 
+                        `<div class="map-item"><span style="color:var(--viz-primary)">${k}</span>→<span style="color:var(--viz-success)">${v}'</span></div>`
+                    ).join('') || '空';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());
