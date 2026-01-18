@@ -3,39 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hand of Straights Visualization</title>
+    <title>Hand of Straights 一手順子 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .cards { display: flex; gap: 4px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
-        .card { width: 32px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-family: monospace; background: var(--viz-primary); color: white; }
-        .card.grouped { opacity: 0.4; }
-        .groups { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
-        .group { padding: 6px 10px; border-radius: 6px; font-family: monospace; background: var(--viz-success); color: #0f172a; font-size: 0.9rem; }
+        .cards { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .card { width: 40px; height: 55px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: white; color: #333; border: 2px solid #ddd; font-size: 1.1rem; transition: all 0.3s; }
+        .card.grouped { background: var(--viz-success); color: #0f172a; border-color: var(--viz-success); }
+        .card.current { border-color: var(--viz-warning); border-width: 3px; }
+        .card.used { opacity: 0.3; }
+        .groups { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 15px 0; }
+        .group { display: flex; gap: 3px; padding: 8px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .group .card { width: 30px; height: 40px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">HAND OF STRAIGHTS (groupSize=3)</div>
+                <div class="viz-title">一手順子（GREEDY + HASH MAP）</div>
                 <div class="cards" id="cardsDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Groups:</div>
+                <div style="text-align: center; color: var(--text-muted);">已分組</div>
                 <div class="groups" id="groupsDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">每組大小</div><div class="state-value">3</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">GREEDY + MAP</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -43,16 +47,16 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'bool isNStraightHand(hand, groupSize) {', id: 0 },
+            { line: 'bool isNStraightHand(vector<int>& hand, int groupSize) {', id: 0 },
             { line: '    if (hand.size() % groupSize != 0) return false;', id: 1 },
             { line: '    map<int, int> count;', id: 2 },
             { line: '    for (int c : hand) count[c]++;', id: 3 },
-            { line: '    while (!count.empty()) {', id: 4 },
-            { line: '        int start = count.begin()->first;', id: 5 },
-            { line: '        for (int i = 0; i < groupSize; i++) {', id: 6 },
-            { line: '            if (count[start + i] == 0) return false;', id: 7 },
-            { line: '            if (--count[start + i] == 0)', id: 8 },
-            { line: '                count.erase(start + i);', id: 9 },
+            { line: '    for (auto& [card, cnt] : count) {', id: 4 },
+            { line: '        if (cnt > 0) {', id: 5 },
+            { line: '            for (int i = 0; i < groupSize; i++) {', id: 6 },
+            { line: '                if (count[card + i] < cnt) return false;', id: 7 },
+            { line: '                count[card + i] -= cnt;', id: 8 },
+            { line: '            }', id: 9 },
             { line: '        }', id: 10 },
             { line: '    }', id: 11 },
             { line: '    return true;', id: 12 },
@@ -60,42 +64,31 @@
         ];
         const hand = [1, 2, 3, 6, 2, 3, 4, 7, 8];
         const groupSize = 3;
-
         function generateAlgorithmSteps() {
             const steps = [];
-            const groups = [[1, 2, 3], [2, 3, 4], [6, 7, 8]];
-            let usedIndices = [];
-            
-            steps.push({ grouped: [], groups: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 'Count each card' }});
-            
-            const sorted = [...hand].sort((a, b) => a - b);
-            for (let g = 0; g < groups.length; g++) {
-                const newGrouped = [...usedIndices];
-                for (const card of groups[g]) {
-                    const idx = sorted.findIndex((c, i) => c === card && !newGrouped.includes(i));
-                    if (idx >= 0) newGrouped.push(idx);
-                }
-                usedIndices = newGrouped;
-                steps.push({ grouped: usedIndices, groups: groups.slice(0, g + 1), highlightLines: [5, 6, 7, 8], explanation: { title: `Group ${g + 1}`, text: `[${groups[g].join(', ')}]` }});
-            }
-            
-            steps.push({ grouped: usedIndices, groups, highlightLines: [12], explanation: { title: 'Done!', text: 'All grouped successfully ✓' }});
-            
+            steps.push({ used: [], groups: [], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `hand = [${hand.join(', ')}]<br>groupSize = 3<br><br>排序後用 HashMap 計數<br>從最小的牌開始組順子` } });
+            steps.push({ used: [0,1,2], groups: [[1,2,3]], current: [1,2,3], highlightLines: [4,5,6,7,8], explanation: { title: '組 1: [1,2,3]', text: '從 1 開始<br>找 1,2,3 各一張' } });
+            steps.push({ used: [0,1,2,4,5,6], groups: [[1,2,3],[2,3,4]], current: [2,3,4], highlightLines: [4,5,6,7,8], explanation: { title: '組 2: [2,3,4]', text: '從 2 開始<br>找 2,3,4 各一張' } });
+            steps.push({ used: [0,1,2,3,4,5,6,7,8], groups: [[1,2,3],[2,3,4],[6,7,8]], current: [6,7,8], highlightLines: [4,5,6,7,8], explanation: { title: '組 3: [6,7,8]', text: '從 6 開始<br>找 6,7,8 各一張' } });
+            steps.push({ used: [0,1,2,3,4,5,6,7,8], groups: [[1,2,3],[2,3,4],[6,7,8]], result: true, final: true, highlightLines: [12], explanation: { title: '🎉 成功！', text: '可以分成 3 組順子<br><br>時間：O(n log n)' } });
             return steps;
         }
-
         let viz;
         function init() {
-            const sorted = [...hand].sort((a, b) => a - b);
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('cardsDisplay').innerHTML = sorted.map((c, i) =>
-                        `<div class="card ${step.grouped?.includes(i) ? 'grouped' : ''}">${c}</div>`
-                    ).join('');
-                    document.getElementById('groupsDisplay').innerHTML = (step.groups || []).map(g =>
-                        `<span class="group">[${g.join(',')}]</span>`
-                    ).join('');
+                    const sorted = [...hand].sort((a,b) => a-b);
+                    let html = '';
+                    sorted.forEach((c, i) => {
+                        let cls = 'card';
+                        if (step.used?.includes(i)) cls += ' used';
+                        if (step.current?.includes(c)) cls += ' current';
+                        html += `<div class="${cls}">${c}</div>`;
+                    });
+                    document.getElementById('cardsDisplay').innerHTML = html;
+                    document.getElementById('groupsDisplay').innerHTML = (step.groups || []).map(g => `<div class="group">${g.map(c => `<div class="card grouped">${c}</div>`).join('')}</div>`).join('') || '無';
+                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

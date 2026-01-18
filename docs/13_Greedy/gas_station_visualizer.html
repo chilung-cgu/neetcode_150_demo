@@ -3,40 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gas Station Visualization</title>
+    <title>Gas Station 加油站 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .stations { display: flex; gap: 6px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
-        .station { padding: 8px 10px; border-radius: 6px; text-align: center; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.85rem; }
-        .station.start { background: var(--viz-success); color: #0f172a; }
-        .station.current { border: 2px solid var(--viz-secondary); }
+        .stations { display: flex; gap: 8px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .station { width: 60px; padding: 10px; text-align: center; border-radius: 8px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .station .idx { font-weight: bold; font-size: 1.1rem; }
+        .station .gas { font-size: 0.8rem; color: #90EE90; }
+        .station .cost { font-size: 0.8rem; color: #FFB6C1; }
+        .station.current { background: var(--viz-warning); color: #0f172a; }
+        .station.start { border: 3px solid var(--viz-success); }
+        .station.visited { background: var(--viz-success); color: #0f172a; }
+        .tank-display { text-align: center; font-size: 1.2rem; margin: 10px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">GAS STATION (Circular)</div>
+                <div class="viz-title">加油站（GREEDY）</div>
                 <div class="stations" id="stationsDisplay"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="tank-display">油箱：<span id="tankDisplay" style="color: var(--viz-success); font-weight: bold;">0</span></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Tank</div><div class="state-value" id="tankDisplay">0</div></div>
-                    <div class="state-item"><div class="state-label">Start</div><div class="state-value" id="startDisplay" style="color: var(--viz-success);">-</div></div>
+                    <div class="state-item"><div class="state-label">起點</div><div class="state-value" id="startDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">GREEDY</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -44,56 +46,57 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int canCompleteCircuit(gas, cost) {', id: 0 },
+            { line: 'int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {', id: 0 },
             { line: '    int total = 0, tank = 0, start = 0;', id: 1 },
-            { line: '    for (int i = 0; i < n; i++) {', id: 2 },
-            { line: '        int net = gas[i] - cost[i];', id: 3 },
-            { line: '        total += net;', id: 4 },
-            { line: '        tank += net;', id: 5 },
+            { line: '    for (int i = 0; i < gas.size(); i++) {', id: 2 },
+            { line: '        int diff = gas[i] - cost[i];', id: 3 },
+            { line: '        total += diff;', id: 4 },
+            { line: '        tank += diff;', id: 5 },
             { line: '        if (tank < 0) {', id: 6 },
-            { line: '            start = i + 1; tank = 0;', id: 7 },
-            { line: '        }', id: 8 },
-            { line: '    }', id: 9 },
-            { line: '    return total >= 0 ? start : -1;', id: 10 },
-            { line: '}', id: 11 },
+            { line: '            start = i + 1; // 從下一站重新開始', id: 7 },
+            { line: '            tank = 0;', id: 8 },
+            { line: '        }', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    return total >= 0 ? start : -1;', id: 11 },
+            { line: '}', id: 12 },
         ];
         const gas = [1, 2, 3, 4, 5];
         const cost = [3, 4, 5, 1, 2];
-        // net = [-2, -2, -2, 3, 3], start from 3
-
         function generateAlgorithmSteps() {
             const steps = [];
+            steps.push({ current: -1, start: 0, tank: 0, highlightLines: [0,1], explanation: { title: '初始化', text: `gas  = [${gas.join(', ')}]<br>cost = [${cost.join(', ')}]<br><br>關鍵：如果從 A 無法到達 B，<br>則 A 和 B 之間的任何站都無法到達 B` } });
+            // Simulate
             let tank = 0, start = 0;
-            const net = gas.map((g, i) => g - cost[i]);
-            
-            steps.push({ current: -1, start: 0, tank: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: 'Find valid starting point' }});
-            
             for (let i = 0; i < gas.length; i++) {
-                tank += net[i];
+                const diff = gas[i] - cost[i];
+                tank += diff;
                 if (tank < 0) {
+                    steps.push({ current: i, start: start, tank: tank, fail: true, highlightLines: [2,3,4,5,6,7,8], explanation: { title: `站 ${i}: 失敗`, text: `gas=${gas[i]}, cost=${cost[i]}<br>tank = ${tank} < 0<br>從站 ${i+1} 重新開始`, formula: `tank += ${diff} = ${tank}` } });
                     start = i + 1;
                     tank = 0;
-                    steps.push({ current: i, start, tank: 0, highlightLines: [6, 7], explanation: { title: `Station ${i}: net=${net[i]}`, text: `Tank < 0, restart from ${start}` }});
                 } else {
-                    steps.push({ current: i, start, tank, highlightLines: [5], explanation: { title: `Station ${i}: net=${net[i]}`, text: `Tank = ${tank}` }});
+                    steps.push({ current: i, start: start, tank: tank, visited: Array.from({length: i-start+1}, (_, j) => start+j), highlightLines: [2,3,4,5], explanation: { title: `站 ${i}: 成功`, text: `gas=${gas[i]}, cost=${cost[i]}<br>tank = ${tank}`, formula: `tank += ${diff} = ${tank}` } });
                 }
             }
-            
-            steps.push({ current: -1, start: 3, tank, highlightLines: [10], explanation: { title: 'Done!', text: 'Start from station 3' }});
-            
+            steps.push({ current: -1, start: 3, tank: 4, result: 3, final: true, highlightLines: [11], explanation: { title: '🎉 找到起點！', text: '從站 3 開始可以繞一圈<br><br>時間：O(n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('stationsDisplay').innerHTML = gas.map((g, i) =>
-                        `<div class="station ${i === step.start ? 'start' : ''} ${i === step.current ? 'current' : ''}">G:${g} C:${cost[i]}</div>`
-                    ).join('');
-                    document.getElementById('tankDisplay').textContent = step.tank;
-                    document.getElementById('startDisplay').textContent = step.start;
+                    let html = '';
+                    for (let i = 0; i < gas.length; i++) {
+                        let cls = 'station';
+                        if (i === step.current) cls += ' current';
+                        if (i === step.start) cls += ' start';
+                        if (step.visited?.includes(i)) cls += ' visited';
+                        html += `<div class="${cls}"><div class="idx">${i}</div><div class="gas">+${gas[i]}</div><div class="cost">-${cost[i]}</div></div>`;
+                    }
+                    document.getElementById('stationsDisplay').innerHTML = html;
+                    document.getElementById('tankDisplay').textContent = step.tank ?? 0;
+                    document.getElementById('startDisplay').textContent = step.result ?? step.start ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

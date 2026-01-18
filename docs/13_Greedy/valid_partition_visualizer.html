@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valid Partition 有效分割 - 視覺化</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .array { display: flex; gap: 6px; justify-content: center; margin: 20px 0; }
+        .element { width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; font-size: 1.1rem; transition: all 0.3s; }
+        .element.partition { background: var(--viz-success); color: #0f172a; }
+        .element.checking { background: var(--viz-warning); color: #0f172a; }
+        .dp-row { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
+        .dp-cell { width: 40px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); font-size: 0.9rem; }
+        .dp-cell.true { background: var(--viz-success); color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">有效分割（DP）</div>
+                <div class="array" id="arrayDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">dp[i] = 前 i 個元素能否有效分割</div>
+                <div class="dp-row" id="dpDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
+            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool validPartition(vector<int>& nums) {', id: 0 },
+            { line: '    int n = nums.size();', id: 1 },
+            { line: '    vector<bool> dp(n + 1, false);', id: 2 },
+            { line: '    dp[0] = true;', id: 3 },
+            { line: '    for (int i = 2; i <= n; i++) {', id: 4 },
+            { line: '        // 兩個相等', id: 5 },
+            { line: '        if (nums[i-1] == nums[i-2]) dp[i] = dp[i] || dp[i-2];', id: 6 },
+            { line: '        // 三個相等', id: 7 },
+            { line: '        if (i >= 3 && nums[i-1] == nums[i-2] && nums[i-2] == nums[i-3])', id: 8 },
+            { line: '            dp[i] = dp[i] || dp[i-3];', id: 9 },
+            { line: '        // 三個連續', id: 10 },
+            { line: '        if (i >= 3 && nums[i-1] == nums[i-2]+1 && nums[i-2] == nums[i-3]+1)', id: 11 },
+            { line: '            dp[i] = dp[i] || dp[i-3];', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '    return dp[n];', id: 14 },
+            { line: '}', id: 15 },
+        ];
+        const nums = [4, 4, 4, 5, 6];
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const dp = [true, false, false, false, false, false];
+            steps.push({ dp: [...dp], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `nums = [${nums.join(', ')}]<br><br>有效分割條件：<br>1. 兩個相等 [a, a]<br>2. 三個相等 [a, a, a]<br>3. 三個連續 [a, a+1, a+2]` } });
+            // i=2: [4,4]
+            dp[2] = true;
+            steps.push({ dp: [...dp], checking: [0,1], highlightLines: [4,5,6], explanation: { title: 'i=2: [4,4]', text: '4 == 4 ✓<br>dp[2] = dp[0] = true', formula: '[4,4] 是有效分割' } });
+            // i=3: [4,4,4]
+            dp[3] = true;
+            steps.push({ dp: [...dp], checking: [0,1,2], highlightLines: [4,7,8,9], explanation: { title: 'i=3: [4,4,4]', text: '4 == 4 == 4 ✓<br>dp[3] = dp[0] = true', formula: '[4,4,4] 是有效分割' } });
+            // i=5: [4,5,6]
+            dp[5] = true;
+            steps.push({ dp: [...dp], checking: [2,3,4], highlightLines: [4,10,11,12], explanation: { title: 'i=5: [4,5,6]', text: '6 == 5+1, 5 == 4+1 ✓<br>dp[5] = dp[2] = true', formula: '[4,5,6] 是連續遞增' } });
+            steps.push({ dp: [...dp], result: true, partition: [[0,1,2],[3,4]], final: true, highlightLines: [14], explanation: { title: '🎉 可以分割！', text: '分割：[4,4,4] + [4,5,6]<br><br>時間：O(n)' } });
+            return steps;
+        }
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    nums.forEach((n, i) => {
+                        let cls = 'element';
+                        if (step.checking?.includes(i)) cls += ' checking';
+                        html += `<div class="${cls}">${n}</div>`;
+                    });
+                    document.getElementById('arrayDisplay').innerHTML = html;
+                    document.getElementById('dpDisplay').innerHTML = (step.dp || []).map((d, i) => `<div class="dp-cell${d ? ' true' : ''}">${d ? 'T' : 'F'}</div>`).join('');
+                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

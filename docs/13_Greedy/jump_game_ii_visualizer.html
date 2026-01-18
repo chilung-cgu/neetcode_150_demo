@@ -3,40 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jump Game II Visualization</title>
+    <title>Jump Game II 跳躍遊戲 II - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .positions { display: flex; gap: 4px; justify-content: center; margin: 15px 0; }
-        .pos { width: 40px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
-        .pos.jumped { background: var(--viz-success); color: #0f172a; }
-        .pos.end { background: var(--viz-secondary); color: #0f172a; }
-        .pos .idx { font-size: 0.7rem; opacity: 0.7; }
+        .array { display: flex; gap: 6px; justify-content: center; margin: 20px 0; }
+        .element { width: 50px; height: 55px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .element .val { font-weight: bold; font-size: 1.2rem; }
+        .element .idx { font-size: 0.6rem; opacity: 0.7; }
+        .element.current { background: var(--viz-warning); color: #0f172a; }
+        .element.range { border: 3px solid var(--viz-success); }
+        .element.jumped { background: var(--viz-success); color: #0f172a; }
+        .range-indicator { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 5px 0; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">JUMP GAME II (Min Jumps)</div>
-                <div class="positions" id="posDisplay"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">跳躍遊戲 II（GREEDY）</div>
+                <div class="array" id="arrayDisplay"></div>
+                <div class="range-indicator" id="rangeDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Jumps</div><div class="state-value" id="jumpsDisplay" style="color: var(--viz-success);">0</div></div>
+                    <div class="state-item"><div class="state-label">當前範圍</div><div class="state-value" id="curEndDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">最遠可達</div><div class="state-value" id="farDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">跳躍次數</div><div class="state-value" id="jumpsDisplay" style="color: var(--viz-success);">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">GREEDY BFS</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -45,40 +48,50 @@
     <script>
         const codeStructure = [
             { line: 'int jump(vector<int>& nums) {', id: 0 },
-            { line: '    int jumps = 0, end = 0, farthest = 0;', id: 1 },
+            { line: '    int jumps = 0, curEnd = 0, farthest = 0;', id: 1 },
             { line: '    for (int i = 0; i < nums.size() - 1; i++) {', id: 2 },
             { line: '        farthest = max(farthest, i + nums[i]);', id: 3 },
-            { line: '        if (i == end) {', id: 4 },
+            { line: '        if (i == curEnd) {', id: 4 },
             { line: '            jumps++;', id: 5 },
-            { line: '            end = farthest;', id: 6 },
+            { line: '            curEnd = farthest;', id: 6 },
             { line: '        }', id: 7 },
             { line: '    }', id: 8 },
             { line: '    return jumps;', id: 9 },
             { line: '}', id: 10 },
         ];
         const nums = [2, 3, 1, 1, 4];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            const jumpPoints = [0, 2]; // Jump from 0 to 1, then from 1 to 4 (via 3,1,1,4)
-            
-            steps.push({ jumped: [], jumps: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: 'BFS approach with greedy' }});
-            steps.push({ jumped: [0], end: 2, jumps: 1, highlightLines: [4, 5, 6], explanation: { title: 'Jump 1', text: 'From 0, reach up to index 2' }});
-            steps.push({ jumped: [0, 1], end: 4, jumps: 2, highlightLines: [4, 5, 6], explanation: { title: 'Jump 2', text: 'From 1, reach up to index 4 (end)' }});
-            steps.push({ jumped: [0, 1], end: 4, jumps: 2, highlightLines: [9], explanation: { title: 'Done!', text: 'Min jumps = 2' }});
-            
+            steps.push({ current: -1, curEnd: 0, farthest: 0, jumps: 0, highlightLines: [0,1], explanation: { title: '初始化', text: `nums = [${nums.join(', ')}]<br><br>貪心：在當前範圍內找最遠可達點<br>到達範圍邊界時跳一次` } });
+            // i=0
+            steps.push({ current: 0, curEnd: 0, farthest: 2, jumps: 0, range: [0,0], highlightLines: [2,3], explanation: { title: 'i=0', text: 'farthest = max(0, 0+2) = 2<br>i == curEnd，需要跳躍', formula: 'farthest = max(0, 0+2) = 2' } });
+            steps.push({ current: 0, curEnd: 2, farthest: 2, jumps: 1, jumped: [0], range: [1,2], highlightLines: [4,5,6], explanation: { title: '第 1 跳', text: 'jumps = 1<br>curEnd = 2<br>新範圍：[1, 2]' } });
+            // i=1
+            steps.push({ current: 1, curEnd: 2, farthest: 4, jumps: 1, jumped: [0], range: [1,2], highlightLines: [2,3], explanation: { title: 'i=1', text: 'farthest = max(2, 1+3) = 4<br>可以到達終點！', formula: 'farthest = max(2, 1+3) = 4' } });
+            // i=2
+            steps.push({ current: 2, curEnd: 2, farthest: 4, jumps: 1, jumped: [0], range: [1,2], highlightLines: [2,3,4], explanation: { title: 'i=2', text: 'farthest = max(4, 2+1) = 4<br>i == curEnd，需要跳躍' } });
+            steps.push({ current: 2, curEnd: 4, farthest: 4, jumps: 2, jumped: [0,1], range: [3,4], highlightLines: [5,6], explanation: { title: '第 2 跳', text: 'jumps = 2<br>curEnd = 4（終點）' } });
+            steps.push({ current: -1, curEnd: 4, farthest: 4, jumps: 2, jumped: [0,1,4], final: true, highlightLines: [9], explanation: { title: '🎉 完成！', text: '最少 2 次跳躍<br>路徑：0 → 1 → 4<br><br>時間：O(n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('posDisplay').innerHTML = nums.map((n, i) =>
-                        `<div class="pos ${step.jumped?.includes(i) ? 'jumped' : ''} ${i === nums.length - 1 ? 'end' : ''}"><div class="idx">${i}</div><div>${n}</div></div>`
-                    ).join('');
-                    document.getElementById('jumpsDisplay').textContent = step.jumps;
+                    let html = '';
+                    nums.forEach((n, i) => {
+                        let cls = 'element';
+                        if (i === step.current) cls += ' current';
+                        if (step.range && i >= step.range[0] && i <= step.range[1]) cls += ' range';
+                        if (step.jumped?.includes(i)) cls += ' jumped';
+                        html += `<div class="${cls}"><div class="val">${n}</div><div class="idx">[${i}]</div></div>`;
+                    });
+                    document.getElementById('arrayDisplay').innerHTML = html;
+                    document.getElementById('rangeDisplay').textContent = step.range ? `當前範圍：[${step.range[0]}, ${step.range[1]}]` : '';
+                    document.getElementById('curEndDisplay').textContent = step.curEnd ?? 0;
+                    document.getElementById('farDisplay').textContent = step.farthest ?? 0;
+                    document.getElementById('jumpsDisplay').textContent = step.jumps ?? 0;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());
