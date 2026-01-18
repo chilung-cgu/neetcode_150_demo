@@ -3,36 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merge Intervals Visualization</title>
+    <title>Merge Intervals 合併區間 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .interval-row { display: flex; align-items: center; height: 30px; margin: 4px 0; position: relative; }
-        .interval { position: absolute; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-family: monospace; }
-        .interval.original { background: var(--viz-primary); color: white; }
-        .interval.merged { background: var(--viz-success); color: #0f172a; }
+        .intervals { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 15px 0; }
+        .interval { padding: 10px 16px; border-radius: 8px; background: var(--viz-primary); color: white; font-weight: bold; transition: all 0.3s; }
+        .interval.sorted { background: var(--viz-secondary); color: #0f172a; }
+        .interval.current { border: 3px solid var(--viz-warning); }
+        .interval.merge { background: var(--viz-warning); color: #0f172a; animation: pulse 0.5s; }
+        .interval.result { background: var(--viz-success); color: #0f172a; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">MERGE INTERVALS</div>
-                <div id="intervalsDisplay" style="min-height: 150px; position: relative;"></div>
+                <div class="viz-title">合併區間（MERGE INTERVALS）</div>
+                <div class="intervals" id="intervalsDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">原始區間</div><div class="state-value" id="origDisplay">4</div></div>
+                    <div class="state-item"><div class="state-label">合併後</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -40,53 +44,49 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'vector<vector<int>> merge(intervals) {', id: 0 },
+            { line: 'vector<vector<int>> merge(vector<vector<int>>& intervals) {', id: 0 },
             { line: '    sort(intervals.begin(), intervals.end());', id: 1 },
-            { line: '    vector<vector<int>> res;', id: 2 },
+            { line: '    vector<vector<int>> result;', id: 2 },
             { line: '    for (auto& interval : intervals) {', id: 3 },
-            { line: '        if (res.empty() || res.back()[1] < interval[0])', id: 4 },
-            { line: '            res.push_back(interval);', id: 5 },
+            { line: '        if (result.empty() || result.back()[1] < interval[0])', id: 4 },
+            { line: '            result.push_back(interval);', id: 5 },
             { line: '        else', id: 6 },
-            { line: '            res.back()[1] = max(res.back()[1], interval[1]);', id: 7 },
+            { line: '            result.back()[1] = max(result.back()[1], interval[1]);', id: 7 },
             { line: '    }', id: 8 },
-            { line: '    return res;', id: 9 },
+            { line: '    return result;', id: 9 },
             { line: '}', id: 10 },
         ];
-        const intervals = [[1,3], [2,6], [8,10], [15,18]];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            const sorted = [...intervals].sort((a, b) => a[0] - b[0]);
-            const result = [];
-            steps.push({ intervals: sorted, result: [], highlightLines: [0, 1, 2], explanation: { title: 'Sort by start', text: `${sorted.map(i => `[${i}]`).join(', ')}` }});
-            for (const int of sorted) {
-                if (result.length === 0 || result[result.length - 1][1] < int[0]) {
-                    result.push([...int]);
-                    steps.push({ intervals: sorted, result: result.map(r => [...r]), current: int, highlightLines: [4, 5], explanation: { title: `[${int}] → new interval`, text: '' }});
-                } else {
-                    result[result.length - 1][1] = Math.max(result[result.length - 1][1], int[1]);
-                    steps.push({ intervals: sorted, result: result.map(r => [...r]), current: int, merged: true, highlightLines: [6, 7], explanation: { title: `[${int}] → merge`, text: `Extended to [${result[result.length - 1]}]` }});
-                }
-            }
-            steps.push({ intervals: sorted, result: result.map(r => [...r]), highlightLines: [9], explanation: { title: 'Done!', text: `${result.length} merged intervals` }});
+            steps.push({ intervals: [[1,3],[2,6],[8,10],[15,18]], sorted: false, result: [], highlightLines: [0,1], explanation: { title: '初始化', text: '原始：[[1,3],[2,6],[8,10],[15,18]]<br><br>先按起始點排序（已排序）' } });
+            steps.push({ intervals: [[1,3],[2,6],[8,10],[15,18]], sorted: true, result: [[1,3]], current: 0, highlightLines: [3,4,5], explanation: { title: '處理 [1,3]', text: '結果為空，直接加入<br>result = [[1,3]]' } });
+            steps.push({ intervals: [[1,3],[2,6],[8,10],[15,18]], sorted: true, result: [[1,6]], current: 1, merge: true, highlightLines: [6,7], explanation: { title: '合併 [1,3] 和 [2,6]', text: '[2,6] 開始於 2 ≤ 結果最後結束 3<br>有重疊！合併為 [1, max(3,6)] = [1,6]', formula: 'result.back()[1] = max(3, 6) = 6' } });
+            steps.push({ intervals: [[1,3],[2,6],[8,10],[15,18]], sorted: true, result: [[1,6],[8,10]], current: 2, highlightLines: [4,5], explanation: { title: '處理 [8,10]', text: '[8,10] 開始於 8 > 結果最後結束 6<br>無重疊，直接加入' } });
+            steps.push({ intervals: [[1,3],[2,6],[8,10],[15,18]], sorted: true, result: [[1,6],[8,10],[15,18]], current: 3, highlightLines: [4,5], explanation: { title: '處理 [15,18]', text: '[15,18] 開始於 15 > 10<br>無重疊，直接加入' } });
+            steps.push({ intervals: [[1,3],[2,6],[8,10],[15,18]], sorted: true, result: [[1,6],[8,10],[15,18]], final: true, highlightLines: [9], explanation: { title: '完成！', text: '結果：[[1,6],[8,10],[15,18]]<br>從 4 個區間合併為 3 個<br><br>時間：O(n log n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const scale = 15; // pixels per unit
-                    let html = '<div style="margin-bottom: 10px; color: var(--viz-text-muted);">Original:</div>';
-                    step.intervals.forEach((int, i) => {
-                        html += `<div class="interval-row"><div class="interval original" style="left: ${int[0] * scale}px; width: ${(int[1] - int[0]) * scale}px;">[${int[0]},${int[1]}]</div></div>`;
-                    });
-                    html += '<div style="margin: 10px 0; color: var(--viz-text-muted);">Merged:</div>';
-                    step.result.forEach((int, i) => {
-                        html += `<div class="interval-row"><div class="interval merged" style="left: ${int[0] * scale}px; width: ${(int[1] - int[0]) * scale}px;">[${int[0]},${int[1]}]</div></div>`;
-                    });
+                    let html = '';
+                    if (!step.final) {
+                        (step.intervals || []).forEach((iv, i) => {
+                            let cls = 'interval';
+                            if (step.sorted) cls += ' sorted';
+                            if (step.current === i) cls += ' current';
+                            if (step.merge && step.current === i) cls += ' merge';
+                            html += `<div class="${cls}">[${iv[0]}, ${iv[1]}]</div>`;
+                        });
+                    }
+                    if (step.result?.length > 0) {
+                        html += '<div style="width:100%;text-align:center;color:var(--text-muted);margin:10px 0">↓ 結果 ↓</div>';
+                        step.result.forEach(iv => html += `<div class="interval result">[${iv[0]}, ${iv[1]}]</div>`);
+                    }
                     document.getElementById('intervalsDisplay').innerHTML = html;
+                    document.getElementById('resultDisplay').textContent = step.result?.length ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

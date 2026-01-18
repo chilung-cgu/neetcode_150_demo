@@ -3,44 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Min Stack Visualization</title>
+    <title>Min Stack 最小棧 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .dual-stack { display: flex; gap: 30px; justify-content: center; }
-        .stack-col { text-align: center; }
-        .stack-display { display: flex; flex-direction: column-reverse; align-items: center; gap: 2px; min-height: 120px; }
-        .stack-item { padding: 8px 16px; border-radius: 4px; font-family: monospace; }
-        .main-item { background: var(--viz-primary); color: white; }
-        .min-item { background: var(--viz-success); color: #0f172a; }
+        .stacks { display: flex; gap: 40px; justify-content: center; margin: 20px 0; }
+        .stack-container { text-align: center; }
+        .stack-label { color: var(--text-muted); margin-bottom: 8px; }
+        .stack { display: flex; flex-direction: column-reverse; gap: 4px; min-height: 150px; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; min-width: 80px; align-items: center; }
+        .stack-item { width: 60px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; animation: slideIn 0.3s; }
+        .stack-item.main { background: var(--viz-primary); color: white; }
+        .stack-item.min { background: var(--viz-success); color: #0f172a; }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .op-display { text-align: center; font-size: 1.1rem; color: var(--viz-secondary); margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 6px; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">MIN STACK - TWO STACKS</div>
-                <div class="dual-stack">
-                    <div class="stack-col"><div class="viz-title">Main Stack</div><div class="stack-display" id="mainStack"></div></div>
-                    <div class="stack-col"><div class="viz-title">Min Stack</div><div class="stack-display" id="minStack"></div></div>
+                <div class="viz-title">最小棧（MIN STACK）</div>
+                <div class="op-display" id="opDisplay">-</div>
+                <div class="stacks">
+                    <div class="stack-container"><div class="stack-label">主 Stack</div><div class="stack" id="mainStack"></div></div>
+                    <div class="stack-container"><div class="stack-label">Min Stack</div><div class="stack" id="minStack"></div></div>
                 </div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
-                <div class="state-grid" style="margin-top: 10px;">
+                <div class="state-grid">
                     <div class="state-item"><div class="state-label">getMin()</div><div class="state-value" id="minDisplay" style="color: var(--viz-success);">-</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">OPERATIONS</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">資料結構 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -49,44 +50,41 @@
     <script>
         const codeStructure = [
             { line: 'class MinStack {', id: 0 },
-            { line: '    stack<int> main, minStk;', id: 1 },
-            { line: '    void push(int val) {', id: 2 },
-            { line: '        main.push(val);', id: 3 },
-            { line: '        minStk.push(min(val, minStk.top()));', id: 4 },
-            { line: '    }', id: 5 },
-            { line: '    void pop() { main.pop(); minStk.pop(); }', id: 6 },
-            { line: '    int getMin() { return minStk.top(); }', id: 7 },
-            { line: '};', id: 8 },
+            { line: '    stack<int> mainStack, minStack;', id: 1 },
+            { line: 'public:', id: 2 },
+            { line: '    void push(int val) {', id: 3 },
+            { line: '        mainStack.push(val);', id: 4 },
+            { line: '        if (minStack.empty() || val <= minStack.top())', id: 5 },
+            { line: '            minStack.push(val);', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    void pop() {', id: 8 },
+            { line: '        if (mainStack.top() == minStack.top())', id: 9 },
+            { line: '            minStack.pop();', id: 10 },
+            { line: '        mainStack.pop();', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    int getMin() { return minStack.top(); }', id: 13 },
+            { line: '};', id: 14 },
         ];
-        const ops = [['push', -2], ['push', 0], ['push', -3], ['getMin'], ['pop'], ['getMin']];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            const main = [], minStk = [];
-            steps.push({ main: [], minStk: [], minVal: '-', highlightLines: [0, 1], explanation: { title: 'Init', text: 'Two empty stacks' }});
-            for (const [op, val] of ops) {
-                if (op === 'push') {
-                    main.push(val);
-                    minStk.push(minStk.length === 0 ? val : Math.min(val, minStk[minStk.length - 1]));
-                    steps.push({ main: [...main], minStk: [...minStk], minVal: minStk[minStk.length - 1], highlightLines: [3, 4], explanation: { title: `push(${val})`, text: `min = ${minStk[minStk.length - 1]}` }});
-                } else if (op === 'pop') {
-                    main.pop(); minStk.pop();
-                    steps.push({ main: [...main], minStk: [...minStk], minVal: minStk[minStk.length - 1] ?? '-', highlightLines: [6], explanation: { title: 'pop()', text: '' }});
-                } else if (op === 'getMin') {
-                    steps.push({ main: [...main], minStk: [...minStk], minVal: minStk[minStk.length - 1], highlightLines: [7], explanation: { title: `getMin() = ${minStk[minStk.length - 1]}`, text: 'O(1) lookup' }});
-                }
-            }
+            steps.push({ main: [], min: [], op: '初始化', highlightLines: [0,1,2], explanation: { title: '資料結構設計', text: '使用兩個 Stack：<br><br>mainStack：存所有元素<br>minStack：追蹤最小值<br><br>所有操作都是 O(1)！' } });
+            steps.push({ main: [-2], min: [-2], op: 'push(-2)', highlightLines: [3,4,5,6], explanation: { title: 'push(-2)', text: 'mainStack.push(-2)<br>-2 ≤ 空 → minStack.push(-2)' } });
+            steps.push({ main: [-2, 0], min: [-2], op: 'push(0)', highlightLines: [3,4,5], explanation: { title: 'push(0)', text: 'mainStack.push(0)<br>0 > -2 → minStack 不變' } });
+            steps.push({ main: [-2, 0, -3], min: [-2, -3], op: 'push(-3)', highlightLines: [3,4,5,6], explanation: { title: 'push(-3)', text: 'mainStack.push(-3)<br>-3 ≤ -2 → minStack.push(-3)' } });
+            steps.push({ main: [-2, 0, -3], min: [-2, -3], op: 'getMin() → -3', highlightLines: [13], explanation: { title: 'getMin()', text: 'minStack.top() = -3<br><br>O(1) 取得最小值！' } });
+            steps.push({ main: [-2, 0], min: [-2], op: 'pop()', highlightLines: [8,9,10,11], explanation: { title: 'pop()', text: '-3 == minStack.top()<br>所以 minStack 也要 pop<br><br>現在 min = -2' } });
+            steps.push({ main: [-2, 0], min: [-2], op: 'getMin() → -2', highlightLines: [13], explanation: { title: 'getMin()', text: 'minStack.top() = -2' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('mainStack').innerHTML = step.main.map(v => `<div class="stack-item main-item">${v}</div>`).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
-                    document.getElementById('minStack').innerHTML = step.minStk.map(v => `<div class="stack-item min-item">${v}</div>`).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
-                    document.getElementById('minDisplay').textContent = step.minVal;
+                    document.getElementById('mainStack').innerHTML = (step.main || []).map(v => `<div class="stack-item main">${v}</div>`).join('');
+                    document.getElementById('minStack').innerHTML = (step.min || []).map(v => `<div class="stack-item min">${v}</div>`).join('');
+                    document.getElementById('opDisplay').textContent = step.op || '-';
+                    document.getElementById('minDisplay').textContent = step.min?.length > 0 ? step.min[step.min.length - 1] : '-';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

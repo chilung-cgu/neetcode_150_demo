@@ -3,34 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Best Time to Buy and Sell Stock Visualization</title>
+    <title>Best Time to Buy and Sell Stock 買賣股票最佳時機 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .prices { display: flex; gap: 6px; justify-content: center; align-items: flex-end; margin: 20px 0; height: 150px; }
+        .bar { width: 45px; display: flex; flex-direction: column; align-items: center; }
+        .bar-fill { width: 100%; background: var(--viz-primary); border-radius: 4px 4px 0 0; transition: all 0.3s; display: flex; align-items: flex-end; justify-content: center; color: white; font-size: 0.8rem; font-weight: bold; padding-bottom: 4px; }
+        .bar-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+        .bar.buy .bar-fill { background: var(--viz-success); }
+        .bar.sell .bar-fill { background: var(--viz-error); }
+        .bar.current .bar-fill { background: var(--viz-secondary); }
+    </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">STOCK PRICES - SLIDING WINDOW</div>
-                <div class="chart-container" id="chartContainer"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">買賣股票最佳時機（SLIDING WINDOW）</div>
+                <div class="prices" id="pricesDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Min Price</div><div class="state-value" id="minDisplay" style="color: var(--viz-success);">∞</div></div>
-                    <div class="state-item"><div class="state-label">Max Profit</div><div class="state-value" id="profitDisplay" style="color: var(--viz-primary);">0</div></div>
+                    <div class="state-item"><div class="state-label">最低買入價</div><div class="state-value" id="minDisplay" style="color: var(--viz-success);">?</div></div>
+                    <div class="state-item"><div class="state-label">最大利潤</div><div class="state-value" id="profitDisplay" style="color: var(--viz-warning);">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM (C++)</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -41,42 +47,49 @@
             { line: 'int maxProfit(vector<int>& prices) {', id: 0 },
             { line: '    int minPrice = INT_MAX, maxProfit = 0;', id: 1 },
             { line: '    for (int price : prices) {', id: 2 },
-            { line: '        if (price < minPrice) minPrice = price;', id: 3 },
-            { line: '        else if (price - minPrice > maxProfit)', id: 4 },
-            { line: '            maxProfit = price - minPrice;', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    return maxProfit;', id: 7 },
-            { line: '}', id: 8 },
+            { line: '        minPrice = min(minPrice, price);', id: 3 },
+            { line: '        maxProfit = max(maxProfit, price - minPrice);', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    return maxProfit;', id: 6 },
+            { line: '}', id: 7 },
         ];
         const prices = [7, 1, 5, 3, 6, 4];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            let minPrice = Infinity, maxProfit = 0;
-            steps.push({ idx: -1, minPrice: '∞', maxProfit: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: 'minPrice=∞, maxProfit=0' }});
+            let minPrice = Infinity, maxProfit = 0, buyIdx = 0;
+            steps.push({ current: -1, minPrice: '∞', maxProfit: 0, highlightLines: [0,1], explanation: { title: '初始化', text: `價格：[${prices.join(', ')}]<br><br>追蹤最低買入價和最大利潤` } });
             for (let i = 0; i < prices.length; i++) {
                 const p = prices[i];
-                if (p < minPrice) {
-                    minPrice = p;
-                    steps.push({ idx: i, minPrice, maxProfit, minIdx: i, highlightLines: [3], explanation: { title: `New Min = ${p}`, text: `更低的買點！` }});
-                } else {
-                    const profit = p - minPrice;
-                    if (profit > maxProfit) maxProfit = profit;
-                    steps.push({ idx: i, minPrice, maxProfit, highlightLines: [4, 5], explanation: { title: `Sell at ${p}`, text: `Profit = ${p} - ${minPrice} = ${profit}. Max = ${maxProfit}` }});
-                }
+                const profit = p - minPrice;
+                if (p < minPrice) { minPrice = p; buyIdx = i; }
+                if (profit > maxProfit) maxProfit = profit;
+                steps.push({
+                    current: i, buyIdx, minPrice, maxProfit,
+                    highlightLines: [2,3,4],
+                    explanation: { title: `Day ${i}: 價格 $${p}`, text: `minPrice = min(${i===0?'∞':minPrice}, ${p}) = ${Math.min(minPrice, p)}<br>profit = ${p} - ${minPrice} = ${p - minPrice}<br>maxProfit = max(${maxProfit - (profit > maxProfit ? profit - maxProfit : 0)}, ${p - minPrice}) = ${maxProfit}`, formula: `profit = ${p} - ${minPrice} = ${p - minPrice}` }
+                });
             }
-            steps.push({ idx: -1, minPrice, maxProfit, highlightLines: [7], explanation: { title: 'Done!', text: `最大利潤 = ${maxProfit}` }});
+            steps.push({ current: -1, buyIdx: 1, sellIdx: 4, minPrice, maxProfit, highlightLines: [6], explanation: { title: '完成！', text: `最佳策略：Day 1 買入 ($1)，Day 4 賣出 ($6)<br>最大利潤：$${maxProfit}<br><br>時間：O(n), 空間：O(1)` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), prices, prices.map((_, i) => i === step.idx ? 'current' : i === step.minIdx ? 'in-stack' : ''), { height: 200 });
-                    document.getElementById('minDisplay').textContent = step.minPrice;
-                    document.getElementById('profitDisplay').textContent = step.maxProfit;
+                    const maxP = Math.max(...prices);
+                    let html = '';
+                    for (let i = 0; i < prices.length; i++) {
+                        let cls = 'bar';
+                        if (i === step.current) cls += ' current';
+                        if (i === step.buyIdx) cls += ' buy';
+                        if (i === step.sellIdx) cls += ' sell';
+                        const h = (prices[i] / maxP) * 120;
+                        html += `<div class="${cls}"><div class="bar-fill" style="height:${h}px">${prices[i]}</div><div class="bar-label">D${i}</div></div>`;
+                    }
+                    document.getElementById('pricesDisplay').innerHTML = html;
+                    document.getElementById('minDisplay').textContent = step.minPrice === Infinity ? '∞' : `$${step.minPrice}`;
+                    document.getElementById('profitDisplay').textContent = `$${step.maxProfit}`;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

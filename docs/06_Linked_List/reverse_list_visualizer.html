@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Linked List 反轉鏈結串列 - 視覺化</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .list { display: flex; gap: 8px; justify-content: center; margin: 20px 0; align-items: center; flex-wrap: wrap; }
+        .node { display: flex; align-items: center; gap: 4px; }
+        .node-box { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .node-box.prev { background: var(--viz-success); color: #0f172a; }
+        .node-box.curr { background: var(--viz-secondary); color: #0f172a; }
+        .node-box.next { background: var(--viz-warning); color: #0f172a; }
+        .arrow { color: var(--text-muted); font-size: 1.2rem; }
+        .arrow.reversed { color: var(--viz-success); transform: scaleX(-1); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">反轉鏈結串列（ITERATIVE）</div>
+                <div class="list" id="listDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">prev</div><div class="state-value" id="prevDisplay" style="color: var(--viz-success);">null</div></div>
+                    <div class="state-item"><div class="state-label">curr</div><div class="state-value" id="currDisplay" style="color: var(--viz-secondary);">1</div></div>
+                    <div class="state-item"><div class="state-label">next</div><div class="state-value" id="nextDisplay" style="color: var(--viz-warning);">2</div></div>
+                </div>
+            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'ListNode* reverseList(ListNode* head) {', id: 0 },
+            { line: '    ListNode* prev = nullptr;', id: 1 },
+            { line: '    ListNode* curr = head;', id: 2 },
+            { line: '    while (curr) {', id: 3 },
+            { line: '        ListNode* next = curr->next;', id: 4 },
+            { line: '        curr->next = prev;  // 反轉指向', id: 5 },
+            { line: '        prev = curr;        // 移動 prev', id: 6 },
+            { line: '        curr = next;        // 移動 curr', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return prev;', id: 9 },
+            { line: '}', id: 10 },
+        ];
+        const nodes = [1, 2, 3, 4, 5];
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ nodes, prev: null, curr: 0, next: 1, reversed: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: '鏈表：1→2→3→4→5<br><br>prev = null<br>curr = head (1)' } });
+            for (let i = 0; i < nodes.length; i++) {
+                steps.push({ nodes, prev: i > 0 ? i-1 : null, curr: i, next: i < nodes.length-1 ? i+1 : null, reversed: [...Array(i).keys()], highlightLines: [3,4,5], explanation: { title: `反轉節點 ${nodes[i]}`, text: `next = curr->next = ${i < nodes.length-1 ? nodes[i+1] : 'null'}<br>curr->next = prev<br><br>節點 ${nodes[i]} 現在指向 ${i > 0 ? nodes[i-1] : 'null'}` } });
+                steps.push({ nodes, prev: i, curr: i < nodes.length-1 ? i+1 : null, next: i < nodes.length-2 ? i+2 : null, reversed: [...Array(i+1).keys()], highlightLines: [6,7], explanation: { title: '移動指標', text: `prev = curr = ${nodes[i]}<br>curr = next = ${i < nodes.length-1 ? nodes[i+1] : 'null'}` } });
+            }
+            steps.push({ nodes: nodes.slice().reverse(), prev: nodes.length-1, curr: null, next: null, reversed: [...Array(nodes.length).keys()], final: true, highlightLines: [9], explanation: { title: '🎉 反轉完成！', text: '鏈表：5→4→3→2→1<br><br>回傳 prev（新的 head）<br>時間：O(n), 空間：O(1)' } });
+            return steps;
+        }
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    let html = '';
+                    const displayNodes = step.final ? step.nodes : nodes;
+                    for (let i = 0; i < displayNodes.length; i++) {
+                        let cls = 'node-box';
+                        if (step.prev === i) cls += ' prev';
+                        if (step.curr === i) cls += ' curr';
+                        if (step.next === i) cls += ' next';
+                        html += `<div class="node"><div class="${cls}">${displayNodes[i]}</div>`;
+                        if (i < displayNodes.length - 1) html += `<span class="arrow${step.reversed?.includes(i) && !step.final ? ' reversed' : ''}">→</span>`;
+                        html += '</div>';
+                    }
+                    document.getElementById('listDisplay').innerHTML = html;
+                    document.getElementById('prevDisplay').textContent = step.prev !== null ? nodes[step.prev] : 'null';
+                    document.getElementById('currDisplay').textContent = step.curr !== null ? nodes[step.curr] : 'null';
+                    document.getElementById('nextDisplay').textContent = step.next !== null ? nodes[step.next] : 'null';
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

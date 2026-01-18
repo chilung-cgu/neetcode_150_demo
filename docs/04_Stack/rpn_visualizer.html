@@ -3,39 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evaluate Reverse Polish Notation Visualization</title>
+    <title>Evaluate Reverse Polish Notation - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .token-row { display: flex; justify-content: center; gap: 4px; margin: 10px 0; flex-wrap: wrap; }
-        .token { padding: 8px 12px; border-radius: 4px; font-family: monospace; background: rgba(255,255,255,0.1); }
+        .tokens { display: flex; gap: 6px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .token { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s; }
         .token.current { background: var(--viz-secondary); color: #0f172a; }
-        .stack-display { display: flex; flex-direction: column-reverse; align-items: center; gap: 2px; min-height: 100px; }
-        .stack-item { background: var(--viz-primary); color: white; padding: 8px 16px; border-radius: 4px; font-family: monospace; }
+        .token.processed { opacity: 0.4; }
+        .token.op { color: var(--viz-error); }
+        .stack { display: flex; flex-direction: column-reverse; gap: 4px; min-height: 120px; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; width: 100px; margin: 0 auto; align-items: center; }
+        .stack-item { width: 80px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; }
+        .calc-display { text-align: center; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 6px; font-size: 1.1rem; color: var(--viz-secondary); }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">REVERSE POLISH NOTATION</div>
-                <div class="token-row" id="tokenRow"></div>
-                <div class="viz-title" style="margin-top: 15px;">STACK</div>
-                <div class="stack-display" id="stackDisplay"></div>
+                <div class="viz-title">逆波蘭表示法計算（RPN）</div>
+                <div class="tokens" id="tokensDisplay"></div>
+                <div class="calc-display" id="calcDisplay">-</div>
+                <div style="text-align: center; color: var(--text-muted);">Stack</div>
+                <div class="stack" id="stackDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -44,47 +48,51 @@
     <script>
         const codeStructure = [
             { line: 'int evalRPN(vector<string>& tokens) {', id: 0 },
-            { line: '    stack<int> stk;', id: 1 },
+            { line: '    stack<int> st;', id: 1 },
             { line: '    for (string& t : tokens) {', id: 2 },
-            { line: '        if (isOperator(t)) {', id: 3 },
-            { line: '            int b = stk.top(); stk.pop();', id: 4 },
-            { line: '            int a = stk.top(); stk.pop();', id: 5 },
-            { line: '            stk.push(compute(a, b, t));', id: 6 },
-            { line: '        } else stk.push(stoi(t));', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '    return stk.top();', id: 9 },
-            { line: '}', id: 10 },
+            { line: '        if (t == "+" || t == "-" || t == "*" || t == "/") {', id: 3 },
+            { line: '            int b = st.top(); st.pop();', id: 4 },
+            { line: '            int a = st.top(); st.pop();', id: 5 },
+            { line: '            if (t == "+") st.push(a + b);', id: 6 },
+            { line: '            else if (t == "-") st.push(a - b);', id: 7 },
+            { line: '            else if (t == "*") st.push(a * b);', id: 8 },
+            { line: '            else st.push(a / b);', id: 9 },
+            { line: '        } else st.push(stoi(t));', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return st.top();', id: 12 },
+            { line: '}', id: 13 },
         ];
         const tokens = ["2", "1", "+", "3", "*"];
-        const ops = new Set(['+', '-', '*', '/']);
-
+        // (2 + 1) * 3 = 9
         function generateAlgorithmSteps() {
             const steps = [];
-            const stack = [];
-            steps.push({ idx: -1, stack: [], highlightLines: [0, 1], explanation: { title: 'Init', text: '表達式: 2 1 + 3 *' }});
-            for (let i = 0; i < tokens.length; i++) {
-                const t = tokens[i];
-                if (ops.has(t)) {
-                    const b = stack.pop(), a = stack.pop();
-                    const res = t === '+' ? a + b : t === '-' ? a - b : t === '*' ? a * b : Math.trunc(a / b);
-                    stack.push(res);
-                    steps.push({ idx: i, stack: [...stack], highlightLines: [4, 5, 6], explanation: { title: `${a} ${t} ${b} = ${res}`, text: 'Pop 2, compute, push result' }});
-                } else {
-                    stack.push(parseInt(t));
-                    steps.push({ idx: i, stack: [...stack], highlightLines: [7], explanation: { title: `Push ${t}`, text: 'Operand → push' }});
-                }
-            }
-            steps.push({ idx: -1, stack, highlightLines: [9], explanation: { title: `Result = ${stack[0]}`, text: 'Final value on stack' }});
+            steps.push({ current: -1, stack: [], processed: [], highlightLines: [0,1], explanation: { title: '初始化', text: `表達式：["2", "1", "+", "3", "*"]<br>等同於：(2 + 1) × 3 = 9<br><br>遇到數字 → Push<br>遇到運算子 → Pop 兩數計算後 Push` } });
+            steps.push({ current: 0, stack: [2], processed: [0], calc: 'Push 2', highlightLines: [2,10], explanation: { title: '處理 "2"', text: '數字 → Push 到 Stack' } });
+            steps.push({ current: 1, stack: [2, 1], processed: [0,1], calc: 'Push 1', highlightLines: [2,10], explanation: { title: '處理 "1"', text: '數字 → Push 到 Stack' } });
+            steps.push({ current: 2, stack: [3], processed: [0,1,2], calc: '2 + 1 = 3', highlightLines: [3,4,5,6], explanation: { title: '處理 "+"', text: 'Pop b=1, a=2<br>計算 a + b = 2 + 1 = 3<br>Push 結果 3', formula: '2 + 1 = 3' } });
+            steps.push({ current: 3, stack: [3, 3], processed: [0,1,2,3], calc: 'Push 3', highlightLines: [2,10], explanation: { title: '處理 "3"', text: '數字 → Push 到 Stack' } });
+            steps.push({ current: 4, stack: [9], processed: [0,1,2,3,4], calc: '3 × 3 = 9', highlightLines: [3,4,5,8], explanation: { title: '處理 "*"', text: 'Pop b=3, a=3<br>計算 a × b = 3 × 3 = 9<br>Push 結果 9', formula: '3 × 3 = 9' } });
+            steps.push({ current: -1, stack: [9], processed: [0,1,2,3,4], result: 9, highlightLines: [12], explanation: { title: '完成！', text: '結果 = 9<br><br>時間：O(n), 空間：O(n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('tokenRow').innerHTML = tokens.map((t, i) => `<div class="token ${i === step.idx ? 'current' : ''}">${t}</div>`).join('');
-                    document.getElementById('stackDisplay').innerHTML = step.stack.map(v => `<div class="stack-item">${v}</div>`).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    let html = '';
+                    const ops = ['+', '-', '*', '/'];
+                    for (let i = 0; i < tokens.length; i++) {
+                        let cls = 'token';
+                        if (i === step.current) cls += ' current';
+                        if (step.processed?.includes(i)) cls += ' processed';
+                        if (ops.includes(tokens[i])) cls += ' op';
+                        html += `<div class="${cls}">${tokens[i]}</div>`;
+                    }
+                    document.getElementById('tokensDisplay').innerHTML = html;
+                    document.getElementById('stackDisplay').innerHTML = (step.stack || []).map(v => `<div class="stack-item">${v}</div>`).join('');
+                    document.getElementById('calcDisplay').textContent = step.calc || '-';
+                    document.getElementById('resultDisplay').textContent = step.result ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

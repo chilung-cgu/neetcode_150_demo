@@ -3,36 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Design Twitter Visualization</title>
+    <title>Design Twitter 設計推特 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .tweets { display: flex; flex-direction: column; gap: 6px; margin: 15px 0; align-items: center; }
-        .tweet { padding: 8px 16px; border-radius: 8px; background: var(--viz-primary); color: white; font-family: monospace; display: flex; gap: 10px; }
-        .tweet .user { color: var(--viz-secondary); }
-        .feed { background: var(--viz-success); color: #0f172a; }
+        .twitter-ui { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .user-panel { background: var(--viz-bg-secondary); border-radius: 8px; padding: 12px; }
+        .user-panel h4 { color: var(--viz-secondary); margin: 0 0 8px 0; font-size: 0.9rem; }
+        .user-tweets { font-size: 0.8rem; color: var(--text-secondary); max-height: 80px; overflow-y: auto; }
+        .tweet { background: var(--viz-primary); color: white; padding: 4px 8px; border-radius: 4px; margin: 2px 0; display: inline-block; }
+        .tweet.new { background: var(--viz-success); color: #0f172a; animation: fadeIn 0.3s; }
+        .followers { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; }
+        .feed-panel { background: var(--viz-bg-secondary); border-radius: 8px; padding: 12px; grid-column: span 2; }
+        .feed-panel h4 { color: var(--viz-success); margin: 0 0 8px 0; }
+        .feed { display: flex; flex-wrap: wrap; gap: 6px; }
+        .feed-tweet { background: linear-gradient(135deg, var(--viz-primary), var(--viz-secondary)); color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.85rem; }
+        .heap-viz { background: var(--viz-bg-secondary); border-radius: 8px; padding: 12px; grid-column: span 2; margin-top: 10px; }
+        .heap-viz h4 { color: var(--viz-warning); margin: 0 0 8px 0; }
+        .heap-items { display: flex; gap: 8px; flex-wrap: wrap; }
+        .heap-item { background: var(--viz-warning); color: #0f172a; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">DESIGN TWITTER (HEAP + MERGE)</div>
-                <div class="tweets" id="tweetsDisplay"></div>
+                <div class="viz-title">設計推特（DESIGN TWITTER）</div>
+                <div class="twitter-ui" id="twitterUI"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item">
+                        <div class="state-label">操作</div>
+                        <div class="state-value" id="opDisplay" style="font-size: 0.9rem;">-</div>
+                    </div>
+                    <div class="state-item">
+                        <div class="state-label">Heap 大小</div>
+                        <div class="state-value" id="heapSizeDisplay">0</div>
+                    </div>
                 </div>
             </div>
             <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
+                <div class="viz-title">演算法說明</div>
                 <div class="explanation" id="explanation"></div>
             </div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">HEAP MERGE K LISTS</div>
+                <div class="viz-title">資料結構設計 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -41,27 +63,126 @@
     <script>
         const codeStructure = [
             { line: 'class Twitter {', id: 0 },
-            { line: '    map<int, set<int>> followers;', id: 1 },
-            { line: '    map<int, vector<pair<int,int>>> tweets;', id: 2 },
-            { line: '    int timestamp = 0;', id: 3 },
-            { line: '    void postTweet(userId, tweetId) {', id: 4 },
-            { line: '        tweets[userId].push_back({timestamp++, tweetId});', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    vector<int> getNewsFeed(userId) {', id: 7 },
-            { line: '        // Merge k sorted lists using heap', id: 8 },
-            { line: '        // Return 10 most recent tweets', id: 9 },
-            { line: '    }', id: 10 },
-            { line: '};', id: 11 },
+            { line: '    unordered_map<int, vector<pair<int, int>>> tweets;', id: 1 },
+            { line: '    unordered_map<int, unordered_set<int>> follows;', id: 2 },
+            { line: '    int time = 0;', id: 3 },
+            { line: '', id: 4 },
+            { line: '    void postTweet(int userId, int tweetId) {', id: 5 },
+            { line: '        tweets[userId].push_back({time++, tweetId});', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '', id: 8 },
+            { line: '    void follow(int followerId, int followeeId) {', id: 9 },
+            { line: '        follows[followerId].insert(followeeId);', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '', id: 12 },
+            { line: '    vector<int> getNewsFeed(int userId) {', id: 13 },
+            { line: '        // 使用 Max Heap 合併 K 個推文列表', id: 14 },
+            { line: '        priority_queue<tuple<int,int,int,int>> pq;', id: 15 },
+            { line: '        // 合併自己與關注者的推文', id: 16 },
+            { line: '        // 每次取時間最新的，最多取 10 則', id: 17 },
+            { line: '    }', id: 18 },
+            { line: '};', id: 19 },
         ];
-
+        
         function generateAlgorithmSteps() {
             const steps = [];
+            let users = {}; // userId -> { tweets: [], following: Set }
+            let timestamp = 0;
             
-            steps.push({ tweets: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 'Empty Twitter' }});
-            steps.push({ tweets: [{user: 1, id: 5}], highlightLines: [4, 5], explanation: { title: 'postTweet(1, 5)', text: 'User 1 posts tweet 5' }});
-            steps.push({ tweets: [{user: 1, id: 5}], action: 'follow', highlightLines: [1], explanation: { title: 'follow(1, 2)', text: 'User 1 follows User 2' }});
-            steps.push({ tweets: [{user: 1, id: 5}, {user: 2, id: 6}], highlightLines: [4, 5], explanation: { title: 'postTweet(2, 6)', text: 'User 2 posts tweet 6' }});
-            steps.push({ tweets: [{user: 1, id: 5}, {user: 2, id: 6}], feed: [6, 5], highlightLines: [7, 8, 9], explanation: { title: 'getNewsFeed(1)', text: 'Returns [6, 5] (most recent)' }});
+            // 初始化
+            steps.push({
+                users: {},
+                feed: [],
+                heap: [],
+                op: '初始化',
+                highlightLines: [0, 1, 2, 3],
+                explanation: { 
+                    title: '資料結構設計', 
+                    text: '使用三個核心資料結構：<br><br>1. <strong>tweets</strong>：userId → [(time, tweetId)]<br>2. <strong>follows</strong>：userId → Set of followeeIds<br>3. <strong>time</strong>：全域時間戳記<br><br>這設計支援 O(1) 的發文和追蹤操作。' 
+                }
+            });
+            
+            // 操作序列
+            const operations = [
+                { type: 'post', user: 1, tweet: 101 },
+                { type: 'post', user: 2, tweet: 201 },
+                { type: 'follow', follower: 1, followee: 2 },
+                { type: 'post', user: 2, tweet: 202 },
+                { type: 'feed', user: 1 },
+            ];
+            
+            for (const op of operations) {
+                if (op.type === 'post') {
+                    if (!users[op.user]) users[op.user] = { tweets: [], following: new Set() };
+                    users[op.user].tweets.push({ time: timestamp++, id: op.tweet });
+                    
+                    steps.push({
+                        users: JSON.parse(JSON.stringify(users, (k, v) => v instanceof Set ? [...v] : v)),
+                        feed: [],
+                        heap: [],
+                        op: `postTweet(${op.user}, ${op.tweet})`,
+                        newTweet: { user: op.user, tweet: op.tweet },
+                        highlightLines: [5, 6, 7],
+                        explanation: { 
+                            title: `用戶 ${op.user} 發推文`, 
+                            text: `推文 ID: ${op.tweet}<br>時間戳記: ${timestamp - 1}<br><br>將 (time, tweetId) 追加到該用戶的推文列表。`,
+                            formula: `tweets[${op.user}].push({${timestamp - 1}, ${op.tweet}})`
+                        }
+                    });
+                } else if (op.type === 'follow') {
+                    if (!users[op.follower]) users[op.follower] = { tweets: [], following: new Set() };
+                    if (!users[op.followee]) users[op.followee] = { tweets: [], following: new Set() };
+                    users[op.follower].following.add(op.followee);
+                    
+                    steps.push({
+                        users: JSON.parse(JSON.stringify(users, (k, v) => v instanceof Set ? [...v] : v)),
+                        feed: [],
+                        heap: [],
+                        op: `follow(${op.follower}, ${op.followee})`,
+                        highlightLines: [9, 10, 11],
+                        explanation: { 
+                            title: `用戶 ${op.follower} 追蹤用戶 ${op.followee}`, 
+                            text: `現在用戶 ${op.follower} 的動態牆將顯示用戶 ${op.followee} 的推文。`,
+                            formula: `follows[${op.follower}].insert(${op.followee})`
+                        }
+                    });
+                } else if (op.type === 'feed') {
+                    // 收集所有相關推文
+                    const allTweets = [];
+                    const user = users[op.user] || { tweets: [], following: new Set() };
+                    
+                    // 自己的推文
+                    for (const t of user.tweets) {
+                        allTweets.push({ ...t, from: op.user });
+                    }
+                    // 追蹤者的推文
+                    for (const followeeId of (user.following || [])) {
+                        const followee = users[followeeId];
+                        if (followee) {
+                            for (const t of followee.tweets) {
+                                allTweets.push({ ...t, from: followeeId });
+                            }
+                        }
+                    }
+                    
+                    // 按時間排序（新的在前）
+                    allTweets.sort((a, b) => b.time - a.time);
+                    const feed = allTweets.slice(0, 10);
+                    
+                    steps.push({
+                        users: JSON.parse(JSON.stringify(users, (k, v) => v instanceof Set ? [...v] : v)),
+                        feed: feed.map(t => `${t.id}(User${t.from})`),
+                        heap: allTweets.map(t => `t=${t.time},id=${t.id}`),
+                        op: `getNewsFeed(${op.user})`,
+                        highlightLines: [13, 14, 15, 16, 17],
+                        explanation: { 
+                            title: `取得用戶 ${op.user} 的動態牆`, 
+                            text: `使用 <strong>Max Heap</strong> 合併多個推文來源：<br><br>1. 用戶 ${op.user} 自己的推文<br>2. 追蹤對象的推文<br><br>Heap 按時間戳記排序，每次取最新的推文，最多回傳 10 則。<br><br>結果：[${feed.map(t => t.id).join(', ')}]`,
+                            formula: `K = 關注者數量 + 1，時間複雜度 O(10 log K)`
+                        }
+                    });
+                }
+            }
             
             return steps;
         }
@@ -72,20 +193,43 @@
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
-                    (step.tweets || []).forEach(t => {
-                        html += `<div class="tweet"><span class="user">@user${t.user}</span>Tweet #${t.id}</div>`;
-                    });
-                    if (step.feed) {
-                        html += `<div style="margin-top: 10px; color: var(--viz-text-muted);">Feed:</div>`;
-                        step.feed.forEach(id => {
-                            html += `<div class="tweet feed">Tweet #${id}</div>`;
-                        });
+                    
+                    // 用戶面板
+                    const userIds = Object.keys(step.users || {});
+                    for (const uid of userIds) {
+                        const u = step.users[uid];
+                        const isNew = step.newTweet?.user == uid;
+                        html += `<div class="user-panel">
+                            <h4>👤 用戶 ${uid}</h4>
+                            <div class="user-tweets">${(u.tweets || []).map(t => 
+                                `<span class="tweet${isNew && t.id === step.newTweet?.tweet ? ' new' : ''}">#${t.id}</span>`
+                            ).join(' ')}</div>
+                            <div class="followers">追蹤：${(u.following || []).length > 0 ? u.following.join(', ') : '無'}</div>
+                        </div>`;
                     }
-                    document.getElementById('tweetsDisplay').innerHTML = html || '<em style="color:var(--viz-text-muted)">No tweets yet</em>';
+                    
+                    // Feed 面板
+                    if (step.feed?.length > 0) {
+                        html += `<div class="feed-panel"><h4>📰 動態牆</h4><div class="feed">${
+                            step.feed.map(t => `<span class="feed-tweet">${t}</span>`).join('')
+                        }</div></div>`;
+                    }
+                    
+                    // Heap 視覺化
+                    if (step.heap?.length > 0) {
+                        html += `<div class="heap-viz"><h4>🔺 Max Heap（按時間排序）</h4><div class="heap-items">${
+                            step.heap.map(h => `<span class="heap-item">${h}</span>`).join('')
+                        }</div></div>`;
+                    }
+                    
+                    document.getElementById('twitterUI').innerHTML = html || '<div style="text-align:center;color:var(--text-muted);">準備開始...</div>';
+                    document.getElementById('opDisplay').textContent = step.op || '-';
+                    document.getElementById('heapSizeDisplay').textContent = step.heap?.length || 0;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

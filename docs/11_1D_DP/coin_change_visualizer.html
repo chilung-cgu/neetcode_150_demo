@@ -3,34 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coin Change Visualization</title>
+    <title>Coin Change 零錢兌換 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .coins { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
+        .coin { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; background: var(--viz-warning); color: #0f172a; transition: all 0.3s; }
+        .coin.used { background: var(--viz-success); transform: scale(1.1); }
+        .dp-table { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin: 15px 0; }
+        .dp-cell { width: 40px; height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 4px; background: var(--viz-bg-secondary); font-size: 0.75rem; transition: all 0.3s; }
+        .dp-cell .idx { color: var(--text-muted); font-size: 0.6rem; }
+        .dp-cell .val { font-weight: bold; color: var(--text-primary); }
+        .dp-cell.current { background: var(--viz-secondary); }
+        .dp-cell.updated { background: var(--viz-success); }
+    </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">COIN CHANGE (amount=11)</div>
-                <div class="chart-container" id="chartContainer"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">零錢兌換（COIN CHANGE）</div>
+                <div class="coins" id="coinsDisplay"></div>
+                <div class="dp-table" id="dpTable"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Coins</div><div class="state-value" id="coinsDisplay">[1, 2, 5]</div></div>
-                    <div class="state-item"><div class="state-label">Min Coins</div><div class="state-value" id="minDisplay" style="color: var(--viz-success);">-</div></div>
+                    <div class="state-item"><div class="state-label">目標金額</div><div class="state-value" id="targetDisplay">11</div></div>
+                    <div class="state-item"><div class="state-label">最少硬幣</div><div class="state-value" id="answerDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">DP (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -38,48 +47,56 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int coinChange(coins, amount) {', id: 0 },
-            { line: '    vector<int> dp(amount + 1, INT_MAX);', id: 1 },
+            { line: 'int coinChange(vector<int>& coins, int amount) {', id: 0 },
+            { line: '    vector<int> dp(amount + 1, amount + 1);', id: 1 },
             { line: '    dp[0] = 0;', id: 2 },
             { line: '    for (int i = 1; i <= amount; i++) {', id: 3 },
-            { line: '        for (int c : coins) {', id: 4 },
-            { line: '            if (c <= i && dp[i-c] != INT_MAX)', id: 5 },
-            { line: '                dp[i] = min(dp[i], dp[i-c] + 1);', id: 6 },
+            { line: '        for (int coin : coins) {', id: 4 },
+            { line: '            if (coin <= i)', id: 5 },
+            { line: '                dp[i] = min(dp[i], dp[i-coin] + 1);', id: 6 },
             { line: '        }', id: 7 },
             { line: '    }', id: 8 },
-            { line: '    return dp[amount] == INT_MAX ? -1 : dp[amount];', id: 9 },
+            { line: '    return dp[amount] > amount ? -1 : dp[amount];', id: 9 },
             { line: '}', id: 10 },
         ];
-        const coins = [1, 2, 5], amount = 11;
-
+        const coins = [1, 2, 5];
+        const amount = 11;
         function generateAlgorithmSteps() {
             const steps = [];
-            const dp = Array(amount + 1).fill(Infinity);
+            const dp = Array(amount + 1).fill(amount + 1);
             dp[0] = 0;
-            steps.push({ dp: dp.map(v => v === Infinity ? '∞' : v), i: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'dp[0]=0, rest=∞' }});
+            steps.push({ dp: [...dp], coins, current: null, highlightLines: [0,1,2], explanation: { title: '初始化', text: `硬幣：[${coins.join(', ')}]<br>目標：${amount}<br><br>dp[0]=0，其他設為 ∞` } });
             for (let i = 1; i <= amount; i++) {
-                for (const c of coins) {
-                    if (c <= i && dp[i - c] !== Infinity) {
-                        dp[i] = Math.min(dp[i], dp[i - c] + 1);
+                for (const coin of coins) {
+                    if (coin <= i && dp[i - coin] + 1 < dp[i]) {
+                        const old = dp[i];
+                        dp[i] = dp[i - coin] + 1;
+                        steps.push({ dp: [...dp], coins, current: i, usedCoin: coin, highlightLines: [4,5,6], explanation: { title: `dp[${i}] 使用硬幣 ${coin}`, text: `dp[${i}] = min(${old === amount+1 ? '∞' : old}, dp[${i-coin}]+1)<br>= min(${old === amount+1 ? '∞' : old}, ${dp[i-coin]}+1) = ${dp[i]}`, formula: `dp[${i}] = dp[${i-coin}] + 1 = ${dp[i]}` } });
                     }
                 }
-                if (i % 3 === 0 || i === amount) {
-                    steps.push({ dp: dp.map(v => v === Infinity ? '∞' : v), i, highlightLines: [4, 5, 6], explanation: { title: `dp[${i}] = ${dp[i] === Infinity ? '∞' : dp[i]}`, text: '' }});
-                }
             }
-            steps.push({ dp: dp.map(v => v === Infinity ? '∞' : v), i: amount, highlightLines: [9], explanation: { title: 'Done!', text: `Min ${dp[amount]} coins for ${amount}` }});
+            steps.push({ dp: [...dp], coins, current: null, answer: dp[amount], highlightLines: [9], explanation: { title: '完成！', text: `湊出 ${amount} 最少需要 ${dp[amount]} 枚硬幣<br><br>組合：5+5+1 = 11` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const vals = step.dp.map(v => v === '∞' ? 0 : v);
-                    const states = vals.map((_, i) => i === step.i ? 'current' : '');
-                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), vals, states, { height: 180 });
-                    document.getElementById('minDisplay').textContent = step.dp[amount];
+                    document.getElementById('coinsDisplay').innerHTML = coins.map(c => {
+                        let cls = 'coin';
+                        if (step.usedCoin === c) cls += ' used';
+                        return `<div class="${cls}">$${c}</div>`;
+                    }).join('');
+                    let dpHtml = '';
+                    for (let i = 0; i <= Math.min(amount, 11); i++) {
+                        let cls = 'dp-cell';
+                        if (step.current === i) cls += ' current';
+                        const val = step.dp?.[i] ?? 0;
+                        dpHtml += `<div class="${cls}"><div class="idx">${i}</div><div class="val">${val > amount ? '∞' : val}</div></div>`;
+                    }
+                    document.getElementById('dpTable').innerHTML = dpHtml;
+                    document.getElementById('answerDisplay').textContent = step.answer ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

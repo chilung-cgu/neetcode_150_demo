@@ -3,35 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rotate Image Visualization</title>
+    <title>Rotate Image 旋轉圖像 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .matrix { display: grid; gap: 2px; max-width: 200px; margin: 0 auto; }
-        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; }
-        .cell.swapped { background: var(--viz-success); color: #0f172a; }
+        .matrix { display: inline-grid; gap: 4px; margin: 15px auto; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .cell { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .cell.highlight { background: var(--viz-secondary); color: #0f172a; }
+        .cell.swapping { background: var(--viz-warning); color: #0f172a; animation: pulse 0.5s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">ROTATE IMAGE 90° CLOCKWISE</div>
-                <div class="matrix" id="matrixDisplay" style="grid-template-columns: repeat(4, 40px);"></div>
+                <div class="viz-title">旋轉圖像（原地旋轉 90°）</div>
+                <div style="text-align: center;"><div class="matrix" id="matrixDisplay"></div></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -39,48 +38,45 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'void rotate(matrix) {', id: 0 },
-            { line: '    // Step 1: Transpose', id: 1 },
-            { line: '    for (i = 0; i < n; i++)', id: 2 },
-            { line: '        for (j = i; j < n; j++)', id: 3 },
-            { line: '            swap(matrix[i][j], matrix[j][i]);', id: 4 },
-            { line: '    // Step 2: Reverse each row', id: 5 },
-            { line: '    for (auto& row : matrix)', id: 6 },
-            { line: '        reverse(row.begin(), row.end());', id: 7 },
-            { line: '}', id: 8 },
+            { line: 'void rotate(vector<vector<int>>& matrix) {', id: 0 },
+            { line: '    int n = matrix.size();', id: 1 },
+            { line: '    // 1. 轉置矩陣', id: 2 },
+            { line: '    for (int i = 0; i < n; i++)', id: 3 },
+            { line: '        for (int j = i + 1; j < n; j++)', id: 4 },
+            { line: '            swap(matrix[i][j], matrix[j][i]);', id: 5 },
+            { line: '    // 2. 水平翻轉每一行', id: 6 },
+            { line: '    for (int i = 0; i < n; i++)', id: 7 },
+            { line: '        reverse(matrix[i].begin(), matrix[i].end());', id: 8 },
+            { line: '}', id: 9 },
         ];
-        const original = [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]];
-        const n = 4;
-
         function generateAlgorithmSteps() {
             const steps = [];
-            let matrix = original.map(r => [...r]);
-            steps.push({ matrix: matrix.map(r => [...r]), highlightLines: [0], explanation: { title: 'Original', text: '4x4 matrix' }});
-            
-            // Transpose
-            for (let i = 0; i < n; i++) {
-                for (let j = i + 1; j < n; j++) {
-                    [matrix[i][j], matrix[j][i]] = [matrix[j][i], matrix[i][j]];
-                }
-            }
-            steps.push({ matrix: matrix.map(r => [...r]), highlightLines: [1, 2, 3, 4], explanation: { title: 'Step 1: Transpose', text: 'Swap [i][j] ↔ [j][i]' }});
-            
-            // Reverse rows
-            for (let i = 0; i < n; i++) {
-                matrix[i].reverse();
-            }
-            steps.push({ matrix: matrix.map(r => [...r]), highlightLines: [5, 6, 7], explanation: { title: 'Step 2: Reverse rows', text: 'Each row reversed' }});
-            
-            steps.push({ matrix: matrix.map(r => [...r]), highlightLines: [8], explanation: { title: 'Done!', text: 'Rotated 90° clockwise' }});
+            let m = [[1,2,3],[4,5,6],[7,8,9]];
+            steps.push({ matrix: m.map(r=>[...r]), highlightLines: [0,1], explanation: { title: '初始化', text: '原始矩陣 3×3<br><br>順時針旋轉 90° = 轉置 + 水平翻轉' } });
+            // 轉置
+            steps.push({ matrix: [[1,4,7],[2,5,8],[3,6,9]], swap: [[0,1],[1,0]], highlightLines: [2,3,4,5], explanation: { title: '步驟一：轉置', text: '交換 matrix[i][j] 和 matrix[j][i]<br><br>對角線為軸翻轉' } });
+            // 水平翻轉
+            steps.push({ matrix: [[7,4,1],[8,5,2],[9,6,3]], highlightLines: [6,7,8], explanation: { title: '步驟二：水平翻轉', text: '每一行做 reverse<br><br>完成順時針旋轉 90°！' } });
+            steps.push({ matrix: [[7,4,1],[8,5,2],[9,6,3]], final: true, highlightLines: [9], explanation: { title: '🎉 旋轉完成！', text: '原地旋轉，空間 O(1)<br>時間 O(n²)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('matrixDisplay').innerHTML = step.matrix.flat().map(v => `<div class="cell">${v}</div>`).join('');
+                    const m = step.matrix || [[1,2,3],[4,5,6],[7,8,9]];
+                    const grid = document.getElementById('matrixDisplay');
+                    grid.style.gridTemplateColumns = `repeat(${m[0].length}, 45px)`;
+                    let html = '';
+                    for (let i = 0; i < m.length; i++) {
+                        for (let j = 0; j < m[i].length; j++) {
+                            let cls = 'cell';
+                            if (step.swap?.some(s => (s[0]===i && s[1]===j))) cls += ' swapping';
+                            html += `<div class="${cls}">${m[i][j]}</div>`;
+                        }
+                    }
+                    grid.innerHTML = html;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

@@ -3,45 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Longest Substring Without Repeating Characters Visualization</title>
+    <title>Longest Substring Without Repeating - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .char-row { display: flex; justify-content: center; gap: 2px; margin: 10px 0; flex-wrap: wrap; }
-        .char-box { padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 1rem; background: rgba(255,255,255,0.1); }
-        .char-box.in-window { background: var(--viz-primary); color: white; }
-        .char-box.current { border: 2px solid var(--viz-secondary); }
-        .char-box.duplicate { background: var(--viz-error); }
-        .set-display { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; font-family: monospace; }
-        .set-char { background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; }
+        .string { display: flex; gap: 4px; justify-content: center; margin: 20px 0; }
+        .char { width: 40px; height: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s; }
+        .char .c { font-weight: bold; font-size: 1.2rem; }
+        .char .idx { font-size: 0.6rem; color: var(--text-muted); }
+        .char.window { background: var(--viz-success); color: #0f172a; }
+        .char.left { border-left: 3px solid var(--viz-warning); }
+        .char.right { border-right: 3px solid var(--viz-secondary); }
+        .char.duplicate { background: var(--viz-error); color: white; }
+        .hashset { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; min-height: 35px; }
+        .set-item { background: var(--viz-primary); color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SLIDING WINDOW</div>
-                <div class="char-row" id="charRow"></div>
-                <div class="viz-title" style="margin-top: 15px;">WINDOW SET</div>
-                <div class="set-display" id="setDisplay"></div>
+                <div class="viz-title">最長無重複子字串（SLIDING WINDOW）</div>
+                <div class="string" id="stringDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">HashSet（窗口內字元）</div>
+                <div class="hashset" id="hashsetDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Window [L, R]</div><div class="state-value" id="windowDisplay">[0, 0]</div></div>
-                    <div class="state-item"><div class="state-label">Max Length</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">0</div></div>
+                    <div class="state-item"><div class="state-label">L / R</div><div class="state-value" id="ptrDisplay">0 / 0</div></div>
+                    <div class="state-item"><div class="state-label">窗口大小</div><div class="state-value" id="sizeDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">最大長度</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM (C++)</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -50,55 +51,60 @@
     <script>
         const codeStructure = [
             { line: 'int lengthOfLongestSubstring(string s) {', id: 0 },
-            { line: '    unordered_set<char> charSet;', id: 1 },
-            { line: '    int left = 0, maxLen = 0;', id: 2 },
-            { line: '    for (int right = 0; right < s.length(); right++) {', id: 3 },
-            { line: '        while (charSet.find(s[right]) != charSet.end()) {', id: 4 },
-            { line: '            charSet.erase(s[left]); left++;', id: 5 },
-            { line: '        }', id: 6 },
-            { line: '        charSet.insert(s[right]);', id: 7 },
-            { line: '        maxLen = max(maxLen, right - left + 1);', id: 8 },
-            { line: '    }', id: 9 },
-            { line: '    return maxLen;', id: 10 },
-            { line: '}', id: 11 },
+            { line: '    unordered_set<char> chars;', id: 1 },
+            { line: '    int l = 0, maxLen = 0;', id: 2 },
+            { line: '    for (int r = 0; r < s.size(); r++) {', id: 3 },
+            { line: '        while (chars.count(s[r])) {', id: 4 },
+            { line: '            chars.erase(s[l]);', id: 5 },
+            { line: '            l++;', id: 6 },
+            { line: '        }', id: 7 },
+            { line: '        chars.insert(s[r]);', id: 8 },
+            { line: '        maxLen = max(maxLen, r - l + 1);', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    return maxLen;', id: 11 },
+            { line: '}', id: 12 },
         ];
         const str = "abcabcbb";
-
         function generateAlgorithmSteps() {
             const steps = [];
-            const charSet = new Set();
-            let left = 0, maxLen = 0;
-            steps.push({ left, right: -1, charSet: new Set(), maxLen: 0, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Empty set, left=0' }});
-            for (let right = 0; right < str.length; right++) {
-                const c = str[right];
-                while (charSet.has(c)) {
-                    steps.push({ left, right, charSet: new Set(charSet), maxLen, shrinking: true, duplicate: c, highlightLines: [4, 5], explanation: { title: `Duplicate '${c}'`, text: `Shrink: remove '${str[left]}'` }});
-                    charSet.delete(str[left]);
-                    left++;
+            steps.push({ l: 0, r: -1, set: [], maxLen: 0, highlightLines: [0,1,2], explanation: { title: '初始化', text: `字串："${str}"<br><br>滑動窗口 + HashSet<br>遇到重複就收縮左邊界` } });
+            let l = 0, maxLen = 0;
+            const set = new Set();
+            for (let r = 0; r < str.length; r++) {
+                const c = str[r];
+                if (set.has(c)) {
+                    steps.push({ l, r, set: [...set], dup: c, highlightLines: [4,5,6], explanation: { title: `發現重複：${c}`, text: `'${c}' 已在窗口中<br>收縮左邊界直到移除重複` } });
+                    while (set.has(c)) {
+                        set.delete(str[l]);
+                        l++;
+                    }
                 }
-                charSet.add(c);
-                maxLen = Math.max(maxLen, right - left + 1);
-                steps.push({ left, right, charSet: new Set(charSet), maxLen, highlightLines: [7, 8], explanation: { title: `Add '${c}'`, text: `Window [${left}, ${right}], len=${right - left + 1}` }});
+                set.add(c);
+                maxLen = Math.max(maxLen, r - l + 1);
+                steps.push({ l, r, set: [...set], maxLen, highlightLines: [3,8,9], explanation: { title: `加入 '${c}'`, text: `窗口：[${l}, ${r}] = "${str.slice(l, r+1)}"<br>長度：${r - l + 1}<br>maxLen = ${maxLen}`, formula: `maxLen = max(${maxLen}, ${r}-${l}+1) = ${maxLen}` } });
             }
-            steps.push({ left, right: str.length - 1, charSet, maxLen, highlightLines: [10], explanation: { title: 'Done!', text: `Max = ${maxLen}` }});
+            steps.push({ l, r: str.length - 1, set: [...set], maxLen, final: true, highlightLines: [11], explanation: { title: '完成！', text: `最長無重複子字串長度：${maxLen}<br>例如："abc"<br><br>時間：O(n)` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('charRow').innerHTML = [...str].map((c, i) => {
-                        let cls = 'char-box';
-                        if (i >= step.left && i <= step.right) cls += ' in-window';
-                        if (i === step.right) cls += ' current';
-                        if (step.duplicate && c === step.duplicate && i === step.right) cls += ' duplicate';
-                        return `<div class="${cls}">${c}</div>`;
-                    }).join('');
-                    document.getElementById('setDisplay').innerHTML = [...step.charSet].map(c => `<span class="set-char">${c}</span>`).join('') || '-';
-                    document.getElementById('windowDisplay').textContent = `[${step.left}, ${step.right}]`;
-                    document.getElementById('maxDisplay').textContent = step.maxLen;
+                    let html = '';
+                    for (let i = 0; i < str.length; i++) {
+                        let cls = 'char';
+                        if (i >= step.l && i <= step.r) cls += ' window';
+                        if (i === step.l) cls += ' left';
+                        if (i === step.r) cls += ' right';
+                        if (str[i] === step.dup && i === step.r) cls += ' duplicate';
+                        html += `<div class="${cls}"><div class="c">${str[i]}</div><div class="idx">${i}</div></div>`;
+                    }
+                    document.getElementById('stringDisplay').innerHTML = html;
+                    document.getElementById('hashsetDisplay').innerHTML = (step.set || []).map(c => `<span class="set-item">${c}</span>`).join('') || '空';
+                    document.getElementById('ptrDisplay').textContent = `${step.l} / ${step.r >= 0 ? step.r : '-'}`;
+                    document.getElementById('sizeDisplay').textContent = step.r >= step.l ? step.r - step.l + 1 : 0;
+                    document.getElementById('maxDisplay').textContent = step.maxLen ?? 0;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

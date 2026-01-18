@@ -3,42 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contains Duplicate Visualization</title>
+    <title>Contains Duplicate 包含重複 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .array { display: flex; gap: 6px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .element { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .element.current { background: var(--viz-secondary); color: #0f172a; }
+        .element.duplicate { background: var(--viz-error); color: white; animation: shake 0.3s; }
+        .element.seen { opacity: 0.5; }
+        @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .hashset { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; min-height: 40px; }
+        .set-item { background: var(--viz-success); color: #0f172a; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
+    </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">ARRAY TRAVERSAL</div>
-                <div class="chart-container" id="chartContainer"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">
-                        Step <span id="currentStep">0</span> / <span id="totalSteps">0</span>
-                    </div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">包含重複（HASH SET）</div>
+                <div class="array" id="arrayDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted); margin: 5px 0;">HashSet（已見過的數字）</div>
+                <div class="hashset" id="hashsetDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item">
-                        <div class="state-label">HashSet (Seen)</div>
-                        <div class="state-value" id="hashSetDisplay" style="color: var(--viz-success); font-size: 1rem;">{ }</div>
-                    </div>
-                    <div class="state-item">
-                        <div class="state-label">Result</div>
-                        <div class="state-value" id="resultDisplay">-</div>
-                    </div>
+                    <div class="state-item"><div class="state-label">Set 大小</div><div class="state-value" id="sizeDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM (C++)</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -49,89 +50,44 @@
             { line: 'bool containsDuplicate(vector<int>& nums) {', id: 0 },
             { line: '    unordered_set<int> seen;', id: 1 },
             { line: '    for (int num : nums) {', id: 2 },
-            { line: '        if (seen.find(num) != seen.end()) {', id: 3 },
-            { line: '            return true; // Found duplicate', id: 4 },
-            { line: '        }', id: 5 },
-            { line: '        seen.insert(num);', id: 6 },
-            { line: '    }', id: 7 },
-            { line: '    return false;', id: 8 },
-            { line: '}', id: 9 },
+            { line: '        if (seen.count(num))', id: 3 },
+            { line: '            return true;', id: 4 },
+            { line: '        seen.insert(num);', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return false;', id: 7 },
+            { line: '}', id: 8 },
         ];
-
-        function generateAlgorithmSteps(nums) {
+        const nums = [1, 2, 3, 1];
+        function generateAlgorithmSteps() {
             const steps = [];
-            const seen = new Set();
-            
-            steps.push({
-                currentIdx: -1, seen: new Set(), result: null,
-                highlightLines: [0, 1],
-                explanation: { title: 'Initialization', text: '初始化空的 HashSet，用於記錄已經看過的數字。' }
-            });
-
-            for (let i = 0; i < nums.length; i++) {
-                const num = nums[i];
-                
-                steps.push({
-                    currentIdx: i, seen: new Set(seen), result: null,
-                    highlightLines: [2, 3],
-                    explanation: { title: `Check nums[${i}] = ${num}`, text: `檢查 ${num} 是否已存在於 HashSet 中？` }
-                });
-
-                if (seen.has(num)) {
-                    steps.push({
-                        currentIdx: i, seen: new Set(seen), result: true, foundDuplicate: num,
-                        highlightLines: [4],
-                        explanation: { title: '🎯 Found Duplicate!', text: `${num} 已經在 HashSet 中！回傳 true。` }
-                    });
-                    return steps;
-                }
-
-                seen.add(num);
-                steps.push({
-                    currentIdx: i, seen: new Set(seen), result: null,
-                    highlightLines: [6],
-                    explanation: { title: `Insert ${num}`, text: `${num} 不在 HashSet 中，將其加入。HashSet = {${[...seen].join(', ')}}` }
-                });
-            }
-
-            steps.push({
-                currentIdx: -1, seen: new Set(seen), result: false,
-                highlightLines: [8],
-                explanation: { title: 'No Duplicate Found', text: '遍歷完成，沒有發現重複元素。回傳 false。' }
-            });
-
+            steps.push({ current: -1, set: [], seen: [], highlightLines: [0,1], explanation: { title: '初始化', text: `陣列：[${nums.join(', ')}]<br><br>使用 HashSet 記錄已見過的數字<br>遇到重複就回傳 true` } });
+            steps.push({ current: 0, set: [1], seen: [0], highlightLines: [2,3,5], explanation: { title: '處理 1', text: 'HashSet 中沒有 1<br>加入 Set' } });
+            steps.push({ current: 1, set: [1,2], seen: [0,1], highlightLines: [2,3,5], explanation: { title: '處理 2', text: 'HashSet 中沒有 2<br>加入 Set' } });
+            steps.push({ current: 2, set: [1,2,3], seen: [0,1,2], highlightLines: [2,3,5], explanation: { title: '處理 3', text: 'HashSet 中沒有 3<br>加入 Set' } });
+            steps.push({ current: 3, set: [1,2,3], seen: [0,1,2], duplicate: 3, highlightLines: [3,4], explanation: { title: '🚨 發現重複！', text: '1 已經在 HashSet 中！<br><br>回傳 true', formula: 'seen.count(1) == true → return true' } });
             return steps;
         }
-
         let viz;
-        const inputData = [1, 2, 3, 1]; // Example with duplicate
-
-        function renderArray(container, nums, currentIdx, foundDuplicate) {
-            container.innerHTML = '';
-            nums.forEach((n, i) => {
-                const div = document.createElement('div');
-                div.className = 'bar';
-                div.style.width = `${100 / nums.length}%`;
-                let stateClass = '';
-                if (i === currentIdx) stateClass = foundDuplicate === n ? 'calculating' : 'current';
-                div.innerHTML = `<div class="bar-fill ${stateClass}" style="height: 80px;">${n}</div><div class="bar-index">${i}</div>`;
-                container.appendChild(div);
-            });
-        }
-
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    renderArray(document.getElementById('chartContainer'), inputData, step.currentIdx, step.foundDuplicate);
-                    document.getElementById('hashSetDisplay').textContent = step.seen.size ? `{ ${[...step.seen].join(', ')} }` : '{ }';
-                    document.getElementById('resultDisplay').textContent = step.result === null ? '-' : step.result ? 'TRUE ✓' : 'FALSE';
-                    document.getElementById('resultDisplay').style.color = step.result === true ? 'var(--viz-error)' : step.result === false ? 'var(--viz-success)' : 'var(--viz-text-muted)';
+                    let html = '';
+                    for (let i = 0; i < nums.length; i++) {
+                        let cls = 'element';
+                        if (i === step.current) cls += ' current';
+                        if (i === step.duplicate) cls += ' duplicate';
+                        else if (step.seen?.includes(i)) cls += ' seen';
+                        html += `<div class="${cls}">${nums[i]}</div>`;
+                    }
+                    document.getElementById('arrayDisplay').innerHTML = html;
+                    document.getElementById('hashsetDisplay').innerHTML = (step.set || []).map(n => `<span class="set-item">${n}</span>`).join('') || '空';
+                    document.getElementById('sizeDisplay').textContent = step.set?.length ?? 0;
+                    document.getElementById('resultDisplay').textContent = step.duplicate !== undefined ? 'true (有重複)' : '?';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps(inputData));
+            viz.setSteps(generateAlgorithmSteps());
         }
-
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

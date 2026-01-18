@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number of Islands 島嶼數量 - 視覺化</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .grid { display: inline-grid; gap: 2px; margin: 15px auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; transition: all 0.3s; }
+        .cell.water { background: #3b82f6; color: white; }
+        .cell.land { background: #22c55e; color: white; }
+        .cell.visited { background: #f59e0b; color: #0f172a; }
+        .cell.current { border: 3px solid var(--viz-error); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">島嶼數量（DFS/BFS）</div>
+                <div style="text-align: center;"><div class="grid" id="gridDisplay"></div></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">目前位置</div><div class="state-value" id="posDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">島嶼數量</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">DFS (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int numIslands(vector<vector<char>>& grid) {', id: 0 },
+            { line: '    int count = 0;', id: 1 },
+            { line: '    for (int i = 0; i < grid.size(); i++) {', id: 2 },
+            { line: '        for (int j = 0; j < grid[0].size(); j++) {', id: 3 },
+            { line: '            if (grid[i][j] == \'1\') {', id: 4 },
+            { line: '                dfs(grid, i, j);', id: 5 },
+            { line: '                count++;', id: 6 },
+            { line: '            }', id: 7 },
+            { line: '        }', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return count;', id: 10 },
+            { line: '}', id: 11 },
+        ];
+        const grid = [
+            ['1','1','0','0','0'],
+            ['1','1','0','0','0'],
+            ['0','0','1','0','0'],
+            ['0','0','0','1','1']
+        ];
+        function generateAlgorithmSteps() {
+            const steps = [];
+            const visited = Array.from({length: 4}, () => Array(5).fill(false));
+            let count = 0;
+            steps.push({ grid, visited: visited.map(r=>[...r]), count: 0, highlightLines: [0,1], explanation: { title: '初始化', text: '遍歷網格，遇到陸地就用 DFS 標記整座島<br><br>🟦 = 水(0), 🟩 = 陸地(1)' } });
+            // Island 1: (0,0), (0,1), (1,0), (1,1)
+            visited[0][0] = visited[0][1] = visited[1][0] = visited[1][1] = true;
+            count++;
+            steps.push({ grid, visited: visited.map(r=>[...r]), count, current: [0,0], highlightLines: [4,5,6], explanation: { title: '發現島嶼 1', text: '從 (0,0) 開始 DFS<br>標記相連陸地：(0,0),(0,1),(1,0),(1,1)<br>count = 1' } });
+            // Island 2: (2,2)
+            visited[2][2] = true;
+            count++;
+            steps.push({ grid, visited: visited.map(r=>[...r]), count, current: [2,2], highlightLines: [4,5,6], explanation: { title: '發現島嶼 2', text: '從 (2,2) 開始 DFS<br>這是獨立的一格陸地<br>count = 2' } });
+            // Island 3: (3,3), (3,4)
+            visited[3][3] = visited[3][4] = true;
+            count++;
+            steps.push({ grid, visited: visited.map(r=>[...r]), count, current: [3,3], highlightLines: [4,5,6], explanation: { title: '發現島嶼 3', text: '從 (3,3) 開始 DFS<br>標記：(3,3),(3,4)<br>count = 3' } });
+            steps.push({ grid, visited: visited.map(r=>[...r]), count, highlightLines: [10], explanation: { title: '完成！', text: `共有 ${count} 座島嶼<br><br>時間複雜度：O(M×N)<br>空間複雜度：O(M×N)` } });
+            return steps;
+        }
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    const g = document.getElementById('gridDisplay');
+                    g.style.gridTemplateColumns = 'repeat(5, 40px)';
+                    let html = '';
+                    for (let i = 0; i < 4; i++) {
+                        for (let j = 0; j < 5; j++) {
+                            let cls = 'cell ' + (grid[i][j] === '1' ? 'land' : 'water');
+                            if (step.visited?.[i]?.[j]) cls = 'cell visited';
+                            if (step.current?.[0] === i && step.current?.[1] === j) cls += ' current';
+                            html += `<div class="${cls}">${grid[i][j]}</div>`;
+                        }
+                    }
+                    g.innerHTML = html;
+                    document.getElementById('posDisplay').textContent = step.current ? `(${step.current[0]},${step.current[1]})` : '-';
+                    document.getElementById('countDisplay').textContent = step.count ?? 0;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

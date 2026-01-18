@@ -3,36 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3Sum Visualization</title>
+    <title>3Sum 三數之和 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .triplet { background: var(--viz-success); color: #0f172a; padding: 4px 10px; border-radius: 6px; margin: 2px; display: inline-block; font-family: monospace; }
+        .array { display: flex; gap: 6px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .element { width: 40px; height: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .element .val { font-weight: bold; }
+        .element .idx { font-size: 0.6rem; opacity: 0.7; }
+        .element.i { background: var(--viz-error); }
+        .element.left { background: var(--viz-success); color: #0f172a; }
+        .element.right { background: var(--viz-warning); color: #0f172a; }
+        .element.found { animation: pulse 0.5s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        .results { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 10px 0; }
+        .triplet { background: var(--viz-success); color: #0f172a; padding: 6px 12px; border-radius: 6px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">3SUM - SORT + TWO POINTERS</div>
-                <div class="chart-container" id="chartContainer"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">三數之和（TWO POINTERS）</div>
+                <div class="array" id="arrayDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted); margin: 5px 0;">找到的三元組</div>
+                <div class="results" id="resultsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Found Triplets</div><div id="tripletsDisplay" style="font-size: 0.9rem;"></div></div>
+                    <div class="state-item"><div class="state-label">i / L / R</div><div class="state-value" id="ptrDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">當前和</div><div class="state-value" id="sumDisplay">-</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM (C++)</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -42,52 +52,54 @@
         const codeStructure = [
             { line: 'vector<vector<int>> threeSum(vector<int>& nums) {', id: 0 },
             { line: '    sort(nums.begin(), nums.end());', id: 1 },
-            { line: '    for (int i = 0; i < nums.size(); i++) {', id: 2 },
-            { line: '        if (i > 0 && nums[i] == nums[i-1]) continue;', id: 3 },
-            { line: '        int l = i+1, r = nums.size()-1;', id: 4 },
-            { line: '        while (l < r) {', id: 5 },
-            { line: '            int sum = nums[i] + nums[l] + nums[r];', id: 6 },
-            { line: '            if (sum > 0) r--;', id: 7 },
-            { line: '            else if (sum < 0) l++;', id: 8 },
-            { line: '            else { res.push_back({...}); l++; r--; }', id: 9 },
-            { line: '        }', id: 10 },
-            { line: '    }', id: 11 },
-            { line: '}', id: 12 },
+            { line: '    vector<vector<int>> result;', id: 2 },
+            { line: '    for (int i = 0; i < nums.size(); i++) {', id: 3 },
+            { line: '        if (i > 0 && nums[i] == nums[i-1]) continue;', id: 4 },
+            { line: '        int l = i + 1, r = nums.size() - 1;', id: 5 },
+            { line: '        while (l < r) {', id: 6 },
+            { line: '            int sum = nums[i] + nums[l] + nums[r];', id: 7 },
+            { line: '            if (sum == 0) {', id: 8 },
+            { line: '                result.push_back({nums[i], nums[l], nums[r]});', id: 9 },
+            { line: '                while (l < r && nums[l] == nums[l+1]) l++;', id: 10 },
+            { line: '                l++; r--;', id: 11 },
+            { line: '            } else if (sum < 0) l++;', id: 12 },
+            { line: '            else r--;', id: 13 },
+            { line: '        }', id: 14 },
+            { line: '    }', id: 15 },
+            { line: '    return result;', id: 16 },
+            { line: '}', id: 17 },
         ];
         const nums = [-1, 0, 1, 2, -1, -4];
-        const sorted = [...nums].sort((a, b) => a - b);
-
+        const sorted = [-4, -1, -1, 0, 1, 2];
         function generateAlgorithmSteps() {
             const steps = [];
-            const triplets = [];
-            steps.push({ i: -1, l: -1, r: -1, triplets: [], highlightLines: [0, 1], explanation: { title: 'Sort', text: `Sorted: [${sorted.join(', ')}]` }});
-            for (let i = 0; i < sorted.length; i++) {
-                if (i > 0 && sorted[i] === sorted[i-1]) continue;
-                let l = i + 1, r = sorted.length - 1;
-                steps.push({ i, l, r, triplets: [...triplets], highlightLines: [2, 4], explanation: { title: `Fix i=${i} (${sorted[i]})`, text: `Two pointers: l=${l}, r=${r}` }});
-                while (l < r) {
-                    const sum = sorted[i] + sorted[l] + sorted[r];
-                    if (sum === 0) {
-                        triplets.push([sorted[i], sorted[l], sorted[r]]);
-                        steps.push({ i, l, r, triplets: [...triplets], found: true, highlightLines: [9], explanation: { title: '✓ Found!', text: `[${sorted[i]}, ${sorted[l]}, ${sorted[r]}]` }});
-                        l++; r--;
-                        while (l < r && sorted[l] === sorted[l-1]) l++;
-                    } else if (sum > 0) { r--; }
-                    else { l++; }
-                }
-            }
-            steps.push({ i: -1, l: -1, r: -1, triplets, highlightLines: [12], explanation: { title: 'Done', text: `Found ${triplets.length} triplets` }});
+            steps.push({ i: null, l: null, r: null, results: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: `原陣列：[${nums.join(', ')}]<br>排序後：[${sorted.join(', ')}]<br><br>固定一個數 i，用雙指標找另外兩個` } });
+            steps.push({ i: 0, l: 1, r: 5, sum: -4-1+2, results: [], highlightLines: [3,5,6,7], explanation: { title: 'i=0, 固定 -4', text: 'l=1, r=5<br>sum = -4 + (-1) + 2 = -3 < 0<br>l++', formula: '-4 + (-1) + 2 = -3' } });
+            steps.push({ i: 1, l: 2, r: 5, sum: -1-1+2, results: [], highlightLines: [3,5,6,7], explanation: { title: 'i=1, 固定 -1', text: 'l=2, r=5<br>sum = -1 + (-1) + 2 = 0 ✓', formula: '-1 + (-1) + 2 = 0' } });
+            steps.push({ i: 1, l: 2, r: 5, sum: 0, results: [[-1,-1,2]], found: true, highlightLines: [8,9,10,11], explanation: { title: '🎉 找到三元組！', text: '[-1, -1, 2]<br>跳過重複，l++, r--' } });
+            steps.push({ i: 1, l: 3, r: 4, sum: -1+0+1, results: [[-1,-1,2]], highlightLines: [6,7,8], explanation: { title: '繼續搜尋', text: 'l=3, r=4<br>sum = -1 + 0 + 1 = 0 ✓', formula: '-1 + 0 + 1 = 0' } });
+            steps.push({ i: 1, l: 3, r: 4, sum: 0, results: [[-1,-1,2],[-1,0,1]], found: true, highlightLines: [8,9], explanation: { title: '🎉 找到三元組！', text: '[-1, 0, 1]' } });
+            steps.push({ i: null, l: null, r: null, results: [[-1,-1,2],[-1,0,1]], final: true, highlightLines: [16], explanation: { title: '搜尋完成！', text: `找到 2 個三元組：<br>[-1, -1, 2]<br>[-1, 0, 1]<br><br>時間：O(n²)` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const states = sorted.map((_, idx) => idx === step.i ? 'in-stack' : idx === step.l ? 'current' : idx === step.r ? 'calculating' : '');
-                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), sorted, states, { height: 180 });
-                    document.getElementById('tripletsDisplay').innerHTML = step.triplets.map(t => `<span class="triplet">[${t.join(',')}]</span>`).join(' ') || '-';
+                    let html = '';
+                    for (let j = 0; j < sorted.length; j++) {
+                        let cls = 'element';
+                        if (j === step.i) cls += ' i';
+                        if (j === step.l) cls += ' left';
+                        if (j === step.r) cls += ' right';
+                        if (step.found && (j === step.i || j === step.l || j === step.r)) cls += ' found';
+                        html += `<div class="${cls}"><div class="val">${sorted[j]}</div><div class="idx">[${j}]</div></div>`;
+                    }
+                    document.getElementById('arrayDisplay').innerHTML = html;
+                    document.getElementById('resultsDisplay').innerHTML = (step.results || []).map(t => `<span class="triplet">[${t.join(', ')}]</span>`).join('');
+                    document.getElementById('ptrDisplay').textContent = step.i !== null ? `${step.i} / ${step.l} / ${step.r}` : '-';
+                    document.getElementById('sumDisplay').textContent = step.sum !== undefined ? step.sum : '-';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

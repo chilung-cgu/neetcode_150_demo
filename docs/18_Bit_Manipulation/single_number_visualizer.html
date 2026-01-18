@@ -3,38 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Single Number Visualization</title>
+    <title>Single Number 只出現一次的數字 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .nums { display: flex; gap: 6px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
-        .num { padding: 10px 16px; border-radius: 6px; font-family: monospace; font-size: 1.1rem; background: var(--viz-primary); color: white; }
-        .num.processed { opacity: 0.4; }
-        .num.current { background: var(--viz-secondary); color: #0f172a; }
-        .xor-display { text-align: center; font-family: monospace; font-size: 1.5rem; color: var(--viz-success); margin: 15px 0; }
+        .array { display: flex; gap: 8px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .element { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; border-radius: 8px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .element.current { background: var(--viz-secondary); color: #0f172a; }
+        .element.processed { opacity: 0.5; }
+        .xor-display { text-align: center; margin: 15px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .xor-binary { font-family: monospace; font-size: 1.1rem; color: var(--viz-secondary); margin: 5px 0; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SINGLE NUMBER (XOR)</div>
-                <div class="nums" id="numsDisplay"></div>
-                <div class="xor-display" id="xorDisplay">XOR = 0</div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">只出現一次的數字（XOR）</div>
+                <div class="array" id="arrayDisplay"></div>
+                <div class="xor-display">
+                    <div style="color: var(--text-muted);">XOR 累積結果</div>
+                    <div class="xor-binary" id="binaryDisplay">0000</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: var(--viz-success);" id="resultDisplay">0</div>
+                </div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">XOR PROPERTY</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -44,41 +46,40 @@
         const codeStructure = [
             { line: 'int singleNumber(vector<int>& nums) {', id: 0 },
             { line: '    int result = 0;', id: 1 },
-            { line: '    for (int n : nums) {', id: 2 },
-            { line: '        result ^= n;', id: 3 },
+            { line: '    for (int num : nums) {', id: 2 },
+            { line: '        result ^= num; // XOR', id: 3 },
             { line: '    }', id: 4 },
             { line: '    return result;', id: 5 },
             { line: '}', id: 6 },
-            { line: '// Key insight: a ^ a = 0, a ^ 0 = a', id: 7 },
         ];
         const nums = [4, 1, 2, 1, 2];
-        // XOR: 4^1=5, 5^2=7, 7^1=6, 6^2=4
-
         function generateAlgorithmSteps() {
             const steps = [];
-            let xor = 0;
-            
-            steps.push({ processed: -1, xor: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: 'a⊕a=0, a⊕0=a' }});
-            
+            let result = 0;
+            steps.push({ current: -1, result: 0, processed: [], highlightLines: [0,1], explanation: { title: '初始化', text: `陣列：[${nums.join(', ')}]<br><br>XOR 性質：<br>a ⊕ a = 0<br>a ⊕ 0 = a<br>成對的數字會互相抵消！` } });
             for (let i = 0; i < nums.length; i++) {
-                xor ^= nums[i];
-                steps.push({ processed: i, xor, highlightLines: [3], explanation: { title: `XOR with ${nums[i]}`, text: `result = ${xor}` }});
+                const prev = result;
+                result ^= nums[i];
+                steps.push({ current: i, result, processed: [...Array(i+1).keys()], highlightLines: [2,3], explanation: { title: `XOR ${nums[i]}`, text: `${prev} ⊕ ${nums[i]} = ${result}<br><br>二進位：${prev.toString(2).padStart(4,'0')} ⊕ ${nums[i].toString(2).padStart(4,'0')} = ${result.toString(2).padStart(4,'0')}`, formula: `${prev} ⊕ ${nums[i]} = ${result}` } });
             }
-            
-            steps.push({ processed: nums.length - 1, xor: 4, highlightLines: [5], explanation: { title: 'Done!', text: 'Single number = 4' }});
-            
+            steps.push({ current: -1, result, processed: [...Array(nums.length).keys()], final: true, highlightLines: [5], explanation: { title: '🎉 找到答案！', text: `只出現一次的數字：${result}<br><br>成對的數字 (1,1) 和 (2,2) 互相抵消<br>剩下 4<br><br>時間：O(n), 空間：O(1)` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('numsDisplay').innerHTML = nums.map((n, i) =>
-                        `<span class="num ${i < step.processed ? 'processed' : ''} ${i === step.processed ? 'current' : ''}">${n}</span>`
-                    ).join('');
-                    document.getElementById('xorDisplay').textContent = `XOR = ${step.xor}`;
+                    let html = '';
+                    for (let i = 0; i < nums.length; i++) {
+                        let cls = 'element';
+                        if (i === step.current) cls += ' current';
+                        else if (step.processed?.includes(i)) cls += ' processed';
+                        html += `<div class="${cls}">${nums[i]}</div>`;
+                    }
+                    document.getElementById('arrayDisplay').innerHTML = html;
+                    document.getElementById('binaryDisplay').textContent = (step.result ?? 0).toString(2).padStart(4, '0');
+                    document.getElementById('resultDisplay').textContent = step.result ?? 0;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

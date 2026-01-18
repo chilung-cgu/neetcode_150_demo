@@ -3,37 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Container With Most Water Visualization</title>
+    <title>Container With Most Water 盛最多水的容器 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .water-area { position: absolute; background: rgba(59, 130, 246, 0.3); bottom: 0; border: 2px dashed var(--viz-primary); }
+        .container { display: flex; gap: 4px; justify-content: center; align-items: flex-end; margin: 20px 0; height: 160px; }
+        .bar { width: 30px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+        .bar-fill { width: 100%; background: var(--viz-primary); border-radius: 4px 4px 0 0; transition: all 0.3s; }
+        .bar-fill.left { background: var(--viz-success); }
+        .bar-fill.right { background: var(--viz-warning); }
+        .bar-fill.water { background: rgba(59, 130, 246, 0.5); }
+        .bar-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+        .water-overlay { position: absolute; background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">CONTAINER - GREEDY TWO POINTERS</div>
-                <div class="chart-container" id="chartContainer" style="position: relative;"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">盛最多水的容器（TWO POINTERS）</div>
+                <div class="container" id="containerDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Current Area</div><div class="state-value" id="areaDisplay">0</div></div>
-                    <div class="state-item"><div class="state-label">Max Area</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">0</div></div>
+                    <div class="state-item"><div class="state-label">L / R</div><div class="state-value" id="ptrDisplay">0 / 8</div></div>
+                    <div class="state-item"><div class="state-label">當前面積</div><div class="state-value" id="areaDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">最大面積</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM (C++)</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -45,40 +50,54 @@
             { line: '    int l = 0, r = height.size() - 1;', id: 1 },
             { line: '    int maxArea = 0;', id: 2 },
             { line: '    while (l < r) {', id: 3 },
-            { line: '        int area = min(height[l], height[r]) * (r - l);', id: 4 },
-            { line: '        maxArea = max(maxArea, area);', id: 5 },
-            { line: '        if (height[l] < height[r]) l++;', id: 6 },
-            { line: '        else r--;', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '    return maxArea;', id: 9 },
-            { line: '}', id: 10 },
+            { line: '        int h = min(height[l], height[r]);', id: 4 },
+            { line: '        int area = h * (r - l);', id: 5 },
+            { line: '        maxArea = max(maxArea, area);', id: 6 },
+            { line: '        if (height[l] < height[r]) l++;', id: 7 },
+            { line: '        else r--;', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return maxArea;', id: 10 },
+            { line: '}', id: 11 },
         ];
-        const height = [1, 8, 6, 2, 5, 4, 8, 3, 7];
-
+        const heights = [1, 8, 6, 2, 5, 4, 8, 3, 7];
         function generateAlgorithmSteps() {
             const steps = [];
-            let l = 0, r = height.length - 1, maxArea = 0;
-            steps.push({ l, r, area: 0, maxArea: 0, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: `l=0, r=${r}` }});
+            let l = 0, r = heights.length - 1, maxArea = 0;
+            steps.push({ l: 0, r: 8, maxArea: 0, highlightLines: [0,1,2], explanation: { title: '初始化', text: `高度：[${heights.join(', ')}]<br><br>雙指標從兩端開始<br>每次移動較矮的那一邊` } });
             while (l < r) {
-                const area = Math.min(height[l], height[r]) * (r - l);
+                const h = Math.min(heights[l], heights[r]);
+                const area = h * (r - l);
                 maxArea = Math.max(maxArea, area);
-                steps.push({ l, r, area, maxArea, highlightLines: [4, 5], explanation: { title: `Area = min(${height[l]}, ${height[r]}) × ${r - l} = ${area}`, text: height[l] < height[r] ? `左邊較短，l++` : `右邊較短，r--` }});
-                if (height[l] < height[r]) l++;
-                else r--;
+                steps.push({ l, r, h, area, maxArea, highlightLines: [3,4,5,6], explanation: { title: `計算面積`, text: `L=${l}, R=${r}<br>h = min(${heights[l]}, ${heights[r]}) = ${h}<br>area = ${h} × ${r-l} = ${area}<br>maxArea = ${maxArea}`, formula: `area = min(${heights[l]}, ${heights[r]}) × (${r}-${l}) = ${area}` } });
+                if (heights[l] < heights[r]) {
+                    steps.push({ l, r, maxArea, move: 'l', highlightLines: [7], explanation: { title: '移動左指標', text: `height[L]=${heights[l]} < height[R]=${heights[r]}<br>L++` } });
+                    l++;
+                } else {
+                    steps.push({ l, r, maxArea, move: 'r', highlightLines: [8], explanation: { title: '移動右指標', text: `height[L]=${heights[l]} ≥ height[R]=${heights[r]}<br>R--` } });
+                    r--;
+                }
             }
-            steps.push({ l, r, area: 0, maxArea, highlightLines: [9], explanation: { title: 'Done!', text: `Max Area = ${maxArea}` }});
+            steps.push({ l, r, maxArea, final: true, highlightLines: [10], explanation: { title: '完成！', text: `最大面積：${maxArea}<br><br>最佳組合：index 1 和 8<br>area = min(8,7) × 7 = 49` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const states = height.map((_, i) => i === step.l ? 'current' : i === step.r ? 'calculating' : '');
-                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), height, states, { height: 200 });
-                    document.getElementById('areaDisplay').textContent = step.area;
-                    document.getElementById('maxDisplay').textContent = step.maxArea;
+                    const maxH = Math.max(...heights);
+                    let html = '';
+                    for (let i = 0; i < heights.length; i++) {
+                        let cls = 'bar-fill';
+                        if (i === step.l) cls += ' left';
+                        if (i === step.r) cls += ' right';
+                        const h = (heights[i] / maxH) * 140;
+                        html += `<div class="bar"><div class="${cls}" style="height:${h}px">${heights[i]}</div><div class="bar-label">${i}</div></div>`;
+                    }
+                    document.getElementById('containerDisplay').innerHTML = html;
+                    document.getElementById('ptrDisplay').textContent = `${step.l} / ${step.r}`;
+                    document.getElementById('areaDisplay').textContent = step.area ?? '-';
+                    document.getElementById('maxDisplay').textContent = step.maxArea ?? 0;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

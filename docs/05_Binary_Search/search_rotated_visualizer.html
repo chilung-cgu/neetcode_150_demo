@@ -3,34 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search in Rotated Sorted Array Visualization</title>
+    <title>Search in Rotated Sorted Array - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .array { display: flex; gap: 4px; justify-content: center; margin: 20px 0; }
+        .element { width: 40px; height: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .element .val { font-weight: bold; }
+        .element .idx { font-size: 0.6rem; opacity: 0.7; }
+        .element.left { border-bottom: 3px solid var(--viz-success); }
+        .element.right { border-bottom: 3px solid var(--viz-error); }
+        .element.mid { background: var(--viz-secondary); color: #0f172a; }
+        .element.found { background: var(--viz-success); color: #0f172a; animation: pulse 0.5s; }
+        .element.excluded { opacity: 0.3; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+    </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SEARCH ROTATED ARRAY (target=0)</div>
-                <div class="chart-container" id="chartContainer"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">旋轉排序陣列搜尋（BINARY SEARCH）</div>
+                <div class="array" id="arrayDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">[L, R]</div><div class="state-value" id="rangeDisplay">[0, 6]</div></div>
-                    <div class="state-item"><div class="state-label">Mid</div><div class="state-value" id="midDisplay" style="color: var(--viz-secondary);">-</div></div>
+                    <div class="state-item"><div class="state-label">目標</div><div class="state-value">0</div></div>
+                    <div class="state-item"><div class="state-label">L / M / R</div><div class="state-value" id="lmrDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -38,58 +48,54 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int search(nums, target) {', id: 0 },
+            { line: 'int search(vector<int>& nums, int target) {', id: 0 },
             { line: '    int l = 0, r = nums.size() - 1;', id: 1 },
             { line: '    while (l <= r) {', id: 2 },
-            { line: '        int mid = (l + r) / 2;', id: 3 },
-            { line: '        if (nums[mid] == target) return mid;', id: 4 },
-            { line: '        // Check which half is sorted', id: 5 },
-            { line: '        if (nums[l] <= nums[mid]) { // left sorted', id: 6 },
-            { line: '            // target in left? or go right', id: 7 },
-            { line: '        } else { // right sorted', id: 8 },
-            { line: '            // target in right? or go left', id: 9 },
-            { line: '        }', id: 10 },
-            { line: '    }', id: 11 },
-            { line: '    return -1;', id: 12 },
-            { line: '}', id: 13 },
+            { line: '        int m = l + (r - l) / 2;', id: 3 },
+            { line: '        if (nums[m] == target) return m;', id: 4 },
+            { line: '        // 判斷哪半邊是有序的', id: 5 },
+            { line: '        if (nums[l] <= nums[m]) { // 左半有序', id: 6 },
+            { line: '            if (nums[l] <= target && target < nums[m])', id: 7 },
+            { line: '                r = m - 1;', id: 8 },
+            { line: '            else l = m + 1;', id: 9 },
+            { line: '        } else { // 右半有序', id: 10 },
+            { line: '            if (nums[m] < target && target <= nums[r])', id: 11 },
+            { line: '                l = m + 1;', id: 12 },
+            { line: '            else r = m - 1;', id: 13 },
+            { line: '        }', id: 14 },
+            { line: '    }', id: 15 },
+            { line: '    return -1;', id: 16 },
+            { line: '}', id: 17 },
         ];
         const nums = [4, 5, 6, 7, 0, 1, 2];
         const target = 0;
-
         function generateAlgorithmSteps() {
             const steps = [];
-            let l = 0, r = nums.length - 1;
-            steps.push({ l, r, mid: -1, highlightLines: [0, 1], explanation: { title: 'Init', text: `Search ${target} in [${nums}]` }});
-            while (l <= r) {
-                const mid = Math.floor((l + r) / 2);
-                if (nums[mid] === target) {
-                    steps.push({ l, r, mid, found: true, highlightLines: [4], explanation: { title: '✓ Found!', text: `nums[${mid}] = ${target}` }});
-                    return steps;
-                }
-                const leftSorted = nums[l] <= nums[mid];
-                let goLeft;
-                if (leftSorted) {
-                    goLeft = target >= nums[l] && target < nums[mid];
-                } else {
-                    goLeft = !(target > nums[mid] && target <= nums[r]);
-                }
-                steps.push({ l, r, mid, highlightLines: leftSorted ? [6, 7] : [8, 9], explanation: { title: `mid=${mid}=${nums[mid]}`, text: leftSorted ? 'Left sorted' : 'Right sorted' }});
-                if (goLeft) r = mid - 1;
-                else l = mid + 1;
-            }
-            steps.push({ l, r, mid: -1, highlightLines: [12], explanation: { title: 'Not Found', text: '' }});
+            steps.push({ l: 0, r: 6, m: 3, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `陣列（旋轉後）：[${nums.join(', ')}]<br>目標：${target}<br><br>關鍵：找出哪半邊是「有序的」` } });
+            steps.push({ l: 0, r: 6, m: 3, highlightLines: [4,5,6], explanation: { title: '檢查 mid=3 (值=7)', text: `nums[3]=7 ≠ target=0<br>nums[0]=4 ≤ nums[3]=7 → 左半有序<br>target=0 不在 [4,7) 之間<br>→ 搜尋右半`, formula: '4 ≤ 7 → 左半有序' } });
+            steps.push({ l: 4, r: 6, m: 5, highlightLines: [9,2,3], explanation: { title: 'l=4, 新 mid=5', text: `nums[5]=1<br>nums[4]=0 ≤ nums[5]=1 → 左半有序` } });
+            steps.push({ l: 4, r: 4, m: 4, highlightLines: [7,8], explanation: { title: 'r=4, 新 mid=4', text: `nums[4]=0 = target<br>找到了！` } });
+            steps.push({ l: 4, r: 4, m: 4, found: true, highlightLines: [4], explanation: { title: '🎉 找到目標！', text: `nums[4] = 0 = target<br>回傳 index = 4<br><br>時間：O(log n)` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const states = nums.map((_, i) => i === step.mid ? (step.found ? 'active' : 'current') : i >= step.l && i <= step.r ? 'in-stack' : '');
-                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), nums, states, { height: 200 });
-                    document.getElementById('rangeDisplay').textContent = `[${step.l}, ${step.r}]`;
-                    document.getElementById('midDisplay').textContent = step.mid >= 0 ? `${step.mid} → ${nums[step.mid]}` : '-';
+                    let html = '';
+                    for (let i = 0; i < nums.length; i++) {
+                        let cls = 'element';
+                        if (i < step.l || i > step.r) cls += ' excluded';
+                        if (i === step.l) cls += ' left';
+                        if (i === step.r) cls += ' right';
+                        if (i === step.m) cls += ' mid';
+                        if (step.found && i === step.m) cls += ' found';
+                        html += `<div class="${cls}"><div class="val">${nums[i]}</div><div class="idx">[${i}]</div></div>`;
+                    }
+                    document.getElementById('arrayDisplay').innerHTML = html;
+                    document.getElementById('lmrDisplay').textContent = `${step.l} / ${step.m} / ${step.r}`;
+                    document.getElementById('resultDisplay').textContent = step.found ? '4' : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

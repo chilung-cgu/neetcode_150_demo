@@ -3,40 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Valid Parentheses Visualization</title>
+    <title>Valid Parentheses 有效括號 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .char-row { display: flex; justify-content: center; gap: 4px; margin: 10px 0; }
-        .char-box { padding: 10px 14px; border-radius: 4px; font-family: monospace; font-size: 1.1rem; background: rgba(255,255,255,0.1); }
-        .char-box.current { background: var(--viz-secondary); color: #0f172a; }
-        .char-box.matched { background: var(--viz-success); color: #0f172a; }
-        .stack-display { display: flex; flex-direction: column-reverse; align-items: center; gap: 2px; min-height: 80px; }
-        .stack-item { background: var(--viz-primary); color: white; padding: 6px 14px; border-radius: 4px; font-family: monospace; font-size: 1.1rem; }
+        .string { display: flex; gap: 4px; justify-content: center; margin: 15px 0; }
+        .char { width: 35px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s; }
+        .char.current { background: var(--viz-secondary); color: #0f172a; }
+        .char.matched { background: var(--viz-success); color: #0f172a; }
+        .stack { display: flex; flex-direction: column-reverse; gap: 4px; min-height: 120px; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; margin: 15px auto; width: 60px; align-items: center; }
+        .stack-item { width: 40px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; border-radius: 4px; background: var(--viz-primary); color: white; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">VALID PARENTHESES - STACK</div>
-                <div class="char-row" id="charRow"></div>
-                <div class="viz-title" style="margin-top: 15px;">STACK</div>
-                <div class="stack-display" id="stackDisplay"></div>
+                <div class="viz-title">有效括號（STACK）</div>
+                <div class="string" id="stringDisplay"></div>
+                <div style="display: flex; justify-content: center; gap: 30px;">
+                    <div><div style="text-align: center; color: var(--text-muted); margin-bottom: 5px;">Stack</div><div class="stack" id="stackDisplay"></div></div>
+                </div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">Stack 大小</div><div class="state-value" id="sizeDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM (C++)</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -45,49 +48,51 @@
     <script>
         const codeStructure = [
             { line: 'bool isValid(string s) {', id: 0 },
-            { line: '    stack<char> stk;', id: 1 },
-            { line: '    map<char, char> m = {...)};', id: 2 },
-            { line: '    for (char c : s) {', id: 3 },
-            { line: '        if (m.count(c)) stk.push(c);', id: 4 },
-            { line: '        else if (stk.empty() || m[stk.top()] != c)', id: 5 },
-            { line: '            return false;', id: 6 },
-            { line: '        else stk.pop();', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '    return stk.empty();', id: 9 },
-            { line: '}', id: 10 },
+            { line: '    stack<char> st;', id: 1 },
+            { line: '    for (char c : s) {', id: 2 },
+            { line: '        if (c == \'(\' || c == \'[\' || c == \'{\')', id: 3 },
+            { line: '            st.push(c);', id: 4 },
+            { line: '        else {', id: 5 },
+            { line: '            if (st.empty()) return false;', id: 6 },
+            { line: '            if (c == \')\' && st.top() != \'(\') return false;', id: 7 },
+            { line: '            if (c == \']\' && st.top() != \'[\') return false;', id: 8 },
+            { line: '            if (c == \'}\' && st.top() != \'{\') return false;', id: 9 },
+            { line: '            st.pop();', id: 10 },
+            { line: '        }', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    return st.empty();', id: 13 },
+            { line: '}', id: 14 },
         ];
         const str = "({[]})";
-        const pairs = { '(': ')', '[': ']', '{': '}' };
-
         function generateAlgorithmSteps() {
             const steps = [];
-            const stack = [];
-            steps.push({ idx: -1, stack: [], highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Empty stack' }});
-            for (let i = 0; i < str.length; i++) {
-                const c = str[i];
-                if (pairs[c]) {
-                    stack.push(c);
-                    steps.push({ idx: i, stack: [...stack], highlightLines: [4], explanation: { title: `Push '${c}'`, text: `Opening bracket → push` }});
-                } else {
-                    if (stack.length === 0 || pairs[stack[stack.length-1]] !== c) {
-                        steps.push({ idx: i, stack: [...stack], invalid: true, highlightLines: [5, 6], explanation: { title: 'Mismatch!', text: `Expected ${pairs[stack[stack.length-1]] || '(none)'}, got ${c}` }});
-                        return steps;
-                    }
-                    stack.pop();
-                    steps.push({ idx: i, stack: [...stack], highlightLines: [7], explanation: { title: `Pop (match '${c}')`, text: `Closing bracket matches` }});
-                }
-            }
-            steps.push({ idx: -1, stack, valid: stack.length === 0, highlightLines: [9], explanation: { title: stack.length === 0 ? '✓ Valid!' : '✗ Invalid', text: stack.length === 0 ? 'Stack empty, all matched' : 'Stack not empty' }});
+            steps.push({ stack: [], current: -1, matched: [], highlightLines: [0,1], explanation: { title: '初始化', text: `字串："${str}"<br><br>使用 Stack 追蹤開括號<br>遇到閉括號時檢查是否匹配` } });
+            steps.push({ stack: ['('], current: 0, matched: [], highlightLines: [2,3,4], explanation: { title: '遇到 (', text: '左括號 → Push 到 Stack' } });
+            steps.push({ stack: ['(','{'], current: 1, matched: [], highlightLines: [2,3,4], explanation: { title: '遇到 {', text: '左括號 → Push 到 Stack' } });
+            steps.push({ stack: ['(','{','['], current: 2, matched: [], highlightLines: [2,3,4], explanation: { title: '遇到 [', text: '左括號 → Push 到 Stack' } });
+            steps.push({ stack: ['(','{'], current: 3, matched: [2,3], highlightLines: [5,8,10], explanation: { title: '遇到 ]', text: 'Stack.top() = [ 匹配 ]<br>Pop！' } });
+            steps.push({ stack: ['('], current: 4, matched: [2,3,1,4], highlightLines: [5,9,10], explanation: { title: '遇到 }', text: 'Stack.top() = { 匹配 }<br>Pop！' } });
+            steps.push({ stack: [], current: 5, matched: [2,3,1,4,0,5], highlightLines: [5,7,10], explanation: { title: '遇到 )', text: 'Stack.top() = ( 匹配 )<br>Pop！' } });
+            steps.push({ stack: [], current: -1, matched: [0,1,2,3,4,5], result: true, highlightLines: [13], explanation: { title: '🎉 有效！', text: 'Stack 為空，所有括號都匹配<br><br>回傳 true' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('charRow').innerHTML = [...str].map((c, i) => `<div class="char-box ${i === step.idx ? 'current' : ''}">${c}</div>`).join('');
-                    document.getElementById('stackDisplay').innerHTML = step.stack.map(c => `<div class="stack-item">${c}</div>`).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
+                    const chars = str.split('');
+                    let html = '';
+                    for (let i = 0; i < chars.length; i++) {
+                        let cls = 'char';
+                        if (i === step.current) cls += ' current';
+                        if (step.matched?.includes(i)) cls += ' matched';
+                        html += `<div class="${cls}">${chars[i]}</div>`;
+                    }
+                    document.getElementById('stringDisplay').innerHTML = html;
+                    document.getElementById('stackDisplay').innerHTML = (step.stack || []).map(c => `<div class="stack-item">${c}</div>`).join('');
+                    document.getElementById('sizeDisplay').textContent = step.stack?.length ?? 0;
+                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

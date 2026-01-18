@@ -3,40 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jump Game Visualization</title>
+    <title>Jump Game 跳躍遊戲 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .positions { display: flex; gap: 4px; justify-content: center; margin: 15px 0; }
-        .pos { width: 40px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
-        .pos.reachable { background: var(--viz-success); color: #0f172a; }
-        .pos.current { border: 2px solid var(--viz-secondary); }
-        .pos .idx { font-size: 0.7rem; opacity: 0.7; }
+        .array { display: flex; gap: 6px; justify-content: center; margin: 20px 0; }
+        .element { width: 50px; height: 55px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .element .val { font-weight: bold; font-size: 1.2rem; }
+        .element .idx { font-size: 0.65rem; opacity: 0.7; }
+        .element.current { background: var(--viz-secondary); color: #0f172a; }
+        .element.reachable { background: var(--viz-success); color: #0f172a; }
+        .element.unreachable { background: var(--viz-error); opacity: 0.5; }
+        .reach-bar { height: 8px; background: var(--viz-success); border-radius: 4px; margin: 10px auto; transition: all 0.3s; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">JUMP GAME</div>
-                <div class="positions" id="posDisplay"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">跳躍遊戲（GREEDY）</div>
+                <div class="array" id="arrayDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted); margin: 5px 0;">最遠可達範圍</div>
+                <div class="reach-bar" id="reachBar"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Max Reach</div><div class="state-value" id="reachDisplay" style="color: var(--viz-success);">0</div></div>
+                    <div class="state-item"><div class="state-label">目前位置</div><div class="state-value" id="posDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">最遠可達</div><div class="state-value" id="reachDisplay" style="color: var(--viz-success);">0</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">GREEDY</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -49,39 +53,41 @@
             { line: '    for (int i = 0; i < nums.size(); i++) {', id: 2 },
             { line: '        if (i > maxReach) return false;', id: 3 },
             { line: '        maxReach = max(maxReach, i + nums[i]);', id: 4 },
-            { line: '        if (maxReach >= nums.size() - 1) return true;', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    return true;', id: 7 },
-            { line: '}', id: 8 },
+            { line: '    }', id: 5 },
+            { line: '    return true;', id: 6 },
+            { line: '}', id: 7 },
         ];
         const nums = [2, 3, 1, 1, 4];
-
         function generateAlgorithmSteps() {
             const steps = [];
             let maxReach = 0;
-            
-            steps.push({ reachable: 0, current: -1, maxReach: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: 'Track max reachable index' }});
-            
+            steps.push({ pos: -1, maxReach: 0, highlightLines: [0,1], explanation: { title: '初始化', text: `陣列：[${nums.join(', ')}]<br><br>貪心策略：追蹤最遠可達位置<br>如果當前位置超過最遠可達，則失敗` } });
             for (let i = 0; i < nums.length; i++) {
-                maxReach = Math.max(maxReach, i + nums[i]);
-                steps.push({ reachable: maxReach, current: i, maxReach, highlightLines: [4, 5], explanation: { title: `i=${i}, jump=${nums[i]}`, text: `maxReach = max(${maxReach - nums[i]}, ${i}+${nums[i]}) = ${maxReach}` }});
-                if (maxReach >= nums.length - 1) break;
+                const newReach = Math.max(maxReach, i + nums[i]);
+                steps.push({ pos: i, maxReach, newReach, highlightLines: [2,3,4], explanation: { title: `位置 ${i}：可跳 ${nums[i]} 步`, text: `maxReach = max(${maxReach}, ${i}+${nums[i]}) = ${newReach}<br><br>${i} ≤ ${maxReach} → 可到達此位置`, formula: `maxReach = max(${maxReach}, ${i}+${nums[i]}) = ${newReach}` } });
+                maxReach = newReach;
             }
-            
-            steps.push({ reachable: nums.length - 1, current: -1, maxReach, highlightLines: [5], explanation: { title: 'Done!', text: 'Can reach the end ✓' }});
-            
+            steps.push({ pos: -1, maxReach, result: true, highlightLines: [6], explanation: { title: '🎉 可以到達終點！', text: `maxReach = ${maxReach} ≥ ${nums.length - 1}<br><br>回傳 true` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('posDisplay').innerHTML = nums.map((n, i) =>
-                        `<div class="pos ${i <= step.reachable ? 'reachable' : ''} ${i === step.current ? 'current' : ''}"><div class="idx">${i}</div><div>${n}</div></div>`
-                    ).join('');
-                    document.getElementById('reachDisplay').textContent = step.maxReach;
+                    let html = '';
+                    for (let i = 0; i < nums.length; i++) {
+                        let cls = 'element';
+                        if (i === step.pos) cls += ' current';
+                        else if (i <= (step.newReach ?? step.maxReach)) cls += ' reachable';
+                        html += `<div class="${cls}"><div class="val">${nums[i]}</div><div class="idx">[${i}]</div></div>`;
+                    }
+                    document.getElementById('arrayDisplay').innerHTML = html;
+                    const reach = step.newReach ?? step.maxReach ?? 0;
+                    document.getElementById('reachBar').style.width = `${(reach / (nums.length - 1)) * 100}%`;
+                    document.getElementById('posDisplay').textContent = step.pos >= 0 ? step.pos : '-';
+                    document.getElementById('reachDisplay').textContent = reach;
+                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

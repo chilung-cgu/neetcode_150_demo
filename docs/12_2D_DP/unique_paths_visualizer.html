@@ -3,37 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unique Paths Visualization</title>
+    <title>Unique Paths 不同路徑 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: grid; gap: 2px; max-width: 250px; margin: 0 auto; }
-        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; font-size: 0.9rem; }
-        .cell.start { background: var(--viz-secondary); color: #0f172a; }
-        .cell.end { background: var(--viz-success); color: #0f172a; }
-        .cell.current { border: 2px solid var(--viz-error); }
+        .grid { display: inline-grid; gap: 2px; margin: 15px auto; background: var(--viz-bg-secondary); padding: 10px; border-radius: 8px; }
+        .cell { 
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+            background: var(--viz-primary); color: white; border-radius: 4px;
+            font-weight: bold; font-size: 1.1rem; transition: all 0.3s ease;
+        }
+        .cell.current { background: var(--viz-secondary); color: #0f172a; }
+        .cell.filled { background: var(--viz-success); color: #0f172a; }
+        .cell.start { background: linear-gradient(135deg, var(--viz-success), var(--viz-secondary)); }
+        .cell.end { background: linear-gradient(135deg, var(--viz-warning), var(--viz-error)); }
+        .cell.border { background: rgba(100, 116, 139, 0.3); color: var(--text-muted); }
+        .robot { font-size: 1.5rem; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">UNIQUE PATHS (3x7 grid)</div>
-                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(7, 40px);"></div>
+                <div class="viz-title">不同路徑（UNIQUE PATHS）</div>
+                <div style="text-align: center;">
+                    <div class="grid" id="gridDisplay"></div>
+                </div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item">
+                        <div class="state-label">目前位置</div>
+                        <div class="state-value" id="posDisplay">(0, 0)</div>
+                    </div>
+                    <div class="state-item">
+                        <div class="state-label">當前格子路徑數</div>
+                        <div class="state-value" id="valueDisplay" style="color: var(--viz-success);">1</div>
+                    </div>
+                    <div class="state-item">
+                        <div class="state-label">答案</div>
+                        <div class="state-value" id="answerDisplay">?</div>
+                    </div>
                 </div>
             </div>
             <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
+                <div class="viz-title">演算法說明</div>
                 <div class="explanation" id="explanation"></div>
             </div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">2D DP</div>
+                <div class="viz-title">動態規劃 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -43,33 +66,82 @@
         const codeStructure = [
             { line: 'int uniquePaths(int m, int n) {', id: 0 },
             { line: '    vector<vector<int>> dp(m, vector<int>(n, 1));', id: 1 },
-            { line: '    // First row and column are all 1s', id: 2 },
-            { line: '    for (int i = 1; i < m; i++) {', id: 3 },
-            { line: '        for (int j = 1; j < n; j++) {', id: 4 },
-            { line: '            dp[i][j] = dp[i-1][j] + dp[i][j-1];', id: 5 },
-            { line: '        }', id: 6 },
-            { line: '    }', id: 7 },
-            { line: '    return dp[m-1][n-1];', id: 8 },
-            { line: '}', id: 9 },
+            { line: '    // 第一行和第一列都是 1（只有一種走法）', id: 2 },
+            { line: '', id: 3 },
+            { line: '    for (int i = 1; i < m; i++) {', id: 4 },
+            { line: '        for (int j = 1; j < n; j++) {', id: 5 },
+            { line: '            // 到達 (i,j) 的路徑 = 從上方 + 從左方', id: 6 },
+            { line: '            dp[i][j] = dp[i-1][j] + dp[i][j-1];', id: 7 },
+            { line: '        }', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return dp[m-1][n-1];', id: 10 },
+            { line: '}', id: 11 },
         ];
-        const m = 3, n = 7;
+        
+        const m = 3, n = 4; // 3x4 網格
 
         function generateAlgorithmSteps() {
             const steps = [];
-            const dp = Array.from({ length: m }, () => Array(n).fill(1));
+            const dp = Array.from({ length: m }, () => Array(n).fill(0));
             
-            steps.push({ dp: dp.map(r => [...r]), current: null, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'First row and column = 1' }});
+            // 初始化
+            steps.push({
+                dp: dp.map(r => [...r]),
+                pos: null,
+                highlightLines: [0, 1, 2],
+                explanation: { 
+                    title: '初始化 DP 表格', 
+                    text: `網格大小：${m} × ${n}<br><br>機器人從左上角 (0,0) 出發，只能<strong>向右</strong>或<strong>向下</strong>移動。<br><br>問題：到達右下角 (${m-1},${n-1}) 有幾種不同路徑？` 
+                }
+            });
             
+            // 初始化第一行和第一列為 1
+            for (let i = 0; i < m; i++) dp[i][0] = 1;
+            for (let j = 0; j < n; j++) dp[0][j] = 1;
+            
+            steps.push({
+                dp: dp.map(r => [...r]),
+                pos: null,
+                filledCells: [...Array(m).keys()].map(i => [i, 0]).concat([...Array(n).keys()].map(j => [0, j])),
+                highlightLines: [1, 2],
+                explanation: { 
+                    title: '邊界條件', 
+                    text: `第一行：只能一路向右，只有 1 種走法<br>第一列：只能一路向下，只有 1 種走法<br><br>所以 dp[0][j] = dp[i][0] = 1` 
+                }
+            });
+            
+            // 填充 DP 表格
             for (let i = 1; i < m; i++) {
                 for (let j = 1; j < n; j++) {
-                    dp[i][j] = dp[i - 1][j] + dp[i][j - 1];
-                    if ((i === 1 && j <= 2) || (i === 2 && j <= 2) || (i === m - 1 && j === n - 1)) {
-                        steps.push({ dp: dp.map(r => [...r]), current: [i, j], highlightLines: [5], explanation: { title: `dp[${i}][${j}]`, text: `= dp[${i-1}][${j}] + dp[${i}][${j-1}] = ${dp[i][j]}` }});
-                    }
+                    const fromTop = dp[i - 1][j];
+                    const fromLeft = dp[i][j - 1];
+                    dp[i][j] = fromTop + fromLeft;
+                    
+                    steps.push({
+                        dp: dp.map(r => [...r]),
+                        pos: [i, j],
+                        fromTop: [i - 1, j],
+                        fromLeft: [i, j - 1],
+                        highlightLines: [4, 5, 6, 7],
+                        explanation: { 
+                            title: `計算 dp[${i}][${j}]`, 
+                            text: `到達 (${i}, ${j}) 只能從<strong>上方</strong>或<strong>左方</strong>來：<br><br>從上方 (${i - 1}, ${j})：${fromTop} 種路徑<br>從左方 (${i}, ${j - 1})：${fromLeft} 種路徑<br><br>總計：${fromTop} + ${fromLeft} = ${dp[i][j]} 種`,
+                            formula: `dp[${i}][${j}] = dp[${i - 1}][${j}] + dp[${i}][${j - 1}] = ${fromTop} + ${fromLeft} = ${dp[i][j]}`
+                        }
+                    });
                 }
             }
             
-            steps.push({ dp, current: [m - 1, n - 1], highlightLines: [8], explanation: { title: 'Done!', text: `${dp[m - 1][n - 1]} unique paths` }});
+            steps.push({
+                dp: dp.map(r => [...r]),
+                pos: [m - 1, n - 1],
+                answer: dp[m - 1][n - 1],
+                highlightLines: [10],
+                explanation: { 
+                    title: '演算法完成！', 
+                    text: `從 (0,0) 到 (${m - 1},${n - 1}) 共有 <strong>${dp[m - 1][n - 1]}</strong> 種不同路徑。<br><br>時間複雜度：O(m × n)<br>空間複雜度：O(m × n)，可優化至 O(n)` 
+                }
+            });
             
             return steps;
         }
@@ -79,21 +151,34 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
+                    const grid = document.getElementById('gridDisplay');
+                    grid.style.gridTemplateColumns = `repeat(${n}, 50px)`;
+                    
                     let html = '';
                     for (let i = 0; i < m; i++) {
                         for (let j = 0; j < n; j++) {
                             let cls = 'cell';
+                            const val = step.dp?.[i]?.[j] ?? 0;
+                            
                             if (i === 0 && j === 0) cls += ' start';
-                            if (i === m - 1 && j === n - 1) cls += ' end';
-                            if (step.current && step.current[0] === i && step.current[1] === j) cls += ' current';
-                            html += `<div class="${cls}">${step.dp[i][j]}</div>`;
+                            else if (i === m - 1 && j === n - 1) cls += ' end';
+                            else if (step.pos?.[0] === i && step.pos?.[1] === j) cls += ' current';
+                            else if (val > 0) cls += ' filled';
+                            
+                            const content = i === 0 && j === 0 ? '🤖' : (val || '-');
+                            html += `<div class="${cls}">${content}</div>`;
                         }
                     }
-                    document.getElementById('gridDisplay').innerHTML = html;
+                    grid.innerHTML = html;
+                    
+                    document.getElementById('posDisplay').textContent = step.pos ? `(${step.pos[0]}, ${step.pos[1]})` : '-';
+                    document.getElementById('valueDisplay').textContent = step.pos ? (step.dp?.[step.pos[0]]?.[step.pos[1]] ?? '-') : '-';
+                    document.getElementById('answerDisplay').textContent = step.answer ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

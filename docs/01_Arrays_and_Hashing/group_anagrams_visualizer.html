@@ -3,43 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Group Anagrams Visualization</title>
+    <title>Group Anagrams 字母異位詞分組 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .input-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 10px 0; }
-        .word-chip { padding: 6px 12px; border-radius: 20px; font-family: monospace; background: rgba(255,255,255,0.1); }
-        .word-chip.active { background: var(--viz-secondary); color: #0f172a; }
-        .word-chip.processed { opacity: 0.5; }
-        .groups-container { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 10px 0; }
-        .group-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; min-width: 100px; }
-        .group-key { color: var(--viz-success); font-family: monospace; font-size: 0.8rem; margin-bottom: 5px; }
-        .group-words { display: flex; flex-wrap: wrap; gap: 4px; }
-        .group-word { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; }
+        .words { display: flex; gap: 8px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .word { padding: 8px 14px; border-radius: 6px; background: var(--viz-primary); color: white; font-weight: bold; transition: all 0.3s; }
+        .word.current { background: var(--viz-secondary); color: #0f172a; }
+        .word.grouped { opacity: 0.5; }
+        .groups { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
+        .group { display: flex; gap: 8px; align-items: center; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .group-key { color: var(--viz-secondary); font-family: monospace; min-width: 60px; }
+        .group-words { display: flex; gap: 6px; flex-wrap: wrap; }
+        .group-word { background: var(--viz-success); color: #0f172a; padding: 4px 10px; border-radius: 4px; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">INPUT STRINGS</div>
-                <div class="input-list" id="inputList"></div>
-                <div class="viz-title" style="margin-top: 15px;">GROUPED BY SORTED KEY</div>
-                <div class="groups-container" id="groupsDisplay"></div>
+                <div class="viz-title">字母異位詞分組（HASH MAP）</div>
+                <div class="words" id="wordsDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">分組結果（key = 排序後字串）</div>
+                <div class="groups" id="groupsDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">分組數</div><div class="state-value" id="groupCountDisplay" style="color: var(--viz-success);">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM (C++)</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -48,68 +48,52 @@
     <script>
         const codeStructure = [
             { line: 'vector<vector<string>> groupAnagrams(vector<string>& strs) {', id: 0 },
-            { line: '    unordered_map<string, vector<string>> groups;', id: 1 },
-            { line: '    for (string s : strs) {', id: 2 },
+            { line: '    unordered_map<string, vector<string>> map;', id: 1 },
+            { line: '    for (string& s : strs) {', id: 2 },
             { line: '        string key = s;', id: 3 },
             { line: '        sort(key.begin(), key.end());', id: 4 },
-            { line: '        groups[key].push_back(s);', id: 5 },
+            { line: '        map[key].push_back(s);', id: 5 },
             { line: '    }', id: 6 },
-            { line: '    // Convert map to result', id: 7 },
-            { line: '    return result;', id: 8 },
-            { line: '}', id: 9 },
+            { line: '    vector<vector<string>> result;', id: 7 },
+            { line: '    for (auto& [key, group] : map)', id: 8 },
+            { line: '        result.push_back(group);', id: 9 },
+            { line: '    return result;', id: 10 },
+            { line: '}', id: 11 },
         ];
-
-        const strs = ["eat", "tea", "tan", "ate", "nat", "bat"];
-
+        const words = ["eat", "tea", "tan", "ate", "nat", "bat"];
         function generateAlgorithmSteps() {
             const steps = [];
-            const groups = new Map();
-            const processed = new Set();
-
-            steps.push({ idx: -1, groups: new Map(), processed: new Set(), highlightLines: [0, 1],
-                explanation: { title: 'Initialization', text: '初始化空的 HashMap 用於分組。Key = 排序後字串，Value = 原始字串列表。' }});
-
-            for (let i = 0; i < strs.length; i++) {
-                const s = strs[i];
-                const key = [...s].sort().join('');
-                
-                steps.push({ idx: i, currentKey: key, groups: new Map(groups), processed: new Set(processed), highlightLines: [2, 3, 4],
-                    explanation: { title: `Process "${s}"`, text: `排序 "${s}" → "${key}"。這將作為分組的 Key。` }});
-
-                if (!groups.has(key)) groups.set(key, []);
-                groups.get(key).push(s);
-                processed.add(i);
-
-                steps.push({ idx: i, currentKey: key, groups: new Map(groups), processed: new Set(processed), highlightLines: [5],
-                    explanation: { title: `Group by "${key}"`, text: `將 "${s}" 加入 groups["${key}"]。目前該組: [${groups.get(key).join(', ')}]` }});
+            const groups = {};
+            steps.push({ current: -1, grouped: [], groups: {}, highlightLines: [0,1], explanation: { title: '初始化', text: `字串：["${words.join('", "')}"]<br><br>關鍵：排序後相同的字串是異位詞<br>"eat" → "aet"<br>"tea" → "aet"` } });
+            for (let i = 0; i < words.length; i++) {
+                const w = words[i];
+                const key = w.split('').sort().join('');
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(w);
+                steps.push({ current: i, grouped: [...Array(i+1).keys()], groups: JSON.parse(JSON.stringify(groups)), key, highlightLines: [2,3,4,5], explanation: { title: `處理 "${w}"`, text: `排序後："${key}"<br>加入 map["${key}"] 分組`, formula: `"${w}" → sort → "${key}"` } });
             }
-
-            steps.push({ idx: -1, groups: new Map(groups), processed: new Set(processed), highlightLines: [7, 8],
-                explanation: { title: 'Complete!', text: `分組完成！共 ${groups.size} 組 Anagrams。` }});
-
+            steps.push({ current: -1, grouped: [...Array(words.length).keys()], groups, final: true, highlightLines: [7,8,9,10], explanation: { title: '完成！', text: `共 ${Object.keys(groups).length} 組：<br>${Object.entries(groups).map(([k,v]) => `"${k}": [${v.join(', ')}]`).join('<br>')}<br><br>時間：O(n × k log k)` } });
             return steps;
         }
-
-        function renderInputList(idx, processed) {
-            document.getElementById('inputList').innerHTML = strs.map((s, i) => 
-                `<div class="word-chip ${i === idx ? 'active' : ''} ${processed.has(i) && i !== idx ? 'processed' : ''}">${s}</div>`
-            ).join('');
-        }
-
-        function renderGroups(groups) {
-            if (groups.size === 0) { document.getElementById('groupsDisplay').innerHTML = '<em style="color:var(--viz-text-muted)">Empty</em>'; return; }
-            document.getElementById('groupsDisplay').innerHTML = [...groups.entries()].map(([key, words]) => 
-                `<div class="group-box"><div class="group-key">Key: "${key}"</div><div class="group-words">${words.map(w => `<span class="group-word">${w}</span>`).join('')}</div></div>`
-            ).join('');
-        }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    renderInputList(step.idx, step.processed);
-                    renderGroups(step.groups);
+                    let html = '';
+                    for (let i = 0; i < words.length; i++) {
+                        let cls = 'word';
+                        if (i === step.current) cls += ' current';
+                        else if (step.grouped?.includes(i)) cls += ' grouped';
+                        html += `<div class="${cls}">${words[i]}</div>`;
+                    }
+                    document.getElementById('wordsDisplay').innerHTML = html;
+                    let gHtml = '';
+                    for (const [key, group] of Object.entries(step.groups || {})) {
+                        gHtml += `<div class="group"><span class="group-key">${key}:</span><div class="group-words">${group.map(w => `<span class="group-word">${w}</span>`).join('')}</div></div>`;
+                    }
+                    document.getElementById('groupsDisplay').innerHTML = gHtml || '<div style="text-align:center;color:var(--text-muted)">空</div>';
+                    document.getElementById('groupCountDisplay').textContent = Object.keys(step.groups || {}).length;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

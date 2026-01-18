@@ -3,34 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Two Sum II Visualization</title>
+    <title>Two Sum II 兩數之和 II - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .array { display: flex; gap: 6px; justify-content: center; margin: 20px 0; }
+        .element { width: 45px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .element .val { font-weight: bold; font-size: 1.1rem; }
+        .element .idx { font-size: 0.65rem; opacity: 0.7; }
+        .element.left { border: 3px solid var(--viz-success); }
+        .element.right { border: 3px solid var(--viz-error); }
+        .element.found { background: var(--viz-success); color: #0f172a; }
+        .sum-display { text-align: center; font-size: 1.2rem; margin: 10px 0; color: var(--viz-secondary); }
+    </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SORTED ARRAY - TWO POINTERS</div>
-                <div class="chart-container" id="chartContainer"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">兩數之和 II（TWO POINTERS）</div>
+                <div class="array" id="arrayDisplay"></div>
+                <div class="sum-display" id="sumDisplay">-</div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Target</div><div class="state-value" id="targetDisplay">9</div></div>
-                    <div class="state-item"><div class="state-label">Sum</div><div class="state-value" id="sumDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">目標值</div><div class="state-value">9</div></div>
+                    <div class="state-item"><div class="state-label">L / R</div><div class="state-value" id="lrDisplay">0 / 5</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM (C++)</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -39,41 +48,47 @@
     <script>
         const codeStructure = [
             { line: 'vector<int> twoSum(vector<int>& nums, int target) {', id: 0 },
-            { line: '    int left = 0, right = nums.size() - 1;', id: 1 },
-            { line: '    while (left < right) {', id: 2 },
-            { line: '        int sum = nums[left] + nums[right];', id: 3 },
-            { line: '        if (sum > target) right--;', id: 4 },
-            { line: '        else if (sum < target) left++;', id: 5 },
-            { line: '        else return {left+1, right+1};', id: 6 },
+            { line: '    int l = 0, r = nums.size() - 1;', id: 1 },
+            { line: '    while (l < r) {', id: 2 },
+            { line: '        int sum = nums[l] + nums[r];', id: 3 },
+            { line: '        if (sum == target) return {l+1, r+1};', id: 4 },
+            { line: '        else if (sum < target) l++;', id: 5 },
+            { line: '        else r--;', id: 6 },
             { line: '    }', id: 7 },
             { line: '    return {};', id: 8 },
             { line: '}', id: 9 },
         ];
-        const nums = [2, 7, 11, 15];
+        const nums = [2, 3, 4, 5, 8, 11];
         const target = 9;
-
         function generateAlgorithmSteps() {
             const steps = [];
-            let left = 0, right = nums.length - 1;
-            steps.push({ left, right, sum: null, highlightLines: [0, 1], explanation: { title: 'Init', text: `left=0, right=${right}, target=${target}` }});
-            while (left < right) {
-                const sum = nums[left] + nums[right];
-                steps.push({ left, right, sum, highlightLines: [2, 3], explanation: { title: `Sum = ${nums[left]} + ${nums[right]} = ${sum}`, text: sum > target ? `${sum} > ${target}，right--` : sum < target ? `${sum} < ${target}，left++` : `找到！` }});
-                if (sum > target) right--;
-                else if (sum < target) left++;
-                else { steps.push({ left, right, sum, found: true, highlightLines: [6], explanation: { title: '✓ Found!', text: `Answer: [${left+1}, ${right+1}]` }}); return steps; }
-            }
+            steps.push({ l: 0, r: 5, sum: 13, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `陣列（已排序）：[${nums.join(', ')}]<br>目標：${target}<br><br>雙指標：l=0, r=5<br>sum = 2 + 11 = 13` } });
+            steps.push({ l: 0, r: 5, sum: 13, highlightLines: [6], explanation: { title: 'sum > target', text: '13 > 9<br>需要更小的和<br>r-- 移動右指標', formula: '2 + 11 = 13 > 9 → r--' } });
+            steps.push({ l: 0, r: 4, sum: 10, highlightLines: [2,3], explanation: { title: '重新計算', text: 'l=0, r=4<br>sum = 2 + 8 = 10' } });
+            steps.push({ l: 0, r: 4, sum: 10, highlightLines: [6], explanation: { title: 'sum > target', text: '10 > 9<br>r--', formula: '2 + 8 = 10 > 9 → r--' } });
+            steps.push({ l: 0, r: 3, sum: 7, highlightLines: [2,3], explanation: { title: '重新計算', text: 'l=0, r=3<br>sum = 2 + 5 = 7' } });
+            steps.push({ l: 0, r: 3, sum: 7, highlightLines: [5], explanation: { title: 'sum < target', text: '7 < 9<br>需要更大的和<br>l++ 移動左指標', formula: '2 + 5 = 7 < 9 → l++' } });
+            steps.push({ l: 1, r: 3, sum: 8, highlightLines: [2,3,5], explanation: { title: '繼續', text: 'l=1, r=3<br>sum = 3 + 5 = 8 < 9<br>l++', formula: '3 + 5 = 8 < 9 → l++' } });
+            steps.push({ l: 2, r: 3, sum: 9, found: true, highlightLines: [4], explanation: { title: '🎉 找到答案！', text: '4 + 5 = 9 = target<br><br>回傳 [3, 4]（1-indexed）<br>時間：O(n)', formula: '4 + 5 = 9 == target' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), nums, nums.map((_, i) => i === step.left ? 'current' : i === step.right ? 'calculating' : ''), { height: 200 });
-                    document.getElementById('sumDisplay').textContent = step.sum ?? '-';
-                    document.getElementById('sumDisplay').style.color = step.found ? 'var(--viz-success)' : step.sum > target ? 'var(--viz-error)' : step.sum < target ? 'var(--viz-secondary)' : 'var(--viz-text-main)';
+                    let html = '';
+                    for (let i = 0; i < nums.length; i++) {
+                        let cls = 'element';
+                        if (i === step.l) cls += ' left';
+                        if (i === step.r) cls += ' right';
+                        if (step.found && (i === step.l || i === step.r)) cls += ' found';
+                        html += `<div class="${cls}"><div class="val">${nums[i]}</div><div class="idx">[${i}]</div></div>`;
+                    }
+                    document.getElementById('arrayDisplay').innerHTML = html;
+                    document.getElementById('sumDisplay').textContent = `${nums[step.l]} + ${nums[step.r]} = ${step.sum}`;
+                    document.getElementById('lrDisplay').textContent = `${step.l} / ${step.r}`;
+                    document.getElementById('resultDisplay').textContent = step.found ? '[3, 4]' : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

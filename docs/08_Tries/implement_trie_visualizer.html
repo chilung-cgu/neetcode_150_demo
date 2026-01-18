@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Implement Trie 實作前綴樹 - 視覺化</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .trie-viz { display: flex; flex-direction: column; align-items: center; gap: 15px; margin: 20px 0; }
+        .trie-level { display: flex; gap: 20px; }
+        .trie-node { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; background: var(--viz-primary); color: white; transition: all 0.3s; font-size: 0.9rem; }
+        .trie-node.root { background: var(--viz-warning); color: #0f172a; }
+        .trie-node.end { border: 3px solid var(--viz-success); }
+        .trie-node.current { background: var(--viz-secondary); color: #0f172a; }
+        .op-display { text-align: center; font-size: 1.1rem; color: var(--viz-secondary); margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">前綴樹 Trie</div>
+                <div class="op-display" id="opDisplay">-</div>
+                <div class="trie-viz" id="trieViz"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">操作結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
+            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">Trie (C++)</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'class TrieNode {', id: 0 },
+            { line: '    TrieNode* children[26];', id: 1 },
+            { line: '    bool isEnd = false;', id: 2 },
+            { line: '};', id: 3 },
+            { line: 'void insert(string word) {', id: 4 },
+            { line: '    TrieNode* node = root;', id: 5 },
+            { line: '    for (char c : word) {', id: 6 },
+            { line: '        if (!node->children[c-\'a\'])', id: 7 },
+            { line: '            node->children[c-\'a\'] = new TrieNode();', id: 8 },
+            { line: '        node = node->children[c-\'a\'];', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    node->isEnd = true;', id: 11 },
+            { line: '}', id: 12 },
+        ];
+        function generateAlgorithmSteps() {
+            const steps = [];
+            steps.push({ op: '初始化', trie: {root:{}}, highlightLines: [0,1,2,3], explanation: { title: '初始化 Trie', text: '每個節點有 26 個子節點指標（a-z）<br>isEnd 標記單詞結尾' } });
+            steps.push({ op: 'insert("app")', trie: {root:{a:{p:{p:{end:true}}}}}, path: ['a','p','p'], highlightLines: [4,5,6,7,8,9,11], explanation: { title: '插入 "app"', text: '建立路徑 root→a→p→p<br>標記最後的 p 為單詞結尾' } });
+            steps.push({ op: 'insert("apple")', trie: {root:{a:{p:{p:{end:true,l:{e:{end:true}}}}}}}, path: ['a','p','p','l','e'], highlightLines: [6,7,8,9,11], explanation: { title: '插入 "apple"', text: '沿用 a→p→p<br>新建 l→e，標記 e 為結尾' } });
+            steps.push({ op: 'search("app") → true', trie: {root:{a:{p:{p:{end:true,l:{e:{end:true}}}}}}}, result: true, highlightLines: [5,6,9], explanation: { title: '搜尋 "app"', text: '找到 a→p→p 且 isEnd=true<br>回傳 true' } });
+            steps.push({ op: 'startsWith("ap") → true', trie: {root:{a:{p:{p:{end:true,l:{e:{end:true}}}}}}}, result: true, highlightLines: [5,6,9], explanation: { title: '前綴搜尋 "ap"', text: '找到 a→p 路徑存在<br>回傳 true（不需 isEnd）' } });
+            return steps;
+        }
+        let viz;
+        function init() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => {
+                    document.getElementById('opDisplay').textContent = step.op || '-';
+                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? (step.result ? 'true ✓' : 'false ✗') : '-';
+                    // 簡化 Trie 視覺化
+                    let html = '<div class="trie-level"><div class="trie-node root">☆</div></div>';
+                    if (step.path) {
+                        html += '<div class="trie-level">';
+                        for (const c of step.path) {
+                            html += `<div class="trie-node current">${c}</div>`;
+                        }
+                        html += '</div>';
+                    }
+                    document.getElementById('trieViz').innerHTML = html;
+                }
+            });
+            viz.setSteps(generateAlgorithmSteps());
+        }
+        function resetVisualization() { init(); }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -3,34 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Climbing Stairs Visualization</title>
+    <title>Climbing Stairs 爬樓梯 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .stairs { display: flex; flex-direction: column-reverse; align-items: flex-start; margin: 20px auto; padding-left: 50px; }
+        .stair { display: flex; align-items: center; gap: 10px; }
+        .step { width: 80px; height: 30px; background: var(--viz-primary); margin-bottom: 2px; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; transition: all 0.3s; }
+        .step.current { background: var(--viz-secondary); color: #0f172a; }
+        .step.done { background: var(--viz-success); color: #0f172a; }
+        .dp-val { font-size: 0.9rem; color: var(--text-secondary); min-width: 60px; }
+    </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">CLIMBING STAIRS (n=5)</div>
-                <div class="chart-container" id="chartContainer"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">爬樓梯（DP）</div>
+                <div class="stairs" id="stairsDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">dp[i]</div><div class="state-value" id="dpDisplay">-</div></div>
-                    <div class="state-item"><div class="state-label">Formula</div><div class="state-value" id="formulaDisplay" style="font-size: 0.85rem;">dp[i] = dp[i-1] + dp[i-2]</div></div>
+                    <div class="state-item"><div class="state-label">目前階梯</div><div class="state-value" id="posDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">方法數</div><div class="state-value" id="answerDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">DP (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -40,37 +45,42 @@
         const codeStructure = [
             { line: 'int climbStairs(int n) {', id: 0 },
             { line: '    if (n <= 2) return n;', id: 1 },
-            { line: '    int prev2 = 1, prev1 = 2;', id: 2 },
+            { line: '    int dp1 = 1, dp2 = 2;', id: 2 },
             { line: '    for (int i = 3; i <= n; i++) {', id: 3 },
-            { line: '        int curr = prev1 + prev2;', id: 4 },
-            { line: '        prev2 = prev1;', id: 5 },
-            { line: '        prev1 = curr;', id: 6 },
+            { line: '        int temp = dp1 + dp2;', id: 4 },
+            { line: '        dp1 = dp2;', id: 5 },
+            { line: '        dp2 = temp;', id: 6 },
             { line: '    }', id: 7 },
-            { line: '    return prev1;', id: 8 },
+            { line: '    return dp2;', id: 8 },
             { line: '}', id: 9 },
         ];
         const n = 5;
-
         function generateAlgorithmSteps() {
             const steps = [];
             const dp = [0, 1, 2];
-            steps.push({ dp: [...dp], i: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'dp[1]=1, dp[2]=2 (base cases)' }});
+            steps.push({ dp: [0,1,2], current: null, highlightLines: [0,1,2], explanation: { title: '初始化', text: 'dp[1]=1（1種方法）<br>dp[2]=2（2種方法）<br>每次可爬 1 或 2 階' } });
             for (let i = 3; i <= n; i++) {
-                dp[i] = dp[i - 1] + dp[i - 2];
-                steps.push({ dp: [...dp], i, highlightLines: [4, 5, 6], explanation: { title: `dp[${i}] = dp[${i-1}] + dp[${i-2}]`, text: `= ${dp[i-1]} + ${dp[i-2]} = ${dp[i]}` }});
+                dp[i] = dp[i-1] + dp[i-2];
+                steps.push({ dp: [...dp], current: i, highlightLines: [3,4,5,6], explanation: { title: `計算 dp[${i}]`, text: `dp[${i}] = dp[${i-1}] + dp[${i-2}]<br>= ${dp[i-1]} + ${dp[i-2]} = ${dp[i]}`, formula: `dp[${i}] = ${dp[i-1]} + ${dp[i-2]} = ${dp[i]}` } });
             }
-            steps.push({ dp: [...dp], i: n, highlightLines: [8], explanation: { title: 'Done!', text: `${dp[n]} ways to climb ${n} stairs` }});
+            steps.push({ dp: [...dp], current: null, answer: dp[n], highlightLines: [8], explanation: { title: '完成！', text: `爬 ${n} 階樓梯共有 ${dp[n]} 種方法<br><br>這就是費氏數列！` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const states = step.dp.slice(1).map((_, i) => i + 1 === step.i ? 'current' : i + 1 < step.i ? 'in-stack' : '');
-                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), step.dp.slice(1), states, { height: 180 });
-                    document.getElementById('dpDisplay').textContent = step.dp.slice(1).map((v, i) => `dp[${i+1}]=${v}`).join(', ');
+                    let html = '';
+                    for (let i = n; i >= 1; i--) {
+                        let cls = 'step';
+                        if (step.current === i) cls += ' current';
+                        else if (step.dp?.[i]) cls += ' done';
+                        html += `<div class="stair"><div class="${cls}">${i}</div><div class="dp-val">dp=${step.dp?.[i] ?? '?'}</div></div>`;
+                    }
+                    document.getElementById('stairsDisplay').innerHTML = html;
+                    document.getElementById('posDisplay').textContent = step.current ?? '-';
+                    document.getElementById('answerDisplay').textContent = step.answer ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

@@ -3,37 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subsets Visualization</title>
+    <title>Subsets 子集 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .subset { display: inline-block; padding: 6px 12px; margin: 4px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
-        .subset.current { background: var(--viz-secondary); color: #0f172a; }
-        .result-display { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; max-height: 150px; overflow-y: auto; }
+        .nums { display: flex; gap: 8px; justify-content: center; margin: 15px 0; }
+        .num { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; }
+        .num.included { background: var(--viz-success); color: #0f172a; }
+        .num.current { border: 3px solid var(--viz-secondary); }
+        .subsets { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; min-height: 50px; }
+        .subset { background: var(--viz-success); color: #0f172a; padding: 6px 12px; border-radius: 6px; font-weight: bold; }
+        .subset.new { animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: scale(0); } to { transform: scale(1); } }
+        .tree { text-align: center; margin: 15px 0; font-family: monospace; font-size: 0.85rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SUBSETS - BACKTRACKING</div>
-                <div style="text-align: center; margin: 10px 0;">Current: <strong id="currentSubset">[]</strong></div>
-                <div class="viz-title" style="margin-top: 15px;">ALL SUBSETS</div>
-                <div class="result-display" id="resultDisplay"></div>
+                <div class="viz-title">子集（BACKTRACKING）</div>
+                <div class="nums" id="numsDisplay"></div>
+                <div class="tree" id="treeDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">已找到的子集</div>
+                <div class="subsets" id="subsetsDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">子集數</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BACKTRACKING</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -41,42 +48,65 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'void backtrack(int start, vector<int>& cur) {', id: 0 },
-            { line: '    result.push_back(cur);', id: 1 },
-            { line: '    for (int i = start; i < nums.size(); i++) {', id: 2 },
-            { line: '        cur.push_back(nums[i]);', id: 3 },
-            { line: '        backtrack(i + 1, cur);', id: 4 },
-            { line: '        cur.pop_back();', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '}', id: 7 },
+            { line: 'vector<vector<int>> subsets(vector<int>& nums) {', id: 0 },
+            { line: '    vector<vector<int>> result;', id: 1 },
+            { line: '    vector<int> subset;', id: 2 },
+            { line: '    backtrack(nums, 0, subset, result);', id: 3 },
+            { line: '    return result;', id: 4 },
+            { line: '}', id: 5 },
+            { line: 'void backtrack(vector<int>& nums, int start,', id: 6 },
+            { line: '               vector<int>& subset, vector<...>& result) {', id: 7 },
+            { line: '    result.push_back(subset);', id: 8 },
+            { line: '    for (int i = start; i < nums.size(); i++) {', id: 9 },
+            { line: '        subset.push_back(nums[i]);', id: 10 },
+            { line: '        backtrack(nums, i + 1, subset, result);', id: 11 },
+            { line: '        subset.pop_back(); // 回溯', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '}', id: 14 },
         ];
         const nums = [1, 2, 3];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            const result = [];
-            function backtrack(start, cur) {
-                result.push([...cur]);
-                steps.push({ cur: [...cur], result: result.map(r => [...r]), highlightLines: [1], explanation: { title: `Add [${cur.join(',')}]`, text: '' }});
-                for (let i = start; i < nums.length; i++) {
-                    cur.push(nums[i]);
-                    steps.push({ cur: [...cur], result: result.map(r => [...r]), highlightLines: [3], explanation: { title: `Include ${nums[i]}`, text: '' }});
-                    backtrack(i + 1, cur);
-                    cur.pop();
-                }
-            }
-            backtrack(0, []);
-            steps.push({ cur: [], result: result.map(r => [...r]), highlightLines: [7], explanation: { title: 'Done!', text: `${result.length} subsets` }});
+            const subsets = [];
+            steps.push({ current: null, subset: [], subsets: [], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `nums = [${nums.join(', ')}]<br><br>每個元素：選或不選<br>總共 2^n = 8 個子集` } });
+            // Simulate backtracking
+            subsets.push([]);
+            steps.push({ subset: [], subsets: [[]], newSubset: true, highlightLines: [8], explanation: { title: '加入空集', text: '[] 是有效子集' } });
+            subsets.push([1]);
+            steps.push({ current: 0, subset: [1], subsets: [[], [1]], newSubset: true, highlightLines: [10,8], explanation: { title: '選擇 1', text: '加入 [1]' } });
+            subsets.push([1,2]);
+            steps.push({ current: 1, subset: [1,2], subsets: [[],[1],[1,2]], newSubset: true, highlightLines: [10,11,8], explanation: { title: '選擇 1,2', text: '加入 [1,2]' } });
+            subsets.push([1,2,3]);
+            steps.push({ current: 2, subset: [1,2,3], subsets: [[],[1],[1,2],[1,2,3]], newSubset: true, highlightLines: [10,11,8], explanation: { title: '選擇 1,2,3', text: '加入 [1,2,3]' } });
+            subsets.push([1,3]);
+            steps.push({ current: 2, subset: [1,3], subsets: [[],[1],[1,2],[1,2,3],[1,3]], highlightLines: [12,10,8], explanation: { title: '回溯後選 3', text: '回溯 2，選 3<br>加入 [1,3]' } });
+            subsets.push([2]);
+            steps.push({ current: 1, subset: [2], subsets: [[],[1],[1,2],[1,2,3],[1,3],[2]], highlightLines: [12,10,8], explanation: { title: '回溯後選 2', text: '加入 [2]' } });
+            subsets.push([2,3]);
+            steps.push({ current: 2, subset: [2,3], subsets: [[],[1],[1,2],[1,2,3],[1,3],[2],[2,3]], highlightLines: [10,8], explanation: { title: '選擇 2,3', text: '加入 [2,3]' } });
+            subsets.push([3]);
+            steps.push({ current: 2, subset: [3], subsets: [[],[1],[1,2],[1,2,3],[1,3],[2],[2,3],[3]], final: true, highlightLines: [4], explanation: { title: '完成！', text: `共 8 個子集<br><br>時間：O(n × 2^n)` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('currentSubset').textContent = `[${step.cur.join(', ')}]`;
-                    document.getElementById('resultDisplay').innerHTML = step.result.map(r => `<span class="subset">[${r.join(',')}]</span>`).join('');
+                    let html = '';
+                    nums.forEach((n, i) => {
+                        let cls = 'num';
+                        if (step.subset?.includes(n)) cls += ' included';
+                        if (i === step.current) cls += ' current';
+                        html += `<div class="${cls}">${n}</div>`;
+                    });
+                    document.getElementById('numsDisplay').innerHTML = html;
+                    document.getElementById('treeDisplay').textContent = `當前路徑: [${(step.subset || []).join(', ')}]`;
+                    document.getElementById('subsetsDisplay').innerHTML = (step.subsets || []).map((s, i) => {
+                        const isNew = step.newSubset && i === step.subsets.length - 1;
+                        return `<span class="subset${isNew ? ' new' : ''}">[${s.join(',')}]</span>`;
+                    }).join('') || '空';
+                    document.getElementById('countDisplay').textContent = step.subsets?.length ?? 0;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());
