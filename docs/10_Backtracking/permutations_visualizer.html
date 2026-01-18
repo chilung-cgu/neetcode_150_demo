@@ -3,43 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Permutations Visualization</title>
+    <title>Permutations 全排列 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .perm-display { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
-        .num { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .nums { display: flex; gap: 8px; justify-content: center; margin: 20px 0; }
+        .num { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; font-size: 1.2rem; }
         .num.used { opacity: 0.3; }
-        .num.current { background: var(--viz-secondary); color: #0f172a; }
-        .results { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; max-height: 80px; overflow-y: auto; }
-        .result { padding: 4px 8px; border-radius: 4px; font-family: monospace; background: var(--viz-success); color: #0f172a; font-size: 0.85rem; }
+        .num.current { background: var(--viz-warning); color: #0f172a; }
+        .path { display: flex; gap: 6px; justify-content: center; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; min-height: 40px; }
+        .path-item { background: var(--viz-secondary); color: #0f172a; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
+        .results { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 15px 0; }
+        .result { background: var(--viz-success); color: #0f172a; padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">PERMUTATIONS [1, 2, 3]</div>
-                <div style="text-align: center; color: var(--viz-text-muted);">Available:</div>
-                <div class="perm-display" id="availableDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Current Permutation:</div>
-                <div class="perm-display" id="currentDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">All Permutations:</div>
+                <div class="viz-title">全排列（BACKTRACKING）</div>
+                <div class="nums" id="numsDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">當前路徑</div>
+                <div class="path" id="pathDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">結果</div>
                 <div class="results" id="resultsDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BACKTRACKING</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -47,60 +45,44 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'void backtrack(nums, path, used, result) {', id: 0 },
-            { line: '    if (path.size() == nums.size()) {', id: 1 },
-            { line: '        result.push_back(path); return;', id: 2 },
-            { line: '    }', id: 3 },
-            { line: '    for (int i = 0; i < nums.size(); i++) {', id: 4 },
-            { line: '        if (used[i]) continue;', id: 5 },
-            { line: '        used[i] = true;', id: 6 },
-            { line: '        path.push_back(nums[i]);', id: 7 },
-            { line: '        backtrack(nums, path, used, result);', id: 8 },
-            { line: '        path.pop_back(); used[i] = false;', id: 9 },
+            { line: 'vector<vector<int>> permute(vector<int>& nums) {', id: 0 },
+            { line: '    vector<vector<int>> result;', id: 1 },
+            { line: '    vector<int> path;', id: 2 },
+            { line: '    vector<bool> used(nums.size(), false);', id: 3 },
+            { line: '    backtrack(nums, used, path, result);', id: 4 },
+            { line: '    return result;', id: 5 },
+            { line: '}', id: 6 },
+            { line: 'void backtrack(...) {', id: 7 },
+            { line: '    if (path.size() == nums.size()) {', id: 8 },
+            { line: '        result.push_back(path); return;', id: 9 },
             { line: '    }', id: 10 },
-            { line: '}', id: 11 },
+            { line: '    for (int i = 0; i < nums.size(); i++) {', id: 11 },
+            { line: '        if (used[i]) continue;', id: 12 },
+            { line: '        used[i] = true; path.push_back(nums[i]);', id: 13 },
+            { line: '        backtrack(...);', id: 14 },
+            { line: '        used[i] = false; path.pop_back();', id: 15 },
+            { line: '    }', id: 16 },
+            { line: '}', id: 17 },
         ];
         const nums = [1, 2, 3];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            const results = [];
-            const perms = [[1,2,3], [1,3,2], [2,1,3], [2,3,1], [3,1,2], [3,2,1]];
-            
-            steps.push({ path: [], used: [false, false, false], results: [], highlightLines: [0], explanation: { title: 'Start', text: 'Generate all permutations' }});
-            
-            for (const perm of perms) {
-                for (let i = 1; i <= perm.length; i++) {
-                    const path = perm.slice(0, i);
-                    const used = nums.map(n => path.includes(n));
-                    if (i === perm.length) {
-                        results.push(perm);
-                        steps.push({ path, used, results: [...results], highlightLines: [1, 2], explanation: { title: '✓ Found!', text: `[${perm.join(', ')}]` }});
-                    } else {
-                        steps.push({ path, used, results: [...results], highlightLines: [6, 7], explanation: { title: `Add ${path[path.length - 1]}`, text: `Path: [${path.join(', ')}]` }});
-                    }
-                }
+            const perms = [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]];
+            steps.push({ used: [], path: [], results: [], highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: `nums = [1, 2, 3]<br><br>排列數 = 3! = 6<br>用 used 陣列追蹤已選元素` } });
+            for (let i = 0; i < perms.length; i++) {
+                steps.push({ used: perms[i], path: perms[i], results: perms.slice(0, i+1), highlightLines: [8,9], explanation: { title: `排列 ${i+1}`, text: `找到：[${perms[i].join(', ')}]` } });
             }
-            
-            steps.push({ path: [], used: [false, false, false], results, highlightLines: [11], explanation: { title: 'Done!', text: `${results.length} permutations found` }});
-            
+            steps.push({ used: [], path: [], results: perms, final: true, highlightLines: [5], explanation: { title: '🎉 完成！', text: `共 6 種排列<br><br>時間：O(n! × n)` } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('availableDisplay').innerHTML = nums.map((n, i) =>
-                        `<span class="num ${step.used[i] ? 'used' : ''}">${n}</span>`
-                    ).join('');
-                    document.getElementById('currentDisplay').innerHTML = step.path.map(n =>
-                        `<span class="num current">${n}</span>`
-                    ).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
-                    document.getElementById('resultsDisplay').innerHTML = step.results.map(r =>
-                        `<span class="result">[${r.join(',')}]</span>`
-                    ).join('');
+                    document.getElementById('numsDisplay').innerHTML = nums.map((n, i) => `<div class="num${step.used?.includes(n)?' used':''}">${n}</div>`).join('');
+                    document.getElementById('pathDisplay').innerHTML = (step.path || []).map(n => `<span class="path-item">${n}</span>`).join('') || '空';
+                    document.getElementById('resultsDisplay').innerHTML = (step.results || []).map(r => `<span class="result">[${r.join(',')}]</span>`).join('') || '無';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

@@ -3,44 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interleaving String Visualization</title>
+    <title>Interleaving String 交錯字符串 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .strings { text-align: center; margin: 10px 0; }
-        .str { display: inline-flex; gap: 2px; margin: 5px 10px; }
-        .char { width: 24px; height: 28px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 3px; }
-        .char.s1 { background: var(--viz-secondary); color: #0f172a; }
-        .char.s2 { background: var(--viz-success); color: #0f172a; }
+        .strings { display: flex; flex-direction: column; gap: 15px; align-items: center; margin: 20px 0; }
+        .string-row { display: flex; gap: 4px; align-items: center; }
+        .string-label { width: 30px; color: var(--text-muted); font-size: 0.9rem; }
+        .char { width: 30px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); font-size: 1rem; }
+        .char.s1 { background: var(--viz-primary); color: white; }
+        .char.s2 { background: var(--viz-secondary); color: #0f172a; }
+        .char.matched { border: 3px solid var(--viz-success); }
+        .dp-table { display: inline-grid; gap: 2px; margin: 15px auto; }
+        .dp-cell { width: 30px; height: 25px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 3px; background: var(--viz-bg-secondary); font-size: 0.8rem; }
+        .dp-cell.true { background: var(--viz-success); color: #0f172a; }
+        .dp-cell.header { background: var(--viz-primary); color: white; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">INTERLEAVING STRING</div>
-                <div class="strings">
-                    <div>s1: <span class="str" id="s1Display"></span></div>
-                    <div>s2: <span class="str" id="s2Display"></span></div>
-                    <div>s3: <span class="str" id="s3Display"></span></div>
-                </div>
+                <div class="viz-title">交錯字符串（2D DP）</div>
+                <div class="strings" id="stringsDisplay"></div>
+                <div style="text-align: center;"><div class="dp-table" id="dpTable"></div></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">2D DP</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -48,7 +48,7 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'bool isInterleave(s1, s2, s3) {', id: 0 },
+            { line: 'bool isInterleave(string s1, string s2, string s3) {', id: 0 },
             { line: '    if (s1.size() + s2.size() != s3.size()) return false;', id: 1 },
             { line: '    vector<vector<bool>> dp(m+1, vector<bool>(n+1, false));', id: 2 },
             { line: '    dp[0][0] = true;', id: 3 },
@@ -63,35 +63,37 @@
             { line: '    return dp[m][n];', id: 12 },
             { line: '}', id: 13 },
         ];
-        const s1 = 'aab', s2 = 'xyz', s3 = 'axayzbOLD'; // will show simpler example
-        const s1ex = 'ab', s2ex = 'cd', s3ex = 'acbd';
-
+        const s1 = "aab", s2 = "axy", s3 = "aaxaby";
         function generateAlgorithmSteps() {
             const steps = [];
-            const sources = ['s1', 's1', 's2', 's2']; // a from s1, c from s2, b from s1, d from s2
-            
-            steps.push({ s3sources: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 's1="ab", s2="cd", s3="acbd"' }});
-            steps.push({ s3sources: ['s1'], highlightLines: [6, 7], explanation: { title: 'Match "a"', text: 'From s1' }});
-            steps.push({ s3sources: ['s1', 's2'], highlightLines: [8, 9], explanation: { title: 'Match "c"', text: 'From s2' }});
-            steps.push({ s3sources: ['s1', 's2', 's1'], highlightLines: [6, 7], explanation: { title: 'Match "b"', text: 'From s1' }});
-            steps.push({ s3sources: ['s1', 's2', 's1', 's2'], highlightLines: [8, 9], explanation: { title: 'Match "d"', text: 'From s2' }});
-            steps.push({ s3sources: sources, result: true, highlightLines: [12], explanation: { title: 'Done!', text: 'Valid interleaving ✓' }});
-            
+            steps.push({ highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `s1 = "aab"<br>s2 = "axy"<br>s3 = "aaxaby"<br><br>dp[i][j] = s1[0..i-1] 和 s2[0..j-1] 能否交錯成 s3[0..i+j-1]` } });
+            const dp = [[true,true,false,false],[true,true,true,false],[false,true,true,true],[false,false,true,true]];
+            steps.push({ dp, highlightLines: [4,5,6,7,8,9], explanation: { title: '填表', text: 'dp[i][j] = true 如果：<br>s1[i-1] == s3[i+j-1] 且 dp[i-1][j]<br>或 s2[j-1] == s3[i+j-1] 且 dp[i][j-1]' } });
+            steps.push({ dp, result: true, final: true, highlightLines: [12], explanation: { title: '🎉 可以交錯！', text: 'dp[3][3] = true<br><br>交錯：a(s1) a(s2) x(s2) a(s1) b(s1) y(s2)<br><br>時間：O(m×n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('s1Display').innerHTML = [...s1ex].map(c => `<span class="char s1">${c}</span>`).join('');
-                    document.getElementById('s2Display').innerHTML = [...s2ex].map(c => `<span class="char s2">${c}</span>`).join('');
-                    document.getElementById('s3Display').innerHTML = [...s3ex].map((c, i) => {
-                        const src = step.s3sources?.[i];
-                        return `<span class="char ${src || ''}">${c}</span>`;
-                    }).join('');
-                    document.getElementById('resultDisplay').textContent = step.result ? 'true' : '-';
+                    let html = '';
+                    html += `<div class="string-row"><span class="string-label">s1:</span>${s1.split('').map(c => `<span class="char s1">${c}</span>`).join('')}</div>`;
+                    html += `<div class="string-row"><span class="string-label">s2:</span>${s2.split('').map(c => `<span class="char s2">${c}</span>`).join('')}</div>`;
+                    html += `<div class="string-row"><span class="string-label">s3:</span>${s3.split('').map(c => `<span class="char">${c}</span>`).join('')}</div>`;
+                    document.getElementById('stringsDisplay').innerHTML = html;
+                    if (step.dp) {
+                        const grid = document.getElementById('dpTable');
+                        grid.style.gridTemplateColumns = `repeat(${s2.length + 2}, 30px)`;
+                        let tableHtml = '<div class="dp-cell header"></div>';
+                        ('_' + s2).split('').forEach(c => tableHtml += `<div class="dp-cell header">${c === '_' ? '' : c}</div>`);
+                        ('_' + s1).split('').forEach((c, i) => {
+                            tableHtml += `<div class="dp-cell header">${c === '_' ? '' : c}</div>`;
+                            step.dp[i]?.forEach(v => tableHtml += `<div class="dp-cell${v ? ' true' : ''}">${v ? 'T' : 'F'}</div>`);
+                        });
+                        grid.innerHTML = tableHtml;
+                    }
+                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

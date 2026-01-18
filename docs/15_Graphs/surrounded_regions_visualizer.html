@@ -3,38 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Surrounded Regions Visualization</title>
+    <title>Surrounded Regions 被圍繞的區域 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: grid; gap: 2px; max-width: 160px; margin: 0 auto; }
-        .cell { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1rem; border-radius: 3px; }
-        .cell.X { background: var(--viz-primary); color: white; }
-        .cell.O { background: rgba(255,255,255,0.2); color: white; }
+        .grid { display: inline-grid; gap: 2px; margin: 20px auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; font-size: 1.1rem; transition: all 0.3s; }
+        .cell.O { background: var(--viz-primary); color: white; }
+        .cell.X { background: var(--viz-bg-secondary); color: var(--text-muted); }
         .cell.safe { background: var(--viz-success); color: #0f172a; }
-        .cell.captured { background: var(--viz-error); }
+        .cell.captured { background: var(--viz-error); color: white; }
+        .cell.checking { border: 3px solid var(--viz-warning); }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SURROUNDED REGIONS</div>
-                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(4, 35px);"></div>
+                <div class="viz-title">被圍繞的區域（DFS 從邊界開始）</div>
+                <div style="text-align: center;"><div class="grid" id="gridDisplay"></div></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BORDER DFS</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -42,46 +40,55 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'void solve(board) {', id: 0 },
-            { line: '    // Mark border-connected O as safe', id: 1 },
-            { line: '    for (border cells)', id: 2 },
-            { line: '        if (board[i][j] == \'O\') dfs(i, j);', id: 3 },
-            { line: '    // Capture surrounded O, restore safe', id: 4 },
-            { line: '    for (all cells)', id: 5 },
-            { line: '        if (board[i][j] == \'O\') board[i][j] = \'X\';', id: 6 },
-            { line: '        if (board[i][j] == \'S\') board[i][j] = \'O\';', id: 7 },
+            { line: 'void solve(vector<vector<char>>& board) {', id: 0 },
+            { line: '    // 從邊界開始 DFS，標記不會被捕獲的 O', id: 1 },
+            { line: '    for (邊界的 O) dfs(board, i, j);', id: 2 },
+            { line: '    // O → X（被捕獲），S → O（安全）', id: 3 },
+            { line: '    for (all cells) {', id: 4 },
+            { line: '        if (cell == \'O\') cell = \'X\';', id: 5 },
+            { line: '        if (cell == \'S\') cell = \'O\';', id: 6 },
+            { line: '    }', id: 7 },
             { line: '}', id: 8 },
         ];
-        const grid = [['X','X','X','X'],['X','O','O','X'],['X','X','O','X'],['X','O','X','X']];
-
+        const board = [
+            ['X','X','X','X'],
+            ['X','O','O','X'],
+            ['X','X','O','X'],
+            ['X','O','X','X']
+        ];
         function generateAlgorithmSteps() {
             const steps = [];
-            
-            steps.push({ safe: [], captured: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Mark border O', text: 'DFS from border Os' }});
-            steps.push({ safe: [[3,1]], captured: [], highlightLines: [3], explanation: { title: 'Border O at (3,1)', text: 'Mark as safe' }});
-            steps.push({ safe: [[3,1]], captured: [[1,1],[1,2],[2,2]], highlightLines: [5, 6], explanation: { title: 'Capture surrounded', text: 'Interior Os → X' }});
-            steps.push({ safe: [[3,1]], captured: [[1,1],[1,2],[2,2]], highlightLines: [7], explanation: { title: 'Done!', text: 'Restore safe Os' }});
-            
+            steps.push({ board: board.map(r => [...r]), highlightLines: [0,1], explanation: { title: '初始化', text: '4×4 棋盤<br><br>關鍵洞察：<br>與邊界連通的 O 不會被捕獲<br>從邊界 O 開始 DFS 標記' } });
+            // Mark border O as safe
+            let b = board.map(r => [...r]);
+            b[3][1] = 'S';
+            steps.push({ board: b.map(r => [...r]), safe: [[3,1]], highlightLines: [2], explanation: { title: '標記邊界 O', text: '(3,1) 是邊界的 O<br>標記為安全 (S)' } });
+            // Capture the rest
+            b[1][1] = 'X'; b[1][2] = 'X'; b[2][2] = 'X';
+            steps.push({ board: b.map(r => [...r]), captured: [[1,1],[1,2],[2,2]], highlightLines: [4,5], explanation: { title: '捕獲被圍繞的 O', text: '(1,1), (1,2), (2,2) 不與邊界連通<br>O → X' } });
+            // Restore safe
+            b[3][1] = 'O';
+            steps.push({ board: b.map(r => [...r]), final: true, highlightLines: [6,7], explanation: { title: '🎉 完成！', text: '恢復安全的 O<br>S → O<br><br>時間：O(m×n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
+                    const b = step.board || board;
+                    const grid = document.getElementById('gridDisplay');
+                    grid.style.gridTemplateColumns = `repeat(${b[0].length}, 40px)`;
                     let html = '';
-                    for (let i = 0; i < 4; i++) {
-                        for (let j = 0; j < 4; j++) {
-                            const isSafe = step.safe?.some(c => c[0] === i && c[1] === j);
-                            const isCaptured = step.captured?.some(c => c[0] === i && c[1] === j);
-                            let cls = 'cell ' + grid[i][j];
-                            if (isSafe) cls += ' safe';
-                            if (isCaptured) cls += ' captured';
-                            html += `<div class="${cls}">${isCaptured ? 'X' : grid[i][j]}</div>`;
+                    for (let r = 0; r < b.length; r++) {
+                        for (let c = 0; c < b[0].length; c++) {
+                            let cls = `cell ${b[r][c]}`;
+                            if (step.safe?.some(s => s[0]===r && s[1]===c)) cls += ' safe';
+                            if (step.captured?.some(s => s[0]===r && s[1]===c)) cls += ' captured';
+                            html += `<div class="${cls}">${b[r][c]}</div>`;
                         }
                     }
-                    document.getElementById('gridDisplay').innerHTML = html;
+                    grid.innerHTML = html;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

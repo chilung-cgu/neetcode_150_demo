@@ -3,41 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kth Largest Element in Stream Visualization</title>
+    <title>Kth Largest Element in Stream - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .heap-display { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 15px 0; }
-        .heap-item { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
-        .heap-item.top { background: var(--viz-success); color: #0f172a; }
-        .heap-item.new { border: 2px solid var(--viz-secondary); }
+        .heap { display: flex; flex-direction: column; align-items: center; margin: 20px 0; }
+        .heap-level { display: flex; gap: 10px; margin: 5px 0; justify-content: center; }
+        .heap-node { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; font-size: 1.1rem; }
+        .heap-node.root { background: var(--viz-success); color: #0f172a; }
+        .heap-node.new { animation: popIn 0.3s; border: 3px solid var(--viz-warning); }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+        .stream { display: flex; gap: 8px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+        .stream-item { padding: 8px 15px; background: var(--viz-bg-secondary); border-radius: 6px; font-weight: bold; }
+        .stream-item.added { background: var(--viz-warning); color: #0f172a; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">KTH LARGEST IN STREAM (k=3)</div>
-                <div style="text-align: center; color: var(--viz-text-muted);">Min Heap (size ≤ k):</div>
-                <div class="heap-display" id="heapDisplay"></div>
+                <div class="viz-title">數據流中第 K 大元素（MIN HEAP）</div>
+                <div style="text-align: center; color: var(--text-muted);">Min Heap（大小 = k）</div>
+                <div class="heap" id="heapDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">數據流</div>
+                <div class="stream" id="streamDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Operation</div><div class="state-value" id="opDisplay">-</div></div>
-                    <div class="state-item"><div class="state-label">Kth Largest</div><div class="state-value" id="kthDisplay" style="color: var(--viz-success);">-</div></div>
+                    <div class="state-item"><div class="state-label">K</div><div class="state-value">3</div></div>
+                    <div class="state-item"><div class="state-label">第 K 大</div><div class="state-value" id="kthDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">MIN HEAP APPROACH</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -46,58 +50,50 @@
     <script>
         const codeStructure = [
             { line: 'class KthLargest {', id: 0 },
-            { line: '    priority_queue<int, vec, greater<int>> minHeap;', id: 1 },
+            { line: '    priority_queue<int, vector<int>, greater<int>> minHeap;', id: 1 },
             { line: '    int k;', id: 2 },
-            { line: '    KthLargest(int k, vector<int>& nums) {', id: 3 },
-            { line: '        this->k = k;', id: 4 },
+            { line: 'public:', id: 3 },
+            { line: '    KthLargest(int k, vector<int>& nums) : k(k) {', id: 4 },
             { line: '        for (int n : nums) add(n);', id: 5 },
             { line: '    }', id: 6 },
             { line: '    int add(int val) {', id: 7 },
             { line: '        minHeap.push(val);', id: 8 },
             { line: '        if (minHeap.size() > k) minHeap.pop();', id: 9 },
-            { line: '        return minHeap.top(); // kth largest', id: 10 },
+            { line: '        return minHeap.top(); // 第 k 大', id: 10 },
             { line: '    }', id: 11 },
             { line: '};', id: 12 },
         ];
-        const k = 3;
-        const initial = [4, 5, 8, 2];
-        const adds = [3, 5, 10, 9, 4];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            const heap = [];
-            
-            steps.push({ heap: [], op: 'init', kth: null, highlightLines: [0, 1, 2, 3, 4], explanation: { title: 'Init', text: `k=${k}, Min heap keeps k largest` }});
-            
-            // Add initial elements
-            for (const n of initial) {
-                heap.push(n);
-                heap.sort((a, b) => a - b);
-                if (heap.length > k) heap.shift();
-                steps.push({ heap: [...heap], op: `init add(${n})`, kth: heap[0], newVal: n, highlightLines: [5, 8, 9], explanation: { title: `Add ${n}`, text: `Heap: [${heap.join(', ')}], kth=${heap[0]}` }});
-            }
-            
-            // Stream adds
-            for (const n of adds) {
-                heap.push(n);
-                heap.sort((a, b) => a - b);
-                if (heap.length > k) heap.shift();
-                steps.push({ heap: [...heap], op: `add(${n})`, kth: heap[0], newVal: n, highlightLines: [7, 8, 9, 10], explanation: { title: `add(${n})`, text: `Return: ${heap[0]}` }});
-            }
-            
+            steps.push({ heap: [], stream: [], highlightLines: [0,1,2,3,4,5,6], explanation: { title: '初始化', text: 'k = 3<br>初始：[4, 5, 8, 2]<br><br>維護大小為 k 的 Min Heap<br>堆頂 = 第 k 大元素' } });
+            steps.push({ heap: [4,5,8], stream: [4,5,8,2], newVal: 2, kth: 4, highlightLines: [7,8,9,10], explanation: { title: '初始化完成', text: '加入 4,5,8,2 後<br>保留最大的 3 個：[4,5,8]<br>堆頂 4 = 第 3 大' } });
+            steps.push({ heap: [4,5,8], stream: [4,5,8,2,3], addedIdx: 4, kth: 4, highlightLines: [7,8,9,10], explanation: { title: 'add(3)', text: '3 < 堆頂 4<br>加入後 pop 掉<br>第 3 大仍是 4' } });
+            steps.push({ heap: [5,8,10], stream: [4,5,8,2,3,5,10], addedIdx: 6, newHeapVal: 10, kth: 5, highlightLines: [7,8,9,10], explanation: { title: 'add(5), add(10)', text: '10 > 堆頂，加入<br>pop 掉 4<br>新堆：[5,8,10]<br>第 3 大是 5' } });
+            steps.push({ heap: [8,9,10], stream: [4,5,8,2,3,5,10,9], addedIdx: 7, newHeapVal: 9, kth: 8, final: true, highlightLines: [10], explanation: { title: 'add(9)', text: '9 > 堆頂 5，加入<br>pop 掉 5<br>新堆：[8,9,10]<br>第 3 大是 8' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('heapDisplay').innerHTML = step.heap.map((v, i) =>
-                        `<span class="heap-item ${i === 0 ? 'top' : ''} ${v === step.newVal ? 'new' : ''}">${v}</span>`
-                    ).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
-                    document.getElementById('opDisplay').textContent = step.op;
-                    document.getElementById('kthDisplay').textContent = step.kth ?? '-';
+                    const heap = step.heap || [];
+                    let heapHtml = '';
+                    if (heap.length > 0) {
+                        heapHtml = `<div class="heap-level"><div class="heap-node root${heap[0]===step.newHeapVal?' new':''}">${heap[0]}</div></div>`;
+                        if (heap.length > 1) {
+                            heapHtml += `<div class="heap-level">`;
+                            for (let i = 1; i < Math.min(3, heap.length); i++) {
+                                heapHtml += `<div class="heap-node${heap[i]===step.newHeapVal?' new':''}">${heap[i]}</div>`;
+                            }
+                            heapHtml += `</div>`;
+                        }
+                    } else {
+                        heapHtml = '<div style="color:var(--text-muted)">空</div>';
+                    }
+                    document.getElementById('heapDisplay').innerHTML = heapHtml;
+                    document.getElementById('streamDisplay').innerHTML = (step.stream || []).map((n, i) => `<span class="stream-item${i===step.addedIdx?' added':''}">${n}</span>`).join('');
+                    document.getElementById('kthDisplay').textContent = step.kth ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

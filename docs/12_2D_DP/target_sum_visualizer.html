@@ -3,43 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Target Sum Visualization</title>
+    <title>Target Sum 目標和 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .nums-display { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
-        .num { padding: 8px 14px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
+        .nums { display: flex; gap: 8px; justify-content: center; margin: 20px 0; }
+        .num { width: 50px; padding: 10px; text-align: center; border-radius: 6px; background: var(--viz-primary); color: white; }
+        .num .value { font-weight: bold; font-size: 1.2rem; }
+        .num .sign { font-size: 0.9rem; }
         .num.plus { background: var(--viz-success); color: #0f172a; }
         .num.minus { background: var(--viz-error); }
-        .expressions { display: flex; flex-direction: column; gap: 4px; align-items: center; margin-top: 10px; max-height: 80px; overflow-y: auto; }
-        .expr { font-family: monospace; font-size: 0.9rem; color: var(--viz-text-muted); }
+        .expression { text-align: center; font-size: 1.3rem; font-weight: bold; margin: 15px 0; color: var(--viz-secondary); }
+        .dp-display { text-align: center; margin: 15px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">TARGET SUM (target=3)</div>
-                <div class="nums-display" id="numsDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted);">Valid Expressions:</div>
-                <div class="expressions" id="exprDisplay"></div>
+                <div class="viz-title">目標和（DP / 背包）</div>
+                <div class="nums" id="numsDisplay"></div>
+                <div class="expression" id="expressionDisplay"></div>
+                <div class="dp-display" id="dpDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Ways</div><div class="state-value" id="waysDisplay" style="color: var(--viz-success);">0</div></div>
+                    <div class="state-item"><div class="state-label">目標</div><div class="state-value">3</div></div>
+                    <div class="state-item"><div class="state-label">方法數</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">SUBSET SUM DP</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -47,51 +47,46 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int findTargetSumWays(nums, target) {', id: 0 },
-            { line: '    // P - N = target, P + N = sum', id: 1 },
-            { line: '    // P = (sum + target) / 2', id: 2 },
-            { line: '    int P = (sum + target) / 2;', id: 3 },
-            { line: '    // Count subsets with sum P', id: 4 },
-            { line: '    vector<int> dp(P + 1, 0);', id: 5 },
+            { line: 'int findTargetSumWays(vector<int>& nums, int target) {', id: 0 },
+            { line: '    int sum = accumulate(nums.begin(), nums.end(), 0);', id: 1 },
+            { line: '    if ((sum + target) % 2 || abs(target) > sum) return 0;', id: 2 },
+            { line: '    int newTarget = (sum + target) / 2;', id: 3 },
+            { line: '    // 轉換為：選出子集和為 newTarget', id: 4 },
+            { line: '    vector<int> dp(newTarget + 1, 0);', id: 5 },
             { line: '    dp[0] = 1;', id: 6 },
-            { line: '    for (int n : nums)', id: 7 },
-            { line: '        for (int j = P; j >= n; j--)', id: 8 },
-            { line: '            dp[j] += dp[j - n];', id: 9 },
-            { line: '    return dp[P];', id: 10 },
-            { line: '}', id: 11 },
+            { line: '    for (int num : nums) {', id: 7 },
+            { line: '        for (int j = newTarget; j >= num; j--) {', id: 8 },
+            { line: '            dp[j] += dp[j - num];', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return dp[newTarget];', id: 12 },
+            { line: '}', id: 13 },
         ];
         const nums = [1, 1, 1, 1, 1];
         const target = 3;
-        // +1+1+1+1-1=3, +1+1+1-1+1=3, etc. → 5 ways
-
         function generateAlgorithmSteps() {
             const steps = [];
-            const validExpressions = ['-1+1+1+1+1', '+1-1+1+1+1', '+1+1-1+1+1', '+1+1+1-1+1', '+1+1+1+1-1'];
-            
-            steps.push({ signs: [], expressions: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 'sum=5, P=(5+3)/2=4' }});
-            steps.push({ signs: [], expressions: [], highlightLines: [4, 5, 6], explanation: { title: 'Subset Sum', text: 'Count subsets summing to 4' }});
-            
-            for (let i = 0; i < validExpressions.length; i++) {
-                steps.push({ signs: validExpressions[i].split('').filter(c => c === '+' || c === '-'), expressions: validExpressions.slice(0, i + 1), highlightLines: [7, 8, 9], explanation: { title: `Found: ${validExpressions[i]}`, text: `= ${target}` }});
-            }
-            
-            steps.push({ expressions: validExpressions, highlightLines: [10], explanation: { title: 'Done!', text: `${validExpressions.length} ways` }});
-            
+            steps.push({ signs: [], highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: `nums = [1,1,1,1,1], target = 3<br><br>轉換：<br>P - N = target<br>P + N = sum<br>P = (sum + target) / 2 = 4` } });
+            steps.push({ signs: ['+','+','+','+','-'], expr: '+1+1+1+1-1=3', highlightLines: [7,8,9], explanation: { title: '方法 1', text: '+1+1+1+1-1 = 3' } });
+            steps.push({ signs: ['+','+','+','-','+'], expr: '+1+1+1-1+1=3', highlightLines: [7,8,9], explanation: { title: '方法 2', text: '+1+1+1-1+1 = 3' } });
+            steps.push({ signs: ['+','+','-','+','+'], expr: '+1+1-1+1+1=3', highlightLines: [7,8,9], explanation: { title: '方法 3', text: '+1+1-1+1+1 = 3' } });
+            steps.push({ signs: ['+','-','+','+','+'], expr: '+1-1+1+1+1=3', highlightLines: [7,8,9], explanation: { title: '方法 4', text: '+1-1+1+1+1 = 3' } });
+            steps.push({ signs: ['-','+','+','+','+'], expr: '-1+1+1+1+1=3', count: 5, final: true, highlightLines: [12], explanation: { title: '🎉 完成！', text: '共 5 種方法<br><br>時間：O(n × sum)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('numsDisplay').innerHTML = nums.map(n =>
-                        `<span class="num">${n}</span>`
-                    ).join('');
-                    document.getElementById('exprDisplay').innerHTML = (step.expressions || []).map(e =>
-                        `<div class="expr">${e} = ${target}</div>`
-                    ).join('') || '<em style="color:var(--viz-text-muted)">None</em>';
-                    document.getElementById('waysDisplay').textContent = step.expressions?.length || 0;
+                    document.getElementById('numsDisplay').innerHTML = nums.map((n, i) => {
+                        const sign = step.signs?.[i] || '';
+                        const cls = sign === '+' ? 'num plus' : (sign === '-' ? 'num minus' : 'num');
+                        return `<div class="${cls}"><div class="sign">${sign}</div><div class="value">${n}</div></div>`;
+                    }).join('');
+                    document.getElementById('expressionDisplay').textContent = step.expr || '';
+                    document.getElementById('dpDisplay').textContent = step.dpInfo || '選出子集和為 4';
+                    document.getElementById('countDisplay').textContent = step.count ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

@@ -3,36 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redundant Connection Visualization</title>
+    <title>Redundant Connection 冗餘連接 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .edges { display: flex; flex-direction: column; gap: 6px; margin: 15px 0; align-items: center; }
-        .edge { padding: 8px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
-        .edge.redundant { background: var(--viz-error); }
-        .edge.checked { border: 2px solid var(--viz-secondary); }
+        .nodes { display: flex; gap: 15px; justify-content: center; margin: 20px 0; }
+        .node { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; }
+        .edges { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .edge { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; }
+        .edge.current { background: var(--viz-warning); color: #0f172a; }
+        .edge.redundant { background: var(--viz-error); color: white; }
+        .edge.added { background: var(--viz-success); color: #0f172a; }
+        .uf { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
+        .uf-item { padding: 6px 12px; background: var(--viz-bg-secondary); border-radius: 4px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">REDUNDANT CONNECTION (UNION-FIND)</div>
+                <div class="viz-title">冗餘連接（UNION-FIND）</div>
+                <div class="nodes" id="nodesDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">邊</div>
                 <div class="edges" id="edgesDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">Union-Find Parent</div>
+                <div class="uf" id="ufDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">UNION-FIND</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -40,37 +46,45 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'vector<int> findRedundantConnection(edges) {', id: 0 },
-            { line: '    UnionFind uf(n);', id: 1 },
-            { line: '    for (auto& e : edges) {', id: 2 },
-            { line: '        if (uf.find(e[0]) == uf.find(e[1]))', id: 3 },
-            { line: '            return e; // already connected!', id: 4 },
-            { line: '        uf.union(e[0], e[1]);', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    return {};', id: 7 },
-            { line: '}', id: 8 },
+            { line: 'vector<int> findRedundantConnection(vector<vector<int>>& edges) {', id: 0 },
+            { line: '    int n = edges.size();', id: 1 },
+            { line: '    vector<int> parent(n + 1);', id: 2 },
+            { line: '    iota(parent.begin(), parent.end(), 0);', id: 3 },
+            { line: '    for (auto& e : edges) {', id: 4 },
+            { line: '        int p1 = find(parent, e[0]);', id: 5 },
+            { line: '        int p2 = find(parent, e[1]);', id: 6 },
+            { line: '        if (p1 == p2) return e; // 已連通 = 冗餘', id: 7 },
+            { line: '        parent[p1] = p2; // 合併', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return {};', id: 10 },
+            { line: '}', id: 11 },
         ];
-        const edges = [[1, 2], [1, 3], [2, 3]];
-
+        const edges = [[1,2],[1,3],[2,3]];
         function generateAlgorithmSteps() {
             const steps = [];
-            
-            steps.push({ checked: -1, redundant: -1, highlightLines: [0, 1], explanation: { title: 'Init Union-Find', text: 'Each node is its own parent' }});
-            steps.push({ checked: 0, redundant: -1, highlightLines: [5], explanation: { title: 'Edge [1,2]', text: 'Union 1 and 2' }});
-            steps.push({ checked: 1, redundant: -1, highlightLines: [5], explanation: { title: 'Edge [1,3]', text: 'Union 1 and 3' }});
-            steps.push({ checked: 2, redundant: 2, highlightLines: [3, 4], explanation: { title: 'Edge [2,3]', text: '2 and 3 already connected → redundant!' }});
-            
+            steps.push({ parent: [0,1,2,3], added: [], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: 'edges = [[1,2],[1,3],[2,3]]<br><br>Union-Find：初始每個節點是自己的父節點' } });
+            steps.push({ parent: [0,2,2,3], current: 0, added: [0], highlightLines: [4,5,6,8], explanation: { title: '邊 [1,2]', text: 'find(1)=1, find(2)=2<br>不同集合，合併<br>parent[1] = 2' } });
+            steps.push({ parent: [0,2,3,3], current: 1, added: [0,1], highlightLines: [4,5,6,8], explanation: { title: '邊 [1,3]', text: 'find(1)=2, find(3)=3<br>不同集合，合併<br>parent[2] = 3' } });
+            steps.push({ parent: [0,2,3,3], current: 2, redundant: 2, highlightLines: [4,5,6,7], explanation: { title: '邊 [2,3] - 冗餘！', text: 'find(2)=3, find(3)=3<br>同一集合！已經連通<br>這是冗餘邊' } });
+            steps.push({ parent: [0,2,3,3], redundant: 2, result: [2,3], final: true, highlightLines: [7], explanation: { title: '🎉 找到冗餘邊！', text: '冗餘邊：[2, 3]<br><br>時間：O(n × α(n)) ≈ O(n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('edgesDisplay').innerHTML = edges.map((e, i) =>
-                        `<div class="edge ${i === step.redundant ? 'redundant' : ''} ${i === step.checked ? 'checked' : ''}">[${e[0]}, ${e[1]}]</div>`
-                    ).join('');
+                    document.getElementById('nodesDisplay').innerHTML = [1,2,3].map(n => `<div class="node">${n}</div>`).join('');
+                    let html = '';
+                    edges.forEach((e, i) => {
+                        let cls = 'edge';
+                        if (i === step.current) cls += ' current';
+                        if (step.added?.includes(i)) cls += ' added';
+                        if (i === step.redundant) cls += ' redundant';
+                        html += `<div class="${cls}">[${e[0]}, ${e[1]}]</div>`;
+                    });
+                    document.getElementById('edgesDisplay').innerHTML = html;
+                    document.getElementById('ufDisplay').innerHTML = (step.parent || []).slice(1).map((p, i) => `<span class="uf-item">${i+1}→${p}</span>`).join('');
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

@@ -3,39 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Schedule II Visualization</title>
+    <title>Course Schedule II 課程表 II - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .courses { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
-        .course { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
-        .course.processed { background: var(--viz-success); color: #0f172a; }
-        .order { display: flex; gap: 4px; justify-content: center; margin-top: 10px; }
-        .order-item { padding: 8px 12px; border-radius: 4px; font-family: monospace; background: var(--viz-secondary); color: #0f172a; }
+        .graph { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .node { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; font-size: 1.1rem; transition: all 0.3s; }
+        .node.visited { background: var(--viz-success); color: #0f172a; }
+        .node.current { background: var(--viz-warning); color: #0f172a; }
+        .result { display: flex; gap: 8px; justify-content: center; margin: 15px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .result-item { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-success); color: #0f172a; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">COURSE SCHEDULE II (TOPOLOGICAL SORT)</div>
-                <div class="courses" id="coursesDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted);">Order:</div>
-                <div class="order" id="orderDisplay"></div>
+                <div class="viz-title">課程表 II（拓撲排序）</div>
+                <div class="graph" id="graphDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">修課順序</div>
+                <div class="result" id="resultDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">KAHN'S ALGORITHM (BFS)</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -43,46 +41,49 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'vector<int> findOrder(numCourses, prerequisites) {', id: 0 },
-            { line: '    // Build graph and indegree array', id: 1 },
-            { line: '    queue<int> q;', id: 2 },
-            { line: '    for (nodes with indegree 0) q.push(node);', id: 3 },
-            { line: '    while (!q.empty()) {', id: 4 },
-            { line: '        int node = q.front(); q.pop();', id: 5 },
-            { line: '        result.push_back(node);', id: 6 },
-            { line: '        for (auto& next : graph[node]) {', id: 7 },
-            { line: '            if (--indegree[next] == 0)', id: 8 },
-            { line: '                q.push(next);', id: 9 },
-            { line: '        }', id: 10 },
-            { line: '    }', id: 11 },
-            { line: '    return result.size() == n ? result : {};', id: 12 },
-            { line: '}', id: 13 },
+            { line: 'vector<int> findOrder(int numCourses, vector<vector<int>>& prerequisites) {', id: 0 },
+            { line: '    vector<int> inDegree(numCourses, 0);', id: 1 },
+            { line: '    vector<vector<int>> graph(numCourses);', id: 2 },
+            { line: '    // 建圖並計算入度', id: 3 },
+            { line: '    for (auto& p : prerequisites) { graph[p[1]].push_back(p[0]); inDegree[p[0]]++; }', id: 4 },
+            { line: '    queue<int> q;', id: 5 },
+            { line: '    for (int i = 0; i < numCourses; i++) if (inDegree[i] == 0) q.push(i);', id: 6 },
+            { line: '    vector<int> order;', id: 7 },
+            { line: '    while (!q.empty()) {', id: 8 },
+            { line: '        int course = q.front(); q.pop();', id: 9 },
+            { line: '        order.push_back(course);', id: 10 },
+            { line: '        for (int next : graph[course]) {', id: 11 },
+            { line: '            if (--inDegree[next] == 0) q.push(next);', id: 12 },
+            { line: '        }', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '    return order.size() == numCourses ? order : vector<int>();', id: 15 },
+            { line: '}', id: 16 },
         ];
-        const courses = [0, 1, 2, 3];
-
+        // 4 courses: 1→0, 2→0, 3→1, 3→2
         function generateAlgorithmSteps() {
             const steps = [];
-            
-            steps.push({ processed: [], order: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 'Find nodes with indegree 0' }});
-            steps.push({ processed: [0], order: [0], highlightLines: [5, 6], explanation: { title: 'Process 0', text: 'Add to order' }});
-            steps.push({ processed: [0, 1], order: [0, 1], highlightLines: [5, 6], explanation: { title: 'Process 1', text: 'Add to order' }});
-            steps.push({ processed: [0, 1, 2], order: [0, 1, 2], highlightLines: [5, 6], explanation: { title: 'Process 2', text: 'Add to order' }});
-            steps.push({ processed: [0, 1, 2, 3], order: [0, 1, 2, 3], highlightLines: [12], explanation: { title: 'Done!', text: 'Order: [0, 1, 2, 3]' }});
-            
+            steps.push({ visited: [], order: [], highlightLines: [0,1,2,3,4,5,6,7], explanation: { title: '初始化', text: '4 門課程，依賴關係：<br>1→0, 2→0, 3→1, 3→2<br><br>入度：[2, 1, 1, 0]<br>課程 3 入度為 0，先修' } });
+            steps.push({ visited: [3], current: 3, order: [3], highlightLines: [8,9,10,11,12], explanation: { title: '修課程 3', text: '課程 3 入度 = 0<br>更新：1 和 2 的入度 -1<br>現在 1 和 2 入度都為 0' } });
+            steps.push({ visited: [3, 1], current: 1, order: [3, 1], highlightLines: [8,9,10,11,12], explanation: { title: '修課程 1', text: '課程 1 入度 = 0<br>更新：0 的入度 -1 = 1' } });
+            steps.push({ visited: [3, 1, 2], current: 2, order: [3, 1, 2], highlightLines: [8,9,10,11,12], explanation: { title: '修課程 2', text: '課程 2 入度 = 0<br>更新：0 的入度 -1 = 0' } });
+            steps.push({ visited: [3, 1, 2, 0], current: 0, order: [3, 1, 2, 0], highlightLines: [8,9,10], explanation: { title: '修課程 0', text: '課程 0 入度 = 0<br>所有課程完成！' } });
+            steps.push({ visited: [3, 1, 2, 0], order: [3, 1, 2, 0], final: true, highlightLines: [15], explanation: { title: '🎉 完成！', text: '修課順序：[3, 1, 2, 0]<br><br>時間：O(V + E)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('coursesDisplay').innerHTML = courses.map(c =>
-                        `<div class="course ${step.processed?.includes(c) ? 'processed' : ''}">${c}</div>`
-                    ).join('');
-                    document.getElementById('orderDisplay').innerHTML = (step.order || []).map(c =>
-                        `<span class="order-item">${c}</span>`
-                    ).join('') || '<em style="color:var(--viz-text-muted)">-</em>';
+                    let html = '';
+                    for (let i = 0; i < 4; i++) {
+                        let cls = 'node';
+                        if (step.visited?.includes(i)) cls += ' visited';
+                        if (i === step.current) cls += ' current';
+                        html += `<div class="${cls}">${i}</div>`;
+                    }
+                    document.getElementById('graphDisplay').innerHTML = html;
+                    document.getElementById('resultDisplay').innerHTML = (step.order || []).map(c => `<div class="result-item">${c}</div>`).join('') || '等待...';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

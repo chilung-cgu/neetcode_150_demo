@@ -3,45 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Permutation in String Visualization</title>
+    <title>Permutation in String 字串的排列 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .char-row { display: flex; justify-content: center; gap: 2px; margin: 10px 0; }
-        .char-box { padding: 8px 12px; border-radius: 4px; font-family: monospace; background: rgba(255,255,255,0.1); }
-        .char-box.in-window { background: var(--viz-primary); color: white; }
-        .freq-display { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; font-family: monospace; font-size: 0.85rem; }
-        .freq-item { padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); }
-        .freq-item.match { color: var(--viz-success); }
-        .freq-item.mismatch { color: var(--viz-error); }
+        .strings { display: flex; flex-direction: column; gap: 15px; align-items: center; margin: 20px 0; }
+        .string-row { display: flex; gap: 4px; }
+        .char { width: 35px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-primary); color: white; font-size: 1.1rem; }
+        .char.window { background: var(--viz-warning); color: #0f172a; }
+        .char.match { background: var(--viz-success); color: #0f172a; }
+        .freq { display: flex; gap: 8px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
+        .freq-item { padding: 6px 12px; background: var(--viz-bg-secondary); border-radius: 4px; font-size: 0.85rem; }
+        .freq-item.zero { background: var(--viz-success); color: #0f172a; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">FIXED WINDOW - PERMUTATION CHECK</div>
-                <div style="text-align: center; margin-bottom: 10px;">Pattern: <strong id="patternDisplay"></strong></div>
-                <div class="char-row" id="charRow"></div>
-                <div class="viz-title" style="margin-top: 15px;">FREQUENCY COMPARISON</div>
-                <div class="freq-display" id="freqDisplay"></div>
+                <div class="viz-title">字串的排列（滑動窗口 + 頻率）</div>
+                <div class="strings">
+                    <div><span style="color: var(--text-muted)">s1: </span><span class="string-row" id="s1Display"></span></div>
+                    <div><span style="color: var(--text-muted)">s2: </span><span class="string-row" id="s2Display"></span></div>
+                </div>
+                <div style="text-align: center; color: var(--text-muted);">需要匹配的字元數</div>
+                <div class="freq" id="freqDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Matches</div><div class="state-value" id="matchDisplay" style="color: var(--viz-success);">0 / 26</div></div>
+                    <div class="state-item"><div class="state-label">窗口</div><div class="state-value" id="windowDisplay">[0,0]</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -50,71 +51,46 @@
     <script>
         const codeStructure = [
             { line: 'bool checkInclusion(string s1, string s2) {', id: 0 },
-            { line: '    int count1[26], count2[26], matches = 0;', id: 1 },
-            { line: '    // Init count1 from s1, count2 from first window', id: 2 },
-            { line: '    for (int i = s1.length(); i < s2.length(); i++) {', id: 3 },
-            { line: '        // Slide window: add s2[i], remove s2[i-len]', id: 4 },
-            { line: '        if (matches == 26) return true;', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    return matches == 26;', id: 7 },
-            { line: '}', id: 8 },
+            { line: '    vector<int> count(26, 0);', id: 1 },
+            { line: '    for (char c : s1) count[c - \'a\']++;', id: 2 },
+            { line: '    int left = 0, matched = 0;', id: 3 },
+            { line: '    for (int right = 0; right < s2.size(); right++) {', id: 4 },
+            { line: '        if (--count[s2[right] - \'a\'] >= 0) matched++;', id: 5 },
+            { line: '        if (right - left + 1 > s1.size()) {', id: 6 },
+            { line: '            if (count[s2[left++] - \'a\']++ >= 0) matched--;', id: 7 },
+            { line: '        }', id: 8 },
+            { line: '        if (matched == s1.size()) return true;', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    return false;', id: 11 },
+            { line: '}', id: 12 },
         ];
         const s1 = "ab", s2 = "eidbaooo";
-
         function generateAlgorithmSteps() {
             const steps = [];
-            const len = s1.length;
-            const count1 = {}, count2 = {};
-            for (const c of s1) count1[c] = (count1[c] || 0) + 1;
-            
-            steps.push({ left: 0, right: -1, matches: 0, count1, count2: {}, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: `Pattern "${s1}", window size = ${len}` }});
-            
-            for (let i = 0; i < s2.length; i++) {
-                const left = Math.max(0, i - len + 1);
-                const right = i;
-                
-                // Simulate window
-                const windowCount = {};
-                for (let j = left; j <= right && j < s2.length; j++) {
-                    const c = s2[j];
-                    windowCount[c] = (windowCount[c] || 0) + 1;
-                }
-                
-                let matches = 0;
-                for (let k = 0; k < 26; k++) {
-                    const c = String.fromCharCode(97 + k);
-                    if ((count1[c] || 0) === (windowCount[c] || 0)) matches++;
-                }
-                
-                const isMatch = matches === 26;
-                steps.push({ left, right, matches, count1, count2: windowCount, found: isMatch, highlightLines: isMatch ? [5] : [3, 4], explanation: { title: `Window [${left}, ${right}]`, text: isMatch ? '✓ Found permutation!' : `Matches: ${matches}/26` }});
-                
-                if (isMatch) break;
-            }
+            steps.push({ window: [0, -1], freq: {a:1,b:1}, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `s1 = "ab", s2 = "eidbaooo"<br><br>需要匹配：a=1, b=1<br>固定窗口大小 = 2` } });
+            steps.push({ window: [0, 1], freq: {a:1,b:1}, highlightLines: [4,5,6], explanation: { title: '窗口 [0,1]: "ei"', text: 'e, i 都不在 s1 中<br>matched = 0' } });
+            steps.push({ window: [1, 2], freq: {a:1,b:1}, highlightLines: [4,5,6,7], explanation: { title: '窗口 [1,2]: "id"', text: '移除 e，加入 d<br>matched = 0' } });
+            steps.push({ window: [2, 3], freq: {a:1,b:0}, highlightLines: [4,5,6,7], explanation: { title: '窗口 [2,3]: "db"', text: '找到 b！<br>matched = 1' } });
+            steps.push({ window: [3, 4], freq: {a:0,b:0}, match: true, highlightLines: [4,5,9], explanation: { title: '窗口 [3,4]: "ba"', text: '找到 a！<br>matched = 2 = s1.length<br>找到排列！' } });
+            steps.push({ window: [3, 4], freq: {a:0,b:0}, result: true, final: true, highlightLines: [9], explanation: { title: '🎉 找到排列！', text: '"ba" 是 "ab" 的排列<br><br>時間：O(n)' } });
             return steps;
         }
-
         let viz;
         function init() {
-            document.getElementById('patternDisplay').textContent = s1;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('charRow').innerHTML = [...s2].map((c, i) => {
-                        let cls = 'char-box';
-                        if (i >= step.left && i <= step.right) cls += ' in-window';
-                        return `<div class="${cls}">${c}</div>`;
-                    }).join('');
-                    
-                    const chars = [...new Set([...Object.keys(step.count1), ...Object.keys(step.count2)])].sort();
-                    document.getElementById('freqDisplay').innerHTML = chars.map(c => {
-                        const c1 = step.count1[c] || 0, c2 = step.count2[c] || 0;
-                        const match = c1 === c2;
-                        return `<span class="freq-item ${match ? 'match' : 'mismatch'}">${c}: ${c2}/${c1}</span>`;
-                    }).join('') || '-';
-                    
-                    document.getElementById('matchDisplay').textContent = `${step.matches} / 26`;
-                    document.getElementById('matchDisplay').style.color = step.found ? 'var(--viz-success)' : 'var(--viz-text-main)';
+                    document.getElementById('s1Display').innerHTML = s1.split('').map(c => `<span class="char">${c}</span>`).join('');
+                    let html = '';
+                    for (let i = 0; i < s2.length; i++) {
+                        let cls = 'char';
+                        if (step.window && i >= step.window[0] && i <= step.window[1]) cls += step.match ? ' match' : ' window';
+                        html += `<span class="${cls}">${s2[i]}</span>`;
+                    }
+                    document.getElementById('s2Display').innerHTML = html;
+                    document.getElementById('freqDisplay').innerHTML = Object.entries(step.freq || {}).map(([k,v]) => `<span class="freq-item${v===0?' zero':''}">${k}:${v}</span>`).join('');
+                    document.getElementById('windowDisplay').textContent = step.window ? `[${step.window[0]},${step.window[1]}]` : '-';
+                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());
