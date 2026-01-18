@@ -3,28 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dijkstra's Algorithm 最短路徑 - 視覺化</title>
+    <title>Network Delay Time 網絡延遲時間 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .graph { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin: 20px 0; }
-        .node { width: 60px; height: 60px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--viz-primary); color: white; transition: all 0.3s; }
-        .node .id { font-weight: bold; font-size: 1.2rem; }
+        .nodes { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .node { width: 50px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .node .id { font-size: 1rem; }
         .node .dist { font-size: 0.7rem; opacity: 0.8; }
-        .node.current { background: var(--viz-secondary); color: #0f172a; }
         .node.visited { background: var(--viz-success); color: #0f172a; }
-        .node.start { border: 3px solid var(--viz-warning); }
-        .pq { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .pq-item { background: var(--viz-warning); color: #0f172a; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; }
+        .node.current { background: var(--viz-warning); color: #0f172a; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Network Delay Time（DIJKSTRA）</div>
-                <div class="graph" id="graphDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted); margin: 5px 0;">Priority Queue (min-heap)</div>
-                <div class="pq" id="pqDisplay">空</div>
+                <div class="viz-title">網絡延遲時間（DIJKSTRA）</div>
+                <div class="nodes" id="nodesDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
@@ -32,8 +27,8 @@
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">起點</div><div class="state-value">1</div></div>
-                    <div class="state-item"><div class="state-label">最大延遲</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                    <div class="state-item"><div class="state-label">起點</div><div class="state-value">2</div></div>
+                    <div class="state-item"><div class="state-label">最大延遲</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -49,35 +44,29 @@
     <script>
         const codeStructure = [
             { line: 'int networkDelayTime(vector<vector<int>>& times, int n, int k) {', id: 0 },
-            { line: '    vector<vector<pair<int,int>>> graph(n + 1);', id: 1 },
-            { line: '    for (auto& t : times)', id: 2 },
-            { line: '        graph[t[0]].push_back({t[1], t[2]});', id: 3 },
-            { line: '    vector<int> dist(n + 1, INT_MAX);', id: 4 },
-            { line: '    priority_queue<pair<int,int>, vector<pair<int,int>>,', id: 5 },
-            { line: '                   greater<pair<int,int>>> pq;', id: 6 },
-            { line: '    dist[k] = 0; pq.push({0, k});', id: 7 },
-            { line: '    while (!pq.empty()) {', id: 8 },
-            { line: '        auto [d, u] = pq.top(); pq.pop();', id: 9 },
-            { line: '        if (d > dist[u]) continue;', id: 10 },
-            { line: '        for (auto& [v, w] : graph[u]) {', id: 11 },
-            { line: '            if (dist[u] + w < dist[v]) {', id: 12 },
-            { line: '                dist[v] = dist[u] + w;', id: 13 },
-            { line: '                pq.push({dist[v], v});', id: 14 },
-            { line: '            }', id: 15 },
-            { line: '        }', id: 16 },
-            { line: '    }', id: 17 },
-            { line: '    int maxDist = *max_element(dist.begin()+1, dist.end());', id: 18 },
-            { line: '    return maxDist == INT_MAX ? -1 : maxDist;', id: 19 },
-            { line: '}', id: 20 },
+            { line: '    vector<int> dist(n + 1, INT_MAX);', id: 1 },
+            { line: '    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;', id: 2 },
+            { line: '    dist[k] = 0; pq.push({0, k});', id: 3 },
+            { line: '    while (!pq.empty()) {', id: 4 },
+            { line: '        auto [d, u] = pq.top(); pq.pop();', id: 5 },
+            { line: '        if (d > dist[u]) continue;', id: 6 },
+            { line: '        for (auto& [v, w] : graph[u]) {', id: 7 },
+            { line: '            if (dist[u] + w < dist[v]) {', id: 8 },
+            { line: '                dist[v] = dist[u] + w;', id: 9 },
+            { line: '                pq.push({dist[v], v});', id: 10 },
+            { line: '            }', id: 11 },
+            { line: '        }', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '    int maxDist = *max_element(dist.begin()+1, dist.end());', id: 14 },
+            { line: '    return maxDist == INT_MAX ? -1 : maxDist;', id: 15 },
+            { line: '}', id: 16 },
         ];
         function generateAlgorithmSteps() {
             const steps = [];
-            // 簡化範例：4 節點
-            steps.push({ nodes: {1: 0, 2: '∞', 3: '∞', 4: '∞'}, current: null, visited: [], pq: [{d:0,n:1}], highlightLines: [0,1,4,5,6,7], explanation: { title: '初始化', text: '建立圖和距離陣列<br>起點 1 距離 = 0<br>其他 = ∞' } });
-            steps.push({ nodes: {1: 0, 2: 1, 3: 1, 4: '∞'}, current: 1, visited: [1], pq: [{d:1,n:2},{d:1,n:3}], highlightLines: [8,9,10,11,12,13,14], explanation: { title: '處理節點 1', text: '從起點出發<br>更新鄰居：2=1, 3=1', formula: 'dist[2] = 0+1=1, dist[3] = 0+1=1' } });
-            steps.push({ nodes: {1: 0, 2: 1, 3: 1, 4: 2}, current: 2, visited: [1,2], pq: [{d:1,n:3},{d:2,n:4}], highlightLines: [9,11,12,13,14], explanation: { title: '處理節點 2', text: '更新鄰居 4<br>dist[4] = 1+1=2', formula: 'dist[4] = dist[2]+1 = 2' } });
-            steps.push({ nodes: {1: 0, 2: 1, 3: 1, 4: 2}, current: 3, visited: [1,2,3], pq: [{d:2,n:4}], highlightLines: [9,11], explanation: { title: '處理節點 3', text: '節點 3 的鄰居已有更短路徑' } });
-            steps.push({ nodes: {1: 0, 2: 1, 3: 1, 4: 2}, current: 4, visited: [1,2,3,4], pq: [], result: 2, highlightLines: [18,19], explanation: { title: '🎉 完成！', text: '所有節點都已訪問<br>最大距離 = 2<br><br>時間：O((V+E)logV)' } });
+            steps.push({ dists: {1:'∞',2:0,3:'∞',4:'∞'}, visited: [], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: 'n=4, k=2 (起點)<br>dist[2]=0, 其他=∞<br><br>Dijkstra: 貪心選最短' } });
+            steps.push({ dists: {1:1,2:0,3:1,4:'∞'}, visited: [2], current: 2, highlightLines: [4,5,7,8,9,10], explanation: { title: '處理節點 2', text: 'dist[1] = 0+1 = 1<br>dist[3] = 0+1 = 1' } });
+            steps.push({ dists: {1:1,2:0,3:1,4:2}, visited: [2,1], current: 1, highlightLines: [4,5,7,8,9,10], explanation: { title: '處理節點 1', text: 'dist[4] = 1+1 = 2' } });
+            steps.push({ dists: {1:1,2:0,3:1,4:2}, visited: [2,1,3,4], max: 2, final: true, highlightLines: [14,15], explanation: { title: '🎉 完成！', text: '最大延遲 = 2<br><br>時間：O(E log V)' } });
             return steps;
         }
         let viz;
@@ -85,19 +74,16 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
+                    const dists = step.dists || {};
                     let html = '';
-                    for (const [id, dist] of Object.entries(step.nodes || {})) {
+                    for (let i = 1; i <= 4; i++) {
                         let cls = 'node';
-                        if (+id === step.current) cls += ' current';
-                        if (step.visited?.includes(+id)) cls += ' visited';
-                        if (+id === 1) cls += ' start';
-                        html += `<div class="${cls}"><div class="id">${id}</div><div class="dist">d=${dist}</div></div>`;
+                        if (step.visited?.includes(i)) cls += ' visited';
+                        if (i === step.current) cls += ' current';
+                        html += `<div class="${cls}"><div class="id">${i}</div><div class="dist">${dists[i] ?? '∞'}</div></div>`;
                     }
-                    document.getElementById('graphDisplay').innerHTML = html;
-                    document.getElementById('pqDisplay').innerHTML = (step.pq || []).length > 0 
-                        ? step.pq.map(p => `<span class="pq-item">(${p.d},${p.n})</span>`).join('') 
-                        : '空';
-                    document.getElementById('resultDisplay').textContent = step.result ?? '?';
+                    document.getElementById('nodesDisplay').innerHTML = html;
+                    document.getElementById('maxDisplay').textContent = step.max ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

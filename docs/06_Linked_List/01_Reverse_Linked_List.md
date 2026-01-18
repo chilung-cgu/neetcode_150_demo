@@ -5,11 +5,11 @@
 題目給一個 singly linked list 的 head。
 請反轉這個 List，並回傳新的 head。
 
--   **Input**: `head = [1,2,3,4,5]`
--   **Output**: `[5,4,3,2,1]`
--   **Constraints**:
-    -   number of nodes: $0 \dots 5000$.
-    -   `-5000 <= Node.val <= 5000`.
+- **Input**: `head = [1,2,3,4,5]`
+- **Output**: `[5,4,3,2,1]`
+- **Constraints**:
+  - number of nodes: $0 \dots 5000$.
+  - `-5000 <= Node.val <= 5000`.
 
 ---
 
@@ -17,9 +17,9 @@
 
 用一個 Stack 把所有 node values 存起來，然後重建一個新的 List。
 
--   **Time**: $O(n)$。
--   **Space**: $O(n)$。
--   **Result**: 雖然可行，但面試官通常期望 $O(1)$ Space。
+- **Time**: $O(n)$。
+- **Space**: $O(n)$。
+- **Result**: 雖然可行，但面試官通常期望 $O(1)$ Space。
 
 ---
 
@@ -51,9 +51,9 @@
 ### 🎬 Visualization (演算法視覺化)
 
 <div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
-    <iframe src="../reverse_linked_list_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+    <iframe src="../reverse_list_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
 </div>
-<p style="text-align: right; margin-top: 8px;"><a href="../reverse_linked_list_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
+<p style="text-align: right; margin-top: 8px;"><a href="../reverse_list_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -174,7 +174,7 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(n)$
-    -   遍歷每個節點一次。
--   **Space Complexity**: $O(1)$
-    -   只使用了 `prev`, `curr`, `next` 三個指標，沒有額外的資料結構。
+- **Time Complexity**: $O(n)$
+  - 遍歷每個節點一次。
+- **Space Complexity**: $O(1)$
+  - 只使用了 `prev`, `curr`, `next` 三個指標，沒有額外的資料結構。

@@ -8,21 +8,22 @@
 2.  `search(String word)`: 回傳 `word` 是否在 Trie 中（必須是完整單字）。
 3.  `startsWith(String prefix)`: 回傳 Trie 中是否有任何單字以 `prefix` 開頭。
 
--   **Input**:
-    ```
-    Trie trie = new Trie();
-    trie.insert("apple");
-    trie.search("apple");   // return True
-    trie.search("app");     // return False
-    trie.startsWith("app"); // return True
-    trie.insert("app");
-    trie.search("app");     // return True
-    ```
+- **Input**:
 
--   **Constraints**:
-    -   `word` and `prefix` consist only of lowercase English letters (a-z).
-    -   $1 <= length <= 2000$.
-    -   At most $3 \times 10^4$ calls.
+  ```
+  Trie trie = new Trie();
+  trie.insert("apple");
+  trie.search("apple");   // return True
+  trie.search("app");     // return False
+  trie.startsWith("app"); // return True
+  trie.insert("app");
+  trie.search("app");     // return True
+  ```
+
+- **Constraints**:
+  - `word` and `prefix` consist only of lowercase English letters (a-z).
+  - $1 <= length <= 2000$.
+  - At most $3 \times 10^4$ calls.
 
 ---
 
@@ -30,9 +31,9 @@
 
 用一個 `HashSet` 存所有 words。
 
--   `insert`: $O(1)$ 或 $O(L)$ (Depends on hash)。
--   `search`: $O(1)$ 或 $O(L)$。
--   `startsWith`: 必須遍歷 Set 中的所有字串，檢查是否以 prefix 開頭。時間 $O(N \times L)$。太慢。
+- `insert`: $O(1)$ 或 $O(L)$ (Depends on hash)。
+- `search`: $O(1)$ 或 $O(L)$。
+- `startsWith`: 必須遍歷 Set 中的所有字串，檢查是否以 prefix 開頭。時間 $O(N \times L)$。太慢。
 
 ---
 
@@ -46,18 +47,18 @@
 
 **Operations**:
 
--   `insert(word)`: 從 root 開始，沿著 word 的每個 char 往下走/建立節點。最後將最後一個節點的 `EndOfWord` 設為 true。 $O(L)$。
--   `search(word)`: 從 root 開始走。如果卡住（child 為 null）回傳 false。走完後檢查 `EndOfWord` 是否為 true。 $O(L)$。
--   `startsWith(prefix)`: 同 search，但走完後不需要檢查 `EndOfWord`，只要沒卡住就回傳 true。 $O(L)$。
+- `insert(word)`: 從 root 開始，沿著 word 的每個 char 往下走/建立節點。最後將最後一個節點的 `EndOfWord` 設為 true。 $O(L)$。
+- `search(word)`: 從 root 開始走。如果卡住（child 為 null）回傳 false。走完後檢查 `EndOfWord` 是否為 true。 $O(L)$。
+- `startsWith(prefix)`: 同 search，但走完後不需要檢查 `EndOfWord`，只要沒卡住就回傳 true。 $O(L)$。
 
 ---
 
 ### 🎬 Visualization (演算法視覺化)
 
 <div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
-    <iframe src="../trie_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+    <iframe src="../implement_trie_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
 </div>
-<p style="text-align: right; margin-top: 8px;"><a href="../trie_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
+<p style="text-align: right; margin-top: 8px;"><a href="../implement_trie_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -243,7 +244,7 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(L)$ for insert, search, startsWith. $L$ is word length.
--   **Space Complexity**: $O(N \times L \times 26)$ worst case (sparse).
-    -   $N$ words, length $L$.
-    -   Each node has 26 pointers.
+- **Time Complexity**: $O(L)$ for insert, search, startsWith. $L$ is word length.
+- **Space Complexity**: $O(N \times L \times 26)$ worst case (sparse).
+  - $N$ words, length $L$.
+  - Each node has 26 pointers.

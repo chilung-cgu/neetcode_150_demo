@@ -3,42 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merge k Sorted Lists Visualization</title>
+    <title>Merge K Sorted Lists - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .lists-container { margin: 10px 0; }
-        .list-row { display: flex; align-items: center; gap: 4px; margin: 5px 0; }
-        .list-label { width: 30px; color: var(--viz-text-muted); font-size: 0.85rem; }
-        .node { padding: 6px 10px; border-radius: 4px; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.9rem; }
+        .lists { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
+        .list-row { display: flex; gap: 6px; align-items: center; }
+        .list-label { width: 30px; color: var(--text-muted); font-size: 0.85rem; }
+        .node { width: 35px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-primary); color: white; }
+        .node.current { background: var(--viz-warning); color: #0f172a; }
         .node.merged { background: var(--viz-success); color: #0f172a; }
-        .node.current { background: var(--viz-secondary); color: #0f172a; }
-        .arrow { color: var(--viz-text-muted); font-size: 0.9rem; }
+        .result { display: flex; gap: 4px; justify-content: center; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .heap { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
+        .heap-item { padding: 6px 12px; background: var(--viz-secondary); color: #0f172a; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">MERGE K SORTED LISTS (MIN HEAP)</div>
-                <div class="lists-container" id="listsDisplay"></div>
-                <div style="margin-top: 10px; text-align: center;">
-                    <strong>Merged:</strong> <span id="mergedDisplay"></span>
-                </div>
+                <div class="viz-title">合併 K 個排序鏈表（MIN HEAP）</div>
+                <div class="lists" id="listsDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">Min Heap</div>
+                <div class="heap" id="heapDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">合併結果</div>
+                <div class="result" id="resultDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">MIN HEAP APPROACH</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -47,63 +47,37 @@
     <script>
         const codeStructure = [
             { line: 'ListNode* mergeKLists(vector<ListNode*>& lists) {', id: 0 },
-            { line: '    priority_queue<pair<int,ListNode*>, vec, greater> pq;', id: 1 },
-            { line: '    // Add head of each list to heap', id: 2 },
-            { line: '    for (auto list : lists)', id: 3 },
-            { line: '        if (list) pq.push({list->val, list});', id: 4 },
-            { line: '    ListNode dummy(0), *tail = &dummy;', id: 5 },
-            { line: '    while (!pq.empty()) {', id: 6 },
-            { line: '        auto [val, node] = pq.top(); pq.pop();', id: 7 },
-            { line: '        tail->next = node;', id: 8 },
-            { line: '        tail = tail->next;', id: 9 },
-            { line: '        if (node->next) pq.push({node->next->val, node->next});', id: 10 },
-            { line: '    }', id: 11 },
-            { line: '    return dummy.next;', id: 12 },
-            { line: '}', id: 13 },
+            { line: '    auto cmp = [](ListNode* a, ListNode* b) { return a->val > b->val; };', id: 1 },
+            { line: '    priority_queue<ListNode*, vector<ListNode*>, decltype(cmp)> pq(cmp);', id: 2 },
+            { line: '    for (auto list : lists) if (list) pq.push(list);', id: 3 },
+            { line: '    ListNode dummy(0), *tail = &dummy;', id: 4 },
+            { line: '    while (!pq.empty()) {', id: 5 },
+            { line: '        ListNode* node = pq.top(); pq.pop();', id: 6 },
+            { line: '        tail->next = node; tail = tail->next;', id: 7 },
+            { line: '        if (node->next) pq.push(node->next);', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return dummy.next;', id: 10 },
+            { line: '}', id: 11 },
         ];
-        const lists = [[1, 4, 5], [1, 3, 4], [2, 6]];
-
+        const lists = [[1,4,5],[1,3,4],[2,6]];
         function generateAlgorithmSteps() {
             const steps = [];
-            const remaining = lists.map(l => [...l]);
-            const merged = [];
-            
-            steps.push({ remaining: remaining.map(l => [...l]), merged: [], heap: [1, 1, 2], highlightLines: [0, 1, 2, 3, 4], explanation: { title: 'Init Heap', text: 'Push head of each list: [1, 1, 2]' }});
-            
-            // Simulate merging
-            const all = lists.flat().sort((a, b) => a - b);
-            for (let i = 0; i < all.length; i++) {
-                const val = all[i];
-                merged.push(val);
-                // Remove from remaining
-                for (let j = 0; j < remaining.length; j++) {
-                    const idx = remaining[j].indexOf(val);
-                    if (idx === 0) {
-                        remaining[j].shift();
-                        break;
-                    }
-                }
-                steps.push({ remaining: remaining.map(l => [...l]), merged: [...merged], current: val, highlightLines: [7, 8, 9, 10], explanation: { title: `Pop min: ${val}`, text: `Add to merged list` }});
-            }
-            
-            steps.push({ remaining: [[], [], []], merged, highlightLines: [12], explanation: { title: 'Done!', text: `Merged: ${merged.join('→')}` }});
-            
+            steps.push({ heap: [], result: [], highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: '3 個排序鏈表<br><br>Min Heap 維護每個鏈表的當前最小值<br>每次取出最小，加入結果' } });
+            steps.push({ heap: [1,1,2], result: [], highlightLines: [3], explanation: { title: '初始化 Heap', text: '放入每個鏈表頭：[1,1,2]' } });
+            steps.push({ heap: [1,2,4], result: [1], highlightLines: [5,6,7,8], explanation: { title: '取出 1', text: 'pop 1, push 4<br>結果：[1]' } });
+            steps.push({ heap: [2,3,4], result: [1,1], highlightLines: [5,6,7,8], explanation: { title: '取出 1', text: 'pop 1, push 3<br>結果：[1,1]' } });
+            steps.push({ heap: [3,4,6], result: [1,1,2], highlightLines: [5,6,7,8], explanation: { title: '取出 2', text: 'pop 2, push 6<br>結果：[1,1,2]' } });
+            steps.push({ heap: [], result: [1,1,2,3,4,4,5,6], final: true, highlightLines: [10], explanation: { title: '🎉 完成！', text: '合併結果：[1,1,2,3,4,4,5,6]<br><br>時間：O(N log k)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    step.remaining.forEach((list, i) => {
-                        html += `<div class="list-row"><span class="list-label">L${i+1}:</span>`;
-                        html += list.length ? list.map(n => `<span class="node">${n}</span>`).join('<span class="arrow">→</span>') : '<em style="color:var(--viz-text-muted)">empty</em>';
-                        html += '</div>';
-                    });
-                    document.getElementById('listsDisplay').innerHTML = html;
-                    document.getElementById('mergedDisplay').innerHTML = step.merged.map(n => `<span class="node merged">${n}</span>`).join('<span class="arrow">→</span>') || '-';
+                    document.getElementById('listsDisplay').innerHTML = lists.map((l, i) => `<div class="list-row"><span class="list-label">L${i+1}:</span>${l.map(n => `<span class="node">${n}</span>`).join('')}</div>`).join('');
+                    document.getElementById('heapDisplay').innerHTML = (step.heap || []).map(n => `<span class="heap-item">${n}</span>`).join('') || '空';
+                    document.getElementById('resultDisplay').innerHTML = (step.result || []).map(n => `<span class="node merged">${n}</span>`).join('') || '等待合併...';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

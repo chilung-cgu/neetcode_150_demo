@@ -3,42 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cheapest Flights Visualization</title>
+    <title>Cheapest Flights 最便宜機票 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .cities { display: flex; gap: 15px; justify-content: center; margin: 15px 0; }
-        .city { text-align: center; }
-        .city-circle { width: 50px; height: 50px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.9rem; background: var(--viz-primary); color: white; }
-        .city-circle.source { background: var(--viz-secondary); color: #0f172a; }
-        .city-circle.dest { background: var(--viz-success); color: #0f172a; }
-        .city-dist { font-size: 0.75rem; color: var(--viz-text-muted); margin-top: 4px; }
+        .cities { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .city { width: 60px; padding: 15px 10px; text-align: center; border-radius: 8px; background: var(--viz-primary); color: white; }
+        .city .name { font-weight: bold; font-size: 1.1rem; }
+        .city .cost { font-size: 0.8rem; opacity: 0.8; }
+        .city.start { background: var(--viz-success); color: #0f172a; }
+        .city.end { background: var(--viz-warning); color: #0f172a; }
+        .city.visited { border: 3px solid var(--viz-success); }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">CHEAPEST FLIGHTS (K STOPS)</div>
+                <div class="viz-title">K 站中轉最便宜機票（BELLMAN-FORD 變體）</div>
                 <div class="cities" id="citiesDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Stops</div><div class="state-value" id="stopsDisplay">0</div></div>
-                    <div class="state-item"><div class="state-label">Cost</div><div class="state-value" id="costDisplay" style="color: var(--viz-success);">-</div></div>
+                    <div class="state-item"><div class="state-label">起點</div><div class="state-value">0</div></div>
+                    <div class="state-item"><div class="state-label">終點</div><div class="state-value">2</div></div>
+                    <div class="state-item"><div class="state-label">最多中轉</div><div class="state-value">1</div></div>
+                    <div class="state-item"><div class="state-label">最低價格</div><div class="state-value" id="priceDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BELLMAN-FORD VARIANT</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -46,48 +46,44 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int findCheapestPrice(n, flights, src, dst, k) {', id: 0 },
-            { line: '    vector<int> dist(n, INT_MAX);', id: 1 },
-            { line: '    dist[src] = 0;', id: 2 },
-            { line: '    for (int i = 0; i <= k; i++) {', id: 3 },
-            { line: '        vector<int> temp = dist;', id: 4 },
-            { line: '        for (auto& [u, v, w] : flights) {', id: 5 },
-            { line: '            if (dist[u] != INT_MAX)', id: 6 },
-            { line: '                temp[v] = min(temp[v], dist[u] + w);', id: 7 },
-            { line: '        }', id: 8 },
-            { line: '        dist = temp;', id: 9 },
-            { line: '    }', id: 10 },
-            { line: '    return dist[dst] == INT_MAX ? -1 : dist[dst];', id: 11 },
-            { line: '}', id: 12 },
+            { line: 'int findCheapestPrice(int n, vector<vector<int>>& flights,', id: 0 },
+            { line: '                      int src, int dst, int k) {', id: 1 },
+            { line: '    vector<int> dist(n, INT_MAX);', id: 2 },
+            { line: '    dist[src] = 0;', id: 3 },
+            { line: '    for (int i = 0; i <= k; i++) { // k+1 輪', id: 4 },
+            { line: '        vector<int> temp = dist;', id: 5 },
+            { line: '        for (auto& f : flights) {', id: 6 },
+            { line: '            if (dist[f[0]] != INT_MAX) {', id: 7 },
+            { line: '                temp[f[1]] = min(temp[f[1]], dist[f[0]] + f[2]);', id: 8 },
+            { line: '            }', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '        dist = temp;', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    return dist[dst] == INT_MAX ? -1 : dist[dst];', id: 13 },
+            { line: '}', id: 14 },
         ];
-        const cities = ['SRC', 'A', 'B', 'DST'];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            const dists = [
-                ['0', '∞', '∞', '∞'],
-                ['0', '100', '200', '∞'],
-                ['0', '100', '200', '300'],
-            ];
-            
-            steps.push({ dist: dists[0], stop: 0, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Source distance = 0' }});
-            steps.push({ dist: dists[1], stop: 1, highlightLines: [5, 6, 7], explanation: { title: 'Iteration 1', text: 'Relax edges' }});
-            steps.push({ dist: dists[2], stop: 2, highlightLines: [5, 6, 7], explanation: { title: 'Iteration 2', text: 'Found path to DST' }});
-            steps.push({ dist: dists[2], stop: 2, highlightLines: [11], explanation: { title: 'Done!', text: 'Cheapest = $300 with ≤k stops' }});
-            
+            steps.push({ costs: {0:0,1:'∞',2:'∞'}, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: '3 城市, 起點=0, 終點=2<br>最多 1 次中轉<br><br>Bellman-Ford 限制輪數' } });
+            steps.push({ costs: {0:0,1:100,2:500}, round: 1, highlightLines: [4,5,6,7,8], explanation: { title: '第 1 輪', text: '0→1: 100<br>0→2: 500<br><br>直飛 500，經 1 中轉？' } });
+            steps.push({ costs: {0:0,1:100,2:200}, round: 2, highlightLines: [4,5,6,7,8], explanation: { title: '第 2 輪', text: '1→2: 100+100=200<br><br>經過 1 中轉更便宜！' } });
+            steps.push({ costs: {0:0,1:100,2:200}, price: 200, final: true, highlightLines: [13], explanation: { title: '🎉 完成！', text: '最便宜 = 200<br>路線：0→1→2<br><br>時間：O(k × E)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('citiesDisplay').innerHTML = cities.map((c, i) =>
-                        `<div class="city"><div class="city-circle ${i === 0 ? 'source' : ''} ${i === 3 ? 'dest' : ''}">${c}</div><div class="city-dist">$${step.dist?.[i] || '∞'}</div></div>`
-                    ).join('');
-                    document.getElementById('stopsDisplay').textContent = step.stop || 0;
-                    document.getElementById('costDisplay').textContent = step.dist?.[3] || '-';
+                    const costs = step.costs || {};
+                    const cities = ['0 起點', '1', '2 終點'];
+                    document.getElementById('citiesDisplay').innerHTML = cities.map((c, i) => {
+                        let cls = 'city';
+                        if (i === 0) cls += ' start';
+                        if (i === 2) cls += ' end';
+                        return `<div class="${cls}"><div class="name">${c}</div><div class="cost">$${costs[i] ?? '∞'}</div></div>`;
+                    }).join('');
+                    document.getElementById('priceDisplay').textContent = step.price ? `$${step.price}` : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

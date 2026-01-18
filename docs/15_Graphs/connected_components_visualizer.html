@@ -3,37 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number of Connected Components Visualization</title>
+    <title>Connected Components 連通分量 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .nodes { display: flex; gap: 10px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
-        .node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; }
+        .nodes { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .node { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; color: white; transition: all 0.3s; }
+        .node.comp0 { background: var(--viz-primary); }
+        .node.comp1 { background: var(--viz-success); color: #0f172a; }
+        .node.comp2 { background: var(--viz-warning); color: #0f172a; }
+        .edges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+        .edge { padding: 6px 12px; background: var(--viz-bg-secondary); border-radius: 4px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">NUMBER OF CONNECTED COMPONENTS</div>
+                <div class="viz-title">連通分量數（UNION-FIND / DFS）</div>
                 <div class="nodes" id="nodesDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">邊</div>
+                <div class="edges" id="edgesDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Components</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
+                    <div class="state-item"><div class="state-label">連通分量數</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">UNION-FIND</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -41,40 +45,45 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int countComponents(int n, edges) {', id: 0 },
-            { line: '    UnionFind uf(n);', id: 1 },
-            { line: '    for (auto& e : edges) {', id: 2 },
-            { line: '        uf.union(e[0], e[1]);', id: 3 },
-            { line: '    }', id: 4 },
-            { line: '    return uf.count;', id: 5 },
-            { line: '}', id: 6 },
+            { line: 'int countComponents(int n, vector<vector<int>>& edges) {', id: 0 },
+            { line: '    vector<int> parent(n);', id: 1 },
+            { line: '    iota(parent.begin(), parent.end(), 0);', id: 2 },
+            { line: '    int components = n;', id: 3 },
+            { line: '    for (auto& e : edges) {', id: 4 },
+            { line: '        int p1 = find(parent, e[0]);', id: 5 },
+            { line: '        int p2 = find(parent, e[1]);', id: 6 },
+            { line: '        if (p1 != p2) {', id: 7 },
+            { line: '            parent[p1] = p2;', id: 8 },
+            { line: '            components--;', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return components;', id: 12 },
+            { line: '}', id: 13 },
         ];
-        const nodes = [0, 1, 2, 3, 4];
-        const colors = ['#ef4444', '#ef4444', '#ef4444', '#3b82f6', '#3b82f6'];
-
+        const n = 5;
+        const edges = [[0,1],[1,2],[3,4]];
         function generateAlgorithmSteps() {
             const steps = [];
-            
-            steps.push({ components: [[0], [1], [2], [3], [4]], count: 5, highlightLines: [0, 1], explanation: { title: 'Init', text: '5 separate components' }});
-            steps.push({ components: [[0, 1], [2], [3], [4]], count: 4, highlightLines: [3], explanation: { title: 'Union(0, 1)', text: '4 components' }});
-            steps.push({ components: [[0, 1, 2], [3], [4]], count: 3, highlightLines: [3], explanation: { title: 'Union(1, 2)', text: '3 components' }});
-            steps.push({ components: [[0, 1, 2], [3, 4]], count: 2, highlightLines: [3], explanation: { title: 'Union(3, 4)', text: '2 components' }});
-            steps.push({ components: [[0, 1, 2], [3, 4]], count: 2, highlightLines: [5], explanation: { title: 'Done!', text: '2 connected components' }});
-            
+            steps.push({ comps: {0:-1,1:-1,2:-1,3:-1,4:-1}, count: 5, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `n = 5, edges = [[0,1],[1,2],[3,4]]<br><br>初始：每個節點是獨立分量<br>components = 5` } });
+            steps.push({ comps: {0:0,1:0,2:-1,3:-1,4:-1}, count: 4, highlightLines: [4,5,6,7,8,9], explanation: { title: '邊 [0,1]', text: '合併 0 和 1<br>components = 4' } });
+            steps.push({ comps: {0:0,1:0,2:0,3:-1,4:-1}, count: 3, highlightLines: [4,5,6,7,8,9], explanation: { title: '邊 [1,2]', text: '合併 2 到 0,1 的分量<br>components = 3' } });
+            steps.push({ comps: {0:0,1:0,2:0,3:1,4:1}, count: 2, highlightLines: [4,5,6,7,8,9], explanation: { title: '邊 [3,4]', text: '合併 3 和 4<br>components = 2' } });
+            steps.push({ comps: {0:0,1:0,2:0,3:1,4:1}, count: 2, final: true, highlightLines: [12], explanation: { title: '🎉 完成！', text: '2 個連通分量：<br>{0,1,2} 和 {3,4}<br><br>時間：O(n × α(n))' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('nodesDisplay').innerHTML = nodes.map(n => {
-                        const comp = step.components?.findIndex(c => c.includes(n)) ?? 0;
-                        const color = comp === 0 ? '#ef4444' : '#3b82f6';
-                        return `<div class="node" style="background: ${color}; color: white;">${n}</div>`;
+                    const comps = step.comps || {};
+                    document.getElementById('nodesDisplay').innerHTML = Array.from({length: n}, (_, i) => {
+                        const c = comps[i];
+                        const cls = c >= 0 ? `node comp${c}` : 'node comp0';
+                        return `<div class="${cls}">${i}</div>`;
                     }).join('');
-                    document.getElementById('countDisplay').textContent = step.count;
+                    document.getElementById('edgesDisplay').innerHTML = edges.map(e => `<span class="edge">[${e[0]},${e[1]}]</span>`).join('');
+                    document.getElementById('countDisplay').textContent = step.count ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

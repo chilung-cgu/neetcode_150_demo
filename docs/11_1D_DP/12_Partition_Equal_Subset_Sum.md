@@ -7,16 +7,16 @@
 
 換句話說：找出是否存在一個子集，其總和等於 `totalSum / 2`。
 
--   **Input**: `nums = [1,5,11,5]`
--   **Output**: `true`
-    -   Total = 22. Target = 11.
-    -   Subset `[1, 5, 5]` sums to 11. (Or `[11]`)
--   **Input**: `nums = [1,2,3,5]`
--   **Output**: `false`
-    -   Total = 11. Target = 5.5 (Impossible for integers).
--   **Constraints**:
-    -   $1 <= nums.length <= 200$
-    -   $1 <= nums[i] <= 100$
+- **Input**: `nums = [1,5,11,5]`
+- **Output**: `true`
+  - Total = 22. Target = 11.
+  - Subset `[1, 5, 5]` sums to 11. (Or `[11]`)
+- **Input**: `nums = [1,2,3,5]`
+- **Output**: `false`
+  - Total = 11. Target = 5.5 (Impossible for integers).
+- **Constraints**:
+  - $1 <= nums.length <= 200$
+  - $1 <= nums[i] <= 100$
 
 ---
 
@@ -27,7 +27,7 @@
 如果 Set A sum == Set B sum，則成功。
 這等同於 subset sum problem。
 
--   **Time**: $O(2^N)$。
+- **Time**: $O(2^N)$。
 
 ---
 
@@ -56,9 +56,9 @@ Constraint `length <= 200`, `nums[i] <= 100`. Total sum <= 20000.
 ### 🎬 Visualization (演算法視覺化)
 
 <div style="position: relative; padding-bottom: 50%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #0f172a;">
-    <iframe src="../partition_subset_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+    <iframe src="../partition_equal_subset_visualizer.html" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
 </div>
-<p style="text-align: right; margin-top: 8px;"><a href="../partition_subset_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
+<p style="text-align: right; margin-top: 8px;"><a href="../partition_equal_subset_visualizer.html" target="_blank" style="font-size: 0.9em; display: inline-flex; align-items: center; gap: 4px; color: #818cf8; text-decoration: none;"><span>⤢</span> 全螢幕開啟視覺化</a></p>
 
 ---
 
@@ -196,8 +196,8 @@ public:
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
 
--   **Time Complexity**: $O(N \times S)$
-    -   $N$ is length of numbers. $S$ is the target sum.
-    -   Worst case: $200 \times 10000 = 2 \times 10^6$. Very fast.
--   **Space Complexity**: $O(S)$
-    -   $DP$ array size is target sum.
+- **Time Complexity**: $O(N \times S)$
+  - $N$ is length of numbers. $S$ is the target sum.
+  - Worst case: $200 \times 10000 = 2 \times 10^6$. Very fast.
+- **Space Complexity**: $O(S)$
+  - $DP$ array size is target sum.

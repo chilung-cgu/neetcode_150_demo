@@ -3,41 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kth Smallest Element in BST Visualization</title>
+    <title>Kth Smallest in BST - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .tree-level { display: flex; justify-content: center; gap: 12px; margin: 6px 0; }
-        .tree-node { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
-        .tree-node.visited { background: var(--viz-secondary); color: #0f172a; }
-        .tree-node.found { background: var(--viz-success); color: #0f172a; }
-        .inorder-display { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
-        .inorder-item { padding: 6px 10px; border-radius: 4px; font-family: monospace; background: rgba(255,255,255,0.1); }
-        .inorder-item.current { background: var(--viz-success); color: #0f172a; }
+        .tree { text-align: center; margin: 20px 0; }
+        .level { display: flex; justify-content: center; gap: 10px; margin: 8px 0; }
+        .node { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; }
+        .node.visited { background: var(--viz-success); color: #0f172a; }
+        .node.current { background: var(--viz-warning); color: #0f172a; }
+        .node.answer { background: var(--viz-secondary); color: #0f172a; border: 3px solid var(--viz-success); }
+        .inorder { display: flex; gap: 6px; justify-content: center; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .inorder-item { padding: 6px 12px; border-radius: 4px; font-weight: bold; }
+        .inorder-item.visited { background: var(--viz-success); color: #0f172a; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">KTH SMALLEST IN BST (k=3)</div>
-                <div id="treeDisplay"></div>
-                <div style="margin-top: 10px; text-align: center; color: var(--viz-text-muted);">Inorder Traversal:</div>
-                <div class="inorder-display" id="inorderDisplay"></div>
+                <div class="viz-title">BST 第 K 小元素（中序遍歷）</div>
+                <div class="tree" id="treeDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">中序遍歷順序</div>
+                <div class="inorder" id="inorderDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">K</div><div class="state-value">3</div></div>
+                    <div class="state-item"><div class="state-label">第 K 小</div><div class="state-value" id="kthDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">INORDER TRAVERSAL</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -46,53 +49,50 @@
     <script>
         const codeStructure = [
             { line: 'int kthSmallest(TreeNode* root, int k) {', id: 0 },
-            { line: '    stack<TreeNode*> stk;', id: 1 },
-            { line: '    TreeNode* cur = root;', id: 2 },
-            { line: '    while (cur || !stk.empty()) {', id: 3 },
-            { line: '        while (cur) { stk.push(cur); cur = cur->left; }', id: 4 },
-            { line: '        cur = stk.top(); stk.pop();', id: 5 },
-            { line: '        if (--k == 0) return cur->val;', id: 6 },
-            { line: '        cur = cur->right;', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '}', id: 9 },
+            { line: '    stack<TreeNode*> st;', id: 1 },
+            { line: '    while (root || !st.empty()) {', id: 2 },
+            { line: '        while (root) {', id: 3 },
+            { line: '            st.push(root);', id: 4 },
+            { line: '            root = root->left;', id: 5 },
+            { line: '        }', id: 6 },
+            { line: '        root = st.top(); st.pop();', id: 7 },
+            { line: '        if (--k == 0) return root->val;', id: 8 },
+            { line: '        root = root->right;', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    return -1;', id: 11 },
+            { line: '}', id: 12 },
         ];
-        // BST:     5
-        //        /   \
-        //       3     6
-        //      / \
-        //     2   4
-        //    /
-        //   1
-        const levels = [[5], [3, 6], [2, 4, '', ''], [1, '', '', '', '', '', '', '']];
-        const k = 3;
-        const inorder = [1, 2, 3, 4, 5, 6];
-
+        const inorder = [1, 2, 3, 4, 5];
         function generateAlgorithmSteps() {
             const steps = [];
-            steps.push({ visited: [], inorderVisited: 0, highlightLines: [0, 1, 2], explanation: { title: 'Start', text: 'Inorder: left → node → right (sorted in BST)' }});
-            steps.push({ visited: [[3, 0]], inorderVisited: 1, current: 1, highlightLines: [5, 6], explanation: { title: 'Visit 1', text: 'k=3, count=1' }});
-            steps.push({ visited: [[3, 0], [2, 0]], inorderVisited: 2, current: 2, highlightLines: [5, 6], explanation: { title: 'Visit 2', text: 'k=3, count=2' }});
-            steps.push({ visited: [[3, 0], [2, 0], [1, 0]], inorderVisited: 3, current: 3, found: 3, highlightLines: [6], explanation: { title: 'Visit 3 → Found!', text: 'k=3, count=3 → 3rd smallest = 3' }});
+            steps.push({ visited: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: 'BST 中序遍歷 = 升序排列<br>k = 3<br><br>迭代中序遍歷' } });
+            steps.push({ visited: [1], current: 1, count: 1, highlightLines: [7,8], explanation: { title: '訪問 1', text: '第 1 小 = 1<br>k = 2' } });
+            steps.push({ visited: [1,2], current: 2, count: 2, highlightLines: [7,8], explanation: { title: '訪問 2', text: '第 2 小 = 2<br>k = 1' } });
+            steps.push({ visited: [1,2,3], current: 3, count: 3, answer: 3, highlightLines: [8], explanation: { title: '訪問 3', text: '第 3 小 = 3<br>k = 0，找到！' } });
+            steps.push({ visited: [1,2,3], answer: 3, final: true, highlightLines: [8], explanation: { title: '🎉 完成！', text: '第 3 小元素 = 3<br><br>時間：O(H + k)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
+                    const nodes = [[3], [1, 4], [2, 5]];
                     let html = '';
-                    levels.forEach((level, li) => {
-                        html += '<div class="tree-level">' + level.map((v, i) => {
-                            if (!v) return '<div style="width:36px"></div>';
-                            let cls = 'tree-node';
-                            if (v === step.found) cls += ' found';
-                            else if (step.visited?.some(vv => vv[0] === li && vv[1] === i)) cls += ' visited';
-                            return `<div class="${cls}">${v}</div>`;
-                        }).join('') + '</div>';
+                    nodes.forEach(level => {
+                        html += '<div class="level">';
+                        level.forEach(n => {
+                            let cls = 'node';
+                            if (step.visited?.includes(n)) cls += ' visited';
+                            if (n === step.current) cls += ' current';
+                            if (n === step.answer) cls += ' answer';
+                            html += `<div class="${cls}">${n}</div>`;
+                        });
+                        html += '</div>';
                     });
                     document.getElementById('treeDisplay').innerHTML = html;
-                    document.getElementById('inorderDisplay').innerHTML = inorder.slice(0, step.inorderVisited).map((v, i) => `<span class="inorder-item ${i === step.inorderVisited - 1 ? 'current' : ''}">${v}</span>`).join('') || '-';
+                    document.getElementById('inorderDisplay').innerHTML = inorder.map(n => `<span class="inorder-item${step.visited?.includes(n)?' visited':''}">${n}</span>`).join('');
+                    document.getElementById('kthDisplay').textContent = step.answer ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

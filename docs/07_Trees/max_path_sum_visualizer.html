@@ -3,39 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Binary Tree Maximum Path Sum Visualization</title>
+    <title>Binary Tree Maximum Path Sum - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .tree-level { display: flex; justify-content: center; gap: 15px; margin: 8px 0; }
-        .tree-node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
-        .tree-node.path { background: var(--viz-success); color: #0f172a; }
-        .tree-node.current { border: 3px solid var(--viz-secondary); }
+        .tree { text-align: center; margin: 20px 0; }
+        .level { display: flex; justify-content: center; gap: 15px; margin: 10px 0; }
+        .node { width: 45px; height: 45px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; }
+        .node.path { background: var(--viz-success); color: #0f172a; }
+        .node.current { border: 3px solid var(--viz-warning); }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">BINARY TREE MAXIMUM PATH SUM</div>
-                <div id="treeDisplay"></div>
+                <div class="viz-title">二叉樹最大路徑和（後序遍歷）</div>
+                <div class="tree" id="treeDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Max Path Sum</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">-∞</div></div>
+                    <div class="state-item"><div class="state-label">最大路徑和</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">DFS APPROACH</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -56,42 +54,28 @@
             { line: '    return node->val + max(left, right);', id: 10 },
             { line: '}', id: 11 },
         ];
-        // Tree:    -10
-        //         /    \
-        //        9      20
-        //              /  \
-        //             15   7
-        const levels = [[-10], [9, 20], ['', '', 15, 7]];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            steps.push({ maxSum: -Infinity, highlightLines: [0, 1, 2], explanation: { title: 'Start', text: 'Path can start and end at any node' }});
-            steps.push({ current: [1, 0], maxSum: 9, highlightLines: [7, 8, 9], explanation: { title: 'Visit 9 (leaf)', text: 'Single node path: 9' }});
-            steps.push({ current: [2, 2], maxSum: 15, highlightLines: [7, 8, 9], explanation: { title: 'Visit 15 (leaf)', text: 'Single node path: 15' }});
-            steps.push({ current: [2, 3], maxSum: 15, highlightLines: [7, 8, 9], explanation: { title: 'Visit 7 (leaf)', text: 'Path: 7' }});
-            steps.push({ current: [1, 1], path: [[2, 2], [1, 1], [2, 3]], maxSum: 42, highlightLines: [9], explanation: { title: 'At node 20', text: '15 + 20 + 7 = 42 → new max!' }});
-            steps.push({ current: [0, 0], path: [[2, 2], [1, 1], [2, 3]], maxSum: 42, highlightLines: [9], explanation: { title: 'At root -10', text: '-10 + 9 + 35 = 34 < 42' }});
-            steps.push({ path: [[2, 2], [1, 1], [2, 3]], maxSum: 42, highlightLines: [3], explanation: { title: 'Done!', text: 'Max path sum = 42 (15→20→7)' }});
+            steps.push({ path: [], max: '-∞', highlightLines: [0,1,2], explanation: { title: '初始化', text: '路徑：任意連續節點序列<br><br>後序遍歷：<br>每個節點計算經過它的最大路徑和<br>返回單邊最大貢獻' } });
+            steps.push({ path: [9], current: 9, max: 9, highlightLines: [5,6,7,8,9,10], explanation: { title: '節點 9', text: '左右都是 null<br>經過 9 的路徑和 = 9<br>返回 9' } });
+            steps.push({ path: [9,15], current: 15, max: 15, highlightLines: [5,6,7,8,9,10], explanation: { title: '節點 15', text: '經過 15 的路徑和 = 15<br>返回 15' } });
+            steps.push({ path: [9,15,7], current: 7, max: 15, highlightLines: [5,6,7,8,9,10], explanation: { title: '節點 7', text: '經過 7 的路徑和 = 7<br>返回 7' } });
+            steps.push({ path: [9,15,7,20], current: 20, max: 42, highlightLines: [9], explanation: { title: '節點 20', text: '左=15, 右=7<br>經過 20：15+20+7=42<br>maxSum = 42' } });
+            steps.push({ path: [-10,9,20,15,7], current: -10, max: 42, highlightLines: [9], explanation: { title: '節點 -10', text: '左=9, 右=35<br>經過 -10：9+(-10)+35=34<br>maxSum 仍是 42' } });
+            steps.push({ path: [15,20,7], max: 42, final: true, highlightLines: [3], explanation: { title: '🎉 完成！', text: '最大路徑和 = 42<br>路徑：15→20→7<br><br>時間：O(n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    levels.forEach((level, li) => {
-                        html += '<div class="tree-level">' + level.map((v, i) => {
-                            if (v === '') return '<div style="width:40px"></div>';
-                            let cls = 'tree-node';
-                            if (step.path?.some(p => p[0] === li && p[1] === i)) cls += ' path';
-                            if (step.current && step.current[0] === li && step.current[1] === i) cls += ' current';
-                            return `<div class="${cls}">${v}</div>`;
-                        }).join('') + '</div>';
-                    });
+                    const maxPath = [15,20,7];
+                    let html = '<div class="level"><div class="node'+(step.current===-10?' current':'')+(step.final?' path':'')+'">-10</div></div>';
+                    html += '<div class="level"><div class="node'+(step.current===9?' current':'')+(step.final?' path':'')+'">9</div><div class="node'+(step.current===20?' current':'')+(step.final||maxPath.includes(20)?' path':'')+'">20</div></div>';
+                    html += '<div class="level"><div class="node'+(step.current===15?' current':'')+(step.final||maxPath.includes(15)?' path':'')+'">15</div><div class="node'+(step.current===7?' current':'')+(step.final||maxPath.includes(7)?' path':'')+'">7</div></div>';
                     document.getElementById('treeDisplay').innerHTML = html;
-                    document.getElementById('maxDisplay').textContent = step.maxSum === -Infinity ? '-∞' : step.maxSum;
+                    document.getElementById('maxDisplay').textContent = step.max ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

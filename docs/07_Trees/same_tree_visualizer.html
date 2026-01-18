@@ -3,43 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Same Tree Visualization</title>
+    <title>Same Tree 相同的樹 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .trees-container { display: flex; gap: 30px; justify-content: center; }
-        .tree-box { text-align: center; }
-        .tree-label { color: var(--viz-text-muted); margin-bottom: 8px; }
-        .tree-level { display: flex; justify-content: center; gap: 10px; margin: 5px 0; }
-        .tree-node { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.9rem; }
-        .tree-node.match { background: var(--viz-success); color: #0f172a; }
-        .tree-node.mismatch { background: var(--viz-error); }
-        .tree-node.current { border: 3px solid var(--viz-secondary); }
+        .trees { display: flex; gap: 40px; justify-content: center; margin: 20px 0; }
+        .tree { text-align: center; }
+        .tree-label { color: var(--text-muted); margin-bottom: 10px; }
+        .tree-nodes { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .level { display: flex; gap: 10px; justify-content: center; }
+        .node { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; }
+        .node.match { background: var(--viz-success); color: #0f172a; }
+        .node.mismatch { background: var(--viz-error); }
+        .node.current { border: 3px solid var(--viz-warning); }
+        .node.null { background: transparent; border: 2px dashed var(--text-muted); color: var(--text-muted); }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SAME TREE</div>
-                <div class="trees-container" id="treesDisplay"></div>
+                <div class="viz-title">相同的樹（遞迴比較）</div>
+                <div class="trees" id="treesDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Same?</div><div class="state-value" id="resultDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">RECURSIVE DFS</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -55,39 +54,31 @@
             { line: '           isSameTree(p->right, q->right);', id: 5 },
             { line: '}', id: 6 },
         ];
-        const tree1 = [[1], [2, 3]];
-        const tree2 = [[1], [2, 3]];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            steps.push({ current: null, matched: [], highlightLines: [0], explanation: { title: 'Start', text: 'Compare two trees recursively' }});
-            steps.push({ current: [0, 0], matched: [], highlightLines: [3], explanation: { title: 'Compare roots', text: '1 == 1 ✓' }});
-            steps.push({ current: [1, 0], matched: [[0, 0]], highlightLines: [4], explanation: { title: 'Compare left children', text: '2 == 2 ✓' }});
-            steps.push({ current: [1, 1], matched: [[0, 0], [1, 0]], highlightLines: [5], explanation: { title: 'Compare right children', text: '3 == 3 ✓' }});
-            steps.push({ matched: 'all', result: true, highlightLines: [4, 5], explanation: { title: 'Done!', text: 'Trees are identical ✓' }});
+            steps.push({ matched: [], current: null, highlightLines: [0], explanation: { title: '初始化', text: '比較兩棵樹是否相同<br><br>遞迴檢查：<br>1. 都為空 → true<br>2. 一空一非空 → false<br>3. 值不同 → false<br>4. 遞迴比較子樹' } });
+            steps.push({ matched: [0], current: 0, highlightLines: [3,4,5], explanation: { title: '比較根節點', text: 'p.val = q.val = 1 ✓<br>遞迴比較左右子樹' } });
+            steps.push({ matched: [0,1], current: 1, highlightLines: [3,4,5], explanation: { title: '比較左子節點', text: 'p.left.val = q.left.val = 2 ✓' } });
+            steps.push({ matched: [0,1,2], current: 2, highlightLines: [3,4,5], explanation: { title: '比較右子節點', text: 'p.right.val = q.right.val = 3 ✓' } });
+            steps.push({ matched: [0,1,2], result: true, final: true, highlightLines: [4,5], explanation: { title: '🎉 相同！', text: '所有節點都匹配<br><br>時間：O(n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    function renderTree(tree, label) {
-                        let html = `<div class="tree-box"><div class="tree-label">${label}</div>`;
-                        tree.forEach((level, li) => {
-                            html += '<div class="tree-level">' + level.map((v, i) => {
-                                let cls = 'tree-node';
-                                if (step.matched === 'all' || step.matched?.some(m => m[0] === li && m[1] === i)) cls += ' match';
-                                if (step.current && step.current[0] === li && step.current[1] === i) cls += ' current';
-                                return `<div class="${cls}">${v}</div>`;
-                            }).join('') + '</div>';
-                        });
-                        return html + '</div>';
-                    }
-                    document.getElementById('treesDisplay').innerHTML = renderTree(tree1, 'Tree P') + renderTree(tree2, 'Tree Q');
-                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? (step.result ? '✓ Yes' : '✗ No') : '-';
-                    document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
+                    const tree1 = [1, 2, 3];
+                    const tree2 = [1, 2, 3];
+                    let html = '';
+                    [['p', tree1], ['q', tree2]].forEach(([label, tree]) => {
+                        html += `<div class="tree"><div class="tree-label">${label}</div><div class="tree-nodes">`;
+                        html += `<div class="level"><div class="node${step.matched?.includes(0)?' match':''}${step.current===0?' current':''}">${tree[0]}</div></div>`;
+                        html += `<div class="level"><div class="node${step.matched?.includes(1)?' match':''}${step.current===1?' current':''}">${tree[1]}</div><div class="node${step.matched?.includes(2)?' match':''}${step.current===2?' current':''}">${tree[2]}</div></div>`;
+                        html += `</div></div>`;
+                    });
+                    document.getElementById('treesDisplay').innerHTML = html;
+                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

@@ -3,40 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lowest Common Ancestor of a BST Visualization</title>
+    <title>LCA of BST 最近公共祖先 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .tree-level { display: flex; justify-content: center; gap: 10px; margin: 6px 0; }
-        .tree-node { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.9rem; }
-        .tree-node.target { background: var(--viz-secondary); color: #0f172a; }
-        .tree-node.lca { background: var(--viz-success); color: #0f172a; }
-        .tree-node.path { border: 2px solid var(--viz-success); }
+        .tree { text-align: center; margin: 20px 0; }
+        .level { display: flex; justify-content: center; gap: 10px; margin: 8px 0; }
+        .node { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; }
+        .node.target { background: var(--viz-warning); color: #0f172a; }
+        .node.lca { background: var(--viz-success); color: #0f172a; }
+        .node.path { border: 3px solid var(--viz-secondary); }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">LCA OF BST (p=2, q=8)</div>
-                <div id="treeDisplay"></div>
+                <div class="viz-title">BST 最近公共祖先</div>
+                <div class="tree" id="treeDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">LCA</div><div class="state-value" id="lcaDisplay" style="color: var(--viz-success);">-</div></div>
+                    <div class="state-item"><div class="state-label">節點 p</div><div class="state-value">2</div></div>
+                    <div class="state-item"><div class="state-label">節點 q</div><div class="state-value">8</div></div>
+                    <div class="state-item"><div class="state-label">LCA</div><div class="state-value" id="lcaDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BST PROPERTY</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -44,50 +44,45 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'TreeNode* lowestCommonAncestor(root, p, q) {', id: 0 },
+            { line: 'TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {', id: 0 },
             { line: '    while (root) {', id: 1 },
             { line: '        if (p->val < root->val && q->val < root->val)', id: 2 },
-            { line: '            root = root->left;', id: 3 },
+            { line: '            root = root->left;  // 都在左邊', id: 3 },
             { line: '        else if (p->val > root->val && q->val > root->val)', id: 4 },
-            { line: '            root = root->right;', id: 5 },
+            { line: '            root = root->right; // 都在右邊', id: 5 },
             { line: '        else', id: 6 },
-            { line: '            return root; // LCA found', id: 7 },
+            { line: '            return root; // 分岔點 = LCA', id: 7 },
             { line: '    }', id: 8 },
-            { line: '}', id: 9 },
+            { line: '    return nullptr;', id: 9 },
+            { line: '}', id: 10 },
         ];
-        // BST:     6
-        //        /   \
-        //       2     8
-        //      / \   / \
-        //     0   4 7   9
-        const levels = [[6], [2, 8], [0, 4, 7, 9]];
-        const p = 2, q = 8;
-
         function generateAlgorithmSteps() {
             const steps = [];
-            steps.push({ current: [0, 0], highlightLines: [0, 1], explanation: { title: 'Start at root (6)', text: `Find LCA of ${p} and ${q}` }});
-            steps.push({ current: [0, 0], lca: 6, highlightLines: [6, 7], explanation: { title: 'Check node 6', text: `p=${p} < 6, q=${q} > 6 → split! LCA = 6` }});
-            steps.push({ lca: 6, highlightLines: [7], explanation: { title: '✓ LCA Found!', text: `LCA(${p}, ${q}) = 6` }});
+            steps.push({ current: null, highlightLines: [0,1], explanation: { title: '初始化', text: 'BST 中找 p=2, q=8 的 LCA<br><br>利用 BST 性質：<br>都小於當前 → 往左<br>都大於當前 → 往右<br>分岔點 → LCA' } });
+            steps.push({ current: 6, path: [6], highlightLines: [1,2,3,4,5,6,7], explanation: { title: '檢查節點 6', text: 'p=2 < 6, q=8 > 6<br>分岔！6 是 LCA' } });
+            steps.push({ current: 6, lca: 6, final: true, highlightLines: [7], explanation: { title: '🎉 找到 LCA！', text: 'LCA = 6<br>2 在左子樹, 8 在右子樹<br><br>時間：O(h)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
+                    const nodes = [[6], [2, 8], [0, 4, 7, 9]];
                     let html = '';
-                    levels.forEach((level, li) => {
-                        html += '<div class="tree-level">' + level.map((v, i) => {
-                            let cls = 'tree-node';
-                            if (v === p || v === q) cls += ' target';
-                            if (v === step.lca) cls += ' lca';
-                            if (step.current && step.current[0] === li && step.current[1] === i) cls += ' path';
-                            return `<div class="${cls}">${v}</div>`;
-                        }).join('') + '</div>';
+                    nodes.forEach((level, li) => {
+                        html += '<div class="level">';
+                        level.forEach(n => {
+                            let cls = 'node';
+                            if (n === 2 || n === 8) cls += ' target';
+                            if (n === step.lca) cls += ' lca';
+                            if (step.path?.includes(n)) cls += ' path';
+                            html += `<div class="${cls}">${n}</div>`;
+                        });
+                        html += '</div>';
                     });
                     document.getElementById('treeDisplay').innerHTML = html;
-                    document.getElementById('lcaDisplay').textContent = step.lca || '-';
+                    document.getElementById('lcaDisplay').textContent = step.lca ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

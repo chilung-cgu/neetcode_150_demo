@@ -3,39 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subtree of Another Tree Visualization</title>
+    <title>Subtree of Another Tree 另一棵樹的子樹 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .trees-container { display: flex; gap: 40px; justify-content: center; align-items: flex-start; }
-        .tree-box { text-align: center; }
-        .tree-label { color: var(--viz-text-muted); margin-bottom: 8px; }
-        .tree-level { display: flex; justify-content: center; gap: 8px; margin: 4px 0; }
-        .tree-node { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.85rem; }
-        .tree-node.subtree { background: var(--viz-success); color: #0f172a; }
-        .tree-node.checking { border: 3px solid var(--viz-secondary); }
+        .trees { display: flex; gap: 40px; justify-content: center; margin: 20px 0; }
+        .tree { text-align: center; }
+        .tree-label { color: var(--text-muted); margin-bottom: 10px; }
+        .node { width: 35px; height: 35px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; margin: 2px; }
+        .node.match { background: var(--viz-success); color: #0f172a; }
+        .node.checking { border: 3px solid var(--viz-warning); }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SUBTREE OF ANOTHER TREE</div>
-                <div class="trees-container" id="treesDisplay"></div>
+                <div class="viz-title">另一棵樹的子樹</div>
+                <div class="trees" id="treesDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -50,39 +49,30 @@
             { line: '           isSubtree(root->right, subRoot);', id: 4 },
             { line: '}', id: 5 },
         ];
-        const mainTree = [[3], [4, 5], [1, 2, '', '']];
-        const subTree = [[4], [1, 2]];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            steps.push({ checking: null, highlightLines: [0], explanation: { title: 'Start', text: 'Check if subTree exists in mainTree' }});
-            steps.push({ checking: [0, 0], highlightLines: [2], explanation: { title: 'Check root (3)', text: '3 != 4, not a match' }});
-            steps.push({ checking: [1, 0], subtreeMatch: [[1, 0], [2, 0], [2, 1]], highlightLines: [2, 3], explanation: { title: 'Check node 4', text: '4 == 4, checking subtree...' }});
-            steps.push({ subtreeFound: true, highlightLines: [2], explanation: { title: '✓ Subtree Found!', text: 'Node 4 subtree matches exactly' }});
+            steps.push({ checking: null, highlightLines: [0], explanation: { title: '初始化', text: '檢查 subRoot 是否為 root 的子樹<br><br>對 root 每個節點檢查是否與 subRoot 相同' } });
+            steps.push({ checking: 0, highlightLines: [2], explanation: { title: '檢查根節點 3', text: '3 vs 4: 不匹配<br>繼續檢查子節點' } });
+            steps.push({ checking: 1, match: true, highlightLines: [2], explanation: { title: '檢查節點 4', text: '4 = 4 ✓<br>1 = 1 ✓, 2 = 2 ✓<br>找到匹配！' } });
+            steps.push({ match: true, result: true, final: true, highlightLines: [2], explanation: { title: '🎉 是子樹！', text: '在節點 4 找到匹配<br><br>時間：O(m×n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '<div class="tree-box"><div class="tree-label">Main Tree</div>';
-                    mainTree.forEach((level, li) => {
-                        html += '<div class="tree-level">' + level.map((v, i) => {
-                            if (!v) return '<div style="width:32px"></div>';
-                            let cls = 'tree-node';
-                            if (step.subtreeMatch?.some(m => m[0] === li && m[1] === i) || step.subtreeFound && li >= 1 && v) cls += ' subtree';
-                            if (step.checking && step.checking[0] === li && step.checking[1] === i) cls += ' checking';
-                            return `<div class="${cls}">${v}</div>`;
-                        }).join('') + '</div>';
-                    });
-                    html += '</div><div class="tree-box"><div class="tree-label">Sub Tree</div>';
-                    subTree.forEach((level) => {
-                        html += '<div class="tree-level">' + level.map(v => `<div class="tree-node ${step.subtreeFound ? 'subtree' : ''}">${v}</div>`).join('') + '</div>';
-                    });
-                    html += '</div>';
+                    let html = `<div class="tree"><div class="tree-label">root</div>`;
+                    html += `<div><div class="node${step.checking===0?' checking':''}">${3}</div></div>`;
+                    html += `<div><div class="node${step.checking===1||step.match?' checking':''}">${4}</div><div class="node">${5}</div></div>`;
+                    html += `<div><div class="node${step.match?' match':''}">${1}</div><div class="node${step.match?' match':''}">${2}</div></div>`;
+                    html += `</div>`;
+                    html += `<div class="tree"><div class="tree-label">subRoot</div>`;
+                    html += `<div><div class="node${step.match?' match':''}">${4}</div></div>`;
+                    html += `<div><div class="node${step.match?' match':''}">${1}</div><div class="node${step.match?' match':''}">${2}</div></div>`;
+                    html += `</div>`;
                     document.getElementById('treesDisplay').innerHTML = html;
+                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

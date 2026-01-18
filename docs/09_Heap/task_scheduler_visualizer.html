@@ -3,42 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Scheduler Visualization</title>
+    <title>Task Scheduler - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .timeline { display: flex; gap: 3px; justify-content: center; flex-wrap: wrap; margin: 15px 0; }
-        .slot { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-family: monospace; font-weight: bold; }
-        .slot.task { background: var(--viz-primary); color: white; }
-        .slot.idle { background: rgba(255,255,255,0.1); color: var(--viz-text-muted); }
-        .slot.A { background: #f87171; }
-        .slot.B { background: #60a5fa; }
+        .tasks { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .task { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; color: white; }
+        .task.A { background: #3b82f6; }
+        .task.B { background: #8b5cf6; }
+        .task.idle { background: var(--viz-bg-secondary); color: var(--text-muted); }
+        .timeline { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .slot { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; font-size: 0.85rem; }
+        .slot.A { background: #3b82f6; color: white; }
+        .slot.B { background: #8b5cf6; color: white; }
+        .slot.idle { background: #374151; color: #9ca3af; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">TASK SCHEDULER (n=2)</div>
-                <div style="text-align: center; color: var(--viz-text-muted);">Timeline:</div>
+                <div class="viz-title">任務調度器（貪心 + 數學）</div>
+                <div style="text-align: center; color: var(--text-muted);">任務</div>
+                <div class="tasks" id="tasksDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">執行時間線</div>
                 <div class="timeline" id="timelineDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Total Time</div><div class="state-value" id="timeDisplay" style="color: var(--viz-success);">0</div></div>
+                    <div class="state-item"><div class="state-label">冷卻時間 n</div><div class="state-value">2</div></div>
+                    <div class="state-item"><div class="state-label">總時間</div><div class="state-value" id="totalDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">GREEDY + HEAP</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -46,54 +50,33 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int leastInterval(tasks, n) {', id: 0 },
-            { line: '    // Count task frequencies', id: 1 },
-            { line: '    // Use max heap (most frequent first)', id: 2 },
-            { line: '    priority_queue<int> maxHeap;', id: 3 },
-            { line: '    queue<pair<int,int>> cooldown; // {count, availTime}', id: 4 },
-            { line: '    int time = 0;', id: 5 },
-            { line: '    while (!maxHeap.empty() || !cooldown.empty()) {', id: 6 },
-            { line: '        if (!maxHeap.empty()) {', id: 7 },
-            { line: '            int cnt = maxHeap.top() - 1; maxHeap.pop();', id: 8 },
-            { line: '            if (cnt) cooldown.push({cnt, time + n + 1});', id: 9 },
-            { line: '        }', id: 10 },
-            { line: '        if (cooldown.front().second == time)', id: 11 },
-            { line: '            maxHeap.push(cooldown.front().first);', id: 12 },
-            { line: '        time++;', id: 13 },
-            { line: '    }', id: 14 },
-            { line: '    return time;', id: 15 },
-            { line: '}', id: 16 },
+            { line: 'int leastInterval(vector<char>& tasks, int n) {', id: 0 },
+            { line: '    vector<int> freq(26, 0);', id: 1 },
+            { line: '    for (char t : tasks) freq[t - \'A\']++;', id: 2 },
+            { line: '    int maxFreq = *max_element(freq.begin(), freq.end());', id: 3 },
+            { line: '    int maxCount = count(freq.begin(), freq.end(), maxFreq);', id: 4 },
+            { line: '    // 公式：(maxFreq-1) * (n+1) + maxCount', id: 5 },
+            { line: '    int result = (maxFreq - 1) * (n + 1) + maxCount;', id: 6 },
+            { line: '    return max((int)tasks.size(), result);', id: 7 },
+            { line: '}', id: 8 },
         ];
-        const tasks = ['A', 'A', 'A', 'B', 'B', 'B'];
-        const n = 2;
-
+        const tasks = ['A','A','A','B','B','B'];
         function generateAlgorithmSteps() {
             const steps = [];
-            // Optimal: A B idle A B idle A B = 8
-            const timeline = [];
-            
-            steps.push({ timeline: [], highlightLines: [0, 1, 2, 3, 4, 5], explanation: { title: 'Init', text: 'A:3, B:3, cooldown n=2' }});
-            
-            const schedule = ['A', 'B', 'idle', 'A', 'B', 'idle', 'A', 'B'];
-            for (let i = 0; i < schedule.length; i++) {
-                timeline.push(schedule[i]);
-                steps.push({ timeline: [...timeline], highlightLines: schedule[i] === 'idle' ? [7] : [8, 9], explanation: { title: `Time ${i + 1}`, text: schedule[i] === 'idle' ? 'Cooling down' : `Execute ${schedule[i]}` }});
-            }
-            
-            steps.push({ timeline, highlightLines: [15], explanation: { title: 'Done!', text: `Total time: ${timeline.length}` }});
-            
+            steps.push({ timeline: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: '任務：A×3, B×3<br>冷卻時間 n = 2<br><br>相同任務間隔至少 n' } });
+            steps.push({ timeline: [], freq: {A:3,B:3}, highlightLines: [3,4], explanation: { title: '統計頻率', text: 'maxFreq = 3<br>maxCount = 2 (A和B都是3次)' } });
+            steps.push({ timeline: ['A','B','idle','A','B','idle','A','B'], highlightLines: [5,6], explanation: { title: '計算公式', text: '(3-1) × (2+1) + 2 = 8<br><br>框架：A_B_A_B_AB' } });
+            steps.push({ timeline: ['A','B','idle','A','B','idle','A','B'], total: 8, final: true, highlightLines: [7], explanation: { title: '🎉 完成！', text: '最少時間 = 8<br><br>時間：O(n)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('timelineDisplay').innerHTML = step.timeline.map(t =>
-                        `<span class="slot ${t === 'idle' ? 'idle' : 'task ' + t}">${t === 'idle' ? '—' : t}</span>`
-                    ).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
-                    document.getElementById('timeDisplay').textContent = step.timeline.length;
+                    document.getElementById('tasksDisplay').innerHTML = tasks.map(t => `<span class="task ${t}">${t}</span>`).join('');
+                    document.getElementById('timelineDisplay').innerHTML = (step.timeline || []).map(t => `<span class="slot ${t}">${t}</span>`).join('') || '等待調度...';
+                    document.getElementById('totalDisplay').textContent = step.total ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

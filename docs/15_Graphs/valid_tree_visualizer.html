@@ -3,38 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Graph Valid Tree Visualization</title>
+    <title>Graph Valid Tree 圖是否為樹 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .nodes { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
-        .node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
-        .node.connected { background: var(--viz-success); color: #0f172a; }
+        .nodes { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .node { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; }
+        .node.visited { background: var(--viz-success); color: #0f172a; }
+        .edges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+        .edge { padding: 6px 12px; background: var(--viz-bg-secondary); border-radius: 4px; font-size: 0.85rem; }
+        .conditions { padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; margin: 15px 0; }
+        .condition { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
+        .condition .icon { font-size: 1.2rem; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">GRAPH VALID TREE</div>
+                <div class="viz-title">圖是否為樹（UNION-FIND / DFS）</div>
                 <div class="nodes" id="nodesDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">邊</div>
+                <div class="edges" id="edgesDisplay"></div>
+                <div class="conditions" id="conditionsDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Is Tree?</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">UNION-FIND & EDGE COUNT</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -42,41 +47,42 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'bool validTree(int n, edges) {', id: 0 },
-            { line: '    // Tree has exactly n-1 edges', id: 1 },
-            { line: '    if (edges.size() != n - 1) return false;', id: 2 },
-            { line: '    UnionFind uf(n);', id: 3 },
-            { line: '    for (auto& e : edges) {', id: 4 },
-            { line: '        if (!uf.union(e[0], e[1]))', id: 5 },
-            { line: '            return false; // cycle detected', id: 6 },
-            { line: '    }', id: 7 },
-            { line: '    return true; // connected & no cycle', id: 8 },
-            { line: '}', id: 9 },
+            { line: 'bool validTree(int n, vector<vector<int>>& edges) {', id: 0 },
+            { line: '    // 樹的條件：', id: 1 },
+            { line: '    // 1. 邊數 = n - 1', id: 2 },
+            { line: '    // 2. 無環', id: 3 },
+            { line: '    // 3. 全連通', id: 4 },
+            { line: '    if (edges.size() != n - 1) return false;', id: 5 },
+            { line: '    // Union-Find 檢查環', id: 6 },
+            { line: '    for (auto& e : edges) {', id: 7 },
+            { line: '        if (find(e[0]) == find(e[1])) return false;', id: 8 },
+            { line: '        union(e[0], e[1]);', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    return true;', id: 11 },
+            { line: '}', id: 12 },
         ];
-        const nodes = [0, 1, 2, 3, 4];
-
+        const n = 5;
+        const edges = [[0,1],[0,2],[0,3],[1,4]];
         function generateAlgorithmSteps() {
             const steps = [];
-            
-            steps.push({ connected: [], highlightLines: [0, 1, 2], explanation: { title: 'Check edge count', text: 'edges = 4 = n-1 ✓' }});
-            steps.push({ connected: [0, 1], highlightLines: [5], explanation: { title: 'Union(0,1)', text: 'OK' }});
-            steps.push({ connected: [0, 1, 2], highlightLines: [5], explanation: { title: 'Union(0,2)', text: 'OK' }});
-            steps.push({ connected: [0, 1, 2, 3], highlightLines: [5], explanation: { title: 'Union(0,3)', text: 'OK' }});
-            steps.push({ connected: [0, 1, 2, 3, 4], highlightLines: [5], explanation: { title: 'Union(0,4)', text: 'OK' }});
-            steps.push({ connected: [0, 1, 2, 3, 4], result: true, highlightLines: [8], explanation: { title: 'Valid Tree!', text: 'Connected & no cycle' }});
-            
+            steps.push({ visited: [], cond1: null, cond2: null, highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: `n = 5, edges = 4<br><br>樹的條件：<br>1. 邊數 = n-1<br>2. 無環<br>3. 全連通` } });
+            steps.push({ visited: [], cond1: true, cond2: null, highlightLines: [5], explanation: { title: '檢查邊數', text: '邊數 = 4 = 5-1 ✓' } });
+            steps.push({ visited: [0,1,2,3,4], cond1: true, cond2: true, highlightLines: [7,8,9], explanation: { title: '檢查環與連通', text: 'Union-Find 合併所有邊<br>無環 ✓ 全連通 ✓' } });
+            steps.push({ visited: [0,1,2,3,4], cond1: true, cond2: true, result: true, final: true, highlightLines: [11], explanation: { title: '🎉 是有效樹！', text: '滿足所有條件<br><br>時間：O(n × α(n))' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('nodesDisplay').innerHTML = nodes.map(n =>
-                        `<div class="node ${step.connected?.includes(n) ? 'connected' : ''}">${n}</div>`
-                    ).join('');
-                    document.getElementById('resultDisplay').textContent = step.result ? 'Yes ✓' : '-';
+                    document.getElementById('nodesDisplay').innerHTML = Array.from({length: n}, (_, i) => `<div class="node${step.visited?.includes(i)?' visited':''}">${i}</div>`).join('');
+                    document.getElementById('edgesDisplay').innerHTML = edges.map(e => `<span class="edge">[${e[0]},${e[1]}]</span>`).join('');
+                    let condHtml = '';
+                    condHtml += `<div class="condition"><span class="icon">${step.cond1 === true ? '✅' : (step.cond1 === false ? '❌' : '⏳')}</span>邊數 = n - 1</div>`;
+                    condHtml += `<div class="condition"><span class="icon">${step.cond2 === true ? '✅' : (step.cond2 === false ? '❌' : '⏳')}</span>無環且全連通</div>`;
+                    document.getElementById('conditionsDisplay').innerHTML = condHtml;
+                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

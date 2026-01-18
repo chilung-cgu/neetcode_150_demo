@@ -3,35 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alien Dictionary Visualization</title>
+    <title>Alien Dictionary 外星字典 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .order { display: flex; gap: 6px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
-        .char { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1.2rem; background: var(--viz-primary); color: white; }
-        .char.ordered { background: var(--viz-success); color: #0f172a; }
+        .words { display: flex; flex-direction: column; gap: 8px; align-items: center; margin: 20px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .word { font-family: monospace; font-size: 1.2rem; font-weight: bold; }
+        .edges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+        .edge { padding: 8px 15px; background: var(--viz-primary); color: white; border-radius: 6px; }
+        .result { text-align: center; font-size: 1.5rem; font-weight: bold; margin: 15px 0; color: var(--viz-success); letter-spacing: 5px; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">ALIEN DICTIONARY (TOPOLOGICAL SORT)</div>
-                <div class="order" id="orderDisplay"></div>
+                <div class="viz-title">外星字典（拓撲排序）</div>
+                <div class="words" id="wordsDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">推導出的順序關係</div>
+                <div class="edges" id="edgesDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">字母順序</div>
+                <div class="result" id="resultDisplay">?</div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BUILD GRAPH + TOPO SORT</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -39,37 +42,42 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'string alienOrder(words) {', id: 0 },
-            { line: '    // Build graph from adjacent word pairs', id: 1 },
+            { line: 'string alienOrder(vector<string>& words) {', id: 0 },
+            { line: '    // 1. 建圖：比較相鄰單詞', id: 1 },
             { line: '    for (int i = 0; i < words.size() - 1; i++) {', id: 2 },
-            { line: '        // Find first diff char: word1[j] -> word2[j]', id: 3 },
+            { line: '        找第一個不同字母 → 加邊', id: 3 },
             { line: '    }', id: 4 },
-            { line: '    // Topological sort (Kahn\'s algorithm)', id: 5 },
-            { line: '    string result;', id: 6 },
-            { line: '    // BFS with indegree', id: 7 },
-            { line: '    return result;', id: 8 },
-            { line: '}', id: 9 },
+            { line: '    // 2. 拓撲排序 (BFS)', id: 5 },
+            { line: '    queue<char> q;', id: 6 },
+            { line: '    for (入度為 0 的字母) q.push(c);', id: 7 },
+            { line: '    string result;', id: 8 },
+            { line: '    while (!q.empty()) {', id: 9 },
+            { line: '        char c = q.front(); q.pop();', id: 10 },
+            { line: '        result += c;', id: 11 },
+            { line: '        更新鄰居入度', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '    return result;', id: 14 },
+            { line: '}', id: 15 },
         ];
-        const order = ['w', 'e', 'r', 't', 'f'];
-
+        const words = ["wrt", "wrf", "er", "ett", "rftt"];
         function generateAlgorithmSteps() {
             const steps = [];
-            steps.push({ ordered: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Build graph', text: 'Compare adjacent words' }});
-            for (let i = 0; i < order.length; i++) {
-                steps.push({ ordered: order.slice(0, i + 1), highlightLines: [5, 6, 7], explanation: { title: `Add '${order[i]}'`, text: 'Topological order' }});
-            }
-            steps.push({ ordered: order, highlightLines: [8], explanation: { title: 'Done!', text: `Order: "${order.join('')}"` }});
+            steps.push({ edges: [], result: '', highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: '外星語言單詞：<br>wrt, wrf, er, ett, rftt<br><br>比較相鄰單詞推導順序' } });
+            steps.push({ edges: ['t→f'], result: '', highlightLines: [2,3], explanation: { title: 'wrt vs wrf', text: 't 在 f 之前<br>加邊 t → f' } });
+            steps.push({ edges: ['t→f','w→e'], result: '', highlightLines: [2,3], explanation: { title: 'wrf vs er', text: 'w 在 e 之前<br>加邊 w → e' } });
+            steps.push({ edges: ['t→f','w→e','r→t'], result: '', highlightLines: [2,3], explanation: { title: 'er vs ett', text: 'r 在 t 之前<br>加邊 r → t' } });
+            steps.push({ edges: ['t→f','w→e','r→t','e→r'], result: '', highlightLines: [2,3], explanation: { title: 'ett vs rftt', text: 'e 在 r 之前<br>加邊 e → r' } });
+            steps.push({ edges: ['t→f','w→e','r→t','e→r'], result: 'wertf', final: true, highlightLines: [5,6,7,8,9,10,11,14], explanation: { title: '🎉 完成！', text: '拓撲排序結果：wertf<br><br>時間：O(C) C=字符總數' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('orderDisplay').innerHTML = order.map((c, i) =>
-                        `<span class="char ${step.ordered?.includes(c) ? 'ordered' : ''}">${c}</span>`
-                    ).join('');
+                    document.getElementById('wordsDisplay').innerHTML = words.map(w => `<div class="word">${w}</div>`).join('');
+                    document.getElementById('edgesDisplay').innerHTML = (step.edges || []).map(e => `<span class="edge">${e}</span>`).join('') || '無';
+                    document.getElementById('resultDisplay').textContent = step.result || '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

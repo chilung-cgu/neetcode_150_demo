@@ -3,35 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sum of Two Integers Visualization</title>
+    <title>Sum of Two Integers 兩整數之和 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .calc { text-align: center; margin: 20px 0; }
-        .formula { font-family: monospace; font-size: 1.2rem; color: var(--viz-text-muted); margin: 5px 0; }
-        .result { font-family: monospace; font-size: 2rem; color: var(--viz-success); margin-top: 15px; }
+        .bits { display: flex; flex-direction: column; gap: 10px; align-items: center; margin: 20px 0; }
+        .bit-row { display: flex; gap: 4px; align-items: center; }
+        .bit-label { width: 80px; color: var(--text-muted); font-size: 0.85rem; text-align: right; margin-right: 10px; }
+        .bit { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); font-family: monospace; }
+        .bit.one { background: var(--viz-primary); color: white; }
+        .bit.carry { background: var(--viz-warning); color: #0f172a; }
+        .bit.result { background: var(--viz-success); color: #0f172a; }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SUM OF TWO INTEGERS (NO + or -)</div>
-                <div class="calc" id="calcDisplay"></div>
+                <div class="viz-title">兩整數之和（位運算）</div>
+                <div class="bits" id="bitsDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">a</div><div class="state-value" id="aDisplay">1</div></div>
+                    <div class="state-item"><div class="state-label">b</div><div class="state-value" id="bDisplay">2</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BIT MANIPULATION</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -41,40 +47,39 @@
         const codeStructure = [
             { line: 'int getSum(int a, int b) {', id: 0 },
             { line: '    while (b != 0) {', id: 1 },
-            { line: '        int carry = a & b;', id: 2 },
-            { line: '        a = a ^ b;         // sum without carry', id: 3 },
-            { line: '        b = carry << 1;    // carry shifted left', id: 4 },
+            { line: '        int carry = (a & b) << 1; // 進位', id: 2 },
+            { line: '        a = a ^ b;                // 無進位加法', id: 3 },
+            { line: '        b = carry;', id: 4 },
             { line: '    }', id: 5 },
             { line: '    return a;', id: 6 },
             { line: '}', id: 7 },
         ];
-        // 2 + 3 = 5
-        // a=2 (010), b=3 (011)
-        // carry = 010 & 011 = 010, a = 010 ^ 011 = 001, b = 010 << 1 = 100
-        // carry = 001 & 100 = 000, a = 001 ^ 100 = 101, b = 000
-        
         function generateAlgorithmSteps() {
             const steps = [];
-            
-            steps.push({ a: 2, b: 3, highlightLines: [0], explanation: { title: '2 + 3', text: 'a=2 (010), b=3 (011)' }});
-            steps.push({ a: 1, b: 4, carry: 2, highlightLines: [2, 3, 4], explanation: { title: 'Iteration 1', text: 'carry=2&3=2, a=2^3=1, b=2<<1=4' }});
-            steps.push({ a: 5, b: 0, carry: 0, highlightLines: [2, 3, 4], explanation: { title: 'Iteration 2', text: 'carry=1&4=0, a=1^4=5, b=0' }});
-            steps.push({ a: 5, b: 0, highlightLines: [6], explanation: { title: 'Done!', text: '2 + 3 = 5' }});
-            
+            steps.push({ a: '001', b: '010', highlightLines: [0,1], explanation: { title: '初始化', text: 'a = 1 (001)<br>b = 2 (010)<br><br>不用 +/-，用位運算<br>XOR = 無進位加法<br>AND << 1 = 進位' } });
+            steps.push({ a: '001', b: '010', xor: '011', carry: '000', highlightLines: [2,3,4], explanation: { title: '第 1 輪', text: 'a XOR b = 011 (3)<br>a AND b = 000<br>carry = 000<br><br>b = 0，停止' } });
+            steps.push({ a: '011', b: '000', result: 3, final: true, highlightLines: [6], explanation: { title: '🎉 完成！', text: '1 + 2 = 3<br><br>時間：O(1)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const toBin = n => (n >>> 0).toString(2).padStart(4, '0');
-                    document.getElementById('calcDisplay').innerHTML = `
-                        <div class="formula">a = ${step.a} (${toBin(step.a)})</div>
-                        <div class="formula">b = ${step.b} (${toBin(step.b)})</div>
-                        ${step.b === 0 ? `<div class="result">${step.a}</div>` : ''}
-                    `;
+                    let html = '';
+                    const showBits = (label, bits, cls) => {
+                        html += `<div class="bit-row"><span class="bit-label">${label}</span>`;
+                        bits.split('').forEach(b => html += `<div class="bit ${b==='1'?cls:''}">${b}</div>`);
+                        html += `</div>`;
+                    };
+                    showBits('a:', step.a || '001', 'one');
+                    showBits('b:', step.b || '010', 'one');
+                    if (step.xor) showBits('a XOR b:', step.xor, 'result');
+                    if (step.carry) showBits('carry:', step.carry, 'carry');
+                    document.getElementById('bitsDisplay').innerHTML = html;
+                    document.getElementById('aDisplay').textContent = parseInt(step.a || '001', 2);
+                    document.getElementById('bDisplay').textContent = parseInt(step.b || '010', 2);
+                    document.getElementById('resultDisplay').textContent = step.result ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());
