@@ -3,34 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maximum Subarray Visualization</title>
+    <title>Maximum Subarray 最大子陣列和 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .array { display: flex; gap: 6px; justify-content: center; margin: 20px 0; }
+        .element { width: 45px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .element .val { font-weight: bold; }
+        .element .idx { font-size: 0.6rem; opacity: 0.7; }
+        .element.current { background: var(--viz-secondary); color: #0f172a; }
+        .element.subarray { background: var(--viz-success); color: #0f172a; }
+        .dp-row { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
+        .dp-cell { width: 45px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); font-size: 0.9rem; }
+        .dp-cell.active { background: var(--viz-warning); color: #0f172a; }
+    </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">MAXIMUM SUBARRAY (KADANE'S)</div>
-                <div class="chart-container" id="chartContainer"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">最大子陣列和（KADANE'S ALGORITHM）</div>
+                <div class="array" id="arrayDisplay"></div>
+                <div style="text-align: center; color: var(--text-muted);">currentSum（以該位置結尾的最大和）</div>
+                <div class="dp-row" id="dpDisplay"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Current Sum</div><div class="state-value" id="currDisplay">0</div></div>
-                    <div class="state-item"><div class="state-label">Max Sum</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">0</div></div>
+                    <div class="state-item"><div class="state-label">currentSum</div><div class="state-value" id="currDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">maxSum</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">-∞</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">KADANE'S ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -39,38 +49,48 @@
     <script>
         const codeStructure = [
             { line: 'int maxSubArray(vector<int>& nums) {', id: 0 },
-            { line: '    int maxSum = nums[0], curSum = 0;', id: 1 },
-            { line: '    for (int n : nums) {', id: 2 },
-            { line: '        curSum = max(curSum + n, n);', id: 3 },
-            { line: '        maxSum = max(maxSum, curSum);', id: 4 },
-            { line: '    }', id: 5 },
-            { line: '    return maxSum;', id: 6 },
-            { line: '}', id: 7 },
+            { line: '    int currentSum = 0;', id: 1 },
+            { line: '    int maxSum = nums[0];', id: 2 },
+            { line: '    for (int n : nums) {', id: 3 },
+            { line: '        currentSum = max(n, currentSum + n);', id: 4 },
+            { line: '        maxSum = max(maxSum, currentSum);', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return maxSum;', id: 7 },
+            { line: '}', id: 8 },
         ];
         const nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4];
-
         function generateAlgorithmSteps() {
             const steps = [];
-            let maxSum = nums[0], curSum = 0;
-            steps.push({ idx: -1, curSum: 0, maxSum: nums[0], highlightLines: [0, 1], explanation: { title: 'Init', text: 'maxSum=nums[0], curSum=0' }});
+            const dp = [];
+            let curr = 0, max = nums[0];
+            steps.push({ current: -1, dp: [], curr: 0, max: nums[0], highlightLines: [0,1,2], explanation: { title: '初始化', text: `陣列：[${nums.join(', ')}]<br><br>Kadane's Algorithm：<br>currentSum = max(n, currentSum + n)<br>決定是否從當前元素重新開始` } });
             for (let i = 0; i < nums.length; i++) {
-                curSum = Math.max(curSum + nums[i], nums[i]);
-                maxSum = Math.max(maxSum, curSum);
-                steps.push({ idx: i, curSum, maxSum, highlightLines: [3, 4], explanation: { title: `Add ${nums[i]}`, text: `curSum=${curSum}, max=${maxSum}` }});
+                const prev = curr;
+                curr = Math.max(nums[i], curr + nums[i]);
+                max = Math.max(max, curr);
+                dp.push(curr);
+                const restart = nums[i] > prev + nums[i];
+                steps.push({ current: i, dp: [...dp], curr, max, highlightLines: [3,4,5], explanation: { title: `處理 nums[${i}]=${nums[i]}`, text: `currentSum = max(${nums[i]}, ${prev}+${nums[i]}) = ${curr}<br>${restart ? '重新開始！' : '延續子陣列'}<br>maxSum = ${max}`, formula: `max(${nums[i]}, ${prev}+${nums[i]}) = ${curr}` } });
             }
-            steps.push({ idx: -1, curSum, maxSum, highlightLines: [6], explanation: { title: 'Done!', text: `Max subarray sum = ${maxSum}` }});
+            steps.push({ current: -1, dp, curr, max: 6, subarray: [3,4,5,6], highlightLines: [7], explanation: { title: '🎉 完成！', text: '最大子陣列和 = 6<br>子陣列：[4, -1, 2, 1]<br><br>時間：O(n), 空間：O(1)' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const states = nums.map((_, i) => i === step.idx ? 'current' : i < step.idx ? 'in-stack' : '');
-                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), nums.map(n => n + 6), states, { height: 180 });
-                    document.getElementById('currDisplay').textContent = step.curSum;
-                    document.getElementById('maxDisplay').textContent = step.maxSum;
+                    let html = '';
+                    nums.forEach((n, i) => {
+                        let cls = 'element';
+                        if (i === step.current) cls += ' current';
+                        if (step.subarray?.includes(i)) cls += ' subarray';
+                        html += `<div class="${cls}"><div class="val">${n}</div><div class="idx">[${i}]</div></div>`;
+                    });
+                    document.getElementById('arrayDisplay').innerHTML = html;
+                    document.getElementById('dpDisplay').innerHTML = (step.dp || []).map((d, i) => `<div class="dp-cell${i === step.current ? ' active' : ''}">${d}</div>`).join('') || '-';
+                    document.getElementById('currDisplay').textContent = step.curr ?? 0;
+                    document.getElementById('maxDisplay').textContent = step.max ?? '-∞';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

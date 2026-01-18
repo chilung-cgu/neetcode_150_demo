@@ -3,35 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koko Eating Bananas Visualization</title>
+    <title>Koko Eating Bananas - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .piles { display: flex; gap: 8px; justify-content: center; align-items: flex-end; margin: 20px 0; height: 120px; }
+        .pile { display: flex; flex-direction: column; align-items: center; }
+        .pile-bar { width: 40px; background: var(--viz-warning); border-radius: 4px 4px 0 0; display: flex; align-items: flex-end; justify-content: center; color: #0f172a; font-weight: bold; padding-bottom: 4px; }
+        .pile-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+        .speed-test { text-align: center; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .speed-test .k { font-size: 1.3rem; font-weight: bold; color: var(--viz-secondary); }
+        .speed-test .hours { color: var(--text-muted); }
+    </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">KOKO EATING BANANAS (h=8)</div>
-                <div class="chart-container" id="chartContainer"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">吃香蕉的珂珂（BINARY SEARCH）</div>
+                <div class="piles" id="pilesDisplay"></div>
+                <div class="speed-test" id="speedTest"></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Speed [L, R]</div><div class="state-value" id="rangeDisplay">[1, 11]</div></div>
-                    <div class="state-item"><div class="state-label">Try k</div><div class="state-value" id="kDisplay" style="color: var(--viz-secondary);">-</div></div>
-                    <div class="state-item"><div class="state-label">Hours needed</div><div class="state-value" id="hoursDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">時限 h</div><div class="state-value">8</div></div>
+                    <div class="state-item"><div class="state-label">L / M / R</div><div class="state-value" id="lmrDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">最小 k</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BINARY SEARCH ON ANSWER</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -39,48 +46,47 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int minEatingSpeed(piles, h) {', id: 0 },
-            { line: '    int l = 1, r = max(piles);', id: 1 },
+            { line: 'int minEatingSpeed(vector<int>& piles, int h) {', id: 0 },
+            { line: '    int l = 1, r = *max_element(piles.begin(), piles.end());', id: 1 },
             { line: '    while (l < r) {', id: 2 },
-            { line: '        int mid = (l + r) / 2;', id: 3 },
-            { line: '        if (canFinish(mid, h)) r = mid;', id: 4 },
-            { line: '        else l = mid + 1;', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    return l;', id: 7 },
-            { line: '}', id: 8 },
+            { line: '        int k = l + (r - l) / 2;', id: 3 },
+            { line: '        int hours = 0;', id: 4 },
+            { line: '        for (int p : piles)', id: 5 },
+            { line: '            hours += (p + k - 1) / k; // ceil(p/k)', id: 6 },
+            { line: '        if (hours <= h)', id: 7 },
+            { line: '            r = k;     // 可以更慢', id: 8 },
+            { line: '        else', id: 9 },
+            { line: '            l = k + 1; // 需要更快', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return l;', id: 12 },
+            { line: '}', id: 13 },
         ];
         const piles = [3, 6, 7, 11];
         const h = 8;
-
-        function hoursNeeded(k) {
-            return piles.reduce((sum, p) => sum + Math.ceil(p / k), 0);
-        }
-
         function generateAlgorithmSteps() {
             const steps = [];
-            let l = 1, r = Math.max(...piles);
-            steps.push({ l, r, k: -1, hours: '-', highlightLines: [0, 1], explanation: { title: 'Init', text: `Piles: [${piles}], h=${h}` }});
-            while (l < r) {
-                const mid = Math.floor((l + r) / 2);
-                const hours = hoursNeeded(mid);
-                const canFinish = hours <= h;
-                steps.push({ l, r, k: mid, hours, highlightLines: canFinish ? [4] : [5], explanation: { title: `k=${mid}: ${hours} hours`, text: canFinish ? `${hours} <= ${h} ✓ r=${mid}` : `${hours} > ${h} ✗ l=${mid + 1}` }});
-                if (canFinish) r = mid;
-                else l = mid + 1;
-            }
-            steps.push({ l, r, k: l, hours: hoursNeeded(l), highlightLines: [7], explanation: { title: `Answer = ${l}`, text: `Minimum speed to finish in ${h} hours` }});
+            steps.push({ l: 1, r: 11, k: 6, hours: 7, highlightLines: [0,1,2,3,4,5,6], explanation: { title: '初始化', text: `香蕉堆：[${piles.join(', ')}]<br>時限：${h} 小時<br><br>二分搜尋吃的速度 k<br>l=1, r=11（最大堆）` } });
+            steps.push({ l: 1, r: 6, k: 3, hours: 10, highlightLines: [7,8], explanation: { title: 'k=6 可行', text: 'k=6 需要 7 小時 ≤ 8<br>可以嘗試更慢<br>r = k = 6', formula: 'ceil(3/6)+ceil(6/6)+ceil(7/6)+ceil(11/6) = 1+1+2+2 = 6' } });
+            steps.push({ l: 4, r: 6, k: 5, hours: 8, highlightLines: [9,10], explanation: { title: 'k=3 太慢', text: 'k=3 需要 10 小時 > 8<br>需要更快<br>l = k + 1 = 4', formula: 'ceil(3/3)+ceil(6/3)+ceil(7/3)+ceil(11/3) = 1+2+3+4 = 10' } });
+            steps.push({ l: 4, r: 5, k: 4, hours: 8, highlightLines: [7,8], explanation: { title: 'k=5 可行', text: 'k=5 需要 8 小時 = 8<br>剛好！嘗試更慢<br>r = 5', formula: 'ceil(3/5)+ceil(6/5)+ceil(7/5)+ceil(11/5) = 1+2+2+3 = 8' } });
+            steps.push({ l: 4, r: 4, k: 4, hours: 8, result: 4, highlightLines: [12], explanation: { title: '🎉 找到答案！', text: 'k=4 需要 8 小時<br>最小速度 = 4<br><br>時間：O(n log m)', formula: 'ceil(3/4)+ceil(6/4)+ceil(7/4)+ceil(11/4) = 1+2+2+3 = 8' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), piles, [], { height: 180 });
-                    document.getElementById('rangeDisplay').textContent = `[${step.l}, ${step.r}]`;
-                    document.getElementById('kDisplay').textContent = step.k > 0 ? step.k : '-';
-                    document.getElementById('hoursDisplay').textContent = step.hours;
+                    const maxP = Math.max(...piles);
+                    let html = '';
+                    piles.forEach((p, i) => {
+                        const h = (p / maxP) * 100;
+                        html += `<div class="pile"><div class="pile-bar" style="height:${h}px">${p}</div><div class="pile-label">堆${i+1}</div></div>`;
+                    });
+                    document.getElementById('pilesDisplay').innerHTML = html;
+                    document.getElementById('speedTest').innerHTML = `<div class="k">k = ${step.k ?? '-'}</div><div class="hours">需要 ${step.hours ?? '-'} 小時</div>`;
+                    document.getElementById('lmrDisplay').textContent = `${step.l} / ${step.k ?? '-'} / ${step.r}`;
+                    document.getElementById('resultDisplay').textContent = step.result ?? '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());

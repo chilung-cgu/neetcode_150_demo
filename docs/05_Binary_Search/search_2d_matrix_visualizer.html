@@ -3,41 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search a 2D Matrix Visualization</title>
+    <title>Search a 2D Matrix - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .matrix { display: grid; gap: 2px; max-width: 300px; margin: 0 auto; }
-        .cell { padding: 10px; text-align: center; font-family: monospace; background: rgba(255,255,255,0.1); border-radius: 4px; }
-        .cell.active { background: var(--viz-secondary); color: #0f172a; }
-        .cell.found { background: var(--viz-success); color: #0f172a; }
-        .cell.searched { background: rgba(99, 102, 241, 0.3); }
+        .matrix { display: inline-grid; gap: 3px; margin: 15px auto; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .cell { width: 45px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .cell.excluded { opacity: 0.3; }
+        .cell.mid { background: var(--viz-secondary); color: #0f172a; }
+        .cell.found { background: var(--viz-success); color: #0f172a; animation: pulse 0.5s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">2D MATRIX SEARCH (target=3)</div>
-                <div class="matrix" id="matrixDisplay" style="grid-template-columns: repeat(4, 1fr);"></div>
-                <div class="controls" style="margin-top: 20px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">搜尋二維矩陣（BINARY SEARCH）</div>
+                <div style="text-align: center;"><div class="matrix" id="matrixDisplay"></div></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                 </div>
-                <div class="state-grid" style="margin-top: 10px;">
-                    <div class="state-item"><div class="state-label">Virtual [L, R]</div><div class="state-value" id="rangeDisplay">[0, 11]</div></div>
-                    <div class="state-item"><div class="state-label">Mid → (row, col)</div><div class="state-value" id="midDisplay">-</div></div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">目標</div><div class="state-value">3</div></div>
+                    <div class="state-item"><div class="state-label">L / M / R</div><div class="state-value" id="lmrDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -45,57 +44,52 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'bool searchMatrix(matrix, target) {', id: 0 },
-            { line: '    int m = rows, n = cols;', id: 1 },
+            { line: 'bool searchMatrix(vector<vector<int>>& matrix, int target) {', id: 0 },
+            { line: '    int m = matrix.size(), n = matrix[0].size();', id: 1 },
             { line: '    int l = 0, r = m * n - 1;', id: 2 },
             { line: '    while (l <= r) {', id: 3 },
-            { line: '        int mid = (l + r) / 2;', id: 4 },
-            { line: '        int row = mid / n, col = mid % n;', id: 5 },
-            { line: '        if (matrix[row][col] == target) return true;', id: 6 },
-            { line: '        if (matrix[row][col] < target) l = mid + 1;', id: 7 },
+            { line: '        int mid = l + (r - l) / 2;', id: 4 },
+            { line: '        int val = matrix[mid / n][mid % n];', id: 5 },
+            { line: '        if (val == target) return true;', id: 6 },
+            { line: '        else if (val < target) l = mid + 1;', id: 7 },
             { line: '        else r = mid - 1;', id: 8 },
             { line: '    }', id: 9 },
             { line: '    return false;', id: 10 },
             { line: '}', id: 11 },
         ];
-        const matrix = [[1, 3, 5, 7], [10, 11, 16, 20], [23, 30, 34, 60]];
+        const matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]];
         const target = 3;
-        const m = matrix.length, n = matrix[0].length;
-
         function generateAlgorithmSteps() {
             const steps = [];
-            let l = 0, r = m * n - 1;
-            steps.push({ l, r, mid: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: `Treat ${m}x${n} matrix as virtual array [0..${r}]` }});
-            while (l <= r) {
-                const mid = Math.floor((l + r) / 2);
-                const row = Math.floor(mid / n), col = mid % n;
-                const v = matrix[row][col];
-                if (v === target) {
-                    steps.push({ l, r, mid, row, col, found: true, highlightLines: [6], explanation: { title: '✓ Found!', text: `matrix[${row}][${col}] = ${target}` }});
-                    return steps;
-                }
-                steps.push({ l, r, mid, row, col, highlightLines: v < target ? [7] : [8], explanation: { title: `mid=${mid} → [${row}][${col}]=${v}`, text: v < target ? `${v} < ${target}` : `${v} > ${target}` }});
-                if (v < target) l = mid + 1;
-                else r = mid - 1;
-            }
-            steps.push({ l, r, mid: -1, highlightLines: [10], explanation: { title: 'Not Found', text: '' }});
+            const n = matrix[0].length;
+            steps.push({ l: 0, r: 11, m: 5, highlightLines: [0,1,2,3,4,5], explanation: { title: '初始化', text: '將 2D 矩陣視為 1D 陣列<br>l=0, r=11, m=5<br><br>matrix[5/4][5%4] = matrix[1][1] = 11' } });
+            steps.push({ l: 0, r: 4, m: 2, highlightLines: [6,8], explanation: { title: '11 > 3', text: 'val=11 > target=3<br>r = mid - 1 = 4<br><br>新 m=2 → matrix[0][2] = 5', formula: '11 > 3 → r = 4' } });
+            steps.push({ l: 0, r: 1, m: 0, highlightLines: [6,8], explanation: { title: '5 > 3', text: 'val=5 > target=3<br>r = mid - 1 = 1<br><br>新 m=0 → matrix[0][0] = 1', formula: '5 > 3 → r = 1' } });
+            steps.push({ l: 1, r: 1, m: 1, found: true, highlightLines: [6], explanation: { title: '🎉 找到目標！', text: '1 < 3 → l = 1<br>m=1 → matrix[0][1] = 3<br><br>找到！回傳 true', formula: 'matrix[0][1] = 3 == target' } });
             return steps;
         }
-
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('matrixDisplay').innerHTML = matrix.flat().map((v, i) => {
-                        const r = Math.floor(i / n), c = i % n;
-                        let cls = 'cell';
-                        if (r === step.row && c === step.col) cls += step.found ? ' found' : ' active';
-                        else if (i >= step.l && i <= step.r) cls += ' searched';
-                        return `<div class="${cls}">${v}</div>`;
-                    }).join('');
-                    document.getElementById('rangeDisplay').textContent = `[${step.l}, ${step.r}]`;
-                    document.getElementById('midDisplay').textContent = step.mid >= 0 ? `${step.mid} → (${step.row}, ${step.col})` : '-';
+                    const grid = document.getElementById('matrixDisplay');
+                    const n = matrix[0].length;
+                    grid.style.gridTemplateColumns = `repeat(${n}, 45px)`;
+                    let html = '';
+                    let idx = 0;
+                    for (let r = 0; r < matrix.length; r++) {
+                        for (let c = 0; c < matrix[r].length; c++) {
+                            let cls = 'cell';
+                            if (idx < step.l || idx > step.r) cls += ' excluded';
+                            if (idx === step.m) cls += step.found ? ' found' : ' mid';
+                            html += `<div class="${cls}">${matrix[r][c]}</div>`;
+                            idx++;
+                        }
+                    }
+                    grid.innerHTML = html;
+                    document.getElementById('lmrDisplay').textContent = `${step.l} / ${step.m} / ${step.r}`;
+                    document.getElementById('resultDisplay').textContent = step.found ? 'true ✓' : '?';
                 }
             });
             viz.setSteps(generateAlgorithmSteps());
