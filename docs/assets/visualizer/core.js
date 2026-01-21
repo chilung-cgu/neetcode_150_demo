@@ -2,6 +2,9 @@ class AlgorithmVisualizer {
   constructor(config) {
     this.steps = [];
     this.currStep = 0;
+    this.isPlaying = false;
+    this.autoPlayInterval = null;
+    this.playSpeed = 1500; // 預設速度 1.5 秒
     this.config = Object.assign(
       {
         codeLines: [],
@@ -114,6 +117,64 @@ class AlgorithmVisualizer {
       const el = document.getElementById(`code-${id}`);
       if (el) el.classList.add("active");
     });
+  }
+
+  // --- Auto Play Controls ---
+  toggleAutoPlay() {
+    if (this.isPlaying) {
+      this.stopAutoPlay();
+    } else {
+      this.startAutoPlay();
+    }
+  }
+
+  startAutoPlay() {
+    if (this.isPlaying) return;
+    this.isPlaying = true;
+    this.updatePlayButton();
+    
+    this.autoPlayInterval = setInterval(() => {
+      if (this.currStep < this.steps.length - 1) {
+        this.next();
+      } else {
+        this.stopAutoPlay();
+      }
+    }, this.playSpeed);
+  }
+
+  stopAutoPlay() {
+    this.isPlaying = false;
+    if (this.autoPlayInterval) {
+      clearInterval(this.autoPlayInterval);
+      this.autoPlayInterval = null;
+    }
+    this.updatePlayButton();
+  }
+
+  setSpeed(speedMs) {
+    this.playSpeed = speedMs;
+    // 如果正在播放，重新啟動以應用新速度
+    if (this.isPlaying) {
+      this.stopAutoPlay();
+      this.startAutoPlay();
+    }
+    this.updateSpeedDisplay();
+  }
+
+  updatePlayButton() {
+    const playBtn = document.getElementById("playBtn");
+    if (playBtn) {
+      playBtn.innerHTML = this.isPlaying ? "⏸ 暫停" : "▶ 自動播放";
+      playBtn.classList.toggle("playing", this.isPlaying);
+    }
+  }
+
+  updateSpeedDisplay() {
+    const speedDisplay = document.getElementById("speedDisplay");
+    if (speedDisplay) {
+      const speedLabel = this.playSpeed <= 500 ? "2x" : this.playSpeed <= 1000 ? "1.5x" : this.playSpeed <= 1500 ? "1x" : "0.5x";
+      speedDisplay.textContent = speedLabel;
+    }
   }
 
   // --- Helper for Charts ---
