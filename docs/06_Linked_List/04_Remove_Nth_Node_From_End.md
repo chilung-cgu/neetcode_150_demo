@@ -1,4 +1,4 @@
-# Remove Nth Node From End of List (移除鏈結串列倒數第 N 個節點)
+# Remove Nth Node From End of List (移除鏈結串列倒數第 N 個節點) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 ## 1. 🧐 Problem Dissection (釐清問題)
 
