@@ -180,3 +180,28 @@ public:
     -   對於 Balanced BST 是 $O(\log n)$，最壞情況 $O(n)$。
 -   **Space Complexity**: $O(1)$
     -   Iterative 寫法不需要 stack。Recursive 是 $O(h)$。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 普通二元樹的 LCA？
+- 有父指標的解法？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 沒有利用 BST 性質
+- ⚠️ 遞迴方向選擇錯誤
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 利用 BST 性質
+- 💎 O(h) 迭代解法

@@ -242,3 +242,28 @@ public:
     -   因為我們只對較短的陣列做 Binary Search，搜尋範圍是 `min(m, n)`。
 -   **Space Complexity**: $O(1)$
     -   沒有額外配置 Memory。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧) ⭐ 高頻題
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- K-th Element?
+- 如果陣列可能為空？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ Partition 邊界計算錯誤
+- ⚠️ 沒有處理邊界 -∞/+∞
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 O(log(min(m,n)))
+- 💎 清晰的 partition 概念解釋

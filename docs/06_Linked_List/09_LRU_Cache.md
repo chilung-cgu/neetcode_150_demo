@@ -317,3 +317,28 @@ public:
     -   Linked List 操作 (有了 pointer) 是 $O(1)$。
 -   **Space Complexity**: $O(capacity)$
     -   存了 capacity 個節點。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧) ⭐ 高頻題
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- LFU Cache?
+- 分佈式 LRU？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 雙向鏈表操作錯誤
+- ⚠️ Hash Map 更新不同步
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 O(1) 時間複雜度
+- 💎 清晰的資料結構設計

@@ -176,3 +176,28 @@ private:
     -   如果樹是平衡的，或者 `subRoot` 很小，實際效能會接近 $O(M)$。
 -   **Space Complexity**: $O(M)$
     -   DFS Stack Depth。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如何優化時間複雜度？
+- 用序列化檢查？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ isSameTree 調用位置錯誤
+- ⚠️ 沒有從每個節點開始檢查
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 Merkle Hash 優化
+- 💎 KMP 串匹配優化

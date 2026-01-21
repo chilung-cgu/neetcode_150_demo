@@ -168,3 +168,28 @@ public:
 -   **Space Complexity**: $O(\max(m, n))$
     -   創建新的 Linked List 來儲存結果。
     -   (如果不算 Output Space，則是 $O(1)$ extra space)。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如果數字正序存儲？
+- 如何處理極大的數？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 進位處理錯誤
+- ⚠️ 沒有處理不同長度
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 完整的進位邏輯
+- 💎 最後的 carry 處理

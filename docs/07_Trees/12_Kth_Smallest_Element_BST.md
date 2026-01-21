@@ -228,3 +228,28 @@ public:
     -   所以是 $O(H + k)$。在最壞情況下 (k=n)，是 $O(n)$。
 -   **Space Complexity**: $O(H)$
     -   Stack 的大小最多為樹高。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如果 BST 頻繁修改？
+- 第 K 大？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ In-order 順序錯誤
+- ⚠️ 沒有提前終止
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 迭代 In-order
+- 💎 Augmented BST 概念

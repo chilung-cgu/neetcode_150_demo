@@ -227,3 +227,28 @@ public:
     -   每個節點遍歷一次。
 -   **Space Complexity**: $O(h)$
     -   Recursion stack.
+
+---
+
+## 7. 💼 Interview Tips (面試技巧) ⭐ 高頻題
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如何修復不合法的 BST？
+- 第 K 小元素？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 只比較父子關係
+- ⚠️ 沒有傳遞 min/max 範圍
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 傳遞範圍區間
+- 💎 In-order traversal 解法

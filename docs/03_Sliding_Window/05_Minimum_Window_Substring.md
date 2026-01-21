@@ -220,3 +220,28 @@ public:
   - $O(n)$ 掃描 `s`。雖然有 inner loop，但 `left` 和 `right` 都只前進不後退，所以是 $2n$。
 - **Space Complexity**: $O(1)$ (Assuming size of charset is fixed 128/256)
   - 如果 charset 很大，則是 $O(k)$ where k is unique chars。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧) ⭐ 高頻題
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如果需要返回所有最小視窗？
+- 如何處理重複字元？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 沒有正確計算 required/formed
+- ⚠️ 窗口收縮條件錯誤
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 O(n) 時間複雜度
+- 💎 清晰的擴展/收縮邏輯

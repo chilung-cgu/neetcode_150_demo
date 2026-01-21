@@ -198,3 +198,28 @@ public:
 
 - **Time Complexity**: $O(n \log n)$
 - **Space Complexity**: $O(1)$ 或 $O(\log n)$
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如果輸入包含 Unicode 字元？
+- 如果字串非常長，有更快的方法嗎？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 忘記考慮大小寫敏感
+- ⚠️ 沒有處理空字串
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 提到排序解法的 trade-off
+- 💎 討論固定大小陣列 vs Hash Map

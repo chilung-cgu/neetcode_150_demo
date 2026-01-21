@@ -248,3 +248,28 @@ public:
 **Comparison**:
 這題跟 **Valid Anagram** 很像，只是 Anagram 是全域比較，這裡是局部窗口比較。
 這題又跟 **Find All Anagrams in a String** (LeetCode 438) 完全一樣，只是那題要回傳所有 index，這題只要 boolean。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- Find All Anagrams in a String?
+- 如何處理 Unicode？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 窗口大小不固定
+- ⚠️ 比較兩個頻率表方式低效
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 使用 matches 計數器優化
+- 💎 固定大小滑動窗口

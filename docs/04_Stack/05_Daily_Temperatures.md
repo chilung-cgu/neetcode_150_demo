@@ -153,3 +153,28 @@ public:
     -   總操作次數是 $2n$，所以是線性時間。
 -   **Space Complexity**: $O(n)$
     -   在最壞情況下 (溫度嚴格遞減 `[100, 99, 98...]`)，所有元素都會留在 Stack 中直到最後。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- Next Greater Element II (circular)?
+- 如何處理相等的溫度？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ Stack 儲存錯誤的資訊
+- ⚠️ 單調性維護錯誤
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 Monotonic Decreasing Stack
+- 💎 解釋為何從右到左也可行

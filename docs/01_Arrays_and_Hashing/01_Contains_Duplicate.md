@@ -205,3 +205,28 @@ public:
   - 主要消耗在 Sorting。
 - **Space Complexity**: $O(1)$ (或是 $O(\log n)$ 取決於 sort 實作的 stack depth)
   - 如果不計算 Input Array 本身，我們只用了常數空間來做 iterator。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如果陣列已排序怎麼辦？
+- 如果只能用 O(1) 空間怎麼辦？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 忘記處理空陣列
+- ⚠️ 使用 O(n²) 暴力解但未說明可優化
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 主動提到 Hash collision 最壞情況
+- 💎 討論 Set vs Map 的選擇

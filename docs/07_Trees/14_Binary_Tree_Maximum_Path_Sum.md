@@ -204,3 +204,28 @@ public:
     -   每個節點遍歷一次。
 -   **Space Complexity**: $O(h)$
     -   Recursion stack.
+
+---
+
+## 7. 💼 Interview Tips (面試技巧) ⭐ 高頻題
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 路徑必須從 root 開始？
+- 返回具體路徑？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 混淆回傳值和全域更新
+- ⚠️ 沒有考慮負數節點
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 清晰區分 contribution vs path sum
+- 💎 負數剪枝 max(0, ...)

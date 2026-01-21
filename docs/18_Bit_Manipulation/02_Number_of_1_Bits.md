@@ -119,3 +119,28 @@ public:
 -   **Time Complexity**: $O(k)$, where $k$ is the number of set bits.
     -   In worst case $k=32$, so $O(1)$.
 -   **Space Complexity**: $O(1)$.
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 你會如何處理更大的輸入？
+- 有沒有更好的空間複雜度？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 沒有考慮邊界條件
+- ⚠️ 未討論複雜度
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 主動討論 trade-offs
+- 💎 提供多種解法比較

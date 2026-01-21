@@ -188,3 +188,28 @@ public:
     -   DFS 遍歷每個節點一次。
 -   **Space Complexity**: $O(h)$
     -   Recursive stack depth.
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 路徑可以不經過 root 嗎？
+- N-ary Tree?
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 沒有理解直徑 = 左深度 + 右深度
+- ⚠️ 忘記更新全域最大值
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 Bottom-up DFS
+- 💎 清晰的 DFS 返回值設計

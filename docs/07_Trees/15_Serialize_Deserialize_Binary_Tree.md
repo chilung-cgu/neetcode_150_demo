@@ -259,3 +259,28 @@ private:
 -   **Space Complexity**: $O(n)$
     -   Serialize: String/Recursion Stack.
     -   Deserialize: Queue/Recursion Stack.
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- N-ary Tree?
+- 壓縮序列化？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 序列化格式不一致
+- ⚠️ 反序列化指標管理錯誤
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 BFS vs DFS 方案比較
+- 💎 null 節點的處理

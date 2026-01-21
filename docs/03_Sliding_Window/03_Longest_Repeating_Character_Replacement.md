@@ -199,3 +199,28 @@ public:
   - 總共 $2n$ operations。
 - **Space Complexity**: $O(1)$
   - 我們使用了一個大小為 26 的陣列 `count`。這與 `n` 無關。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如果有多種字元可替換？
+- 如何處理大小寫？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 沒有維護窗口內最多字元計數
+- ⚠️ 替換次數計算錯誤
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 理解 maxCount 不需要遞減的巧妙設計
+- 💎 公式: window_size - maxCount <= k

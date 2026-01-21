@@ -194,3 +194,28 @@ public:
   - 每個柱子最多進 Stack 一次，出 Stack 一次。
 - **Space Complexity**: $O(n)$
   - 最壞情況 (單調遞增陣列)，Stack 會存所有的 indices。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧) ⭐ 高頻題
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- Maximal Rectangle in Matrix?
+- 2D 擴展？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 邊界處理錯誤
+- ⚠️ Stack 沒有加入 sentinel
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 Monotonic Stack 完整解釋
+- 💎 面積計算公式清晰

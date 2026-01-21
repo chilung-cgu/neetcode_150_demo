@@ -199,3 +199,28 @@ public:
 -   **Space Complexity**: $O(1)$
     -   我們只使用了幾個 pointers (`dummy`, `tail`) 重組現有的 nodes。
     -   Recursive 解法會是 $O(n+m)$ Stack Space。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- Merge K Sorted Lists?
+- 原地合併？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 沒有處理空鏈表
+- ⚠️ 沒有處理剩餘節點
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 使用 dummy head 簡化
+- 💎 解釋時間空間複雜度

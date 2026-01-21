@@ -181,3 +181,28 @@ private:
     -   Bottom-up 每個節點只計算一次。
 -   **Space Complexity**: $O(h)$
     -   Recursive stack depth.
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如何從不平衡樹轉為平衡？
+- AVL Tree?
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 每個節點重複計算高度
+- ⚠️ 沒有 early termination
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 O(n) 一趟遍歷
+- 💎 返回 -1 表示不平衡的技巧

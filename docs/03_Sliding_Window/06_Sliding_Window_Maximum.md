@@ -181,3 +181,28 @@ public:
 - **Space Complexity**: $O(k)$
   - Deque 最多同時儲存 $k$ 個元素 (在 Input 是 Strictly Decreasing `[5,4,3,2,1]` 的最差情況下)。
   - Output space $O(n-k+1)$ 不算在 auxiliary space 中。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如果需要滑動視窗最小值？
+- 兩者如何組合？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ Deque 維護邏輯錯誤
+- ⚠️ 沒有移除過期元素
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 Monotonic Deque
+- 💎 解釋單調遞減的必要性

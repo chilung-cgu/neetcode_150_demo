@@ -183,3 +183,28 @@ private:
 -   **Space Complexity**: $O(n)$
     -   Recursion stack depth 是 $2n$ (最大字串長度)。
     -   Output space 不算。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如何枚舉所有 BST 結構？
+- Catalan Number?
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 剪枝條件錯誤
+- ⚠️ 沒有維護 open/close 計數
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 清晰的遞迴終止條件
+- 💎 解釋 Catalan Number

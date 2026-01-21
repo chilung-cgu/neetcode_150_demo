@@ -210,3 +210,28 @@ public:
     -   我們只用了基本的 stack operations (push/pop/top) 和 min comparison，這些都是常數時間。
 -   **Space Complexity**: $O(n)$
     -   我們用了兩個 stack，總共存儲 $2n$ 個元素。依然是線性空間。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如何優化空間？
+- 如果需要 Max Stack？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ min stack 同步更新錯誤
+- ⚠️ pop 時沒有維護 min
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 討論空間優化方案
+- 💎 解釋雙 stack 設計原理

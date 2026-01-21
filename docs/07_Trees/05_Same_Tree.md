@@ -136,3 +136,28 @@ public:
     -   $n$ 是較小那棵樹的節點數。
 -   **Space Complexity**: $O(h)$
     -   Recursive stack depth.
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- Symmetric Tree?
+- 結構相同但值不同？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 沒有處理一邊為 null
+- ⚠️ 遞迴順序錯誤
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 簡潔的遞迴寫法
+- 💎 BFS 迭代解法

@@ -178,3 +178,28 @@ public:
 - Two Sum I: $O(n)$ Time, $O(n)$ Space (Hash Map).
 - Two Sum II: $O(n)$ Time, $O(1)$ Space (Two Pointers).
 - **關鍵差異**: II 的 Input 是 **Sorted** 的，這讓我們可以用空間換取了... 呃，其實這題同時省了空間跟時間常數，因為 Two Pointers 比 Hash Map 操作更快。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如果有多組解怎麼辦？
+- 如何擴展到 3Sum？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 沒有利用已排序的特性
+- ⚠️ 返回 0-indexed 而非 1-indexed
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 解釋為何雙指標保證正確性
+- 💎 討論與 Hash Map 解法的比較

@@ -273,3 +273,28 @@ private:
   - Divide and Conquer 類似 Merge Sort，樹高 $\log k$，每層處理 $N$ 個節點。
 - **Space Complexity**: $O(1)$
   - 我們直接修改 `lists` array 和 nodes 的指標，沒有使用額外的 Heap 或 Recursion stack (Iterative merge)。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧) ⭐ 高頻題
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 外部排序？
+- 分布式排序？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ Priority Queue 比較器錯誤
+- ⚠️ 沒有處理空鏈表
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 Divide and Conquer vs Heap
+- 💎 時間複雜度分析

@@ -190,3 +190,28 @@ public:
   - Floyd 演算法是線性的。
 - **Space Complexity**: $O(1)$
   - 沒有修改 array，沒有額外空間。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 不能修改陣列？
+- O(1) 空間？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 連結方式錯誤 (nums[i] -> nums[nums[i]])
+- ⚠️ 環起點計算錯誤
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 Floyd's Cycle Detection 在陣列上的應用
+- 💎 二分搜尋替代解法

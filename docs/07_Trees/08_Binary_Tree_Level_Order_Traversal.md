@@ -221,3 +221,28 @@ public:
     -   每個節點進出 Queue 一次。
 -   **Space Complexity**: $O(n)$
     -   Queue 的最大長度是樹的最大寬度 (葉子節點層)，對於滿二元樹來說是 $n/2$。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- Zigzag Level Order?
+- Bottom-up Level Order?
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ BFS 層次分離錯誤
+- ⚠️ 沒有先記錄層大小
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 DFS 也能實現
+- 💎 時間空間複雜度分析

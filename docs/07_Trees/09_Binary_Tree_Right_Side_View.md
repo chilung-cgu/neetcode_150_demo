@@ -222,3 +222,28 @@ public:
     -   BFS 遍歷每個節點一次。
 -   **Space Complexity**: $O(n)$
     -   Queue 保存一層的節點。對於 Full Binary Tree，最後一層有 $n/2$ 個節點。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- Left Side View?
+- 多個方向？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ BFS 取錯節點
+- ⚠️ DFS 順序錯誤
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 BFS 取每層最後一個
+- 💎 DFS 先右後左

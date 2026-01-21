@@ -177,3 +177,28 @@ public:
     -   必須訪問每個節點一次。
 -   **Space Complexity**: $O(h)$
     -   Recursive Stack height. $O(n)$ worst case, $O(\log n)$ average.
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- Minimum Depth?
+- N-ary Tree?
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ 沒有處理空節點
+- ⚠️ 深度計算差一
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 DFS 和 BFS 兩種解法
+- 💎 尾遞迴優化討論

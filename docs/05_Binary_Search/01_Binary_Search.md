@@ -159,3 +159,28 @@ public:
 -   **Space Complexity**: $O(1)$
     -   Iterative 解法只需要常數空間。
     -   如果是 Recursive 解法，Stack Space 會是 $O(\log n)$。
+
+---
+
+## 7. 💼 Interview Tips (面試技巧)
+
+### 🎯 Follow-up 問題
+
+面試官可能會問的延伸問題：
+
+- 如何找 lower/upper bound？
+- 浮點數二分？
+
+### 🚩 常見錯誤 (Red Flags)
+
+避免這些會讓面試官扣分的錯誤：
+
+- ⚠️ mid 計算溢位
+- ⚠️ 邊界條件 l <= r vs l < r
+
+### ✨ 加分項 (Bonus Points)
+
+這些會讓你脫穎而出：
+
+- 💎 討論各種 Binary Search 模板
+- 💎 避免溢位的 mid 計算方式
