@@ -1,3 +1,12 @@
+---
+title: "Palindrome Partitioning (分割回文串)"
+description: "題目給一個字串 `s`，將 `s` 分割成若干個子字串，使得 **每一個子字串都是回文 (Palindrome)**。 回傳所有可能的分割方案。"
+tags:
+  - 
+Backtracking  - Recursion
+difficulty: Medium
+---
+
 # Palindrome Partitioning (分割回文串) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #131** — [題目連結](https://leetcode.com/problems/palindrome-partitioning/) | [NeetCode 解說](https://neetcode.io/problems/palindrome-partitioning)

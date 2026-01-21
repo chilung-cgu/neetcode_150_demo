@@ -1,3 +1,12 @@
+---
+title: "Partition Labels (劃分字母區間)"
+description: "給定一個字串 `s`。 我們要把這個字串劃分成盡可能多的片段 (partitions)。 使得**同一個字母最多只出現在一個片段中**。 回傳一個列表，包含每個片段的長度。"
+tags:
+  - 
+Greedy
+difficulty: Medium
+---
+
 # Partition Labels (劃分字母區間) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #763** — [題目連結](https://leetcode.com/problems/partition-labels/) | [NeetCode 解說](https://neetcode.io/problems/partition-labels)

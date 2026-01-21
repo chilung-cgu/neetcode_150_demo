@@ -1,3 +1,12 @@
+---
+title: "Best Time to Buy and Sell Stock (買賣股票的最佳時機)"
+description: "題目給我們一個陣列 `prices`，其中 `prices[i]` 代表第 `i` 天的股價。 我們只能選擇 **某一天** 買入，並在 **未來的某一天** 賣出。 請問我們最多能賺多少錢？ 如果賺不到錢 (例如股價一路跌)，回傳 0。"
+tags:
+  - 
+Sliding Window  - String
+difficulty: Easy
+---
+
 # Best Time to Buy and Sell Stock (買賣股票的最佳時機) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
 > 📌 **LeetCode #121** — [題目連結](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) | [NeetCode 解說](https://neetcode.io/problems/best-time-to-buy-and-sell-stock)

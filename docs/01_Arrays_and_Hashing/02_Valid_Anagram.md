@@ -1,3 +1,12 @@
+---
+title: "Valid Anagram (有效的易位構詞)"
+description: "題目要求判斷兩個字串 `s` 和 `t` 是否為彼此的重組字 (Anagram)。也就是說，它們必須包含完全相同的字元，且每個字元的出現次數也必須相同。"
+tags:
+  - 
+Array  - Hash Table
+difficulty: Easy
+---
+
 # Valid Anagram (有效的易位構詞) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
 > 📌 **LeetCode #242** — [題目連結](https://leetcode.com/problems/valid-anagram/) | [NeetCode 解說](https://neetcode.io/problems/valid-anagram)

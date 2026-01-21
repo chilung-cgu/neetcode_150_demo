@@ -1,3 +1,12 @@
+---
+title: "Minimum Window Substring (最小覆蓋子字串)"
+description: "題目給兩個字串 `s` 和 `t`。請在 `s` 中找出一個 **最短子字串**，該子字串包含 `t` 中的 **所有字元 (包含重複數量)**。 如果不存在，回傳空字串 `""`。"
+tags:
+  - 
+Sliding Window  - String
+difficulty: Hard
+---
+
 # Minimum Window Substring (最小覆蓋子字串) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
 > 📌 **LeetCode #76** — [題目連結](https://leetcode.com/problems/minimum-window-substring/) | [NeetCode 解說](https://neetcode.io/problems/minimum-window-substring)

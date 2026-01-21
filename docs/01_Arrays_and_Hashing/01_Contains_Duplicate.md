@@ -1,3 +1,12 @@
+---
+title: "Contains Duplicate (存在重複元素)"
+description: "作為面試者，在直接跳進程式碼之前，我們應該先與面試官確認題目的邊界條件。這展現了你的細心與對系統穩定性的考量。"
+tags:
+  - 
+Array  - Hash Table
+difficulty: Easy
+---
+
 # Contains Duplicate (存在重複元素) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
 > 📌 **LeetCode #217** — [題目連結](https://leetcode.com/problems/contains-duplicate/) | [NeetCode 解說](https://neetcode.io/problems/contains-duplicate)

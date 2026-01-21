@@ -1,3 +1,12 @@
+---
+title: "Counting Bits (計算位元)"
+description: "給定一個整數 `n`。 請回傳一個長度為 `n + 1` 的陣列 `ans`，對於每個 `i` ($0 \le i \le n$)，`ans[i]` 表示數字 `i` 的二進制表示中 `1` 的個數。 請**不要**對每個數字調用 `popcount` 或 `hammingWeight` 函數，這將"
+tags:
+  - 
+Bit Manipulation
+difficulty: Easy
+---
+
 # Counting Bits (計算位元) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
 > 📌 **LeetCode #338** — [題目連結](https://leetcode.com/problems/counting-bits/) | [NeetCode 解說](https://neetcode.io/problems/counting-bits)

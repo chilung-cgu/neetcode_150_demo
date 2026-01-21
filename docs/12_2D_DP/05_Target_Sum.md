@@ -1,3 +1,12 @@
+---
+title: "Target Sum (目標和)"
+description: "給定一個非負整數陣列 `nums` 和一個整數 `target`。 你需要對每個整數前面添加 `+` 或 `-` 號，使得運算結果等於 `target`。 回傳有多少種方法。"
+tags:
+  - 
+Dynamic Programming  - 2D DP
+difficulty: Medium
+---
+
 # Target Sum (目標和) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #494** — [題目連結](https://leetcode.com/problems/target-sum/) | [NeetCode 解說](https://neetcode.io/problems/target-sum)

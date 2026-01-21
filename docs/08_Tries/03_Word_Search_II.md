@@ -1,3 +1,12 @@
+---
+title: "Word Search II (單字搜尋 II)"
+description: "題目給定一個 `m x n` 的字符網格 `board` 和一個單字列表 `words`。 請找出 `words` 中所有存在於 `board` 上的單字。 單字必須由網格中 **相鄰** 的字母組成（水平或垂直），同一個儲存格內的字母在同一個單字中最多只能使用一次。"
+tags:
+  - 
+Trie  - String
+difficulty: Hard
+---
+
 # Word Search II (單字搜尋 II) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
 > 📌 **LeetCode #212** — [題目連結](https://leetcode.com/problems/word-search-ii/) | [NeetCode 解說](https://neetcode.io/problems/word-search-ii)

@@ -1,3 +1,12 @@
+---
+title: "Word Ladder (字詞接龍)"
+description: "給定兩個單詞 `beginWord` 和 `endWord`，以及一個字典 `wordList`。 請找出從 `beginWord` 變換到 `endWord` 的 **最短轉換序列** 的長度。 變換規則："
+tags:
+  - 
+Graph  - DFS  - BFS
+difficulty: Hard
+---
+
 # Word Ladder (字詞接龍) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
 > 📌 **LeetCode #127** — [題目連結](https://leetcode.com/problems/word-ladder/) | [NeetCode 解說](https://neetcode.io/problems/word-ladder)

@@ -1,3 +1,12 @@
+---
+title: "Trapping Rain Water (接雨水)"
+description: "題目給一個 array `height` 代表地形高度，每個寬度為 1。請問下雨後這個地形能接住多少水？"
+tags:
+  - 
+Two Pointers  - Array
+difficulty: Hard
+---
+
 # Trapping Rain Water (接雨水) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
 > 📌 **LeetCode #42** — [題目連結](https://leetcode.com/problems/trapping-rain-water/) | [NeetCode 解說](https://neetcode.io/problems/trapping-rain-water)

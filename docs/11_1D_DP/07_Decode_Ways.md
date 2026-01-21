@@ -1,3 +1,12 @@
+---
+title: "Decode Ways (解碼方法)"
+description: "題目說一條由 'A'-'Z' 組成的訊息已經被加密成數字："
+tags:
+  - 
+Dynamic Programming
+difficulty: Medium
+---
+
 # Decode Ways (解碼方法) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #91** — [題目連結](https://leetcode.com/problems/decode-ways/) | [NeetCode 解說](https://neetcode.io/problems/decode-ways)

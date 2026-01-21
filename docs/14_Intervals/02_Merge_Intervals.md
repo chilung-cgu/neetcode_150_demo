@@ -1,3 +1,12 @@
+---
+title: "Merge Intervals (合併區間)"
+description: "給定一個區間陣列 `intervals`，其中 `intervals[i] = [start_i, end_i]`。 請合併所有 **重疊 (overlapping)** 的區間，並回傳一個不重疊的區間陣列，該陣列需覆蓋輸入中的所有區間。"
+tags:
+  - 
+Intervals  - Sorting
+difficulty: Medium
+---
+
 # Merge Intervals (合併區間) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #56** — [題目連結](https://leetcode.com/problems/merge-intervals/) | [NeetCode 解說](https://neetcode.io/problems/merge-intervals)

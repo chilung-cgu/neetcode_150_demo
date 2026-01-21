@@ -1,3 +1,12 @@
+---
+title: "Remove Nth Node From End of List (移除鏈結串列倒數第 N 個節點)"
+description: "題目給一個 Linked List 的 `head` 和一個整數 `n`。 請刪除倒數第 `n` 個節點，並回傳新的 `head`。"
+tags:
+  - 
+Linked List
+difficulty: Medium
+---
+
 # Remove Nth Node From End of List (移除鏈結串列倒數第 N 個節點) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #19** — [題目連結](https://leetcode.com/problems/remove-nth-node-from-end-of-list/) | [NeetCode 解說](https://neetcode.io/problems/remove-nth-node-from-end-of-list)

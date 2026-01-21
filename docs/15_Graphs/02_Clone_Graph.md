@@ -1,3 +1,12 @@
+---
+title: "Clone Graph (複製圖)"
+description: "給定一個無向連通圖中的一個節點引用 `Node`。 請回傳該圖的 **深拷貝 (Deep Copy)**。 圖中的每個節點都包含一個值 (`int val`) 和一個列表 (`List[Node] neighbors`)。"
+tags:
+  - 
+Graph  - DFS  - BFS
+difficulty: Medium
+---
+
 # Clone Graph (複製圖) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #133** — [題目連結](https://leetcode.com/problems/clone-graph/) | [NeetCode 解說](https://neetcode.io/problems/clone-graph)

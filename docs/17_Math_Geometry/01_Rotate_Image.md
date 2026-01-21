@@ -1,3 +1,12 @@
+---
+title: "Rotate Image (旋轉圖像)"
+description: "給定一個 `n x n` 的二維矩陣 `matrix`，代表一個圖像。 請將圖像 **順時針旋轉 90 度**。 你必須 **原地 (in-place)** 修改矩陣，不能使用另一個 2D 矩陣來旋轉。"
+tags:
+  - 
+Math  - Matrix
+difficulty: Medium
+---
+
 # Rotate Image (旋轉圖像) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #48** — [題目連結](https://leetcode.com/problems/rotate-image/) | [NeetCode 解說](https://neetcode.io/problems/rotate-image)

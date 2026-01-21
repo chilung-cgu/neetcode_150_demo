@@ -1,3 +1,12 @@
+---
+title: "Number of Islands (島嶼數量)"
+description: "給定一個由 `'1'` (陸地) 和 `'0'` (水) 組成的二維網格 `grid`。 請計算島嶼的數量。 島嶼被水包圍，由水平或垂直相鄰的陸地連接而成。 你可以假設網格的四個邊之外都被水包圍。"
+tags:
+  - 
+Graph  - DFS  - BFS
+difficulty: Medium
+---
+
 # Number of Islands (島嶼數量) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #200** — [題目連結](https://leetcode.com/problems/number-of-islands/) | [NeetCode 解說](https://neetcode.io/problems/number-of-islands)

@@ -1,3 +1,12 @@
+---
+title: "Linked List Cycle (鏈結串列中的環)"
+description: "題目給一個 Linked List 的 head。 判斷這個 Linked List 是否有 **Cycle (環)**。 所謂有環，就是你可以透過不斷地 `next` 指標走下去，永遠走不到 `null`，且會重複經過某些節點。"
+tags:
+  - 
+Linked List
+difficulty: Easy
+---
+
 # Linked List Cycle (鏈結串列中的環) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
 > 📌 **LeetCode #141** — [題目連結](https://leetcode.com/problems/linked-list-cycle/) | [NeetCode 解說](https://neetcode.io/problems/linked-list-cycle)

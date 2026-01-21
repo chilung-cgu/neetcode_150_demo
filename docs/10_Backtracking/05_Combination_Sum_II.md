@@ -1,3 +1,12 @@
+---
+title: "Combination Sum II (組合總和 II)"
+description: "題目給一個**可能包含重複數字**的陣列 `candidates` 和一個目標 `target`。 找出所有唯一組合，使得和為 `target`。 每個數字在每個組合中 **只能使用一次**。 解集 **不能包含重複的組合**。"
+tags:
+  - 
+Backtracking  - Recursion
+difficulty: Medium
+---
+
 # Combination Sum II (組合總和 II) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #40** — [題目連結](https://leetcode.com/problems/combination-sum-ii/) | [NeetCode 解說](https://neetcode.io/problems/combination-sum-ii)

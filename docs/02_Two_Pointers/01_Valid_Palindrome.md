@@ -1,3 +1,12 @@
+---
+title: "01. Valid Palindrome"
+description: "題目要求我們寫一個函式來判斷一個字串 `s` 是否為 **Palindrome (回文)**。 所謂「回文」，是指正著讀跟反著讀都一樣的字串。 但是在比對之前，我們必須先進行**資料清洗 (Data Cleaning)**："
+tags:
+  - 
+Two Pointers  - Array
+difficulty: Easy
+---
+
 ![Two Pointers Hero](../assets/images/banners/two_pointers.png){ class="header-banner" }
 
 # 01. Valid Palindrome <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>

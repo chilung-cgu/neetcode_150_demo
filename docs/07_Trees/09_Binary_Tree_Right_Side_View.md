@@ -1,3 +1,12 @@
+---
+title: "Binary Tree Right Side View (二元樹的右視圖)"
+description: "題目給一個 Binary Tree，想像你站在這棵樹的 **右側** 往左看。 請回傳你從上到下能看到的節點值。"
+tags:
+  - 
+Tree  - Binary Tree  - DFS
+difficulty: Medium
+---
+
 # Binary Tree Right Side View (二元樹的右視圖) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #199** — [題目連結](https://leetcode.com/problems/binary-tree-right-side-view/) | [NeetCode 解說](https://neetcode.io/problems/binary-tree-right-side-view)

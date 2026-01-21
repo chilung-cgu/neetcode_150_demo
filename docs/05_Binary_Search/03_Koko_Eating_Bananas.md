@@ -1,3 +1,12 @@
+---
+title: "Koko Eating Bananas (Koko 吃香蕉)"
+description: "Koko 愛吃香蕉。這裡有 `n` 串香蕉 (`piles`)，第 `i` 串有 `piles[i]` 根。 警衛離開了 `h` 小時。 Koko 每小時可以選擇一串香蕉吃掉 `k` 根（如果那串少於 `k` 根，她就全吃掉，這小時剩下的時間也不會去吃別串）。 請問最小的整數 `k` 是多少，才能讓"
+tags:
+  - 
+Binary Search  - Array
+difficulty: Medium
+---
+
 # Koko Eating Bananas (Koko 吃香蕉) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #875** — [題目連結](https://leetcode.com/problems/koko-eating-bananas/) | [NeetCode 解說](https://neetcode.io/problems/koko-eating-bananas)

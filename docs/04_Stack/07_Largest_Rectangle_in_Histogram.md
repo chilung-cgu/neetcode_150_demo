@@ -1,3 +1,12 @@
+---
+title: "Largest Rectangle in Histogram (直方圖中的最大矩形)"
+description: "題目給一個整數陣列 `heights`，代表直方圖中每個柱子的高度（寬度為 1）。 請找出直方圖中最大的矩形面積。"
+tags:
+  - 
+Stack  - Monotonic Stack
+difficulty: Hard
+---
+
 # Largest Rectangle in Histogram (直方圖中的最大矩形) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
 > 📌 **LeetCode #84** — [題目連結](https://leetcode.com/problems/largest-rectangle-in-histogram/) | [NeetCode 解說](https://neetcode.io/problems/largest-rectangle-in-histogram)

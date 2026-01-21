@@ -1,3 +1,12 @@
+---
+title: "Interleaving String (交錯字串)"
+description: "給定三個字串 `s1`, `s2`, `s3`。 判斷 `s3` 是否由 `s1` 和 `s2` **交錯 (Interleave)** 組成。 交錯的意思是： `s3` 包含 `s1` 和 `s2` 的所有字元，且 `s1` 和 `s2` 內部字元的相對順序保持不變。"
+tags:
+  - 
+Dynamic Programming  - 2D DP
+difficulty: Medium
+---
+
 # Interleaving String (交錯字串) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #97** — [題目連結](https://leetcode.com/problems/interleaving-string/) | [NeetCode 解說](https://neetcode.io/problems/interleaving-string)

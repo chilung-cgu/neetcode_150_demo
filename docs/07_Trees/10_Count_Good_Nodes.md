@@ -1,3 +1,12 @@
+---
+title: "Count Good Nodes in Binary Tree (計算二元樹中的好節點)"
+description: "題目給一個 Binary Tree 的 root。 一個節點 X 被稱為 **Good** (好節點)，如果從根節點到 X 的路徑上，沒有任何節點的值 **大於** X 的值。 也就是說，X 必須是從 Root 到 X 路徑上的 **最大值** (或之一)。"
+tags:
+  - 
+Tree  - Binary Tree  - DFS
+difficulty: Medium
+---
+
 # Count Good Nodes in Binary Tree (計算二元樹中的好節點) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #1448** — [題目連結](https://leetcode.com/problems/count-good-nodes-in-binary-tree/) | [NeetCode 解說](https://neetcode.io/problems/count-good-nodes-in-binary-tree)

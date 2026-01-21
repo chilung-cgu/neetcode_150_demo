@@ -1,3 +1,12 @@
+---
+title: "Reverse Nodes in k-Group (k 個一組反轉鏈結串列)"
+description: "題目給一個 Linked List 和一個整數 `k`。 請將 Linked List 每 `k` 個節點分成一組，並在每組內部進行反轉。 如果最後剩餘的節點不滿 `k` 個，則保持原樣，不反轉。 空間複雜度必須是 $O(1)$。"
+tags:
+  - 
+Linked List
+difficulty: Hard
+---
+
 # Reverse Nodes in k-Group (k 個一組反轉鏈結串列) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
 > 📌 **LeetCode #25** — [題目連結](https://leetcode.com/problems/reverse-nodes-in-k-group/) | [NeetCode 解說](https://neetcode.io/problems/reverse-nodes-in-k-group)

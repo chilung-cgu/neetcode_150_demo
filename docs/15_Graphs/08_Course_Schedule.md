@@ -1,3 +1,12 @@
+---
+title: "Course Schedule (課程表)"
+description: "你必須選修 `numCourses` 門課程，編號從 `0` 到 `numCourses - 1`。 給定一個前置條件陣列 `prerequisites`，其中 `prerequisites[i] = [ai, bi]` 表示要修課程 `ai`，必須先修課程 `bi`。 請判斷是否可能完成所有課程？"
+tags:
+  - 
+Graph  - DFS  - BFS
+difficulty: Medium
+---
+
 # Course Schedule (課程表) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #207** — [題目連結](https://leetcode.com/problems/course-schedule/) | [NeetCode 解說](https://neetcode.io/problems/course-schedule)

@@ -1,3 +1,12 @@
+---
+title: "Letter Combinations of a Phone Number (電話號碼的字母組合)"
+description: "題目給一個包含數字 `2-9` 的字串 `digits`。 回傳這些數字在傳統手機鍵盤上可能代表的所有字母組合。"
+tags:
+  - 
+Backtracking  - Recursion
+difficulty: Medium
+---
+
 # Letter Combinations of a Phone Number (電話號碼的字母組合) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #17** — [題目連結](https://leetcode.com/problems/letter-combinations-of-a-phone-number/) | [NeetCode 解說](https://neetcode.io/problems/letter-combinations-of-a-phone-number)

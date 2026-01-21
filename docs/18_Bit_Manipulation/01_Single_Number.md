@@ -1,3 +1,12 @@
+---
+title: "Single Number (只出現一次的數字)"
+description: "給定一個非空整數陣列 `nums`，除了某個元素只出現一次以外，其餘每個元素均出現兩次。 找出那個只出現了一次的元素。 你必須設計並實現一個線性時間複雜度 $O(n)$ 的算法，且只使用常數額外空間 $O(1)$。"
+tags:
+  - 
+Bit Manipulation
+difficulty: Easy
+---
+
 # Single Number (只出現一次的數字) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
 > 📌 **LeetCode #136** — [題目連結](https://leetcode.com/problems/single-number/) | [NeetCode 解說](https://neetcode.io/problems/single-number)

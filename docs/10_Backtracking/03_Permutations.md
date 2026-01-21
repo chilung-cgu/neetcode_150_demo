@@ -1,3 +1,12 @@
+---
+title: "Permutations (全排列)"
+description: "題目給一個**無重複**數字的陣列 `nums`。 回傳所有可能的 **排列 (Permutations)**。 順序不重要。"
+tags:
+  - 
+Backtracking  - Recursion
+difficulty: Medium
+---
+
 # Permutations (全排列) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #46** — [題目連結](https://leetcode.com/problems/permutations/) | [NeetCode 解說](https://neetcode.io/problems/permutations)

@@ -1,3 +1,12 @@
+---
+title: "Max Area of Island (最大的島嶼面積)"
+description: "給定一個 `m x n` 的二維二進制網格 `grid`。 島嶼是一組相連的 `1` (水平或垂直)。 請回傳 **最大的** 島嶼面積。如果沒有島嶼，回傳 0。"
+tags:
+  - 
+Graph  - DFS  - BFS
+difficulty: Medium
+---
+
 # Max Area of Island (最大的島嶼面積) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #695** — [題目連結](https://leetcode.com/problems/max-area-of-island/) | [NeetCode 解說](https://neetcode.io/problems/max-area-of-island)

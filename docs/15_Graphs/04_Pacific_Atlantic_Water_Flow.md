@@ -1,3 +1,12 @@
+---
+title: "Pacific Atlantic Water Flow (太平洋大西洋水流)"
+description: "給定一個 `m x n` 的非負整數矩陣 `heights`，代表每個單元格的高度。 矩陣的 **左邊** 和 **上邊** 連接 **太平洋 (Pacific Ocean)**。 矩陣的 **右邊** 和 **下邊** 連接 **大西洋 (Atlantic Ocean)**。 水只能從高處流向低處"
+tags:
+  - 
+Graph  - DFS  - BFS
+difficulty: Medium
+---
+
 # Pacific Atlantic Water Flow (太平洋大西洋水流) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #417** — [題目連結](https://leetcode.com/problems/pacific-atlantic-water-flow/) | [NeetCode 解說](https://neetcode.io/problems/pacific-atlantic-water-flow)

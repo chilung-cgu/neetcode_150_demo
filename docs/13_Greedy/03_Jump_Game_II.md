@@ -1,3 +1,12 @@
+---
+title: "Jump Game II (跳躍遊戲 II)"
+description: "給定一個非負整數陣列 `nums`。 最初位於第一個位置。 每個元素代表你可以跳躍的最大長度。 假設你 **一定可以** 到達最後一個位置 (Always possible)。 請找出到達最後一個位置所需的 **最少跳躍次數**。"
+tags:
+  - 
+Greedy
+difficulty: Medium
+---
+
 # Jump Game II (跳躍遊戲 II) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #45** — [題目連結](https://leetcode.com/problems/jump-game-ii/) | [NeetCode 解說](https://neetcode.io/problems/jump-game-ii)

@@ -1,3 +1,12 @@
+---
+title: "Sum of Two Integers (兩整數之和)"
+description: "給定兩個整數 `a` 和 `b`，請在 **不使用 `+` 和 `-` 運算符** 的情況下計算它們的和。"
+tags:
+  - 
+Bit Manipulation
+difficulty: Medium
+---
+
 # Sum of Two Integers (兩整數之和) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #371** — [題目連結](https://leetcode.com/problems/sum-of-two-integers/) | [NeetCode 解說](https://neetcode.io/problems/sum-of-two-integers)

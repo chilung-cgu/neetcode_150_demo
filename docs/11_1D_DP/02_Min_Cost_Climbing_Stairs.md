@@ -1,3 +1,12 @@
+---
+title: "Min Cost Climbing Stairs (使用最小花費爬樓梯)"
+description: "給定一個整數陣列 `cost`，其中 `cost[i]` 是從樓梯第 `i` 階向上爬需要支付的費用。 支付費用後，你可以選擇爬 **1** 階或 **2** 階。 你可以從 index `0` 或 index `1` 開始。 請計算到達樓梯頂端（超過最後一個 index）的最低花費。"
+tags:
+  - 
+Dynamic Programming
+difficulty: Easy
+---
+
 # Min Cost Climbing Stairs (使用最小花費爬樓梯) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
 > 📌 **LeetCode #746** — [題目連結](https://leetcode.com/problems/min-cost-climbing-stairs/) | [NeetCode 解說](https://neetcode.io/problems/min-cost-climbing-stairs)

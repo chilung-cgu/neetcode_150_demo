@@ -1,3 +1,12 @@
+---
+title: "Longest Increasing Path in a Matrix (矩陣中的最長遞增路徑)"
+description: "給定一個 `m x n` 的整數矩陣 `matrix`，回傳其中的 **最長遞增路徑** 的長度。 路徑中的每一步，可以向上下左右移動。 不能走出邊界，不能走回頭路 (但因為是嚴格遞增，所以天然不會走回頭路)。"
+tags:
+  - 
+Dynamic Programming  - 2D DP
+difficulty: Hard
+---
+
 # Longest Increasing Path in a Matrix (矩陣中的最長遞增路徑) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
 > 📌 **LeetCode #329** — [題目連結](https://leetcode.com/problems/longest-increasing-path-in-a-matrix/) | [NeetCode 解說](https://neetcode.io/problems/longest-increasing-path-in-a-matrix)

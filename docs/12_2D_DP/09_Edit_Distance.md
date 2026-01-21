@@ -1,3 +1,12 @@
+---
+title: "Edit Distance (編輯距離)"
+description: "給兩個字串 `word1` 和 `word2`。 請計算將 `word1` 轉換成 `word2` 所需的 **最少操作次數**。 允許的操作有三種："
+tags:
+  - 
+Dynamic Programming  - 2D DP
+difficulty: Medium
+---
+
 # Edit Distance (編輯距離) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #72** — [題目連結](https://leetcode.com/problems/edit-distance/) | [NeetCode 解說](https://neetcode.io/problems/edit-distance)

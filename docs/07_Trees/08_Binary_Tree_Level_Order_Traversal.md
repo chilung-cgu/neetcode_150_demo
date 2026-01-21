@@ -1,3 +1,12 @@
+---
+title: "Binary Tree Level Order Traversal (二元樹的層序遍歷)"
+description: "題目給一個 Binary Tree 的 root。 請回傳其節點值的 **層序遍歷 (Level Order Traversal)**。 (i.e., from left to right, level by level)。"
+tags:
+  - 
+Tree  - Binary Tree  - DFS
+difficulty: Medium
+---
+
 # Binary Tree Level Order Traversal (二元樹的層序遍歷) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #102** — [題目連結](https://leetcode.com/problems/binary-tree-level-order-traversal/) | [NeetCode 解說](https://neetcode.io/problems/binary-tree-level-order-traversal)

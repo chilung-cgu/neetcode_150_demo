@@ -1,3 +1,12 @@
+---
+title: "Balanced Binary Tree (平衡二元樹)"
+description: "題目給一個 Binary Tree，判斷它是否是 **高度平衡 (Height-Balanced)** 的。 **Height-Balanced**: 一個二元樹中，**每個節點** 的左右子樹的高度差絕對值不超過 1。"
+tags:
+  - 
+Tree  - Binary Tree  - DFS
+difficulty: Easy
+---
+
 # Balanced Binary Tree (平衡二元樹) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
 > 📌 **LeetCode #110** — [題目連結](https://leetcode.com/problems/balanced-binary-tree/) | [NeetCode 解說](https://neetcode.io/problems/balanced-binary-tree)

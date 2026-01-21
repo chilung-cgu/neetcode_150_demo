@@ -1,3 +1,12 @@
+---
+title: "Valid Parenthesis String (有效的括號字串)"
+description: "給定一個只包含 `(`, `)`, `*` 的字串。 檢查它是否為有效字串。 規則："
+tags:
+  - 
+Greedy
+difficulty: Medium
+---
+
 # Valid Parenthesis String (有效的括號字串) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #678** — [題目連結](https://leetcode.com/problems/valid-parenthesis-string/) | [NeetCode 解說](https://neetcode.io/problems/valid-parenthesis-string)

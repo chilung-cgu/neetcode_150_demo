@@ -1,3 +1,12 @@
+---
+title: "Insert Interval (插入區間)"
+description: "給定一個**非重疊 (non-overlapping)** 且 **已排序 (sorted)** 的區間列表 `intervals`，其中 `intervals[i] = [start_i, end_i]` 代表第 `i` 個區間的起始和結束。 另給定一個新的區間 `newInterval = [s"
+tags:
+  - 
+Intervals  - Sorting
+difficulty: Medium
+---
+
 # Insert Interval (插入區間) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #57** — [題目連結](https://leetcode.com/problems/insert-interval/) | [NeetCode 解說](https://neetcode.io/problems/insert-interval)

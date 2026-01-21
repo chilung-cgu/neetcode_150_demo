@@ -1,3 +1,12 @@
+---
+title: "Minimum Interval to Include Each Query (包含每個查詢的最小區間)"
+description: "給定一個區間陣列 `intervals`，其中 `intervals[i] = [left_i, right_i]`。 以及一個查詢陣列 `queries`，其中 `queries[j]` 是一個數值。 對於每個查詢 `q`，找出一個區間 `[l, r]` 滿足："
+tags:
+  - 
+Intervals  - Sorting
+difficulty: Hard
+---
+
 # Minimum Interval to Include Each Query (包含每個查詢的最小區間) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
 > 📌 **LeetCode #1851** — [題目連結](https://leetcode.com/problems/minimum-interval-to-include-each-query/) | [NeetCode 解說](https://neetcode.io/problems/minimum-interval-to-include-each-query)

@@ -7,6 +7,10 @@
 
 ---
 
+<div id="user-progress" style="background: linear-gradient(135deg, #818cf8, #6366f1); color: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; text-align: center; font-size: 1.1rem;">
+📊 <strong>你的進度: 0/150</strong> (0.0%) — 題目完成後會自動記錄！
+</div>
+
 ## 📖 專案簡介
 
 本專案是 **NeetCode 150** 挑戰的完整中文題解，涵蓋資料結構與演算法的所有核心主題。

@@ -1,3 +1,12 @@
+---
+title: "Cheapest Flights Within K Stops (K 站中轉內最便宜的航班)"
+description: "給定 `n` 個城市，與一些航班 `flights`，其中 `flights[i] = [from, to, price]`。 每班飛機都有價格。 給定起點 `src`、終點 `dst` 和允許的最多中轉次數 `k`。 請找出從 `src` 到 `dst` 的最便宜價格，且中轉次數 **不超過 k*"
+tags:
+  - 
+Graph  - Dijkstra  - MST
+difficulty: Medium
+---
+
 # Cheapest Flights Within K Stops (K 站中轉內最便宜的航班) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #787** — [題目連結](https://leetcode.com/problems/cheapest-flights-within-k-stops/) | [NeetCode 解說](https://neetcode.io/problems/cheapest-flights-within-k-stops)

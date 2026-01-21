@@ -1,3 +1,12 @@
+---
+title: "Swim in Rising Water (在上升的水中游泳)"
+description: "給定一個 `n x n` 的整數網格 `grid`，其中 `grid[i][j]` 代表該點的海拔高度。 現在下雨了，雨水的高度 `t` 隨著時間線性增加 (t = 0, 1, 2, ...)。 你可以在高度為 `t` 時游到任意高度 `<= t` 的相鄰格子。 求從左上角 `(0, 0)` 游到右"
+tags:
+  - 
+Graph  - Dijkstra  - MST
+difficulty: Hard
+---
+
 # Swim in Rising Water (在上升的水中游泳) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
 > 📌 **LeetCode #778** — [題目連結](https://leetcode.com/problems/swim-in-rising-water/) | [NeetCode 解說](https://neetcode.io/problems/swim-in-rising-water)

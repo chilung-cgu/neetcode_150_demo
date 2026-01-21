@@ -1,3 +1,12 @@
+---
+title: "Hand of Straights (一手順子)"
+description: "給定一個整數陣列 `hand`，其中每個數字代表一張牌。還有一個整數 `groupSize`。 判斷是否能將這些牌重新排列成若干組，每組包含 `groupSize` 張牌，且這 `groupSize` 張牌是 **連續的** (consecutive)。"
+tags:
+  - 
+Greedy
+difficulty: Medium
+---
+
 # Hand of Straights (一手順子) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #846** — [題目連結](https://leetcode.com/problems/hand-of-straights/) | [NeetCode 解說](https://neetcode.io/problems/hand-of-straights)

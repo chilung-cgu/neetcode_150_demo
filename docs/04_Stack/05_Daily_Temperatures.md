@@ -1,3 +1,12 @@
+---
+title: "Daily Temperatures (每日溫度)"
+description: "題目給一個整數陣列 `temperatures`，代表每天的氣溫。 請回傳一個陣列 `answer`，其中 `answer[i]` 代表「在第 `i` 天之後，要等幾天才能遇到**更高**的溫度」。 如果之後都沒有更高的溫度，填 `0`。"
+tags:
+  - 
+Stack  - Monotonic Stack
+difficulty: Medium
+---
+
 # Daily Temperatures (每日溫度) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #739** — [題目連結](https://leetcode.com/problems/daily-temperatures/) | [NeetCode 解說](https://neetcode.io/problems/daily-temperatures)

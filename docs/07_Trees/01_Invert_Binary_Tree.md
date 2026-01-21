@@ -1,3 +1,12 @@
+---
+title: "Invert Binary Tree (翻轉二元樹)"
+description: "題目給一個 Binary Tree 的 root，請翻轉這棵樹，使所有左右子樹交換位置。 Max Howell (Homebrew creator) 曾經在面試被 Google 問這題而被拒，非常有名。"
+tags:
+  - 
+Tree  - Binary Tree  - DFS
+difficulty: Easy
+---
+
 # Invert Binary Tree (翻轉二元樹) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
 > 📌 **LeetCode #226** — [題目連結](https://leetcode.com/problems/invert-binary-tree/) | [NeetCode 解說](https://neetcode.io/problems/invert-binary-tree)

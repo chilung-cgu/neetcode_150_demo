@@ -1,3 +1,12 @@
+---
+title: "Reverse Linked List (反轉鏈結串列)"
+description: "題目給一個 singly linked list 的 head。 請反轉這個 List，並回傳新的 head。"
+tags:
+  - 
+Linked List
+difficulty: Easy
+---
+
 # Reverse Linked List (反轉鏈結串列) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
 > 📌 **LeetCode #206** — [題目連結](https://leetcode.com/problems/reverse-linked-list/) | [NeetCode 解說](https://neetcode.io/problems/reverse-linked-list)

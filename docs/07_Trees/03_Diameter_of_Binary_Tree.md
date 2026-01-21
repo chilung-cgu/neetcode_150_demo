@@ -1,3 +1,12 @@
+---
+title: "Diameter of Binary Tree (二元樹的直徑)"
+description: "題目求二元樹的 **直徑**。直徑是指樹中 **任意兩個節點** 之間的最長路徑長度（邊的數量）。 這條路徑 **不一定經過 root**。"
+tags:
+  - 
+Tree  - Binary Tree  - DFS
+difficulty: Easy
+---
+
 # Diameter of Binary Tree (二元樹的直徑) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
 > 📌 **LeetCode #543** — [題目連結](https://leetcode.com/problems/diameter-of-binary-tree/) | [NeetCode 解說](https://neetcode.io/problems/diameter-of-binary-tree)

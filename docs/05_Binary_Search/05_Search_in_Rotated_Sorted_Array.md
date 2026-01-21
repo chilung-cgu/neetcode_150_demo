@@ -1,3 +1,12 @@
+---
+title: "Search in Rotated Sorted Array (在旋轉排序陣列中搜尋)"
+description: "題目給一個**旋轉後**的排序陣列 `nums` 和一個 `target`。 請搜尋 `target` 是否存在。如果存在回傳 index，否則回傳 -1。 **要求時間複雜度為** $O(\log n)$。"
+tags:
+  - 
+Binary Search  - Array
+difficulty: Medium
+---
+
 # Search in Rotated Sorted Array (在旋轉排序陣列中搜尋) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #33** — [題目連結](https://leetcode.com/problems/search-in-rotated-sorted-array/) | [NeetCode 解說](https://neetcode.io/problems/search-in-rotated-sorted-array)

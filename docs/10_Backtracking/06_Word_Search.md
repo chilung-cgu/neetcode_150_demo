@@ -1,3 +1,12 @@
+---
+title: "Word Search (單字搜尋)"
+description: "題目給一個 `m x n` 的字符網格 `board` 和一個單字 `word`。 如果 `word` 存在於網格中，回傳 `true`；否則回傳 `false`。 單字必須由網格中 **相鄰** 的字母組成（水平或垂直），同一個儲存格內的字母在同一個單字中最多只能使用一次。"
+tags:
+  - 
+Backtracking  - Recursion
+difficulty: Medium
+---
+
 # Word Search (單字搜尋) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #79** — [題目連結](https://leetcode.com/problems/word-search/) | [NeetCode 解說](https://neetcode.io/problems/word-search)

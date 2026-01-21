@@ -1,3 +1,12 @@
+---
+title: "Two Sum II - Input Array Is Sorted (兩數之和 II - 輸入已排序)"
+description: "這題是 "Two Sum" 的變種。 題目給一個 **已排序 (Sorted in non-decreasing order)** 的整數陣列 `numbers`，要找出兩個數字相加等於 `target`。 回傳這兩個數字的 **1-based index**。"
+tags:
+  - 
+Two Pointers  - Array
+difficulty: Medium
+---
+
 # Two Sum II - Input Array Is Sorted (兩數之和 II - 輸入已排序) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #167** — [題目連結](https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/) | [NeetCode 解說](https://neetcode.io/problems/two-sum-ii-input-array-is-sorted)

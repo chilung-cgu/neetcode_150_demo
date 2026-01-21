@@ -1,3 +1,12 @@
+---
+title: "Add Two Numbers (兩數相加)"
+description: "題目給兩個 **非空** 的 Linked List，代表兩個非負整數。 這些數字是 **逆序 (Reverse Order)** 儲存的，也就是說個位數在 head。 請將這兩個數字相加，並以 Linked List 形式回傳（同樣是逆序）。"
+tags:
+  - 
+Linked List
+difficulty: Medium
+---
+
 # Add Two Numbers (兩數相加) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #2** — [題目連結](https://leetcode.com/problems/add-two-numbers/) | [NeetCode 解說](https://neetcode.io/problems/add-two-numbers)

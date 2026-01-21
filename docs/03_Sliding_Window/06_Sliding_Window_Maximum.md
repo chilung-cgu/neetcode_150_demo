@@ -1,3 +1,12 @@
+---
+title: "Sliding Window Maximum (滑動窗口最大值)"
+description: "題目給一個整數陣列 `nums`，以及一個窗口大小 `k`。 這個窗口從最左邊移動到最右邊，每次只移動一步。 我們只能看到窗口內的 `k` 個數字。 請回傳 **每一個位置時窗口內的最大值**。"
+tags:
+  - 
+Sliding Window  - String
+difficulty: Hard
+---
+
 # Sliding Window Maximum (滑動窗口最大值) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
 > 📌 **LeetCode #239** — [題目連結](https://leetcode.com/problems/sliding-window-maximum/) | [NeetCode 解說](https://neetcode.io/problems/sliding-window-maximum)

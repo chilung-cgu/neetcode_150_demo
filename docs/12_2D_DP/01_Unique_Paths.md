@@ -1,3 +1,12 @@
+---
+title: "Unique Paths (不同路徑)"
+description: "題目給一個 `m x n` 的網格。 機器人位於左上角 `(0, 0)`。 目標是移動到右下角 `(m-1, n-1)`。 機器人每次只能 **向下** 或 **向右** 移動。 問有多少條不同的路徑？"
+tags:
+  - 
+Dynamic Programming  - 2D DP
+difficulty: Medium
+---
+
 # Unique Paths (不同路徑) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #62** — [題目連結](https://leetcode.com/problems/unique-paths/) | [NeetCode 解說](https://neetcode.io/problems/unique-paths)

@@ -1,3 +1,12 @@
+---
+title: "Surrounded Regions (被圍繞的區域)"
+description: "給定一個 `m x n` 的矩陣 `board`，包含 `'X'` 和 `'O'`。 請 **捕獲 (capture)** 所有被 `'X'` 圍繞的區域。 捕獲的意思是將這些區域中的所有 `'O'` 翻轉成 `'X'`。 如果一個 `'O'` 位於邊界上，或者與位於邊界的 `'O'` 相連，那麼它"
+tags:
+  - 
+Graph  - DFS  - BFS
+difficulty: Medium
+---
+
 # Surrounded Regions (被圍繞的區域) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #130** — [題目連結](https://leetcode.com/problems/surrounded-regions/) | [NeetCode 解說](https://neetcode.io/problems/surrounded-regions)

@@ -1,3 +1,12 @@
+---
+title: "Binary Tree Maximum Path Sum (二元樹中的最大路徑和)"
+description: "題目給一個 **非空** 二元樹的根節點 `root`。 找出 **最大路徑和**。 路徑可以從樹中的 **任意節點開始**，並在 **任意節點結束**（同一條路徑上的節點連接順序必須是父子關係）。 這條路徑 **至少包含一個節點**。 路徑不一定經過 root。"
+tags:
+  - 
+Tree  - Binary Tree  - DFS
+difficulty: Hard
+---
+
 # Binary Tree Maximum Path Sum (二元樹中的最大路徑和) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
 > 📌 **LeetCode #124** — [題目連結](https://leetcode.com/problems/binary-tree-maximum-path-sum/) | [NeetCode 解說](https://neetcode.io/problems/binary-tree-maximum-path-sum)

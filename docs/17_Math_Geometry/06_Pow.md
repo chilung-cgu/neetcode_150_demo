@@ -1,3 +1,12 @@
+---
+title: "Pow(x, n) (數值的 n 次方)"
+description: "實現 `pow(x, n)`，即計算 `x` 的 `n` 次冪 ($x^n$)。"
+tags:
+  - 
+Math  - Matrix
+difficulty: Medium
+---
+
 # Pow(x, n) (數值的 n 次方) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #50** — [題目連結](https://leetcode.com/problems/powx-n/) | [NeetCode 解說](https://neetcode.io/problems/powx-n)

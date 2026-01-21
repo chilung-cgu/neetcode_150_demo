@@ -1,3 +1,12 @@
+---
+title: "Longest Repeating Character Replacement (替換後的最長重複字元子串)"
+description: "題目給一個字串 `s` 和一個整數 `k`。 我們最多可以將字串中的任意 `k` 個字元替換成其他字元。 目標是：在替換不超過 `k` 次的情況下，找出最常的子字串，該子字串由 **完全相同的字元** 組成。 回傳該長度。"
+tags:
+  - 
+Sliding Window  - String
+difficulty: Medium
+---
+
 # Longest Repeating Character Replacement (替換後的最長重複字元子串) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #424** — [題目連結](https://leetcode.com/problems/longest-repeating-character-replacement/) | [NeetCode 解說](https://neetcode.io/problems/longest-repeating-character-replacement)

@@ -1,3 +1,12 @@
+---
+title: "Last Stone Weight (最後一顆石頭的重量)"
+description: "題目給一個整數陣列 `stones`，代表石頭的重量。 每一回合，我們選出 **最重的兩顆石頭**，設重量為 `x` 和 `y` (x <= y)。"
+tags:
+  - 
+Heap  - Priority Queue
+difficulty: Easy
+---
+
 # Last Stone Weight (最後一顆石頭的重量) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
 > 📌 **LeetCode #1046** — [題目連結](https://leetcode.com/problems/last-stone-weight/) | [NeetCode 解說](https://neetcode.io/problems/last-stone-weight)

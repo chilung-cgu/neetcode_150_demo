@@ -1,3 +1,12 @@
+---
+title: "Course Schedule II (課程表 II)"
+description: "與 Course Schedule I 相同，給定 `numCourses` 和 `prerequisites`。 但這次不是問「是否可能」，而是要求回傳一個 **有效的修課順序** (Vector `[0, 1, ...]`)。 如果不可能完成，則回傳空陣列。 如果有多個有效順序，回傳其中任意一個"
+tags:
+  - 
+Graph  - DFS  - BFS
+difficulty: Medium
+---
+
 # Course Schedule II (課程表 II) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #210** — [題目連結](https://leetcode.com/problems/course-schedule-ii/) | [NeetCode 解說](https://neetcode.io/problems/course-schedule-ii)

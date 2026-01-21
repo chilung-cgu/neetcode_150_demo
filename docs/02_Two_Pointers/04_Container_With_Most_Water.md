@@ -1,3 +1,12 @@
+---
+title: "Container With Most Water (盛最多水的容器)"
+description: "題目給一個整數陣列 `height`，長度為 `n`。 有 `n` 條垂直線，第 `i` 條線的兩端點分別是 `(i, 0)` 和 `(i, height[i])`。 我们要找出兩條線，讓這兩條線與 X 軸形成的容器 (Container) 能裝最多的水。 回傳最大水量。"
+tags:
+  - 
+Two Pointers  - Array
+difficulty: Medium
+---
+
 # Container With Most Water (盛最多水的容器) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #11** — [題目連結](https://leetcode.com/problems/container-with-most-water/) | [NeetCode 解說](https://neetcode.io/problems/container-with-most-water)

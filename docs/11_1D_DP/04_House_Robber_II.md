@@ -1,3 +1,12 @@
+---
+title: "House Robber II (打家劫舍 II)"
+description: "這題是 "House Robber" 的進階版。 唯一的差別是：房屋現在圍成了一個 **圓圈 (Circle)**。 這意味著：**第一間房子和最後一間房子是相鄰的**。 限制依然是：不能搶相鄰的兩間房子。"
+tags:
+  - 
+Dynamic Programming
+difficulty: Medium
+---
+
 # House Robber II (打家劫舍 II) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #213** — [題目連結](https://leetcode.com/problems/house-robber-ii/) | [NeetCode 解說](https://neetcode.io/problems/house-robber-ii)

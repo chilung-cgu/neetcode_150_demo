@@ -1,3 +1,12 @@
+---
+title: "Longest Substring Without Repeating Characters (無重複字元的最長子字串)"
+description: "題目給一個字串 `s`，請找出**不包含重複字元**的**最長子字串**的長度。"
+tags:
+  - 
+Sliding Window  - String
+difficulty: Medium
+---
+
 # Longest Substring Without Repeating Characters (無重複字元的最長子字串) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #3** — [題目連結](https://leetcode.com/problems/longest-substring-without-repeating-characters/) | [NeetCode 解說](https://neetcode.io/problems/longest-substring-without-repeating-characters)

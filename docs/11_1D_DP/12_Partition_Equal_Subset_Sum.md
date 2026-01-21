@@ -1,3 +1,12 @@
+---
+title: "Partition Equal Subset Sum (分割等和子集)"
+description: "給定一個**只包含正整數**的非空陣列 `nums`。 判斷是否可以將這個陣列分割成兩個子集，使得這兩個子集的元素和相等。"
+tags:
+  - 
+Dynamic Programming
+difficulty: Medium
+---
+
 # Partition Equal Subset Sum (分割等和子集) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #416** — [題目連結](https://leetcode.com/problems/partition-equal-subset-sum/) | [NeetCode 解說](https://neetcode.io/problems/partition-equal-subset-sum)

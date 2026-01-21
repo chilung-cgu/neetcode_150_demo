@@ -1,3 +1,12 @@
+---
+title: "Permutation in String (字串的排列包含)"
+description: "題目給兩個字串 `s1` 和 `s2`。請判斷 `s2` 是否包含 `s1` 的任意 **Permutation** (排列組合) 作為子字串。"
+tags:
+  - 
+Sliding Window  - String
+difficulty: Medium
+---
+
 # Permutation in String (字串的排列包含) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #567** — [題目連結](https://leetcode.com/problems/permutation-in-string/) | [NeetCode 解說](https://neetcode.io/problems/permutation-in-string)

@@ -1,3 +1,12 @@
+---
+title: "Group Anagrams (字母異位詞分組)"
+description: "題目給我們一個字串陣列 `strs`，要求我們將所有的 **Anagrams** (字母異位詞) 分組在一起。順序不重要。"
+tags:
+  - 
+Array  - Hash Table
+difficulty: Medium
+---
+
 # Group Anagrams (字母異位詞分組) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
 > 📌 **LeetCode #49** — [題目連結](https://leetcode.com/problems/group-anagrams/) | [NeetCode 解說](https://neetcode.io/problems/group-anagrams)
