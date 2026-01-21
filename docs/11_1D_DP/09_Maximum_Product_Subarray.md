@@ -1,5 +1,8 @@
 # Maximum Product Subarray (最大乘積子陣列) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
+> 📌 **LeetCode #152** — [題目連結](https://leetcode.com/problems/maximum-product-subarray/) | [NeetCode 解說](https://neetcode.io/problems/maximum-product-subarray)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目給一個整數陣列 `nums`，找出一個 **連續子陣列 (Contiguous Subarray)**，使得其元素乘積最大。

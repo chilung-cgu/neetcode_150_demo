@@ -1,5 +1,8 @@
 # Jump Game (跳躍遊戲) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
+> 📌 **LeetCode #55** — [題目連結](https://leetcode.com/problems/jump-game/) | [NeetCode 解說](https://neetcode.io/problems/jump-game)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 給定一個非負整數陣列 `nums`。

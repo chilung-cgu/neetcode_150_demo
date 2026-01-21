@@ -1,5 +1,8 @@
 # Median of Two Sorted Arrays (兩個排序陣列的中位數) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
+> 📌 **LeetCode #4** — [題目連結](https://leetcode.com/problems/median-of-two-sorted-arrays/) | [NeetCode 解說](https://neetcode.io/problems/median-of-two-sorted-arrays)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目給兩個大小分別為 `m` 和 `n` 的排序陣列 `nums1` 和 `nums2`。

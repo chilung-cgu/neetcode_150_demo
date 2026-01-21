@@ -1,5 +1,8 @@
 # Find Minimum in Rotated Sorted Array (尋找旋轉排序陣列中的最小值) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
+> 📌 **LeetCode #153** — [題目連結](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/) | [NeetCode 解說](https://neetcode.io/problems/find-minimum-in-rotated-sorted-array)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目給一個長度為 `n` 的陣列 `nums`，它原本是升序排序的，但在某個未知的 pivot 點進行了 **旋轉 (Rotation)**。

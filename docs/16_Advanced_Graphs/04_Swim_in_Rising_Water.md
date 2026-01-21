@@ -1,5 +1,8 @@
 # Swim in Rising Water (在上升的水中游泳) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
+> 📌 **LeetCode #778** — [題目連結](https://leetcode.com/problems/swim-in-rising-water/) | [NeetCode 解說](https://neetcode.io/problems/swim-in-rising-water)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 給定一個 `n x n` 的整數網格 `grid`，其中 `grid[i][j]` 代表該點的海拔高度。

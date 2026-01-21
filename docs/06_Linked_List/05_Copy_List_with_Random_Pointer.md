@@ -1,5 +1,8 @@
 # Copy List with Random Pointer (複製含隨機指標的鏈結串列) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
+> 📌 **LeetCode #138** — [題目連結](https://leetcode.com/problems/copy-list-with-random-pointer/) | [NeetCode 解說](https://neetcode.io/problems/copy-list-with-random-pointer)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目給一個 Linked List，每個節點除了 `next` 指標外，還有一個 `random` 指標，可能指向 list 中的任意節點或 null。

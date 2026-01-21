@@ -1,5 +1,8 @@
 # Missing Number (缺失數字) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
+> 📌 **LeetCode #268** — [題目連結](https://leetcode.com/problems/missing-number/) | [NeetCode 解說](https://neetcode.io/problems/missing-number)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 給定一個包含 0 到 n 中 `n` 個不同數字的陣列 `nums`。

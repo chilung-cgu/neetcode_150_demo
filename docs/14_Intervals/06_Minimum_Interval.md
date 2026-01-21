@@ -1,5 +1,8 @@
 # Minimum Interval to Include Each Query (包含每個查詢的最小區間) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
+> 📌 **LeetCode #1851** — [題目連結](https://leetcode.com/problems/minimum-interval-to-include-each-query/) | [NeetCode 解說](https://neetcode.io/problems/minimum-interval-to-include-each-query)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 給定一個區間陣列 `intervals`，其中 `intervals[i] = [left_i, right_i]`。

@@ -1,5 +1,8 @@
 # Redundant Connection (冗餘連接) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
+> 📌 **LeetCode #684** — [題目連結](https://leetcode.com/problems/redundant-connection/) | [NeetCode 解說](https://neetcode.io/problems/redundant-connection)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 給定一個無向圖，該圖原本是一棵樹（$N$ 個節點，$N-1$ 條邊），但此時多了一條邊，使其形成了至少一個環。

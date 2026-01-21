@@ -1,5 +1,8 @@
 # Find the Duplicate Number (尋找重複的數字) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
+> 📌 **LeetCode #287** — [題目連結](https://leetcode.com/problems/find-the-duplicate-number/) | [NeetCode 解說](https://neetcode.io/problems/find-the-duplicate-number)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目給一個包含 `n + 1` 個整數的陣列 `nums`，每個整數都在 `[1, n]` 範圍內（包含 1 和 n）。

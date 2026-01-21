@@ -1,5 +1,8 @@
 # Meeting Rooms (會議室) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
+> 📌 **LeetCode #252** — [題目連結](https://leetcode.com/problems/meeting-rooms/) | [NeetCode 解說](https://neetcode.io/problems/meeting-rooms)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 給定一個會議時間區間的陣列 `intervals`，其中 `intervals[i] = [start_i, end_i]`。

@@ -1,5 +1,8 @@
 # Find Median from Data Stream (從數據流中尋找中位數) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
+> 📌 **LeetCode #295** — [題目連結](https://leetcode.com/problems/find-median-from-data-stream/) | [NeetCode 解說](https://neetcode.io/problems/find-median-from-data-stream)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目要求設計一個 `MedianFinder` 類別：

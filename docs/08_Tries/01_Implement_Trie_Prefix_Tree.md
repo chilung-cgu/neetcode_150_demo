@@ -1,5 +1,8 @@
 # Implement Trie (Prefix Tree) (實作字典樹) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
+> 📌 **LeetCode #208** — [題目連結](https://leetcode.com/problems/implement-trie-prefix-tree/) | [NeetCode 解說](https://neetcode.io/problems/implement-trie-prefix-tree)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目要求實作一個 `Trie` 類別 (Prefix Tree)，包含以下方法：

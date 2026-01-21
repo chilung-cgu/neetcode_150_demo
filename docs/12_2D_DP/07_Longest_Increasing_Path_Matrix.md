@@ -1,5 +1,8 @@
 # Longest Increasing Path in a Matrix (矩陣中的最長遞增路徑) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
+> 📌 **LeetCode #329** — [題目連結](https://leetcode.com/problems/longest-increasing-path-in-a-matrix/) | [NeetCode 解說](https://neetcode.io/problems/longest-increasing-path-in-a-matrix)
+
+
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 給定一個 `m x n` 的整數矩陣 `matrix`，回傳其中的 **最長遞增路徑** 的長度。
