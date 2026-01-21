@@ -203,3 +203,11 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Subsets II (子集 II)](04_Subsets_II.md)
+- [Combination Sum (組合總和)](02_Combination_Sum.md)

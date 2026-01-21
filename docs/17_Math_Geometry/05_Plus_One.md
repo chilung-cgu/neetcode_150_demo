@@ -169,3 +169,10 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Multiply Strings (字符串相乘)](07_Multiply_Strings.md)

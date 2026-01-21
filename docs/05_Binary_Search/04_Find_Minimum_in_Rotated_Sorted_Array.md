@@ -188,3 +188,13 @@ public:
 
 - 💎 解釋與 nums[-1] 比較的原因
 - 💎 處理已排序的情況
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Search in Rotated Sorted Array (在旋轉排序陣列中搜尋)](05_Search_in_Rotated_Sorted_Array.md)
+
+### 進階挑戰
+- [Find Minimum In Rotated Sorted Array Ii](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array-ii/) — LeetCode

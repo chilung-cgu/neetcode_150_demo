@@ -173,3 +173,13 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [House Robber II (打家劫舍 II)](04_House_Robber_II.md)
+
+### 進階挑戰
+- [House Robber Iii](https://leetcode.com/problems/house-robber-iii/) — LeetCode

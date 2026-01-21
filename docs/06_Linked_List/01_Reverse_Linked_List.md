@@ -206,3 +206,13 @@ public:
 
 - 💎 迭代和遞迴兩種解法
 - 💎 清晰的指標操作解釋
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Reverse Nodes in k-Group (k 個一組反轉鏈結串列)](11_Reverse_Nodes_in_k_Group.md)
+
+### 進階挑戰
+- [Reverse Linked List Ii](https://leetcode.com/problems/reverse-linked-list-ii/) — LeetCode

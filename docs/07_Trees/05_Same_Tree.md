@@ -161,3 +161,13 @@ public:
 
 - 💎 簡潔的遞迴寫法
 - 💎 BFS 迭代解法
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Subtree of Another Tree (另一棵樹的子樹)](06_Subtree_of_Another_Tree.md)
+
+### 進階挑戰
+- [Symmetric Tree](https://leetcode.com/problems/symmetric-tree/) — LeetCode

@@ -201,3 +201,10 @@ private:
 
 - 💎 Merkle Hash 優化
 - 💎 KMP 串匹配優化
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Same Tree (相同的樹)](05_Same_Tree.md)

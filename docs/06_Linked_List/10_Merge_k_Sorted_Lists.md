@@ -298,3 +298,10 @@ private:
 
 - 💎 Divide and Conquer vs Heap
 - 💎 時間複雜度分析
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Merge Two Sorted Lists (合併兩個排序鏈表)](02_Merge_Two_Sorted_Lists.md)

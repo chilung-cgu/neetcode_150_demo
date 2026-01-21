@@ -298,3 +298,12 @@ public:
 
 - 💎 用 bitmask 優化空間
 - 💎 正確計算 box index: (r/3)*3 + c/3
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+
+### 進階挑戰
+- [Sudoku Solver](https://leetcode.com/problems/sudoku-solver/) — LeetCode

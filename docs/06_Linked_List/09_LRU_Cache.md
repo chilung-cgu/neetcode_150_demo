@@ -342,3 +342,12 @@ public:
 
 - 💎 O(1) 時間複雜度
 - 💎 清晰的資料結構設計
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+
+### 進階挑戰
+- [Lfu Cache](https://leetcode.com/problems/lfu-cache/) — LeetCode

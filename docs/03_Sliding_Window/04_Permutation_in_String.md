@@ -273,3 +273,13 @@ public:
 
 - 💎 使用 matches 計數器優化
 - 💎 固定大小滑動窗口
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Minimum Window Substring (最小覆蓋子字串)](05_Minimum_Window_Substring.md)
+
+### 進階挑戰
+- [Find All Anagrams In A String](https://leetcode.com/problems/find-all-anagrams-in-a-string/) — LeetCode

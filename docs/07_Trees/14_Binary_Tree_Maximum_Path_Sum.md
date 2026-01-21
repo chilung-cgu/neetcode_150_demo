@@ -229,3 +229,10 @@ public:
 
 - 💎 清晰區分 contribution vs path sum
 - 💎 負數剪枝 max(0, ...)
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Diameter of Binary Tree (二元樹的直徑)](03_Diameter_of_Binary_Tree.md)

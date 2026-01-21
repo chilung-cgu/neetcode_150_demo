@@ -178,3 +178,14 @@ public:
 
 - 💎 Monotonic Decreasing Stack
 - 💎 解釋為何從右到左也可行
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Car Fleet (車隊)](06_Car_Fleet.md)
+- [Largest Rectangle in Histogram (直方圖中的最大矩形)](07_Largest_Rectangle_in_Histogram.md)
+
+### 進階挑戰
+- [Next Greater Element I](https://leetcode.com/problems/next-greater-element-i/) — LeetCode

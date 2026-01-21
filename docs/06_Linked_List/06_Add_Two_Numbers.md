@@ -193,3 +193,12 @@ public:
 
 - 💎 完整的進位邏輯
 - 💎 最後的 carry 處理
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+
+### 進階挑戰
+- [Add Two Numbers Ii](https://leetcode.com/problems/add-two-numbers-ii/) — LeetCode

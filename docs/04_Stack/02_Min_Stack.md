@@ -235,3 +235,12 @@ public:
 
 - 💎 討論空間優化方案
 - 💎 解釋雙 stack 設計原理
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+
+### 進階挑戰
+- [Max Stack](https://leetcode.com/problems/max-stack/) — LeetCode

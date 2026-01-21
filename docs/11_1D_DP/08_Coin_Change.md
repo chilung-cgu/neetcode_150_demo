@@ -176,3 +176,10 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Coin Change II (零錢兌換 II)](../12_2D_DP/04_Coin_Change_II.md)

@@ -205,3 +205,13 @@ public:
 
 - 💎 利用 BST 性質
 - 💎 O(h) 迭代解法
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Validate Binary Search Tree (驗證二元搜尋樹)](11_Validate_BST.md)
+
+### 進階挑戰
+- [Lowest Common Ancestor Of A Binary Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/) — LeetCode

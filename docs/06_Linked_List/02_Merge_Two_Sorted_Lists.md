@@ -224,3 +224,10 @@ public:
 
 - 💎 使用 dummy head 簡化
 - 💎 解釋時間空間複雜度
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Merge k Sorted Lists (合併 k 個排序鏈表)](10_Merge_k_Sorted_Lists.md)

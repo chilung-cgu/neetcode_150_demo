@@ -264,3 +264,10 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Maximum Subarray (最大子陣列和)](../13_Greedy/01_Maximum_Subarray.md)

@@ -246,3 +246,10 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Copy List with Random Pointer (複製含隨機指標的鏈結串列)](../06_Linked_List/05_Copy_List_with_Random_Pointer.md)

@@ -215,3 +215,10 @@ public:
 
 - 💎 Floyd's Cycle Detection 在陣列上的應用
 - 💎 二分搜尋替代解法
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Linked List Cycle (鏈結串列中的環)](07_Linked_List_Cycle.md)

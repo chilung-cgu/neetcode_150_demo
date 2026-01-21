@@ -255,3 +255,13 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Rotate Image (旋轉圖像)](01_Rotate_Image.md)
+
+### 進階挑戰
+- [Spiral Matrix Ii](https://leetcode.com/problems/spiral-matrix-ii/) — LeetCode

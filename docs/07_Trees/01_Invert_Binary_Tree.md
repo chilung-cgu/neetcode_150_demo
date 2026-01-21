@@ -185,3 +185,10 @@ public:
 
 - 💎 遞迴和迭代都能寫
 - 💎 時間空間複雜度分析
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Same Tree (相同的樹)](05_Same_Tree.md)

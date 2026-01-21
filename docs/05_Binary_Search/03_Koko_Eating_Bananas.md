@@ -222,3 +222,10 @@ public:
 
 - 💎 Binary Search on Answer
 - 💎 清晰的 feasibility check
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Find Minimum in Rotated Sorted Array (尋找旋轉排序陣列中的最小值)](04_Find_Minimum_in_Rotated_Sorted_Array.md)

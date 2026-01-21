@@ -216,3 +216,11 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Kth Largest Element in a Stream (數據流中的第 K 大元素)](01_Kth_Largest_Element_Stream.md)
+- [K Closest Points to Origin (最接近原點的 K 個點)](03_K_Closest_Points.md)

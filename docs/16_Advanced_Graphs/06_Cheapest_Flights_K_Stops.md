@@ -214,3 +214,10 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Network Delay Time (網絡延遲時間)](03_Network_Delay_Time.md)

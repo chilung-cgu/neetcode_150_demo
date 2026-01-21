@@ -134,3 +134,13 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Missing Number (缺失數字)](05_Missing_Number.md)
+
+### 進階挑戰
+- [Single Number Ii](https://leetcode.com/problems/single-number-ii/) — LeetCode

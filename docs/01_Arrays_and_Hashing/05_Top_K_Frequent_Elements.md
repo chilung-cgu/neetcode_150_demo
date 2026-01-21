@@ -291,3 +291,13 @@ public:
 
 - 💎 知道 Bucket Sort 解法
 - 💎 討論 Heap vs QuickSelect
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Kth Largest Element in an Array (陣列中的第 K 大元素)](../09_Heap/04_Kth_Largest_Element_Array.md)
+
+### 進階挑戰
+- [Sort Characters By Frequency](https://leetcode.com/problems/sort-characters-by-frequency/) — LeetCode

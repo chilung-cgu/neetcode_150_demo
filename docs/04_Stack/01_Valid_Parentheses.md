@@ -203,3 +203,10 @@ public:
 
 - 💎 邊界情況完整處理
 - 💎 只用一個 stack 完成
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Generate Parentheses (生成括號)](04_Generate_Parentheses.md)

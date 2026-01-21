@@ -252,3 +252,10 @@ private:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Course Schedule II (課程表 II)](09_Course_Schedule_II.md)

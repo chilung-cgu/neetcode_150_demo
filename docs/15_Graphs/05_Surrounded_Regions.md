@@ -278,3 +278,10 @@ private:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Number of Islands (島嶼數量)](01_Number_of_Islands.md)

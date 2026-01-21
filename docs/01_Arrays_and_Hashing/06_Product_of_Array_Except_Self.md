@@ -217,3 +217,12 @@ public:
 
 - 💎 一趟遍歷完成
 - 💎 討論前綴積與後綴積的概念
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+
+### 進階挑戰
+- [Maximum Product Subarray](https://leetcode.com/problems/maximum-product-subarray/) — LeetCode

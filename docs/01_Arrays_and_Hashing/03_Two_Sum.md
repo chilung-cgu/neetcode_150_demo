@@ -198,3 +198,14 @@ public:
 
 - 💎 一次遍歷內完成
 - 💎 主動討論 Hash Map vs 暴力解的 trade-off
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Two Sum II - Input Array Is Sorted (兩數之和 II - 輸入已排序)](../02_Two_Pointers/02_Two_Sum_II.md)
+- [3Sum (三數之和)](../02_Two_Pointers/03_3Sum.md)
+
+### 進階挑戰
+- [4Sum](https://leetcode.com/problems/4sum/) — LeetCode

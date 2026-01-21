@@ -332,3 +332,11 @@ private:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Design Add and Search Words Data Structure (設計新增與搜尋單字的資料結構)](02_Design_Add_Search_Words.md)
+- [Word Search (單字搜尋)](../10_Backtracking/06_Word_Search.md)

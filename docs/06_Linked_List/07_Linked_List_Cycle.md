@@ -186,3 +186,13 @@ public:
 
 - 💎 Floyd's Cycle Detection
 - 💎 數學證明理解
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Find the Duplicate Number (尋找重複的數字)](08_Find_the_Duplicate_Number.md)
+
+### 進階挑戰
+- [Linked List Cycle Ii](https://leetcode.com/problems/linked-list-cycle-ii/) — LeetCode

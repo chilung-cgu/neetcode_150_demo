@@ -218,3 +218,13 @@ public:
 
 - 💎 一次 Binary Search 完成
 - 💎 清晰的分類討論
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Find Minimum in Rotated Sorted Array (尋找旋轉排序陣列中的最小值)](04_Find_Minimum_in_Rotated_Sorted_Array.md)
+
+### 進階挑戰
+- [Search In Rotated Sorted Array Ii](https://leetcode.com/problems/search-in-rotated-sorted-array-ii/) — LeetCode

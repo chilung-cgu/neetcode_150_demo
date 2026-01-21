@@ -252,3 +252,11 @@ public:
 
 - 💎 傳遞範圍區間
 - 💎 In-order traversal 解法
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Lowest Common Ancestor of a BST (二元搜尋樹的最近共同祖先)](07_Lowest_Common_Ancestor_BST.md)
+- [Kth Smallest Element in a BST (BST 中第 K 小的元素)](12_Kth_Smallest_Element_BST.md)

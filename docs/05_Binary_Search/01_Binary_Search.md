@@ -184,3 +184,10 @@ public:
 
 - 💎 討論各種 Binary Search 模板
 - 💎 避免溢位的 mid 計算方式
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Search a 2D Matrix (搜尋二維矩陣)](02_Search_a_2D_Matrix.md)

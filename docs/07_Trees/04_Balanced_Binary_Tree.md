@@ -206,3 +206,10 @@ private:
 
 - 💎 O(n) 一趟遍歷
 - 💎 返回 -1 表示不平衡的技巧
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Maximum Depth of Binary Tree (二元樹的最大深度)](02_Maximum_Depth_of_Binary_Tree.md)

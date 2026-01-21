@@ -220,3 +220,10 @@ public:
 
 - 💎 使用固定大小陣列優化
 - 💎 清晰的窗口收縮條件
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Longest Repeating Character Replacement (替換後的最長重複字元子串)](03_Longest_Repeating_Character_Replacement.md)

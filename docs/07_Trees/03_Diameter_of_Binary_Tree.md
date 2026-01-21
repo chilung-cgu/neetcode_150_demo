@@ -213,3 +213,11 @@ public:
 
 - 💎 Bottom-up DFS
 - 💎 清晰的 DFS 返回值設計
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Maximum Depth of Binary Tree (二元樹的最大深度)](02_Maximum_Depth_of_Binary_Tree.md)
+- [Binary Tree Maximum Path Sum (二元樹中的最大路徑和)](14_Binary_Tree_Maximum_Path_Sum.md)

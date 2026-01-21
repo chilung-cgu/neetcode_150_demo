@@ -209,3 +209,10 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Longest Increasing Path in a Matrix (矩陣中的最長遞增路徑)](../12_2D_DP/07_Longest_Increasing_Path_Matrix.md)

@@ -223,3 +223,11 @@ public:
 
 - 💎 提到排序解法的 trade-off
 - 💎 討論固定大小陣列 vs Hash Map
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Contains Duplicate (存在重複元素)](01_Contains_Duplicate.md)
+- [Group Anagrams (字母異位詞分組)](04_Group_Anagrams.md)

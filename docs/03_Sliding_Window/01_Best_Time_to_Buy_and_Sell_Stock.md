@@ -189,3 +189,12 @@ public:
 
 - 💎 一趟遍歷 O(n)
 - 💎 解釋 Kadane 變形的概念
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+
+### 進階挑戰
+- [Best Time To Buy And Sell Stock Ii](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/) — LeetCode

@@ -144,3 +144,11 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Counting Bits (計算位元)](03_Counting_Bits.md)
+- [Reverse Bits (顛倒位元)](04_Reverse_Bits.md)

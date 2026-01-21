@@ -218,3 +218,14 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Combination Sum II (組合總和 II)](05_Combination_Sum_II.md)
+- [Subsets (子集)](01_Subsets.md)
+
+### 進階挑戰
+- [Combination Sum Iii](https://leetcode.com/problems/combination-sum-iii/) — LeetCode

@@ -203,3 +203,10 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Partition Equal Subset Sum (分割等和子集)](../11_1D_DP/12_Partition_Equal_Subset_Sum.md)

@@ -217,3 +217,10 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Kth Largest Element in an Array (陣列中的第 K 大元素)](04_Kth_Largest_Element_Array.md)

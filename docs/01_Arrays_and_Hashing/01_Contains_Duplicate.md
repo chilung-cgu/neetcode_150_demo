@@ -230,3 +230,11 @@ public:
 
 - 💎 主動提到 Hash collision 最壞情況
 - 💎 討論 Set vs Map 的選擇
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Valid Anagram (有效的易位構詞)](02_Valid_Anagram.md)
+- [Longest Consecutive Sequence (最長連續序列)](09_Longest_Consecutive_Sequence.md)

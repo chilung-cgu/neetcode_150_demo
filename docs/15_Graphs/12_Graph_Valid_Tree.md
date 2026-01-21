@@ -231,3 +231,10 @@ private:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Number of Connected Components in an Undirected Graph (無向圖中的連通分量數量)](11_Number_of_Connected_Components.md)

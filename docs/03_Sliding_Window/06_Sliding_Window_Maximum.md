@@ -206,3 +206,12 @@ public:
 
 - 💎 Monotonic Deque
 - 💎 解釋單調遞減的必要性
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+
+### 進階挑戰
+- [Sliding Window Median](https://leetcode.com/problems/sliding-window-median/) — LeetCode

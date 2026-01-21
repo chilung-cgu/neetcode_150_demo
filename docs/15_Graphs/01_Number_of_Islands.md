@@ -251,3 +251,11 @@ private:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Max Area of Island (最大的島嶼面積)](03_Max_Area_of_Island.md)
+- [Surrounded Regions (被圍繞的區域)](05_Surrounded_Regions.md)

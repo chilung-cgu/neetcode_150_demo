@@ -204,3 +204,13 @@ public:
 
 - 💎 清晰的座標轉換
 - 💎 討論兩種 2D 矩陣的差異
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Binary Search (二分搜尋)](01_Binary_Search.md)
+
+### 進階挑戰
+- [Search A 2D Matrix Ii](https://leetcode.com/problems/search-a-2d-matrix-ii/) — LeetCode

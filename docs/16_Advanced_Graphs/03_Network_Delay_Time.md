@@ -251,3 +251,10 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Cheapest Flights Within K Stops (K 站中轉內最便宜的航班)](06_Cheapest_Flights_K_Stops.md)

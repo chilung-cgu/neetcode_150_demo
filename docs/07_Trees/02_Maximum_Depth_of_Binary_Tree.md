@@ -202,3 +202,14 @@ public:
 
 - 💎 DFS 和 BFS 兩種解法
 - 💎 尾遞迴優化討論
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Diameter of Binary Tree (二元樹的直徑)](03_Diameter_of_Binary_Tree.md)
+- [Balanced Binary Tree (平衡二元樹)](04_Balanced_Binary_Tree.md)
+
+### 進階挑戰
+- [Minimum Depth Of Binary Tree](https://leetcode.com/problems/minimum-depth-of-binary-tree/) — LeetCode

@@ -211,3 +211,11 @@ private:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Redundant Connection (冗餘連接)](10_Redundant_Connection.md)
+- [Graph Valid Tree (圖是否為樹)](12_Graph_Valid_Tree.md)

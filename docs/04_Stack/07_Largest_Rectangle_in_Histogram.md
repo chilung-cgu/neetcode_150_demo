@@ -219,3 +219,14 @@ public:
 
 - 💎 Monotonic Stack 完整解釋
 - 💎 面積計算公式清晰
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Daily Temperatures (每日溫度)](05_Daily_Temperatures.md)
+- [Trapping Rain Water (接雨水)](../02_Two_Pointers/05_Trapping_Rain_Water.md)
+
+### 進階挑戰
+- [Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle/) — LeetCode

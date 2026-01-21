@@ -205,3 +205,14 @@ public:
 
 - 💎 三種解法：DP、雙指標、Monotonic Stack
 - 💎 解釋每格水量計算公式
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Container With Most Water (盛最多水的容器)](04_Container_With_Most_Water.md)
+- [Largest Rectangle in Histogram (直方圖中的最大矩形)](../04_Stack/07_Largest_Rectangle_in_Histogram.md)
+
+### 進階挑戰
+- [Trapping Rain Water Ii](https://leetcode.com/problems/trapping-rain-water-ii/) — LeetCode

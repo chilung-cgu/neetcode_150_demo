@@ -189,3 +189,10 @@ public:
 
 - 💎 只從序列起點開始搜尋的優化
 - 💎 Union-Find 替代解法
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Contains Duplicate (存在重複元素)](01_Contains_Duplicate.md)

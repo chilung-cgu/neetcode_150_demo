@@ -258,3 +258,12 @@ public:
 
 - 💎 使用 Hash Map 優化到 O(n)
 - 💎 清晰的遞迴分割
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+
+### 進階挑戰
+- [Construct Binary Tree From Inorder And Postorder Traversal](https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal/) — LeetCode

@@ -214,3 +214,13 @@ public:
 
 - 💎 清晰的模擬思路
 - 💎 解釋為何從終點往起點考慮
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Daily Temperatures (每日溫度)](05_Daily_Temperatures.md)
+
+### 進階挑戰
+- [Car Fleet Ii](https://leetcode.com/problems/car-fleet-ii/) — LeetCode

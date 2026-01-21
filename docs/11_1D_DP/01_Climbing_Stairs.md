@@ -177,3 +177,10 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Min Cost Climbing Stairs (使用最小花費爬樓梯)](02_Min_Cost_Climbing_Stairs.md)

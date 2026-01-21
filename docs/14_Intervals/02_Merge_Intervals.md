@@ -198,3 +198,11 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Insert Interval (插入區間)](01_Insert_Interval.md)
+- [Non-overlapping Intervals (無重疊區間)](03_Non_Overlapping_Intervals.md)

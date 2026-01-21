@@ -253,3 +253,10 @@ public:
 
 - 💎 迭代 In-order
 - 💎 Augmented BST 概念
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Validate Binary Search Tree (驗證二元搜尋樹)](11_Validate_BST.md)

@@ -224,3 +224,10 @@ public:
 
 - 💎 理解 maxCount 不需要遞減的巧妙設計
 - 💎 公式: window_size - maxCount <= k
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Longest Substring Without Repeating Characters (無重複字元的最長子字串)](02_Longest_Substring_Without_Repeating.md)

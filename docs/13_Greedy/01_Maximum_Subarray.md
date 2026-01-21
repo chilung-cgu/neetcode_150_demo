@@ -172,3 +172,10 @@ public:
 
 - 💎 主動討論 trade-offs
 - 💎 提供多種解法比較
+
+---
+
+## 📚 Related Problems (相關題目)
+
+### 站內相關
+- [Maximum Product Subarray (最大乘積子陣列)](../11_1D_DP/09_Maximum_Product_Subarray.md)

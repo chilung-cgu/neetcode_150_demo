@@ -198,4 +198,38 @@ class AlgorithmVisualizer {
       container.appendChild(barWrapper);
     });
   }
+
+  // --- Theme Toggle ---
+  static initThemeToggle() {
+    // 檢測 MkDocs 主題或使用者偏好
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const savedTheme = localStorage.getItem('viz-theme');
+    
+    if (savedTheme === 'light' || (!savedTheme && !prefersDark)) {
+      document.body.classList.add('light-theme');
+    }
+    
+    // 監聽 MkDocs 主題切換
+    const observer = new MutationObserver(() => {
+      const mkdocsSlate = document.documentElement.getAttribute('data-md-color-scheme') === 'slate';
+      if (mkdocsSlate) {
+        document.body.classList.remove('light-theme');
+      } else {
+        document.body.classList.add('light-theme');
+      }
+    });
+    
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-md-color-scheme'] });
+  }
+
+  static toggleTheme() {
+    document.body.classList.toggle('light-theme');
+    const isLight = document.body.classList.contains('light-theme');
+    localStorage.setItem('viz-theme', isLight ? 'light' : 'dark');
+  }
+}
+
+// 自動初始化主題
+if (typeof window !== 'undefined') {
+  AlgorithmVisualizer.initThemeToggle();
 }
