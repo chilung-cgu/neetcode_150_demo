@@ -2,8 +2,8 @@
 title: "Palindrome Partitioning (分割回文串)"
 description: "題目給一個字串 `s`，將 `s` 分割成若干個子字串，使得 **每一個子字串都是回文 (Palindrome)**。 回傳所有可能的分割方案。"
 tags:
-  - 
-Backtracking  - Recursion
+  - Backtracking
+  - Recursion
 difficulty: Medium
 ---
 

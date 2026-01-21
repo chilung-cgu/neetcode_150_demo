@@ -2,8 +2,8 @@
 title: "Subsets (子集)"
 description: "題目給一個整數陣列 `nums`，其中的元素 **互不相同**。 請回傳該陣列的所有可能 **子集 (Power Set)**。 解集 **不能包含重複的子集**。"
 tags:
-  - 
-Backtracking  - Recursion
+  - Backtracking
+  - Recursion
 difficulty: Medium
 ---
 

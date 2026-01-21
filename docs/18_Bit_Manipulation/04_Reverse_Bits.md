@@ -2,8 +2,7 @@
 title: "Reverse Bits (顛倒位元)"
 description: "給定一個 32 位的無符號整數 `n`。 請將其二進制表示顛倒（Reverse bits），並回傳結果。"
 tags:
-  - 
-Bit Manipulation
+  - Bit Manipulation
 difficulty: Easy
 ---
 

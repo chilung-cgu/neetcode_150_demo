@@ -2,8 +2,8 @@
 title: "Last Stone Weight (最後一顆石頭的重量)"
 description: "題目給一個整數陣列 `stones`，代表石頭的重量。 每一回合，我們選出 **最重的兩顆石頭**，設重量為 `x` 和 `y` (x <= y)。"
 tags:
-  - 
-Heap  - Priority Queue
+  - Heap
+  - Priority Queue
 difficulty: Easy
 ---
 

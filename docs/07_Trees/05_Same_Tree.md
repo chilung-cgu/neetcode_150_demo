@@ -2,8 +2,9 @@
 title: "Same Tree (相同的樹)"
 description: "題目給兩棵 Binary Tree `p` 和 `q`。 判斷它們是否 **完全相同**。 相同意味著："
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Easy
 ---
 

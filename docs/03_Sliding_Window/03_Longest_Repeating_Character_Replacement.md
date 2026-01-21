@@ -2,8 +2,8 @@
 title: "Longest Repeating Character Replacement (替換後的最長重複字元子串)"
 description: "題目給一個字串 `s` 和一個整數 `k`。 我們最多可以將字串中的任意 `k` 個字元替換成其他字元。 目標是：在替換不超過 `k` 次的情況下，找出最常的子字串，該子字串由 **完全相同的字元** 組成。 回傳該長度。"
 tags:
-  - 
-Sliding Window  - String
+  - Sliding Window
+  - String
 difficulty: Medium
 ---
 

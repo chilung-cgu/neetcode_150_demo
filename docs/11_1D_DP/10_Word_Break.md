@@ -2,8 +2,7 @@
 title: "Word Break (單字拆分)"
 description: "題目給一個字串 `s` 和一個單字字典 `wordDict`。 判斷 `s` 是否可以被拆分成一個或多個在 `wordDict` 中出現的單字 (space-separated sequence)。 同樣的單字可以在拆分中重複使用。"
 tags:
-  - 
-Dynamic Programming
+  - Dynamic Programming
 difficulty: Medium
 ---
 

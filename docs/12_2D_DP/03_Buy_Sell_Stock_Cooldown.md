@@ -2,8 +2,8 @@
 title: "Best Time to Buy and Sell Stock with Cooldown (買賣股票的最佳時機含冷凍期)"
 description: "給定一個整數陣列 `prices`，代表每天的股價。 你可以多次買賣股票，但有以下限制："
 tags:
-  - 
-Dynamic Programming  - 2D DP
+  - Dynamic Programming
+  - 2D DP
 difficulty: Medium
 ---
 

@@ -2,8 +2,9 @@
 title: "Lowest Common Ancestor of a BST (二元搜尋樹的最近共同祖先)"
 description: "題目給一個 **Binary Search Tree (BST)**，以及兩個節點 `p` 和 `q`。 找出這兩個節點在 BST 中的 **最近共同祖先 (Lowest Common Ancestor, LCA)**。"
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Medium
 ---
 

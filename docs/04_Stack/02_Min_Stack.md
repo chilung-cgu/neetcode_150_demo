@@ -2,8 +2,8 @@
 title: "Min Stack (最小堆疊)"
 description: "題目要求設計一個 Stack，除了支援標準的 `push`, `pop`, `top` 之外，還額外支援 `getMin()`。 **Constraints**:"
 tags:
-  - 
-Stack  - Monotonic Stack
+  - Stack
+  - Monotonic Stack
 difficulty: Medium
 ---
 

@@ -2,8 +2,8 @@
 title: "Minimum Interval to Include Each Query (包含每個查詢的最小區間)"
 description: "給定一個區間陣列 `intervals`，其中 `intervals[i] = [left_i, right_i]`。 以及一個查詢陣列 `queries`，其中 `queries[j]` 是一個數值。 對於每個查詢 `q`，找出一個區間 `[l, r]` 滿足："
 tags:
-  - 
-Intervals  - Sorting
+  - Intervals
+  - Sorting
 difficulty: Hard
 ---
 

@@ -2,8 +2,8 @@
 title: "Search a 2D Matrix (搜尋二維矩陣)"
 description: "題目給一個 `m x n` 的矩陣 `matrix` 和一個整數 `target`。 這個矩陣有兩個特性："
 tags:
-  - 
-Binary Search  - Array
+  - Binary Search
+  - Array
 difficulty: Medium
 ---
 

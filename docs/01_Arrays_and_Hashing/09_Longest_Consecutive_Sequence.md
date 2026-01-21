@@ -2,8 +2,8 @@
 title: "Longest Consecutive Sequence (最長連續序列)"
 description: "題目給一個**未排序**的整數陣列 `nums`，找出其中數字最長的「連續序列」長度。 例如：`[100, 4, 200, 1, 3, 2]` 連續序列是 `[1, 2, 3, 4]`，長度為 4。"
 tags:
-  - 
-Array  - Hash Table
+  - Array
+  - Hash Table
 difficulty: Medium
 ---
 

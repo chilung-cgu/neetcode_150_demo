@@ -2,8 +2,8 @@
 title: "Container With Most Water (盛最多水的容器)"
 description: "題目給一個整數陣列 `height`，長度為 `n`。 有 `n` 條垂直線，第 `i` 條線的兩端點分別是 `(i, 0)` 和 `(i, height[i])`。 我们要找出兩條線，讓這兩條線與 X 軸形成的容器 (Container) 能裝最多的水。 回傳最大水量。"
 tags:
-  - 
-Two Pointers  - Array
+  - Two Pointers
+  - Array
 difficulty: Medium
 ---
 

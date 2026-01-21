@@ -2,8 +2,9 @@
 title: "Serialize and Deserialize Binary Tree (二元樹的序列化與反序列化)"
 description: "題目要求設計兩個演算法："
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Hard
 ---
 

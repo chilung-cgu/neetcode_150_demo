@@ -2,8 +2,8 @@
 title: "Letter Combinations of a Phone Number (電話號碼的字母組合)"
 description: "題目給一個包含數字 `2-9` 的字串 `digits`。 回傳這些數字在傳統手機鍵盤上可能代表的所有字母組合。"
 tags:
-  - 
-Backtracking  - Recursion
+  - Backtracking
+  - Recursion
 difficulty: Medium
 ---
 

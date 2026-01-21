@@ -2,8 +2,7 @@
 title: "Merge Two Sorted Lists (合併兩個排序鏈表)"
 description: "題目給兩個已排序 (Non-decreasing) 的 Linked Lists `list1` 和 `list2`。 請將它們合併成一個 **新的** 排序 Linked List 並回傳 head。"
 tags:
-  - 
-Linked List
+  - Linked List
 difficulty: Easy
 ---
 

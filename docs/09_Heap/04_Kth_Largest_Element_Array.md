@@ -2,8 +2,8 @@
 title: "Kth Largest Element in an Array (陣列中的第 K 大元素)"
 description: "題目給一個整數陣列 `nums` 和一個整數 `k`。 請回傳陣列中 **第 k 大** 的元素。 注意：不需要去重，例如 `[3, 2, 3]`，第 1 大是 3，第 2 大也是 3。 題目要求你如果不使用排序 (which is $O(N \log N)$)，你能做得更好嗎？理想是 $O(N)$"
 tags:
-  - 
-Heap  - Priority Queue
+  - Heap
+  - Priority Queue
 difficulty: Medium
 ---
 

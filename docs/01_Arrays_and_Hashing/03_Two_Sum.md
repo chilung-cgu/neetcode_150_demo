@@ -2,8 +2,8 @@
 title: "Two Sum (兩數之和)"
 description: "這是 LeetCode 的第一題，經典中的經典。 題目給我一個整數陣列 `nums` 和一個目標值 `target`，要我找出兩個數字，相加等於 `target`，並回傳它們的 **index**。"
 tags:
-  - 
-Array  - Hash Table
+  - Array
+  - Hash Table
 difficulty: Easy
 ---
 

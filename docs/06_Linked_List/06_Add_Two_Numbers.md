@@ -2,8 +2,7 @@
 title: "Add Two Numbers (兩數相加)"
 description: "題目給兩個 **非空** 的 Linked List，代表兩個非負整數。 這些數字是 **逆序 (Reverse Order)** 儲存的，也就是說個位數在 head。 請將這兩個數字相加，並以 Linked List 形式回傳（同樣是逆序）。"
 tags:
-  - 
-Linked List
+  - Linked List
 difficulty: Medium
 ---
 

@@ -2,8 +2,8 @@
 title: "Product of Array Except Self (除自身以外陣列的乘積)"
 description: "題目給一個整數陣列 `nums`，回傳一個陣列 `answer`，其中 `answer[i]` 等於 `nums` 中除了 `nums[i]` 之外所有元素的乘積。"
 tags:
-  - 
-Array  - Hash Table
+  - Array
+  - Hash Table
 difficulty: Medium
 ---
 

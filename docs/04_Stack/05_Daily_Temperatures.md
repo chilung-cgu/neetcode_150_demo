@@ -2,8 +2,8 @@
 title: "Daily Temperatures (每日溫度)"
 description: "題目給一個整數陣列 `temperatures`，代表每天的氣溫。 請回傳一個陣列 `answer`，其中 `answer[i]` 代表「在第 `i` 天之後，要等幾天才能遇到**更高**的溫度」。 如果之後都沒有更高的溫度，填 `0`。"
 tags:
-  - 
-Stack  - Monotonic Stack
+  - Stack
+  - Monotonic Stack
 difficulty: Medium
 ---
 

@@ -2,8 +2,9 @@
 title: "Graph Valid Tree (圖是否為樹)"
 description: "給定 `n` 個節點和一個邊的列表 `edges`。 請判斷這些邊是否構成了一棵有效的樹。"
 tags:
-  - 
-Graph  - DFS  - BFS
+  - Graph
+  - DFS
+  - BFS
 difficulty: Medium
 ---
 

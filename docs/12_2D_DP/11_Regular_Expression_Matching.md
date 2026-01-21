@@ -2,8 +2,8 @@
 title: "Regular Expression Matching (正規表示式匹配)"
 description: "給定一個輸入字串 `s` 和一個模式 `p`。 實現支持 `.` 和 `*` 的正則表達式匹配："
 tags:
-  - 
-Dynamic Programming  - 2D DP
+  - Dynamic Programming
+  - 2D DP
 difficulty: Hard
 ---
 

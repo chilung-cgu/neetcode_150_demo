@@ -2,8 +2,9 @@
 title: "Walls and Gates (牆與門)"
 description: "給定一個 `m x n` 的網格，包含以下三種可能的值："
 tags:
-  - 
-Graph  - DFS  - BFS
+  - Graph
+  - DFS
+  - BFS
 difficulty: Medium
 ---
 

@@ -2,8 +2,7 @@
 title: "House Robber II (打家劫舍 II)"
 description: "這題是 "House Robber" 的進階版。 唯一的差別是：房屋現在圍成了一個 **圓圈 (Circle)**。 這意味著：**第一間房子和最後一間房子是相鄰的**。 限制依然是：不能搶相鄰的兩間房子。"
 tags:
-  - 
-Dynamic Programming
+  - Dynamic Programming
 difficulty: Medium
 ---
 

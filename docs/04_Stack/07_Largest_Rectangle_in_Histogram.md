@@ -2,8 +2,8 @@
 title: "Largest Rectangle in Histogram (直方圖中的最大矩形)"
 description: "題目給一個整數陣列 `heights`，代表直方圖中每個柱子的高度（寬度為 1）。 請找出直方圖中最大的矩形面積。"
 tags:
-  - 
-Stack  - Monotonic Stack
+  - Stack
+  - Monotonic Stack
 difficulty: Hard
 ---
 

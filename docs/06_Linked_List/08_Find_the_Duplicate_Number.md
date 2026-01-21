@@ -2,8 +2,7 @@
 title: "Find the Duplicate Number (尋找重複的數字)"
 description: "題目給一個包含 `n + 1` 個整數的陣列 `nums`，每個整數都在 `[1, n]` 範圍內（包含 1 和 n）。 在這個陣列中，**恰好有一個** 數字重複出現（可能出現 2 次或更多次）。 請找出這個重複的數字。"
 tags:
-  - 
-Linked List
+  - Linked List
 difficulty: Medium
 ---
 

@@ -2,8 +2,8 @@
 title: "Design Twitter (設計推特)"
 description: "題目要求設計一個簡化版的 Twitter，支援："
 tags:
-  - 
-Heap  - Priority Queue
+  - Heap
+  - Priority Queue
 difficulty: Medium
 ---
 

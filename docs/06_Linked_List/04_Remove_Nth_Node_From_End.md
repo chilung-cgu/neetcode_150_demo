@@ -2,8 +2,7 @@
 title: "Remove Nth Node From End of List (移除鏈結串列倒數第 N 個節點)"
 description: "題目給一個 Linked List 的 `head` 和一個整數 `n`。 請刪除倒數第 `n` 個節點，並回傳新的 `head`。"
 tags:
-  - 
-Linked List
+  - Linked List
 difficulty: Medium
 ---
 

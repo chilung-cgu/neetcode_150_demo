@@ -2,8 +2,8 @@
 title: "Permutation in String (字串的排列包含)"
 description: "題目給兩個字串 `s1` 和 `s2`。請判斷 `s2` 是否包含 `s1` 的任意 **Permutation** (排列組合) 作為子字串。"
 tags:
-  - 
-Sliding Window  - String
+  - Sliding Window
+  - String
 difficulty: Medium
 ---
 

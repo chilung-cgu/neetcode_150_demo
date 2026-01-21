@@ -2,8 +2,9 @@
 title: "Min Cost to Connect All Points (連接所有點的最小費用)"
 description: "給定一個二維坐標陣列 `points`。 你需要連接所有點，使得這是一個連通圖。 連接兩點 `(xi, yi)` 和 `(xj, yj)` 的費用是曼哈頓距離 `|xi - xj| + |yi - yj|`。 回傳連接所有點的最小總費用。"
 tags:
-  - 
-Graph  - Dijkstra  - MST
+  - Graph
+  - Dijkstra
+  - MST
 difficulty: Medium
 ---
 

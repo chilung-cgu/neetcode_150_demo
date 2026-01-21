@@ -2,8 +2,9 @@
 title: "Course Schedule (課程表)"
 description: "你必須選修 `numCourses` 門課程，編號從 `0` 到 `numCourses - 1`。 給定一個前置條件陣列 `prerequisites`，其中 `prerequisites[i] = [ai, bi]` 表示要修課程 `ai`，必須先修課程 `bi`。 請判斷是否可能完成所有課程？"
 tags:
-  - 
-Graph  - DFS  - BFS
+  - Graph
+  - DFS
+  - BFS
 difficulty: Medium
 ---
 

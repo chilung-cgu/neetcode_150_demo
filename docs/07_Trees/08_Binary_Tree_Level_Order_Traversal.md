@@ -2,8 +2,9 @@
 title: "Binary Tree Level Order Traversal (二元樹的層序遍歷)"
 description: "題目給一個 Binary Tree 的 root。 請回傳其節點值的 **層序遍歷 (Level Order Traversal)**。 (i.e., from left to right, level by level)。"
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Medium
 ---
 

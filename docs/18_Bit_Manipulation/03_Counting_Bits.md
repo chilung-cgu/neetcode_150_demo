@@ -2,8 +2,7 @@
 title: "Counting Bits (計算位元)"
 description: "給定一個整數 `n`。 請回傳一個長度為 `n + 1` 的陣列 `ans`，對於每個 `i` ($0 \le i \le n$)，`ans[i]` 表示數字 `i` 的二進制表示中 `1` 的個數。 請**不要**對每個數字調用 `popcount` 或 `hammingWeight` 函數，這將"
 tags:
-  - 
-Bit Manipulation
+  - Bit Manipulation
 difficulty: Easy
 ---
 

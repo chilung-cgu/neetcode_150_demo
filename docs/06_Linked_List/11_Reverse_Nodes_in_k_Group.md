@@ -2,8 +2,7 @@
 title: "Reverse Nodes in k-Group (k 個一組反轉鏈結串列)"
 description: "題目給一個 Linked List 和一個整數 `k`。 請將 Linked List 每 `k` 個節點分成一組，並在每組內部進行反轉。 如果最後剩餘的節點不滿 `k` 個，則保持原樣，不反轉。 空間複雜度必須是 $O(1)$。"
 tags:
-  - 
-Linked List
+  - Linked List
 difficulty: Hard
 ---
 

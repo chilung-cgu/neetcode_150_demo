@@ -2,8 +2,9 @@
 title: "Cheapest Flights Within K Stops (K 站中轉內最便宜的航班)"
 description: "給定 `n` 個城市，與一些航班 `flights`，其中 `flights[i] = [from, to, price]`。 每班飛機都有價格。 給定起點 `src`、終點 `dst` 和允許的最多中轉次數 `k`。 請找出從 `src` 到 `dst` 的最便宜價格，且中轉次數 **不超過 k*"
 tags:
-  - 
-Graph  - Dijkstra  - MST
+  - Graph
+  - Dijkstra
+  - MST
 difficulty: Medium
 ---
 

@@ -2,8 +2,8 @@
 title: "Find Minimum in Rotated Sorted Array (尋找旋轉排序陣列中的最小值)"
 description: "題目給一個長度為 `n` 的陣列 `nums`，它原本是升序排序的，但在某個未知的 pivot 點進行了 **旋轉 (Rotation)**。 例如 `[0,1,2,4,5,6,7]` 變成 `[4,5,6,7,0,1,2]`。 請找出這個陣列中的 **最小元素**。 **要求時間複雜度為** $O"
 tags:
-  - 
-Binary Search  - Array
+  - Binary Search
+  - Array
 difficulty: Medium
 ---
 

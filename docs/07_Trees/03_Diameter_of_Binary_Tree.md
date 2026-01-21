@@ -2,8 +2,9 @@
 title: "Diameter of Binary Tree (二元樹的直徑)"
 description: "題目求二元樹的 **直徑**。直徑是指樹中 **任意兩個節點** 之間的最長路徑長度（邊的數量）。 這條路徑 **不一定經過 root**。"
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Easy
 ---
 

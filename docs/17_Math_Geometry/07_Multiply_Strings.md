@@ -2,8 +2,8 @@
 title: "Multiply Strings (字符串相乘)"
 description: "給定兩個以字符串形式表示的非負整數 `num1` 和 `num2`。 請回傳它們的乘積，也以字符串表示。 **不能** 使用任何內建的大數庫（如 Python 的 `BigInteger`）或直接將輸入轉換為整數。"
 tags:
-  - 
-Math  - Matrix
+  - Math
+  - Matrix
 difficulty: Medium
 ---
 

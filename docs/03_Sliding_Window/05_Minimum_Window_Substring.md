@@ -2,8 +2,8 @@
 title: "Minimum Window Substring (最小覆蓋子字串)"
 description: "題目給兩個字串 `s` 和 `t`。請在 `s` 中找出一個 **最短子字串**，該子字串包含 `t` 中的 **所有字元 (包含重複數量)**。 如果不存在，回傳空字串 `""`。"
 tags:
-  - 
-Sliding Window  - String
+  - Sliding Window
+  - String
 difficulty: Hard
 ---
 

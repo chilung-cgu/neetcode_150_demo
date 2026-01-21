@@ -2,8 +2,8 @@
 title: "Longest Common Subsequence (最長公共子序列)"
 description: "題目給兩個字串 `text1` 和 `text2`。 回傳它們的**最長公共子序列 (LCS)** 的長度。 子序列不要求連續，但順序必須保持。"
 tags:
-  - 
-Dynamic Programming  - 2D DP
+  - Dynamic Programming
+  - 2D DP
 difficulty: Medium
 ---
 

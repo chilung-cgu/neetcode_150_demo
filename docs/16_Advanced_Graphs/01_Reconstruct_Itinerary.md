@@ -2,8 +2,9 @@
 title: "Reconstruct Itinerary (重建行程)"
 description: "給定一份機票列表 `tickets`，其中 `tickets[i] = [from, to]`。 請重建行程路徑。 規則："
 tags:
-  - 
-Graph  - Dijkstra  - MST
+  - Graph
+  - Dijkstra
+  - MST
 difficulty: Hard
 ---
 

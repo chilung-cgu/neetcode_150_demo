@@ -2,8 +2,8 @@
 title: "Design Add and Search Words Data Structure (設計新增與搜尋單字的資料結構)"
 description: "題目要求設計一個資料結構 `WordDictionary`，支援："
 tags:
-  - 
-Trie  - String
+  - Trie
+  - String
 difficulty: Medium
 ---
 

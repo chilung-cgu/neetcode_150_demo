@@ -2,8 +2,8 @@
 title: "N-Queens (N 皇后問題)"
 description: "題目要求在一個 `n x n` 的棋盤上放置 `n` 個皇后，使得它們互不攻擊。"
 tags:
-  - 
-Backtracking  - Recursion
+  - Backtracking
+  - Recursion
 difficulty: Hard
 ---
 

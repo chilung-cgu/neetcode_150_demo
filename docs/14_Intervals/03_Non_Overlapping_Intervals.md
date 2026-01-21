@@ -2,8 +2,8 @@
 title: "Non-overlapping Intervals (無重疊區間)"
 description: "給定一個區間陣列 `intervals`。 你需要移除 **最少數量** 的區間，使得剩餘的區間互不重疊。"
 tags:
-  - 
-Intervals  - Sorting
+  - Intervals
+  - Sorting
 difficulty: Medium
 ---
 

@@ -2,8 +2,7 @@
 title: "Missing Number (缺失數字)"
 description: "給定一個包含 0 到 n 中 `n` 個不同數字的陣列 `nums`。 請找出那個沒有出現在陣列中的數字。 你必須設計並實現一個線性時間複雜度 $O(n)$ 且只使用常數額外空間 $O(1)$ 的算法。"
 tags:
-  - 
-Bit Manipulation
+  - Bit Manipulation
 difficulty: Easy
 ---
 

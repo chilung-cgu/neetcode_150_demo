@@ -2,8 +2,8 @@
 title: "Binary Search (二分搜尋)"
 description: "題目給一個**已排序 (Sorted)** 的整數陣列 `nums` 和一個目標值 `target`。 請寫一個函式來尋找 `target` 在 `nums` 中的 index。 如果找不到，回傳 `-1`。 **演算法的時間複雜度必須是** $O(\log n)$。"
 tags:
-  - 
-Binary Search  - Array
+  - Binary Search
+  - Array
 difficulty: Easy
 ---
 

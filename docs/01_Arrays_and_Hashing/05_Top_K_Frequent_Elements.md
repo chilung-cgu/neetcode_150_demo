@@ -2,8 +2,8 @@
 title: "Top K Frequent Elements (前 K 個高頻元素)"
 description: "題目給一個整數陣列 `nums` 和一個整數 `k`，要求回傳出現頻率最高的 `k` 個元素。"
 tags:
-  - 
-Array  - Hash Table
+  - Array
+  - Hash Table
 difficulty: Medium
 ---
 

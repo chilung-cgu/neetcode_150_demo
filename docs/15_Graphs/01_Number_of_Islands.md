@@ -2,8 +2,9 @@
 title: "Number of Islands (島嶼數量)"
 description: "給定一個由 `'1'` (陸地) 和 `'0'` (水) 組成的二維網格 `grid`。 請計算島嶼的數量。 島嶼被水包圍，由水平或垂直相鄰的陸地連接而成。 你可以假設網格的四個邊之外都被水包圍。"
 tags:
-  - 
-Graph  - DFS  - BFS
+  - Graph
+  - DFS
+  - BFS
 difficulty: Medium
 ---
 

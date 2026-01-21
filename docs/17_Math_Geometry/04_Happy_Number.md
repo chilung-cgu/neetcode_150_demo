@@ -2,8 +2,8 @@
 title: "Happy Number (快樂數)"
 description: "一個**快樂數**定義如下："
 tags:
-  - 
-Math  - Matrix
+  - Math
+  - Matrix
 difficulty: Easy
 ---
 

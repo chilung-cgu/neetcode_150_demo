@@ -2,8 +2,8 @@
 title: "Meeting Rooms (會議室)"
 description: "給定一個會議時間區間的陣列 `intervals`，其中 `intervals[i] = [start_i, end_i]`。 請判斷一個人是否能夠 **參加所有的會議**。 (即判斷是否有任何兩個會議時間重疊)。"
 tags:
-  - 
-Intervals  - Sorting
+  - Intervals
+  - Sorting
 difficulty: Easy
 ---
 

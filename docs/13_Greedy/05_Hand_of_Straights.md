@@ -2,8 +2,7 @@
 title: "Hand of Straights (一手順子)"
 description: "給定一個整數陣列 `hand`，其中每個數字代表一張牌。還有一個整數 `groupSize`。 判斷是否能將這些牌重新排列成若干組，每組包含 `groupSize` 張牌，且這 `groupSize` 張牌是 **連續的** (consecutive)。"
 tags:
-  - 
-Greedy
+  - Greedy
 difficulty: Medium
 ---
 

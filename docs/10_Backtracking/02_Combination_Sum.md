@@ -2,8 +2,8 @@
 title: "Combination Sum (組合總和)"
 description: "題目給一個**無重複**元素的整數陣列 `candidates` 和一個目標整數 `target`。 找出 `candidates` 中所有可以使數字和為 `target` 的唯一組合。 相同數字可以 **無限次** 重複使用。 解集不能包含重複的組合。"
 tags:
-  - 
-Backtracking  - Recursion
+  - Backtracking
+  - Recursion
 difficulty: Medium
 ---
 

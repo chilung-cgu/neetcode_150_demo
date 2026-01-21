@@ -2,8 +2,9 @@
 title: "Binary Tree Maximum Path Sum (二元樹中的最大路徑和)"
 description: "題目給一個 **非空** 二元樹的根節點 `root`。 找出 **最大路徑和**。 路徑可以從樹中的 **任意節點開始**，並在 **任意節點結束**（同一條路徑上的節點連接順序必須是父子關係）。 這條路徑 **至少包含一個節點**。 路徑不一定經過 root。"
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Hard
 ---
 

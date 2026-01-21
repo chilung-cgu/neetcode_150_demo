@@ -2,8 +2,7 @@
 title: "Number of 1 Bits (位元 1 的個數)"
 description: "這是一個非常經典的位運算問題，也叫 **Hamming Weight**。 給定一個無符號整數 `n`，請計算它的二進制表示中有多少個 `1`。"
 tags:
-  - 
-Bit Manipulation
+  - Bit Manipulation
 difficulty: Easy
 ---
 

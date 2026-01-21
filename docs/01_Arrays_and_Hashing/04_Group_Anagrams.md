@@ -2,8 +2,8 @@
 title: "Group Anagrams (字母異位詞分組)"
 description: "題目給我們一個字串陣列 `strs`，要求我們將所有的 **Anagrams** (字母異位詞) 分組在一起。順序不重要。"
 tags:
-  - 
-Array  - Hash Table
+  - Array
+  - Hash Table
 difficulty: Medium
 ---
 

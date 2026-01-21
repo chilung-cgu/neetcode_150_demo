@@ -2,8 +2,8 @@
 title: "Distinct Subsequences (不同的子序列)"
 description: "給兩個字串 `s` 和 `t`。 回傳 `s` 的子序列中，有多少個等於 `t`。 (即從 `s` 中刪除一些字元，讓他變成 `t`，有幾種刪法？)"
 tags:
-  - 
-Dynamic Programming  - 2D DP
+  - Dynamic Programming
+  - 2D DP
 difficulty: Hard
 ---
 

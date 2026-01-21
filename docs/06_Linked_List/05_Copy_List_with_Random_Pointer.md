@@ -2,8 +2,7 @@
 title: "Copy List with Random Pointer (複製含隨機指標的鏈結串列)"
 description: "題目給一個 Linked List，每個節點除了 `next` 指標外，還有一個 `random` 指標，可能指向 list 中的任意節點或 null。 請 **Deep Copy** 這個 List。"
 tags:
-  - 
-Linked List
+  - Linked List
 difficulty: Medium
 ---
 

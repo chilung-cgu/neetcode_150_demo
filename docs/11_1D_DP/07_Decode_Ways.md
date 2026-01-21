@@ -2,8 +2,7 @@
 title: "Decode Ways (解碼方法)"
 description: "題目說一條由 'A'-'Z' 組成的訊息已經被加密成數字："
 tags:
-  - 
-Dynamic Programming
+  - Dynamic Programming
 difficulty: Medium
 ---
 

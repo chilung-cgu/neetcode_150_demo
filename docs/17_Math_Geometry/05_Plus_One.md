@@ -2,8 +2,8 @@
 title: "Plus One (加一)"
 description: "給定一個**大整數**，以陣列 `digits` 形式表示（最高位在前）。 請計算該整數 **加 1** 後的結果，並以同樣的陣列形式回傳。"
 tags:
-  - 
-Math  - Matrix
+  - Math
+  - Matrix
 difficulty: Easy
 ---
 

@@ -2,8 +2,8 @@
 title: "Coin Change II (零錢兌換 II)"
 description: "題目給一個整數陣列 `coins` 代表不同面額的硬幣，以及一個整數 `amount`。 要求算出湊成該總金額的 **組合數量**。"
 tags:
-  - 
-Dynamic Programming  - 2D DP
+  - Dynamic Programming
+  - 2D DP
 difficulty: Medium
 ---
 

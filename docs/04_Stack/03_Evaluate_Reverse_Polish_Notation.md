@@ -2,8 +2,8 @@
 title: "Evaluate Reverse Polish Notation (逆波蘭表達式求值)"
 description: "題目給一個字串陣列 `tokens`，代表一個 **RPN (Reverse Polish Notation)** 表達式。請計算它的值。 RPN (Postfix Notation) 的特點是運算子在運算元後面。例如 `2 + 1` 寫成 `2 1 +`。"
 tags:
-  - 
-Stack  - Monotonic Stack
+  - Stack
+  - Monotonic Stack
 difficulty: Medium
 ---
 

@@ -2,8 +2,9 @@
 title: "Course Schedule II (課程表 II)"
 description: "與 Course Schedule I 相同，給定 `numCourses` 和 `prerequisites`。 但這次不是問「是否可能」，而是要求回傳一個 **有效的修課順序** (Vector `[0, 1, ...]`)。 如果不可能完成，則回傳空陣列。 如果有多個有效順序，回傳其中任意一個"
 tags:
-  - 
-Graph  - DFS  - BFS
+  - Graph
+  - DFS
+  - BFS
 difficulty: Medium
 ---
 

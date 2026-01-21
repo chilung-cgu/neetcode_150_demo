@@ -2,8 +2,9 @@
 title: "Validate Binary Search Tree (驗證二元搜尋樹)"
 description: "題目給一個 Binary Tree Root，請判斷它是否是一個 **Valid BST**。"
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Medium
 ---
 

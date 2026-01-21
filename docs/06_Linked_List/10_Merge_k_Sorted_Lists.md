@@ -2,8 +2,7 @@
 title: "Merge k Sorted Lists (合併 k 個排序鏈表)"
 description: "題目給 `k` 個已經排序 (ascending order) 的 Linked Lists 陣列 `lists`。 請將這 `k` 個 Linked List 合併成 **一個** 排序 Linked List 並回傳。"
 tags:
-  - 
-Linked List
+  - Linked List
 difficulty: Hard
 ---
 

@@ -2,8 +2,8 @@
 title: "Detect Squares (檢測正方形)"
 description: "你需要設計一個數據結構，支持以下兩個操作："
 tags:
-  - 
-Math  - Matrix
+  - Math
+  - Matrix
 difficulty: Medium
 ---
 

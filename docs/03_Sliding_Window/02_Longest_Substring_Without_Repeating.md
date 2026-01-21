@@ -2,8 +2,8 @@
 title: "Longest Substring Without Repeating Characters (無重複字元的最長子字串)"
 description: "題目給一個字串 `s`，請找出**不包含重複字元**的**最長子字串**的長度。"
 tags:
-  - 
-Sliding Window  - String
+  - Sliding Window
+  - String
 difficulty: Medium
 ---
 

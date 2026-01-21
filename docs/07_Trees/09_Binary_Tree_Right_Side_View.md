@@ -2,8 +2,9 @@
 title: "Binary Tree Right Side View (二元樹的右視圖)"
 description: "題目給一個 Binary Tree，想像你站在這棵樹的 **右側** 往左看。 請回傳你從上到下能看到的節點值。"
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Medium
 ---
 

@@ -2,8 +2,8 @@
 title: "Contains Duplicate (存在重複元素)"
 description: "作為面試者，在直接跳進程式碼之前，我們應該先與面試官確認題目的邊界條件。這展現了你的細心與對系統穩定性的考量。"
 tags:
-  - 
-Array  - Hash Table
+  - Array
+  - Hash Table
 difficulty: Easy
 ---
 

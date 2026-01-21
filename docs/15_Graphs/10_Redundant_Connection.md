@@ -2,8 +2,9 @@
 title: "Redundant Connection (冗餘連接)"
 description: "給定一個無向圖，該圖原本是一棵樹（$N$ 個節點，$N-1$ 條邊），但此時多了一條邊，使其形成了至少一個環。 圖由 $N$ 個節點組成，標記為 $1$ 到 $N$，以及 $N$ 條邊。 請找出這條「冗餘」的邊。移除它後，圖應該恢復為一棵樹。 如果有多個答案，回傳在輸入 `edges` 中最後出現的"
 tags:
-  - 
-Graph  - DFS  - BFS
+  - Graph
+  - DFS
+  - BFS
 difficulty: Medium
 ---
 

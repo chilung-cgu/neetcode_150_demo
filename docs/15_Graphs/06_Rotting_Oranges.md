@@ -2,8 +2,9 @@
 title: "Rotting Oranges (腐爛的橘子)"
 description: "給定一個 `m x n` 的網格，每個單元格可以是："
 tags:
-  - 
-Graph  - DFS  - BFS
+  - Graph
+  - DFS
+  - BFS
 difficulty: Medium
 ---
 

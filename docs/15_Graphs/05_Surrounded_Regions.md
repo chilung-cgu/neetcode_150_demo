@@ -2,8 +2,9 @@
 title: "Surrounded Regions (被圍繞的區域)"
 description: "給定一個 `m x n` 的矩陣 `board`，包含 `'X'` 和 `'O'`。 請 **捕獲 (capture)** 所有被 `'X'` 圍繞的區域。 捕獲的意思是將這些區域中的所有 `'O'` 翻轉成 `'X'`。 如果一個 `'O'` 位於邊界上，或者與位於邊界的 `'O'` 相連，那麼它"
 tags:
-  - 
-Graph  - DFS  - BFS
+  - Graph
+  - DFS
+  - BFS
 difficulty: Medium
 ---
 

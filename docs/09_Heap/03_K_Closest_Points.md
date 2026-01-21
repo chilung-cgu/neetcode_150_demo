@@ -2,8 +2,8 @@
 title: "K Closest Points to Origin (最接近原點的 K 個點)"
 description: "題目給一個點座標陣列 `points`，其中 `points[i] = [xi, yi]`，以及一個整數 `k`。 請回傳距離原點 `(0, 0)` 最近的 `k` 個點。 距離使用 **Euclidean Distance** (歐幾里得距離)：$\sqrt{x^2 + y^2}$。 因為只需要比"
 tags:
-  - 
-Heap  - Priority Queue
+  - Heap
+  - Priority Queue
 difficulty: Medium
 ---
 

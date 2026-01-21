@@ -2,8 +2,7 @@
 title: "Maximum Subarray (最大子陣列和)"
 description: "題目給一個整數陣列 `nums`，找出一個連續子陣列（至少包含一個數字），使得其總和最大。 回傳該最大和。"
 tags:
-  - 
-Greedy
+  - Greedy
 difficulty: Medium
 ---
 

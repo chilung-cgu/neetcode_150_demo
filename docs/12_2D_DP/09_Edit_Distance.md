@@ -2,8 +2,8 @@
 title: "Edit Distance (編輯距離)"
 description: "給兩個字串 `word1` 和 `word2`。 請計算將 `word1` 轉換成 `word2` 所需的 **最少操作次數**。 允許的操作有三種："
 tags:
-  - 
-Dynamic Programming  - 2D DP
+  - Dynamic Programming
+  - 2D DP
 difficulty: Medium
 ---
 

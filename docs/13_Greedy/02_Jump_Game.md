@@ -2,8 +2,7 @@
 title: "Jump Game (跳躍遊戲)"
 description: "給定一個非負整數陣列 `nums`。 最初位於第一個 index (位置 0)。 陣列中的每個元素代表你在該位置可以跳躍的 **最大長度** (Maximum Jump Length)。 判斷你是否能夠到達最後一個 index。"
 tags:
-  - 
-Greedy
+  - Greedy
 difficulty: Medium
 ---
 

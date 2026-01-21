@@ -2,8 +2,8 @@
 title: "Longest Increasing Path in a Matrix (矩陣中的最長遞增路徑)"
 description: "給定一個 `m x n` 的整數矩陣 `matrix`，回傳其中的 **最長遞增路徑** 的長度。 路徑中的每一步，可以向上下左右移動。 不能走出邊界，不能走回頭路 (但因為是嚴格遞增，所以天然不會走回頭路)。"
 tags:
-  - 
-Dynamic Programming  - 2D DP
+  - Dynamic Programming
+  - 2D DP
 difficulty: Hard
 ---
 

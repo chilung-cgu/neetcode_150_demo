@@ -2,8 +2,8 @@
 title: "Unique Paths (不同路徑)"
 description: "題目給一個 `m x n` 的網格。 機器人位於左上角 `(0, 0)`。 目標是移動到右下角 `(m-1, n-1)`。 機器人每次只能 **向下** 或 **向右** 移動。 問有多少條不同的路徑？"
 tags:
-  - 
-Dynamic Programming  - 2D DP
+  - Dynamic Programming
+  - 2D DP
 difficulty: Medium
 ---
 

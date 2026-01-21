@@ -2,8 +2,7 @@
 title: "Maximum Product Subarray (最大乘積子陣列)"
 description: "題目給一個整數陣列 `nums`，找出一個 **連續子陣列 (Contiguous Subarray)**，使得其元素乘積最大。 回傳該最大乘積。"
 tags:
-  - 
-Dynamic Programming
+  - Dynamic Programming
 difficulty: Medium
 ---
 

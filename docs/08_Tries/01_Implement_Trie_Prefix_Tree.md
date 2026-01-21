@@ -2,8 +2,8 @@
 title: "Implement Trie (Prefix Tree) (實作字典樹)"
 description: "題目要求實作一個 `Trie` 類別 (Prefix Tree)，包含以下方法："
 tags:
-  - 
-Trie  - String
+  - Trie
+  - String
 difficulty: Medium
 ---
 

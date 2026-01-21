@@ -2,8 +2,8 @@
 title: "Search in Rotated Sorted Array (在旋轉排序陣列中搜尋)"
 description: "題目給一個**旋轉後**的排序陣列 `nums` 和一個 `target`。 請搜尋 `target` 是否存在。如果存在回傳 index，否則回傳 -1。 **要求時間複雜度為** $O(\log n)$。"
 tags:
-  - 
-Binary Search  - Array
+  - Binary Search
+  - Array
 difficulty: Medium
 ---
 

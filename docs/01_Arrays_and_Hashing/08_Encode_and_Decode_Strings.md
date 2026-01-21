@@ -2,8 +2,8 @@
 title: "Encode and Decode Strings (字串編碼與解碼)"
 description: "題目要求我們設計兩個函式："
 tags:
-  - 
-Array  - Hash Table
+  - Array
+  - Hash Table
 difficulty: Medium
 ---
 

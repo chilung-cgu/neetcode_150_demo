@@ -2,8 +2,7 @@
 title: "Partition Equal Subset Sum (分割等和子集)"
 description: "給定一個**只包含正整數**的非空陣列 `nums`。 判斷是否可以將這個陣列分割成兩個子集，使得這兩個子集的元素和相等。"
 tags:
-  - 
-Dynamic Programming
+  - Dynamic Programming
 difficulty: Medium
 ---
 

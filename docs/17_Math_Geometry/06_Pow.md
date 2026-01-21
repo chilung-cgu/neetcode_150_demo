@@ -2,8 +2,8 @@
 title: "Pow(x, n) (數值的 n 次方)"
 description: "實現 `pow(x, n)`，即計算 `x` 的 `n` 次冪 ($x^n$)。"
 tags:
-  - 
-Math  - Matrix
+  - Math
+  - Matrix
 difficulty: Medium
 ---
 

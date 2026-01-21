@@ -2,8 +2,8 @@
 title: "Find Median from Data Stream (從數據流中尋找中位數)"
 description: "題目要求設計一個 `MedianFinder` 類別："
 tags:
-  - 
-Heap  - Priority Queue
+  - Heap
+  - Priority Queue
 difficulty: Hard
 ---
 

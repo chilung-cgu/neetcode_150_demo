@@ -2,8 +2,9 @@
 title: "Subtree of Another Tree (另一棵樹的子樹)"
 description: "題目給兩棵 Binary Tree `root` 和 `subRoot`。 判斷 `subRoot` 是否是 `root` 的 **Subtree**。 Subtree 意味著：`root` 中的某個節點的所有後代結構与值都和 `subRoot` 完全相同。 (必須是完全 match，不能只是部分 "
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Easy
 ---
 

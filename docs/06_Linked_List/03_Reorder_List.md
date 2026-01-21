@@ -2,8 +2,7 @@
 title: "Reorder List (重新排序鏈結串列)"
 description: "題目給一個 singly linked list `L`: $L_0 \rightarrow L_1 \rightarrow \dots \rightarrow L_{n-1} \rightarrow L_n$. 請將其重新排列為：$L_0 \rightarrow L_n \rightarrow L"
 tags:
-  - 
-Linked List
+  - Linked List
 difficulty: Medium
 ---
 

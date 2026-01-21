@@ -2,8 +2,7 @@
 title: "Climbing Stairs (爬樓梯)"
 description: "題目說你在爬一個樓梯。需要 `n` 階才能到達頂端。 每次你可以爬 `1` 階或 `2` 階。 請問有多少種不同的方法可以爬到頂端？"
 tags:
-  - 
-Dynamic Programming
+  - Dynamic Programming
 difficulty: Easy
 ---
 

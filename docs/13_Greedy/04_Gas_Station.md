@@ -2,8 +2,7 @@
 title: "Gas Station (加油站)"
 description: "圓形路線上有 `n` 個加油站。 `gas[i]`：第 `i` 個加油站有的油量。 `cost[i]`：從第 `i` 個站開到第 `i+1` 個站需要消耗的油量。 油箱容量是無限的。 從其中一個加油站出發，是否能繞一圈回到起點？ 如果可以，回傳起點的 index（保證唯一）。如果不可以，回傳 -1。"
 tags:
-  - 
-Greedy
+  - Greedy
 difficulty: Medium
 ---
 

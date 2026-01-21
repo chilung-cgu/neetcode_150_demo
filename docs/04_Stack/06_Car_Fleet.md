@@ -2,8 +2,8 @@
 title: "Car Fleet (車隊)"
 description: "題目給我們終點 `target`，和兩個陣列 `position` 與 `speed`。 有 `n` 輛車在單行道上往 `target` 前進。"
 tags:
-  - 
-Stack  - Monotonic Stack
+  - Stack
+  - Monotonic Stack
 difficulty: Medium
 ---
 

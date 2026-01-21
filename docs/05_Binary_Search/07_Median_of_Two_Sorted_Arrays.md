@@ -2,8 +2,8 @@
 title: "Median of Two Sorted Arrays (兩個排序陣列的中位數)"
 description: "題目給兩個大小分別為 `m` 和 `n` 的排序陣列 `nums1` 和 `nums2`。 請找出這兩個陣列合併後的中位數 (Median)。 **演算法的時間複雜度必須是** $O(\log(m+n))$。"
 tags:
-  - 
-Binary Search  - Array
+  - Binary Search
+  - Array
 difficulty: Hard
 ---
 

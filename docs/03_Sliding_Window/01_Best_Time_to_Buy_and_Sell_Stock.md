@@ -2,8 +2,8 @@
 title: "Best Time to Buy and Sell Stock (買賣股票的最佳時機)"
 description: "題目給我們一個陣列 `prices`，其中 `prices[i]` 代表第 `i` 天的股價。 我們只能選擇 **某一天** 買入，並在 **未來的某一天** 賣出。 請問我們最多能賺多少錢？ 如果賺不到錢 (例如股價一路跌)，回傳 0。"
 tags:
-  - 
-Sliding Window  - String
+  - Sliding Window
+  - String
 difficulty: Easy
 ---
 

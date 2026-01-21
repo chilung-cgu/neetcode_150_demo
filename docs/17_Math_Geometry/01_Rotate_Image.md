@@ -2,8 +2,8 @@
 title: "Rotate Image (旋轉圖像)"
 description: "給定一個 `n x n` 的二維矩陣 `matrix`，代表一個圖像。 請將圖像 **順時針旋轉 90 度**。 你必須 **原地 (in-place)** 修改矩陣，不能使用另一個 2D 矩陣來旋轉。"
 tags:
-  - 
-Math  - Matrix
+  - Math
+  - Matrix
 difficulty: Medium
 ---
 

@@ -2,8 +2,7 @@
 title: "Longest Increasing Subsequence (最長遞增子序列)"
 description: "給定一個整數陣列 `nums`，找出其中最長的**嚴格遞增子序列** (LIS) 的長度。 子序列 (Subsequence) 不要求連續，但順序必須保持。"
 tags:
-  - 
-Dynamic Programming
+  - Dynamic Programming
 difficulty: Medium
 ---
 

@@ -2,8 +2,7 @@
 title: "Min Cost Climbing Stairs (使用最小花費爬樓梯)"
 description: "給定一個整數陣列 `cost`，其中 `cost[i]` 是從樓梯第 `i` 階向上爬需要支付的費用。 支付費用後，你可以選擇爬 **1** 階或 **2** 階。 你可以從 index `0` 或 index `1` 開始。 請計算到達樓梯頂端（超過最後一個 index）的最低花費。"
 tags:
-  - 
-Dynamic Programming
+  - Dynamic Programming
 difficulty: Easy
 ---
 

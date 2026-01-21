@@ -2,8 +2,7 @@
 title: "Partition Labels (劃分字母區間)"
 description: "給定一個字串 `s`。 我們要把這個字串劃分成盡可能多的片段 (partitions)。 使得**同一個字母最多只出現在一個片段中**。 回傳一個列表，包含每個片段的長度。"
 tags:
-  - 
-Greedy
+  - Greedy
 difficulty: Medium
 ---
 

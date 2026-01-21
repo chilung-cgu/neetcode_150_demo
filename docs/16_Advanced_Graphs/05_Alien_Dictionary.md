@@ -2,8 +2,9 @@
 title: "Alien Dictionary (外星人字典)"
 description: "有一種外星語言，使用英語字母，但順序不同。 給定一份該語言的單詞列表 `words`，其中的單詞已經 **按照該語言的字典序排序**。 請你根據這份列表，推導出該語言中字母的順序。 如果有多種可能的順序，回傳任意一種。 如果給定的列表不合法（無法推導出有效順序），回傳空字串 `""`。"
 tags:
-  - 
-Graph  - Dijkstra  - MST
+  - Graph
+  - Dijkstra
+  - MST
 difficulty: Hard
 ---
 

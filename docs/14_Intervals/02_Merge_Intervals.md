@@ -2,8 +2,8 @@
 title: "Merge Intervals (合併區間)"
 description: "給定一個區間陣列 `intervals`，其中 `intervals[i] = [start_i, end_i]`。 請合併所有 **重疊 (overlapping)** 的區間，並回傳一個不重疊的區間陣列，該陣列需覆蓋輸入中的所有區間。"
 tags:
-  - 
-Intervals  - Sorting
+  - Intervals
+  - Sorting
 difficulty: Medium
 ---
 

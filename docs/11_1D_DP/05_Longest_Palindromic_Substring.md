@@ -2,8 +2,7 @@
 title: "Longest Palindromic Substring (最長回文子字串)"
 description: "題目給一個字串 `s`，請找出其中最長的 **回文子字串**。 子字串 (Substring) 必須是連續的。 回文 (Palindrome) 是指正著讀和反著讀都一樣的字串。"
 tags:
-  - 
-Dynamic Programming
+  - Dynamic Programming
 difficulty: Medium
 ---
 

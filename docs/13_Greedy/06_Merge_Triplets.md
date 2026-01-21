@@ -2,8 +2,7 @@
 title: "Merge Triplets to Form Target Triplet (合併三元組以形成目標三元組)"
 description: "給定一個二維整數陣列 `triplets`，其中每個 `triplets[i] = [ai, bi, ci]`。 以及一個整數陣列 `target = [x, y, z]`。 定義操作 **Merge**: 兩個三元組 `[a1, b1, c1]` 和 `[a2, b2, c2]` 合併後變成 `["
 tags:
-  - 
-Greedy
+  - Greedy
 difficulty: Medium
 ---
 

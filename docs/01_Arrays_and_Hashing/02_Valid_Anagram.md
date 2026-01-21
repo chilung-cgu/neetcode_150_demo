@@ -2,8 +2,8 @@
 title: "Valid Anagram (有效的易位構詞)"
 description: "題目要求判斷兩個字串 `s` 和 `t` 是否為彼此的重組字 (Anagram)。也就是說，它們必須包含完全相同的字元，且每個字元的出現次數也必須相同。"
 tags:
-  - 
-Array  - Hash Table
+  - Array
+  - Hash Table
 difficulty: Easy
 ---
 

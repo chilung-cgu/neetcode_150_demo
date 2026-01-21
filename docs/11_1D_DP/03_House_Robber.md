@@ -2,8 +2,7 @@
 title: "House Robber (打家劫舍)"
 description: "題目說你是一個專業的搶匪，計畫搶劫沿街的房屋。 每間房都有一定數量的現金。 唯一阻止你搶劫單個房屋的限制是：**相鄰的房屋裝有連動防盜系統**。 如果 **兩間相鄰** 的房屋在同一晚被搶，系統會自動報警。"
 tags:
-  - 
-Dynamic Programming
+  - Dynamic Programming
 difficulty: Medium
 ---
 

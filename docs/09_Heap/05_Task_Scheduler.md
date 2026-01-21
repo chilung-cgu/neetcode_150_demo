@@ -2,8 +2,8 @@
 title: "Task Scheduler (任務調度器)"
 description: "題目給一個字元陣列 `tasks`，每個字元代表一種任務。 你需要安排這些任務的執行順序。"
 tags:
-  - 
-Heap  - Priority Queue
+  - Heap
+  - Priority Queue
 difficulty: Medium
 ---
 

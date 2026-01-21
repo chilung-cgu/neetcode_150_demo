@@ -2,8 +2,8 @@
 title: "Valid Sudoku (有效的數獨)"
 description: "題目給一個 $9 \times 9$ 的數獨棋盤，要求我們判斷它目前是否有效。 所謂「有效」只需滿足："
 tags:
-  - 
-Array  - Hash Table
+  - Array
+  - Hash Table
 difficulty: Medium
 ---
 

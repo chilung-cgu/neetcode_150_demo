@@ -2,8 +2,7 @@
 title: "LRU Cache (最近少使用緩存)"
 description: "設計一個 **LRU (Least Recently Used)** Cache 機制。 支援以下操作："
 tags:
-  - 
-Linked List
+  - Linked List
 difficulty: Medium
 ---
 

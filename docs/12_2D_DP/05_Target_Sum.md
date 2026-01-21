@@ -2,8 +2,8 @@
 title: "Target Sum (目標和)"
 description: "給定一個非負整數陣列 `nums` 和一個整數 `target`。 你需要對每個整數前面添加 `+` 或 `-` 號，使得運算結果等於 `target`。 回傳有多少種方法。"
 tags:
-  - 
-Dynamic Programming  - 2D DP
+  - Dynamic Programming
+  - 2D DP
 difficulty: Medium
 ---
 

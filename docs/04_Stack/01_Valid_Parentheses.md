@@ -2,8 +2,8 @@
 title: "01. Valid Parentheses"
 description: "題目給一個只包含 `(`, `)`, `{`, `}`, `[`, `]` 的字串 `s`。 判斷這個字串是否有效。 有效條件："
 tags:
-  - 
-Stack  - Monotonic Stack
+  - Stack
+  - Monotonic Stack
 difficulty: Easy
 ---
 

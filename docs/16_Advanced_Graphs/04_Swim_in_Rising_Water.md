@@ -2,8 +2,9 @@
 title: "Swim in Rising Water (在上升的水中游泳)"
 description: "給定一個 `n x n` 的整數網格 `grid`，其中 `grid[i][j]` 代表該點的海拔高度。 現在下雨了，雨水的高度 `t` 隨著時間線性增加 (t = 0, 1, 2, ...)。 你可以在高度為 `t` 時游到任意高度 `<= t` 的相鄰格子。 求從左上角 `(0, 0)` 游到右"
 tags:
-  - 
-Graph  - Dijkstra  - MST
+  - Graph
+  - Dijkstra
+  - MST
 difficulty: Hard
 ---
 

@@ -2,8 +2,9 @@
 title: "Network Delay Time (網絡延遲時間)"
 description: "給定一個網絡，包含 $n$ 個節點（標記為 1 到 n）。 給定一個時間列表 `times`，其中 `times[i] = (u, v, w)` 表示從節點 `u` 到節點 `v` 的信號傳遞需要時間 `w`。 現在我們從某個節點 `k` 發出一個信號。 請問所有 $n$ 個節點都收到信號需要多久？"
 tags:
-  - 
-Graph  - Dijkstra  - MST
+  - Graph
+  - Dijkstra
+  - MST
 difficulty: Medium
 ---
 

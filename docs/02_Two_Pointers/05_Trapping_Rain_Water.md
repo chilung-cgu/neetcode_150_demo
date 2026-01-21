@@ -2,8 +2,8 @@
 title: "Trapping Rain Water (接雨水)"
 description: "題目給一個 array `height` 代表地形高度，每個寬度為 1。請問下雨後這個地形能接住多少水？"
 tags:
-  - 
-Two Pointers  - Array
+  - Two Pointers
+  - Array
 difficulty: Hard
 ---
 

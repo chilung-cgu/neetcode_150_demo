@@ -2,8 +2,9 @@
 title: "Maximum Depth of Binary Tree (二元樹的最大深度)"
 description: "題目給一個 Binary Tree 的 root，求其最大深度。 最大深度是從 root 到最遠 leaf node 的路徑上的節點數。"
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Easy
 ---
 

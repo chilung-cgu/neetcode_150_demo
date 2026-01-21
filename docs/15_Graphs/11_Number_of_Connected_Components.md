@@ -2,8 +2,9 @@
 title: "Number of Connected Components in an Undirected Graph (無向圖中的連通分量數量)"
 description: "給定一個包含 `n` 個節點的圖。 給定一個整數 `n` 和一個數組 `edges`，其中 `edges[i] = [ai, bi]` 表示節點 `ai` 和 `bi` 之間有一條邊。 請回傳圖中連通分量的數量。"
 tags:
-  - 
-Graph  - DFS  - BFS
+  - Graph
+  - DFS
+  - BFS
 difficulty: Medium
 ---
 

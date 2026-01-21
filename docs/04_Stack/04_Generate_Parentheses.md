@@ -2,8 +2,8 @@
 title: "Generate Parentheses (生成括號)"
 description: "題目給一個整數 `n`，代表有 `n` 對括號。 請生成所有 **格式正確 (Well-formed)** 的括號組合。"
 tags:
-  - 
-Stack  - Monotonic Stack
+  - Stack
+  - Monotonic Stack
 difficulty: Medium
 ---
 

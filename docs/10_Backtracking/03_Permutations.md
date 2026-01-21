@@ -2,8 +2,8 @@
 title: "Permutations (全排列)"
 description: "題目給一個**無重複**數字的陣列 `nums`。 回傳所有可能的 **排列 (Permutations)**。 順序不重要。"
 tags:
-  - 
-Backtracking  - Recursion
+  - Backtracking
+  - Recursion
 difficulty: Medium
 ---
 

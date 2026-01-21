@@ -2,8 +2,9 @@
 title: "Balanced Binary Tree (平衡二元樹)"
 description: "題目給一個 Binary Tree，判斷它是否是 **高度平衡 (Height-Balanced)** 的。 **Height-Balanced**: 一個二元樹中，**每個節點** 的左右子樹的高度差絕對值不超過 1。"
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Easy
 ---
 

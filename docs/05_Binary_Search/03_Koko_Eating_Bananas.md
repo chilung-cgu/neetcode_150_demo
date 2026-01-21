@@ -2,8 +2,8 @@
 title: "Koko Eating Bananas (Koko 吃香蕉)"
 description: "Koko 愛吃香蕉。這裡有 `n` 串香蕉 (`piles`)，第 `i` 串有 `piles[i]` 根。 警衛離開了 `h` 小時。 Koko 每小時可以選擇一串香蕉吃掉 `k` 根（如果那串少於 `k` 根，她就全吃掉，這小時剩下的時間也不會去吃別串）。 請問最小的整數 `k` 是多少，才能讓"
 tags:
-  - 
-Binary Search  - Array
+  - Binary Search
+  - Array
 difficulty: Medium
 ---
 

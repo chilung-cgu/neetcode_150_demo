@@ -2,8 +2,8 @@
 title: "Time Based Key-Value Store (基於時間的鍵值存儲)"
 description: "設計一個 `TimeMap` 資料結構，支援以下操作："
 tags:
-  - 
-Binary Search  - Array
+  - Binary Search
+  - Array
 difficulty: Medium
 ---
 

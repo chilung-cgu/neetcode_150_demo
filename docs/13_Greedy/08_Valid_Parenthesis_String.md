@@ -2,8 +2,7 @@
 title: "Valid Parenthesis String (有效的括號字串)"
 description: "給定一個只包含 `(`, `)`, `*` 的字串。 檢查它是否為有效字串。 規則："
 tags:
-  - 
-Greedy
+  - Greedy
 difficulty: Medium
 ---
 

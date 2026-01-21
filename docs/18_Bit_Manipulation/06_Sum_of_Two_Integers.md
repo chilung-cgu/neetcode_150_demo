@@ -2,8 +2,7 @@
 title: "Sum of Two Integers (兩整數之和)"
 description: "給定兩個整數 `a` 和 `b`，請在 **不使用 `+` 和 `-` 運算符** 的情況下計算它們的和。"
 tags:
-  - 
-Bit Manipulation
+  - Bit Manipulation
 difficulty: Medium
 ---
 

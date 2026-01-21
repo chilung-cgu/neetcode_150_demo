@@ -2,8 +2,8 @@
 title: "01. Valid Palindrome"
 description: "題目要求我們寫一個函式來判斷一個字串 `s` 是否為 **Palindrome (回文)**。 所謂「回文」，是指正著讀跟反著讀都一樣的字串。 但是在比對之前，我們必須先進行**資料清洗 (Data Cleaning)**："
 tags:
-  - 
-Two Pointers  - Array
+  - Two Pointers
+  - Array
 difficulty: Easy
 ---
 

@@ -2,8 +2,7 @@
 title: "Reverse Linked List (反轉鏈結串列)"
 description: "題目給一個 singly linked list 的 head。 請反轉這個 List，並回傳新的 head。"
 tags:
-  - 
-Linked List
+  - Linked List
 difficulty: Easy
 ---
 

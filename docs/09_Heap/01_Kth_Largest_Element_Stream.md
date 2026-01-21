@@ -2,8 +2,8 @@
 title: "Kth Largest Element in a Stream (數據流中的第 K 大元素)"
 description: "題目要求設計一個類別 `KthLargest`，它可以："
 tags:
-  - 
-Heap  - Priority Queue
+  - Heap
+  - Priority Queue
 difficulty: Easy
 ---
 

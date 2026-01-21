@@ -2,8 +2,9 @@
 title: "Construct Binary Tree from Preorder and Inorder Traversal (從前序與中序遍歷構造二元樹)"
 description: "題目給兩個整數陣列 `preorder` 和 `inorder`，分別代表同一棵樹的前序遍歷和中序遍歷結果。 請構造並回傳這棵 Binary Tree。"
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Medium
 ---
 

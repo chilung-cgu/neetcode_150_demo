@@ -2,8 +2,8 @@
 title: "Meeting Rooms II (會議室 II)"
 description: "給定一個會議時間區間的陣列 `intervals`，其中 `intervals[i] = [start_i, end_i]`。 請找出 **最少需要幾間會議室** 才能舉行所有會議。"
 tags:
-  - 
-Intervals  - Sorting
+  - Intervals
+  - Sorting
 difficulty: Medium
 ---
 

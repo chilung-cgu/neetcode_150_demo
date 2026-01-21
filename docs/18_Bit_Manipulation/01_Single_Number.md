@@ -2,8 +2,7 @@
 title: "Single Number (只出現一次的數字)"
 description: "給定一個非空整數陣列 `nums`，除了某個元素只出現一次以外，其餘每個元素均出現兩次。 找出那個只出現了一次的元素。 你必須設計並實現一個線性時間複雜度 $O(n)$ 的算法，且只使用常數額外空間 $O(1)$。"
 tags:
-  - 
-Bit Manipulation
+  - Bit Manipulation
 difficulty: Easy
 ---
 

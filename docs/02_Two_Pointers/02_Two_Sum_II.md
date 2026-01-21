@@ -2,8 +2,8 @@
 title: "Two Sum II - Input Array Is Sorted (兩數之和 II - 輸入已排序)"
 description: "這題是 "Two Sum" 的變種。 題目給一個 **已排序 (Sorted in non-decreasing order)** 的整數陣列 `numbers`，要找出兩個數字相加等於 `target`。 回傳這兩個數字的 **1-based index**。"
 tags:
-  - 
-Two Pointers  - Array
+  - Two Pointers
+  - Array
 difficulty: Medium
 ---
 

@@ -2,8 +2,7 @@
 title: "Palindromic Substrings (回文子字串個數)"
 description: "題目給一個字串 `s`，計算其中有多少個回文子字串。 相同內容但位置不同的子字串，視為不同的。"
 tags:
-  - 
-Dynamic Programming
+  - Dynamic Programming
 difficulty: Medium
 ---
 

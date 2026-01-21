@@ -2,8 +2,9 @@
 title: "Kth Smallest Element in a BST (BST 中第 K 小的元素)"
 description: "題目給一個 BST 的 root 和一個整數 k。 請找出這棵樹中 **第 k 小** (1-indexed) 的元素值。"
 tags:
-  - 
-Tree  - Binary Tree  - DFS
+  - Tree
+  - Binary Tree
+  - DFS
 difficulty: Medium
 ---
 

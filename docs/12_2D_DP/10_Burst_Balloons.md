@@ -2,8 +2,8 @@
 title: "Burst Balloons (戳氣球)"
 description: "給定 `n` 個氣球，索引從 0 到 n-1。每個氣球上有一個數字 `nums[i]`。 戳破第 `i` 個氣球，你可以獲得 `nums[i-1] * nums[i] * nums[i+1]` 個硬幣。 戳破後，`i-1` 和 `i+1` 變得相鄰。 求能獲得的最大硬幣數量。 邊界之外的氣球視為 1"
 tags:
-  - 
-Dynamic Programming  - 2D DP
+  - Dynamic Programming
+  - 2D DP
 difficulty: Hard
 ---
 

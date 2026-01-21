@@ -2,8 +2,8 @@
 title: "Spiral Matrix (螺旋矩陣)"
 description: "給定一個 `m x n` 的矩陣 `matrix`。 請按照 **順時針螺旋順序** (Spiral Order)，回傳矩陣中的所有元素。"
 tags:
-  - 
-Math  - Matrix
+  - Math
+  - Matrix
 difficulty: Medium
 ---
 

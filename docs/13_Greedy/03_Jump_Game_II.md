@@ -2,8 +2,7 @@
 title: "Jump Game II (跳躍遊戲 II)"
 description: "給定一個非負整數陣列 `nums`。 最初位於第一個位置。 每個元素代表你可以跳躍的最大長度。 假設你 **一定可以** 到達最後一個位置 (Always possible)。 請找出到達最後一個位置所需的 **最少跳躍次數**。"
 tags:
-  - 
-Greedy
+  - Greedy
 difficulty: Medium
 ---
 

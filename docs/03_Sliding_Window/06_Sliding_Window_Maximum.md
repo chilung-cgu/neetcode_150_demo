@@ -2,8 +2,8 @@
 title: "Sliding Window Maximum (滑動窗口最大值)"
 description: "題目給一個整數陣列 `nums`，以及一個窗口大小 `k`。 這個窗口從最左邊移動到最右邊，每次只移動一步。 我們只能看到窗口內的 `k` 個數字。 請回傳 **每一個位置時窗口內的最大值**。"
 tags:
-  - 
-Sliding Window  - String
+  - Sliding Window
+  - String
 difficulty: Hard
 ---
 

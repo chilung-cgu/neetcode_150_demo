@@ -2,8 +2,9 @@
 title: "Max Area of Island (最大的島嶼面積)"
 description: "給定一個 `m x n` 的二維二進制網格 `grid`。 島嶼是一組相連的 `1` (水平或垂直)。 請回傳 **最大的** 島嶼面積。如果沒有島嶼，回傳 0。"
 tags:
-  - 
-Graph  - DFS  - BFS
+  - Graph
+  - DFS
+  - BFS
 difficulty: Medium
 ---
 

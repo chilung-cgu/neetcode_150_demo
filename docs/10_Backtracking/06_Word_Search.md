@@ -2,8 +2,8 @@
 title: "Word Search (單字搜尋)"
 description: "題目給一個 `m x n` 的字符網格 `board` 和一個單字 `word`。 如果 `word` 存在於網格中，回傳 `true`；否則回傳 `false`。 單字必須由網格中 **相鄰** 的字母組成（水平或垂直），同一個儲存格內的字母在同一個單字中最多只能使用一次。"
 tags:
-  - 
-Backtracking  - Recursion
+  - Backtracking
+  - Recursion
 difficulty: Medium
 ---
 

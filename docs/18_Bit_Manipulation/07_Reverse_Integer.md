@@ -2,8 +2,7 @@
 title: "Reverse Integer (反轉整數)"
 description: "給定一個 32 位的有符號整數 `x`。 請將其數字反轉。 如果反轉後的數值超過了 32 位有符號整數的範圍 $[-2^{31}, 2^{31} - 1]$，則回傳 0。 **假設環境不允許存儲 64 位整數 (signed or unsigned)**。"
 tags:
-  - 
-Bit Manipulation
+  - Bit Manipulation
 difficulty: Medium
 ---
 
