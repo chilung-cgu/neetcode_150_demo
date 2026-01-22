@@ -3,16 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connected Components 連通分量 - 視覺化</title>
+    <title>Connected Components - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .nodes { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .node { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; color: white; transition: all 0.3s; }
-        .node.comp0 { background: var(--viz-primary); }
-        .node.comp1 { background: var(--viz-success); color: #0f172a; }
-        .node.comp2 { background: var(--viz-warning); color: #0f172a; }
-        .edges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
-        .edge { padding: 6px 12px; background: var(--viz-bg-secondary); border-radius: 4px; font-size: 0.85rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .graph-container { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .node { 
+            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border-radius: 50%; color: white; transition: all 0.3s;
+        }
+        .node.comp0 { background: #3b82f6; }
+        .node.comp1 { background: #22c55e; }
+        .node.comp2 { background: #f59e0b; }
+        .node.comp3 { background: #ef4444; }
+        .node.comp4 { background: #8b5cf6; }
+        .node.unassigned { background: var(--viz-bg-secondary); color: var(--viz-text-muted); }
+
+        .edges-container { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+        .edge { padding: 6px 12px; background: var(--viz-bg-secondary); border-radius: 4px; font-size: 0.85rem; transition: all 0.3s; }
+        .edge.current { background: var(--viz-warning); color: #0f172a; }
+        .edge.processed { background: var(--viz-success); color: #0f172a; opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -20,38 +33,40 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">連通分量數（UNION-FIND / DFS）</div>
-                <div class="nodes" id="nodesDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">邊</div>
-                <div class="edges" id="edgesDisplay"></div>
+                <div class="viz-title">連通分量數 (Connected Components)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">範例1 (2分量)</button>
+                        <button onclick="setExample(2)">範例2 (3分量)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="graph-container" id="graphDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted);">邊</div>
+                <div class="edges-container" id="edgesDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
+                    <span class="label">Time:</span> O(n·α(n)) ≈ O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">連通分量數</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">?</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">連通分量數</div><div class="state-value" id="countDisplay">-</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -71,44 +86,140 @@
             { line: '    iota(parent.begin(), parent.end(), 0);', id: 2 },
             { line: '    int components = n;', id: 3 },
             { line: '    for (auto& e : edges) {', id: 4 },
-            { line: '        int p1 = find(parent, e[0]);', id: 5 },
-            { line: '        int p2 = find(parent, e[1]);', id: 6 },
-            { line: '        if (p1 != p2) {', id: 7 },
-            { line: '            parent[p1] = p2;', id: 8 },
-            { line: '            components--;', id: 9 },
-            { line: '        }', id: 10 },
-            { line: '    }', id: 11 },
-            { line: '    return components;', id: 12 },
-            { line: '}', id: 13 },
+            { line: '        int p1 = find(e[0]), p2 = find(e[1]);', id: 5 },
+            { line: '        if (p1 != p2) {', id: 6 },
+            { line: '            parent[p1] = p2;', id: 7 },
+            { line: '            components--;', id: 8 },
+            { line: '        }', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    return components;', id: 11 },
+            { line: '}', id: 12 },
         ];
-        const n = 5;
-        const edges = [[0,1],[1,2],[3,4]];
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: { n: 5, edges: [[0,1],[1,2],[3,4]], desc: '{0,1,2}, {3,4}' },
+            2: { n: 6, edges: [[0,1],[2,3],[4,5]], desc: '{0,1}, {2,3}, {4,5}' }
+        };
+        
+        let currentExample = examples[1];
+
+        function setExample(n) {
+            currentExample = examples[n];
+            init();
+        }
+
+        function generateAlgorithmSteps(n, edges) {
             const steps = [];
-            steps.push({ comps: {0:-1,1:-1,2:-1,3:-1,4:-1}, count: 5, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `n = 5, edges = [[0,1],[1,2],[3,4]]<br><br>初始：每個節點是獨立分量<br>components = 5` } });
-            steps.push({ comps: {0:0,1:0,2:-1,3:-1,4:-1}, count: 4, highlightLines: [4,5,6,7,8,9], explanation: { title: '邊 [0,1]', text: '合併 0 和 1<br>components = 4' } });
-            steps.push({ comps: {0:0,1:0,2:0,3:-1,4:-1}, count: 3, highlightLines: [4,5,6,7,8,9], explanation: { title: '邊 [1,2]', text: '合併 2 到 0,1 的分量<br>components = 3' } });
-            steps.push({ comps: {0:0,1:0,2:0,3:1,4:1}, count: 2, highlightLines: [4,5,6,7,8,9], explanation: { title: '邊 [3,4]', text: '合併 3 和 4<br>components = 2' } });
-            steps.push({ comps: {0:0,1:0,2:0,3:1,4:1}, count: 2, final: true, highlightLines: [12], explanation: { title: '🎉 完成！', text: '2 個連通分量：<br>{0,1,2} 和 {3,4}<br><br>時間：O(n × α(n))' } });
+            const parent = Array.from({ length: n }, (_, i) => i);
+            const nodeComponent = Array.from({ length: n }, (_, i) => i);
+            
+            function find(x) {
+                if (parent[x] !== x) parent[x] = find(parent[x]);
+                return parent[x];
+            }
+            
+            let components = n;
+            
+            steps.push({
+                nodeComponent: [...nodeComponent], count: n, processedEdges: [],
+                highlightLines: [0, 1, 2, 3],
+                explanation: { 
+                    title: '初始化', 
+                    text: `n = ${n}, 邊數 = ${edges.length}<br><br>初始每個節點是獨立分量<br>分量數 = ${n}`,
+                    formula: 'setup'
+                }
+            });
+
+            const processedEdges = [];
+
+            for (let i = 0; i < edges.length; i++) {
+                const [a, b] = edges[i];
+                const p1 = find(a), p2 = find(b);
+                
+                if (p1 !== p2) {
+                    parent[p1] = p2;
+                    components--;
+                    
+                    // Update component assignment for visualization
+                    const targetComp = Math.min(nodeComponent[p1], nodeComponent[p2]);
+                    for (let j = 0; j < n; j++) {
+                        if (find(j) === find(p2)) {
+                            nodeComponent[j] = targetComp;
+                        }
+                    }
+                    
+                    processedEdges.push(i);
+                    
+                    steps.push({
+                        nodeComponent: [...nodeComponent], count: components, 
+                        processedEdges: [...processedEdges], currentEdge: i,
+                        highlightLines: [4, 5, 6, 7, 8],
+                        explanation: { 
+                            title: `邊 [${a},${b}]`, 
+                            text: `合併兩個分量<br>分量數 ${components + 1} → ${components}`,
+                            formula: `components = ${components}`
+                        }
+                    });
+                } else {
+                    processedEdges.push(i);
+                    
+                    steps.push({
+                        nodeComponent: [...nodeComponent], count: components,
+                        processedEdges: [...processedEdges], currentEdge: i,
+                        highlightLines: [4, 5, 6],
+                        explanation: { 
+                            title: `邊 [${a},${b}]`, 
+                            text: `已在同一分量，跳過`,
+                            formula: 'skip'
+                        }
+                    });
+                }
+            }
+
+            steps.push({
+                nodeComponent: [...nodeComponent], count: components, 
+                processedEdges, final: true,
+                highlightLines: [11],
+                explanation: { 
+                    title: '完成!', 
+                    text: `共 ${components} 個連通分量`,
+                    formula: `return ${components}`
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
+            const { n, edges } = currentExample;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const comps = step.comps || {};
-                    document.getElementById('nodesDisplay').innerHTML = Array.from({length: n}, (_, i) => {
-                        const c = comps[i];
-                        const cls = c >= 0 ? `node comp${c}` : 'node comp0';
-                        return `<div class="${cls}">${i}</div>`;
-                    }).join('');
-                    document.getElementById('edgesDisplay').innerHTML = edges.map(e => `<span class="edge">[${e[0]},${e[1]}]</span>`).join('');
-                    document.getElementById('countDisplay').textContent = step.count ?? '?';
+                    // Nodes with component colors
+                    document.getElementById('graphDisplay').innerHTML = 
+                        Array.from({ length: n }, (_, i) => {
+                            const comp = step.nodeComponent?.[i] ?? i;
+                            const cls = `node comp${comp % 5}`;
+                            return `<div class="${cls}">${i}</div>`;
+                        }).join('');
+                    
+                    // Edges
+                    document.getElementById('edgesDisplay').innerHTML = 
+                        edges.map((e, i) => {
+                            let cls = 'edge';
+                            if (step.currentEdge === i) cls += ' current';
+                            else if (step.processedEdges?.includes(i)) cls += ' processed';
+                            return `<span class="${cls}">[${e[0]},${e[1]}]</span>`;
+                        }).join('');
+                    
+                    document.getElementById('countDisplay').textContent = step.count ?? '-';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(n, edges));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>
