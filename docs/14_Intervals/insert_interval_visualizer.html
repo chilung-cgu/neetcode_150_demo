@@ -3,18 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Insert Interval 插入區間 - 視覺化</title>
+    <title>Insert Interval - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .intervals { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .intervals-container { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
         .interval-row { display: flex; align-items: center; gap: 10px; }
-        .interval { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; font-weight: bold; transition: all 0.3s; }
-        .interval.new { background: var(--viz-secondary); color: #0f172a; }
-        .interval.merge { background: var(--viz-warning); color: #0f172a; }
+        .interval-label { width: 60px; color: var(--viz-text-muted); font-size: 0.9rem; }
+        .interval { 
+            padding: 10px 16px; border-radius: 8px; background: var(--viz-primary); color: white; 
+            font-weight: bold; transition: all 0.3s; border: 2px solid transparent;
+        }
+        .interval.new { background: var(--viz-warning); color: #0f172a; }
+        .interval.merge { background: var(--viz-secondary); color: #0f172a; border-color: var(--viz-warning); }
         .interval.result { background: var(--viz-success); color: #0f172a; }
-        .interval.current { border: 3px solid var(--viz-error); }
-        .timeline { display: flex; height: 40px; background: var(--viz-bg-secondary); border-radius: 6px; margin: 15px 0; position: relative; }
-        .time-block { position: absolute; height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: white; }
+        .interval.current { border-color: white; transform: scale(1.05); }
+
+        .timeline { height: 50px; background: var(--viz-bg-secondary); border-radius: 8px; margin: 15px 0; position: relative; overflow: hidden; }
+        .time-block { position: absolute; height: 20px; top: 15px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -22,21 +32,30 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">插入區間（INSERT INTERVAL）</div>
+                <div class="viz-title">插入區間 (Insert Interval)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>區間 (格式: 1,3;6,9):</label>
+                        <input type="text" id="intervalsInput" value="1,3;6,9" style="width: 150px;">
+                        <label>新區間:</label>
+                        <input type="text" id="newInput" value="2,5" style="width: 80px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
                 <div class="timeline" id="timeline"></div>
-                <div class="intervals" id="intervalsDisplay"></div>
+                <div class="intervals-container" id="intervalsDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
@@ -47,13 +66,7 @@
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">新區間</div><div class="state-value" id="newDisplay">[2, 5]</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">結果數量</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                    <div class="state-item"><div class="state-label">結果數量</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -68,64 +81,176 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'vector<vector<int>> insert(vector<vector<int>>& intervals,', id: 0 },
-            { line: '                           vector<int>& newInterval) {', id: 1 },
-            { line: '    vector<vector<int>> result;', id: 2 },
-            { line: '    int i = 0, n = intervals.size();', id: 3 },
-            { line: '    // 1. 加入所有結束在新區間開始之前的', id: 4 },
-            { line: '    while (i < n && intervals[i][1] < newInterval[0])', id: 5 },
-            { line: '        result.push_back(intervals[i++]);', id: 6 },
-            { line: '    // 2. 合併重疊區間', id: 7 },
-            { line: '    while (i < n && intervals[i][0] <= newInterval[1]) {', id: 8 },
-            { line: '        newInterval[0] = min(newInterval[0], intervals[i][0]);', id: 9 },
-            { line: '        newInterval[1] = max(newInterval[1], intervals[i][1]);', id: 10 },
-            { line: '        i++;', id: 11 },
-            { line: '    }', id: 12 },
-            { line: '    result.push_back(newInterval);', id: 13 },
-            { line: '    // 3. 加入剩餘區間', id: 14 },
-            { line: '    while (i < n) result.push_back(intervals[i++]);', id: 15 },
-            { line: '    return result;', id: 16 },
-            { line: '}', id: 17 },
+            { line: 'vector<vector<int>> insert(intervals, newInterval) {', id: 0 },
+            { line: '    vector<vector<int>> result;', id: 1 },
+            { line: '    int i = 0, n = intervals.size();', id: 2 },
+            { line: '    // 1. 加入新區間之前的', id: 3 },
+            { line: '    while (i < n && intervals[i][1] < newInterval[0])', id: 4 },
+            { line: '        result.push_back(intervals[i++]);', id: 5 },
+            { line: '    // 2. 合併重疊區間', id: 6 },
+            { line: '    while (i < n && intervals[i][0] <= newInterval[1]) {', id: 7 },
+            { line: '        newInterval[0] = min(newInterval[0], intervals[i][0]);', id: 8 },
+            { line: '        newInterval[1] = max(newInterval[1], intervals[i][1]);', id: 9 },
+            { line: '        i++;', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    result.push_back(newInterval);', id: 12 },
+            { line: '    // 3. 加入剩餘區間', id: 13 },
+            { line: '    while (i < n) result.push_back(intervals[i++]);', id: 14 },
+            { line: '    return result;', id: 15 },
+            { line: '}', id: 16 },
         ];
-        const intervals = [[1,3],[6,9]];
-        const newInterval = [2,5];
-        function generateAlgorithmSteps() {
+        
+        let currentIntervals = [[1,3],[6,9]];
+        let currentNew = [2,5];
+
+        function runCustomInput() {
+            const iStr = document.getElementById('intervalsInput').value;
+            const nStr = document.getElementById('newInput').value;
+            
+            const intervals = iStr.split(';').map(s => s.split(',').map(x => parseInt(x.trim()))).filter(a => a.length === 2 && !isNaN(a[0]));
+            const newInt = nStr.split(',').map(x => parseInt(x.trim()));
+            
+            if (intervals.length === 0 || newInt.length !== 2 || isNaN(newInt[0])) {
+                alert('請輸入有效的區間');
+                return;
+            }
+            currentIntervals = intervals;
+            currentNew = newInt;
+            init();
+        }
+
+        function generateAlgorithmSteps(intervals, newInterval) {
             const steps = [];
-            steps.push({ intervals: [[1,3],[6,9]], newInterval: [2,5], result: [], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `原區間：[[1,3], [6,9]]<br>新區間：[2,5]<br><br>三階段處理：前、合併、後` } });
-            steps.push({ intervals: [[1,3],[6,9]], newInterval: [2,5], current: 0, result: [], highlightLines: [4,5,6], explanation: { title: '階段一：檢查 [1,3]', text: '[1,3] 結束於 3<br>新區間開始於 2<br>3 ≮ 2，所以有重疊！' } });
-            steps.push({ intervals: [[1,3],[6,9]], newInterval: [1,5], current: 0, merge: true, result: [], highlightLines: [7,8,9,10,11], explanation: { title: '合併 [1,3] 和 [2,5]', text: 'min(2,1)=1, max(5,3)=5<br>新區間更新為 [1,5]', formula: 'merge → [min(2,1), max(5,3)] = [1,5]' } });
-            steps.push({ intervals: [[1,3],[6,9]], newInterval: [1,5], current: 1, result: [], highlightLines: [8], explanation: { title: '檢查 [6,9]', text: '[6,9] 開始於 6<br>新區間結束於 5<br>6 > 5，無重疊！' } });
-            steps.push({ intervals: [[1,3],[6,9]], newInterval: [1,5], result: [[1,5]], highlightLines: [13], explanation: { title: '加入合併後的區間', text: '將 [1,5] 加入結果' } });
-            steps.push({ intervals: [[1,3],[6,9]], newInterval: [1,5], result: [[1,5],[6,9]], highlightLines: [14,15], explanation: { title: '加入剩餘區間', text: '將 [6,9] 加入結果' } });
-            steps.push({ intervals: [[1,3],[6,9]], newInterval: [1,5], result: [[1,5],[6,9]], final: true, highlightLines: [16], explanation: { title: '完成！', text: '結果：[[1,5], [6,9]]<br><br>時間複雜度：O(n)<br>空間複雜度：O(n)' } });
+            const result = [];
+            let merged = [...newInterval];
+            let i = 0;
+            
+            steps.push({
+                intervals: intervals.map(iv => [...iv]), newInterval: [...newInterval], result: [], current: -1,
+                highlightLines: [0, 1, 2],
+                explanation: { title: '初始化', text: `原區間: [${intervals.map(iv => `[${iv}]`).join(', ')}]<br>新區間: [${newInterval}]<br>三階段處理`, formula: 'setup' }
+            });
+
+            // Phase 1: Add intervals before new interval
+            while (i < intervals.length && intervals[i][1] < newInterval[0]) {
+                result.push([...intervals[i]]);
+                steps.push({
+                    intervals: intervals.map(iv => [...iv]), newInterval: [...merged], result: result.map(r => [...r]),
+                    current: i, phase: 1,
+                    highlightLines: [4, 5],
+                    explanation: { 
+                        title: `階段一: [${intervals[i]}]`, 
+                        text: `[${intervals[i][1]}] < [${newInterval[0]}]<br>在新區間前，直接加入`,
+                        formula: `push [${intervals[i]}]`
+                    }
+                });
+                i++;
+            }
+
+            // Phase 2: Merge overlapping intervals
+            const mergeStart = i;
+            while (i < intervals.length && intervals[i][0] <= merged[1]) {
+                merged[0] = Math.min(merged[0], intervals[i][0]);
+                merged[1] = Math.max(merged[1], intervals[i][1]);
+                
+                steps.push({
+                    intervals: intervals.map(iv => [...iv]), newInterval: [...merged], result: result.map(r => [...r]),
+                    current: i, merging: true, phase: 2,
+                    highlightLines: [7, 8, 9, 10],
+                    explanation: { 
+                        title: `階段二: 合併 [${intervals[i]}]`, 
+                        text: `與新區間重疊<br>合併為 [${merged}]`,
+                        formula: `[min, max] = [${merged}]`
+                    }
+                });
+                i++;
+            }
+
+            // Add merged interval
+            result.push([...merged]);
+            steps.push({
+                intervals: intervals.map(iv => [...iv]), newInterval: [...merged], result: result.map(r => [...r]),
+                phase: 2,
+                highlightLines: [12],
+                explanation: { title: '加入合併區間', text: `將 [${merged}] 加入結果`, formula: `push [${merged}]` }
+            });
+
+            // Phase 3: Add remaining intervals
+            while (i < intervals.length) {
+                result.push([...intervals[i]]);
+                steps.push({
+                    intervals: intervals.map(iv => [...iv]), newInterval: [...merged], result: result.map(r => [...r]),
+                    current: i, phase: 3,
+                    highlightLines: [14],
+                    explanation: { 
+                        title: `階段三: [${intervals[i]}]`, 
+                        text: `在新區間後，直接加入`,
+                        formula: `push [${intervals[i]}]`
+                    }
+                });
+                i++;
+            }
+
+            steps.push({
+                intervals: intervals.map(iv => [...iv]), newInterval: [...merged], result: result.map(r => [...r]),
+                final: true,
+                highlightLines: [15],
+                explanation: { title: '完成!', text: `結果: [${result.map(r => `[${r}]`).join(', ')}]`, formula: `return ${result.length} intervals` }
+            });
+
             return steps;
         }
+
+        function renderTimeline(intervals, newInterval, step) {
+            const all = [...intervals, newInterval];
+            const maxEnd = Math.max(...all.map(iv => iv[1]));
+            const minStart = Math.min(...all.map(iv => iv[0]));
+            const range = maxEnd - minStart + 2;
+            
+            let html = '';
+            intervals.forEach((iv, i) => {
+                const left = ((iv[0] - minStart) / range) * 100;
+                const width = ((iv[1] - iv[0]) / range) * 100;
+                let bg = 'var(--viz-primary)';
+                if (step.current === i && step.merging) bg = 'var(--viz-secondary)';
+                html += `<div class="time-block" style="left:${left}%;width:${width}%;background:${bg};color:white;">${iv[0]}-${iv[1]}</div>`;
+            });
+            
+            const nLeft = ((newInterval[0] - minStart) / range) * 100;
+            const nWidth = ((newInterval[1] - newInterval[0]) / range) * 100;
+            html += `<div class="time-block" style="left:${nLeft}%;width:${nWidth}%;background:var(--viz-warning);top:28px;color:#0f172a;">${step.newInterval?.[0]}-${step.newInterval?.[1]}</div>`;
+            
+            return html;
+        }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '<div class="interval-row"><span style="width:60px;color:var(--text-muted)">原始:</span>';
+                    document.getElementById('timeline').innerHTML = renderTimeline(currentIntervals, currentNew, step);
+                    
+                    let html = '<div class="interval-row"><span class="interval-label">原始:</span>';
                     (step.intervals || []).forEach((iv, i) => {
                         let cls = 'interval';
-                        if (step.current === i) cls += ' current';
-                        if (step.merge && step.current === i) cls += ' merge';
+                        if (step.current === i) cls += step.merging ? ' merge' : ' current';
                         html += `<div class="${cls}">[${iv[0]}, ${iv[1]}]</div>`;
                     });
-                    html += '</div><div class="interval-row"><span style="width:60px;color:var(--text-muted)">新:</span>';
-                    html += `<div class="interval new">[${step.newInterval?.[0] ?? 2}, ${step.newInterval?.[1] ?? 5}]</div></div>`;
+                    html += '</div><div class="interval-row"><span class="interval-label">新:</span>';
+                    html += `<div class="interval new">[${step.newInterval?.[0]}, ${step.newInterval?.[1]}]</div></div>`;
+                    
                     if (step.result?.length > 0) {
-                        html += '<div class="interval-row"><span style="width:60px;color:var(--text-muted)">結果:</span>';
+                        html += '<div class="interval-row"><span class="interval-label">結果:</span>';
                         step.result.forEach(iv => html += `<div class="interval result">[${iv[0]}, ${iv[1]}]</div>`);
                         html += '</div>';
                     }
                     document.getElementById('intervalsDisplay').innerHTML = html;
-                    document.getElementById('newDisplay').textContent = `[${step.newInterval?.[0] ?? 2}, ${step.newInterval?.[1] ?? 5}]`;
-                    document.getElementById('resultDisplay').textContent = step.result?.length ?? '?';
+                    document.getElementById('resultDisplay').textContent = step.result?.length ?? '-';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentIntervals, currentNew));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

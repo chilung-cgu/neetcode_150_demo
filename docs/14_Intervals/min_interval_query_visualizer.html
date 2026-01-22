@@ -3,14 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimum Interval Query Visualization</title>
+    <title>Minimum Interval Query - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .intervals { display: flex; flex-direction: column; gap: 4px; margin: 15px 0; }
-        .interval { height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.75rem; color: white; background: var(--viz-primary); position: relative; }
-        .queries { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
-        .query { padding: 6px 12px; border-radius: 4px; font-family: monospace; background: rgba(255,255,255,0.1); }
-        .query.current { background: var(--viz-secondary); color: #0f172a; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .intervals-container { display: flex; flex-direction: column; gap: 5px; margin: 20px 0; }
+        .interval { 
+            height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; 
+            font-family: monospace; font-size: 0.75rem; color: white; background: var(--viz-primary);
+            transition: all 0.3s; border: 2px solid transparent;
+        }
+        .interval.highlight { background: var(--viz-success); color: #0f172a; border-color: white; }
+        
+        .queries-container { display: flex; gap: 8px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+        .query { 
+            padding: 8px 14px; border-radius: 6px; font-family: monospace; 
+            background: var(--viz-bg-secondary); transition: all 0.3s;
+        }
+        .query.current { background: var(--viz-warning); color: #0f172a; font-weight: bold; }
+        .query.done { background: var(--viz-success); color: #0f172a; }
     </style>
 </head>
 <body>
@@ -18,40 +33,47 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">MINIMUM INTERVAL TO INCLUDE QUERY</div>
-                <div class="intervals" id="intervalsDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted);">Queries:</div>
-                <div class="queries" id="queriesDisplay"></div>
+                <div class="viz-title">最小區間查詢 (Minimum Interval Query)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>區間:</label>
+                        <input type="text" id="intervalsInput" value="1,4;2,4;3,6;4,4" style="width: 140px;">
+                        <label>查詢:</label>
+                        <input type="text" id="queriesInput" value="2,3,4,5" style="width: 100px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
+                <div class="intervals-container" id="intervalsDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.9rem;">查詢:</div>
+                <div class="queries-container" id="queriesDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-            <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O((n+q) log n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(n+q)
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">SORT + HEAP</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -61,30 +83,91 @@
         const codeStructure = [
             { line: 'vector<int> minInterval(intervals, queries) {', id: 0 },
             { line: '    sort(intervals by start);', id: 1 },
-            { line: '    sort(queries with original indices);', id: 2 },
+            { line: '    // Sort queries with original indices', id: 2 },
             { line: '    priority_queue<pair<int,int>, vec, greater<>> minHeap;', id: 3 },
-            { line: '    for each query q:', id: 4 },
-            { line: '        // Add all intervals starting <= q', id: 5 },
-            { line: '        // Remove intervals ending < q', id: 6 },
+            { line: '    for each query q (sorted):', id: 4 },
+            { line: '        // Add intervals with start <= q', id: 5 },
+            { line: '        // Remove intervals with end < q', id: 6 },
             { line: '        // Answer = minHeap.top().first (smallest size)', id: 7 },
-            { line: '    return result;', id: 8 },
+            { line: '    return result (original order);', id: 8 },
             { line: '}', id: 9 },
         ];
-        const intervals = [[1, 4], [2, 4], [3, 6], [4, 4]];
-        const queries = [2, 3, 4, 5];
-        const answers = [3, 3, 1, 4]; // sizes of min intervals
+        
+        let currentIntervals = [[1, 4], [2, 4], [3, 6], [4, 4]];
+        let currentQueries = [2, 3, 4, 5];
 
-        function generateAlgorithmSteps() {
-            const steps = [];
+        function runCustomInput() {
+            const iStr = document.getElementById('intervalsInput').value;
+            const qStr = document.getElementById('queriesInput').value;
             
-            steps.push({ q: -1, answers: [], highlightLines: [0, 1, 2, 3], explanation: { title: 'Init', text: 'Sort intervals and queries' }});
+            const intervals = iStr.split(';').map(s => s.split(',').map(x => parseInt(x.trim()))).filter(a => a.length === 2 && !isNaN(a[0]));
+            const queries = qStr.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
             
-            for (let i = 0; i < queries.length; i++) {
-                steps.push({ q: i, answers: answers.slice(0, i + 1), highlightLines: [4, 5, 6, 7], explanation: { title: `Query ${queries[i]}`, text: `Min interval size = ${answers[i]}` }});
+            if (intervals.length < 1 || intervals.length > 6 || queries.length < 1 || queries.length > 6) {
+                alert('請輸入有效的區間 (1-6個) 和查詢 (1-6個)');
+                return;
             }
+            currentIntervals = intervals;
+            currentQueries = queries;
+            init();
+        }
+
+        function generateAlgorithmSteps(intervals, queries) {
+            const steps = [];
+            const sorted = [...intervals].sort((a, b) => a[0] - b[0]);
+            const answers = [];
             
-            steps.push({ q: -1, answers, highlightLines: [8], explanation: { title: 'Done!', text: `Result: [${answers.join(', ')}]` }});
+            steps.push({
+                currentQuery: -1, answers: [], highlightIntervals: [],
+                highlightLines: [0, 1, 2, 3],
+                explanation: { title: '初始化', text: `區間按起始排序<br>查詢也排序，記住原始索引`, formula: 'setup' }
+            });
+
+            // Sort queries with indices
+            const sortedQueries = queries.map((q, i) => [q, i]).sort((a, b) => a[0] - b[0]);
             
+            for (const [q, origIdx] of sortedQueries) {
+                // Find all intervals that contain query
+                const containing = [];
+                for (let i = 0; i < intervals.length; i++) {
+                    if (intervals[i][0] <= q && intervals[i][1] >= q) {
+                        containing.push(i);
+                    }
+                }
+                
+                // Find minimum size
+                let minSize = -1;
+                let minIdx = -1;
+                for (const idx of containing) {
+                    const size = intervals[idx][1] - intervals[idx][0] + 1;
+                    if (minSize === -1 || size < minSize) {
+                        minSize = size;
+                        minIdx = idx;
+                    }
+                }
+                
+                answers[origIdx] = minSize;
+                
+                steps.push({
+                    currentQuery: origIdx, answers: [...answers], 
+                    highlightIntervals: containing, bestInterval: minIdx,
+                    highlightLines: [4, 5, 6, 7],
+                    explanation: { 
+                        title: `查詢 ${q}`, 
+                        text: containing.length > 0 
+                            ? `包含 ${q} 的區間有 ${containing.length} 個<br>最小區間大小 = ${minSize}`
+                            : `無區間包含 ${q}<br>答案 = -1`,
+                        formula: `answer = ${minSize}`
+                    }
+                });
+            }
+
+            steps.push({
+                currentQuery: -1, answers, final: true,
+                highlightLines: [8],
+                explanation: { title: '完成!', text: `結果: [${answers.join(', ')}]`, formula: `return [${answers.join(', ')}]` }
+            });
+
             return steps;
         }
 
@@ -93,21 +176,38 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const scale = 30;
+                    const maxVal = Math.max(...currentIntervals.flat(), ...currentQueries) + 1;
+                    const scale = 300 / maxVal;
+                    
+                    // Intervals
                     let html = '';
-                    intervals.forEach((int) => {
+                    currentIntervals.forEach((int, i) => {
                         const width = (int[1] - int[0] + 1) * scale;
                         const left = (int[0] - 1) * scale;
-                        html += `<div class="interval" style="margin-left: ${left}px; width: ${width}px;">[${int[0]},${int[1]}] size=${int[1] - int[0] + 1}</div>`;
+                        const isHighlight = step.highlightIntervals?.includes(i);
+                        const isBest = step.bestInterval === i;
+                        
+                        let cls = 'interval';
+                        if (isHighlight) cls += ' highlight';
+                        
+                        html += `<div class="${cls}" style="margin-left:${left}px;width:${width}px;${isBest ? 'border-color:var(--viz-warning);' : ''}">[${int[0]},${int[1]}] size=${int[1] - int[0] + 1}</div>`;
                     });
                     document.getElementById('intervalsDisplay').innerHTML = html;
-                    document.getElementById('queriesDisplay').innerHTML = queries.map((q, i) =>
-                        `<span class="query ${i === step.q ? 'current' : ''}">${q}${step.answers[i] !== undefined ? '→' + step.answers[i] : ''}</span>`
-                    ).join('');
+
+                    // Queries
+                    document.getElementById('queriesDisplay').innerHTML = currentQueries.map((q, i) => {
+                        let cls = 'query';
+                        if (step.currentQuery === i) cls += ' current';
+                        else if (step.answers?.[i] !== undefined) cls += ' done';
+                        
+                        const ans = step.answers?.[i];
+                        return `<span class="${cls}">${q}${ans !== undefined ? ' → ' + ans : ''}</span>`;
+                    }).join('');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentIntervals, currentQueries));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

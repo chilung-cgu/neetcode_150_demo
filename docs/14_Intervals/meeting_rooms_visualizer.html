@@ -3,12 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Rooms Visualization</title>
+    <title>Meeting Rooms - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .timeline { display: flex; flex-direction: column; gap: 6px; margin: 15px 0; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .timeline-container { display: flex; flex-direction: column; gap: 8px; margin: 20px 0; }
         .meeting { display: flex; align-items: center; gap: 10px; }
-        .bar { height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.8rem; color: white; }
+        .meeting-label { width: 60px; font-size: 0.85rem; color: var(--viz-text-muted); }
+        .bar { 
+            height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; 
+            font-family: monospace; font-size: 0.85rem; color: white; font-weight: bold;
+            transition: all 0.3s; border: 2px solid transparent;
+        }
+        .bar.current { border-color: white; }
+        .bar.overlap { background: var(--viz-error) !important; }
     </style>
 </head>
 <body>
@@ -16,49 +28,45 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">MEETING ROOMS</div>
-                <div class="timeline" id="timelineDisplay"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">會議室 (Meeting Rooms)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>會議 (格式: 0,30;5,10;15,20):</label>
+                        <input type="text" id="intervalsInput" value="0,30;5,10;15,20" style="width: 200px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
-                <div class="controls-row-2">
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                
+                <div class="timeline-container" id="timelineDisplay"></div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(n log n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Can Attend All?</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">可參加全部?</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">CHECK OVERLAP</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -66,26 +74,74 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'bool canAttendMeetings(intervals) {', id: 0 },
-            { line: '    sort(intervals);', id: 1 },
+            { line: 'bool canAttendMeetings(vector<vector<int>>& intervals) {', id: 0 },
+            { line: '    sort(intervals.begin(), intervals.end());', id: 1 },
             { line: '    for (int i = 1; i < intervals.size(); i++) {', id: 2 },
             { line: '        if (intervals[i][0] < intervals[i-1][1])', id: 3 },
-            { line: '            return false; // overlap!', id: 4 },
+            { line: '            return false;', id: 4 },
             { line: '    }', id: 5 },
             { line: '    return true;', id: 6 },
             { line: '}', id: 7 },
         ];
-        const intervals = [[0, 30], [5, 10], [15, 20]];
-        const colors = ['#ef4444', '#3b82f6', '#22c55e'];
+        
+        let currentIntervals = [[0, 30], [5, 10], [15, 20]];
+        const colors = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6'];
 
-        function generateAlgorithmSteps() {
+        function runCustomInput() {
+            const str = document.getElementById('intervalsInput').value;
+            const intervals = str.split(';').map(s => s.split(',').map(x => parseInt(x.trim()))).filter(a => a.length === 2 && !isNaN(a[0]));
+            
+            if (intervals.length < 1 || intervals.length > 6) {
+                alert('請輸入 1-6 個會議');
+                return;
+            }
+            currentIntervals = intervals;
+            init();
+        }
+
+        function generateAlgorithmSteps(intervals) {
             const steps = [];
-            const sorted = [[0, 30], [5, 10], [15, 20]];
+            const sorted = [...intervals].sort((a, b) => a[0] - b[0]);
             
-            steps.push({ compare: [], highlightLines: [0, 1], explanation: { title: 'Sort by start', text: '[[0,30], [5,10], [15,20]]' }});
-            steps.push({ compare: [0, 1], overlap: true, highlightLines: [3, 4], explanation: { title: 'Compare [0,30] & [5,10]', text: '5 < 30 → OVERLAP!' }});
-            steps.push({ compare: [0, 1], result: false, highlightLines: [4], explanation: { title: 'Cannot attend all', text: 'Meetings overlap' }});
-            
+            steps.push({
+                intervals: sorted.map(iv => [...iv]), compare: [],
+                highlightLines: [0, 1],
+                explanation: { title: '初始化', text: `按開始時間排序<br>檢查相鄰會議是否重疊`, formula: 'sort by start' }
+            });
+
+            for (let i = 1; i < sorted.length; i++) {
+                const prev = sorted[i - 1];
+                const curr = sorted[i];
+                const overlap = curr[0] < prev[1];
+                
+                steps.push({
+                    intervals: sorted.map(iv => [...iv]), compare: [i - 1, i], overlap,
+                    highlightLines: overlap ? [3, 4] : [3],
+                    explanation: { 
+                        title: `比較 [${prev}] 和 [${curr}]`, 
+                        text: overlap 
+                            ? `${curr[0]} < ${prev[1]} → 重疊!<br>無法參加所有會議` 
+                            : `${curr[0]} >= ${prev[1]} → 無重疊`,
+                        formula: overlap ? 'OVERLAP!' : 'OK'
+                    }
+                });
+                
+                if (overlap) {
+                    steps.push({
+                        intervals: sorted.map(iv => [...iv]), compare: [i - 1, i], overlap: true, result: false,
+                        highlightLines: [4],
+                        explanation: { title: '結果: 無法參加', text: `有會議重疊`, formula: 'return false' }
+                    });
+                    return steps;
+                }
+            }
+
+            steps.push({
+                intervals: sorted.map(iv => [...iv]), result: true, final: true,
+                highlightLines: [6],
+                explanation: { title: '結果: 可以參加', text: `所有會議都無重疊`, formula: 'return true' }
+            });
+
             return steps;
         }
 
@@ -94,21 +150,42 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const scale = 8;
+                    const intervals = step.intervals || currentIntervals;
+                    const maxVal = Math.max(...intervals.flat());
+                    const scale = 300 / maxVal;
+                    
                     let html = '';
                     intervals.forEach((int, i) => {
                         const width = (int[1] - int[0]) * scale;
                         const left = int[0] * scale;
                         const highlight = step.compare?.includes(i);
-                        html += `<div class="meeting"><div class="bar" style="margin-left: ${left}px; width: ${width}px; background: ${colors[i]}; ${highlight ? 'border: 2px solid white;' : ''}">[${int[0]},${int[1]}]</div></div>`;
+                        const isOverlap = step.overlap && highlight;
+                        
+                        let cls = 'bar';
+                        if (highlight) cls += ' current';
+                        if (isOverlap) cls += ' overlap';
+                        
+                        html += `<div class="meeting">
+                            <span class="meeting-label">會議 ${i + 1}</span>
+                            <div class="${cls}" style="margin-left:${left}px;width:${width}px;background:${isOverlap ? 'var(--viz-error)' : colors[i % colors.length]}">
+                                [${int[0]}, ${int[1]}]
+                            </div>
+                        </div>`;
                     });
                     document.getElementById('timelineDisplay').innerHTML = html;
-                    document.getElementById('resultDisplay').textContent = step.result === false ? 'No' : '-';
-                    document.getElementById('resultDisplay').style.color = step.result === false ? 'var(--viz-error)' : 'var(--viz-success)';
+                    
+                    if (step.result !== undefined) {
+                        document.getElementById('resultDisplay').textContent = step.result ? 'Yes ✓' : 'No ✗';
+                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '-';
+                        document.getElementById('resultDisplay').style.color = 'inherit';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentIntervals));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>
