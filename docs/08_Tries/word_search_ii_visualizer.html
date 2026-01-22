@@ -3,16 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Search II Visualization</title>
+    <title>Word Search II - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: grid; gap: 2px; max-width: 200px; margin: 0 auto; }
-        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; font-size: 1.1rem; }
+        .grid { display: grid; gap: 2px; max-width: 220px; margin: 0 auto; }
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; font-size: 1.1rem; font-weight: bold; }
         .cell.path { background: var(--viz-secondary); color: #0f172a; }
         .cell.found { background: var(--viz-success); color: #0f172a; }
+        .cell.visited { background: var(--viz-warning); color: #0f172a; }
         .words-display { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
         .word-item { padding: 6px 12px; border-radius: 4px; font-family: monospace; background: rgba(255,255,255,0.1); }
         .word-item.found { background: var(--viz-success); color: #0f172a; }
+        .word-item.searching { background: var(--viz-warning); color: #0f172a; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input, .input-row textarea { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -21,8 +29,22 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">WORD SEARCH II (TRIE + BACKTRACKING)</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <textarea id="boardInput" rows="4" style="width: 180px;">o,a,a,n
+e,t,a,e
+i,h,k,r
+i,f,l,v</textarea>
+                    </div>
+                    <div class="input-row">
+                        <input type="text" id="wordsInput" placeholder="單詞列表" value="oath,pea,eat,rain" style="width: 200px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">每行一列，逗號分隔字母</div>
+                </div>
                 <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(4, 40px);"></div>
-                <div style="margin-top: 15px; text-align: center; color: var(--viz-text-muted);">Found Words:</div>
+                <div style="margin-top: 15px; text-align: center; color: var(--viz-text-muted);">找到的單詞：</div>
                 <div class="words-display" id="wordsDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← Prev</button>
@@ -40,14 +62,18 @@
                         </select>
                     </div>
                 </div>
-            <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O(m×n×4^L)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(W×L)
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>未訪問</div>
+                    <div class="legend-item"><div class="legend-color current"></div>目前路徑</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>找到單詞</div>
                 </div>
             </div>
             <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
+                <div class="viz-title">演算法說明</div>
                 <div class="explanation" id="explanation"></div>
             </div>
         </div>
@@ -63,60 +89,171 @@
         const codeStructure = [
             { line: 'vector<string> findWords(board, words) {', id: 0 },
             { line: '    // Build Trie from words', id: 1 },
-            { line: '    Trie trie; for (auto& w : words) trie.insert(w);', id: 2 },
-            { line: '    set<string> result;', id: 3 },
-            { line: '    for (int i = 0; i < m; i++)', id: 4 },
-            { line: '        for (int j = 0; j < n; j++)', id: 5 },
-            { line: '            dfs(board, i, j, trie.root, "", result);', id: 6 },
-            { line: '    return vector<string>(result.begin(), result.end());', id: 7 },
-            { line: '}', id: 8 },
-            { line: 'void dfs(board, i, j, node, path, result) {', id: 9 },
-            { line: '    if (node->isWord) result.insert(path);', id: 10 },
-            { line: '    // Explore 4 directions if valid', id: 11 },
-            { line: '}', id: 12 },
+            { line: '    Trie trie;', id: 2 },
+            { line: '    for (auto& w : words) trie.insert(w);', id: 3 },
+            { line: '    set<string> result;', id: 4 },
+            { line: '    for (int i = 0; i < m; i++)', id: 5 },
+            { line: '        for (int j = 0; j < n; j++)', id: 6 },
+            { line: '            dfs(board, i, j, trie.root, "", result);', id: 7 },
+            { line: '    return vector<string>(result.begin(), result.end());', id: 8 },
+            { line: '}', id: 9 },
+            { line: 'void dfs(board, i, j, node, path, result) {', id: 10 },
+            { line: '    if (node->isWord) result.insert(path);', id: 11 },
+            { line: '    char c = board[i][j]; board[i][j] = \'#\';', id: 12 },
+            { line: '    // Explore 4 directions', id: 13 },
+            { line: '    for (auto [di, dj] : {{0,1},{1,0},{0,-1},{-1,0}})', id: 14 },
+            { line: '        if (valid(ni, nj) && node->children[c])', id: 15 },
+            { line: '            dfs(board, ni, nj, node->children[c], path+c, result);', id: 16 },
+            { line: '    board[i][j] = c; // backtrack', id: 17 },
+            { line: '}', id: 18 },
         ];
-        const board = [['o','a','a','n'],['e','t','a','e'],['i','h','k','r'],['i','f','l','v']];
-        const words = ['oath', 'pea', 'eat', 'rain'];
 
-        function generateAlgorithmSteps() {
+        let currentBoard = [['o','a','a','n'],['e','t','a','e'],['i','h','k','r'],['i','f','l','v']];
+        let currentWords = ['oath', 'pea', 'eat', 'rain'];
+
+        function parseBoard(input) {
+            return input.trim().split('\n').map(row => 
+                row.split(',').map(c => c.trim().toLowerCase())
+            );
+        }
+
+        function generateAlgorithmSteps(board, words) {
             const steps = [];
-            steps.push({ path: [], found: [], highlightLines: [0, 1, 2], explanation: { title: 'Build Trie', text: 'Insert all words into Trie' }});
+            const m = board.length, n = board[0].length;
+            const found = new Set();
             
-            // Finding "oath"
-            steps.push({ path: [[0,0]], found: [], highlightLines: [4, 5, 6], explanation: { title: 'Start DFS at (0,0)', text: 'Starting with "o"' }});
-            steps.push({ path: [[0,0],[1,0]], found: [], highlightLines: [9], explanation: { title: 'DFS: o→e', text: 'No "oe" prefix in Trie, backtrack' }});
-            steps.push({ path: [[0,0],[0,1]], found: [], highlightLines: [9], explanation: { title: 'DFS: o→a', text: 'Checking "oa"...' }});
-            steps.push({ path: [[0,0],[0,1],[1,1]], found: [], highlightLines: [9], explanation: { title: 'DFS: o→a→t', text: 'Checking "oat"...' }});
-            steps.push({ path: [[0,0],[0,1],[1,1],[2,1]], found: ['oath'], highlightLines: [10], explanation: { title: 'Found: "oath"', text: 'o→a→t→h ✓' }});
-            
-            // Finding "eat"
-            steps.push({ path: [[1,3]], found: ['oath'], highlightLines: [4, 5, 6], explanation: { title: 'Start DFS at (1,3)', text: 'Starting with "e"' }});
-            steps.push({ path: [[1,3],[0,3],[1,2]], found: ['oath', 'eat'], highlightLines: [10], explanation: { title: 'Found: "eat"', text: 'e→a→t ✓' }});
-            
-            steps.push({ path: [], found: ['oath', 'eat'], highlightLines: [7], explanation: { title: 'Done!', text: 'Found words: ["oath", "eat"]' }});
-            
+            // Build Trie
+            const trie = {};
+            for (const word of words) {
+                let node = trie;
+                for (const c of word) {
+                    if (!node[c]) node[c] = {};
+                    node = node[c];
+                }
+                node.isWord = word;
+            }
+
+            steps.push({
+                board: board,
+                words: words,
+                path: [],
+                found: [],
+                highlightLines: [0, 1, 2, 3, 4],
+                explanation: {
+                    title: '建構 Trie',
+                    text: `將所有單詞加入 Trie<br>單詞: [${words.join(', ')}]`,
+                    formula: 'for word in words: trie.insert(word)'
+                }
+            });
+
+            // DFS simulation
+            function dfs(i, j, node, path, visited) {
+                if (i < 0 || i >= m || j < 0 || j >= n) return;
+                if (visited.has(`${i},${j}`)) return;
+                
+                const c = board[i][j];
+                if (!node[c]) return;
+                
+                const newVisited = new Set(visited);
+                newVisited.add(`${i},${j}`);
+                const newPath = [...path, [i, j]];
+                const nextNode = node[c];
+                
+                if (nextNode.isWord && !found.has(nextNode.isWord)) {
+                    found.add(nextNode.isWord);
+                    steps.push({
+                        board: board,
+                        words: words,
+                        path: newPath,
+                        found: [...found],
+                        currentWord: nextNode.isWord,
+                        highlightLines: [11],
+                        explanation: {
+                            title: `找到 "${nextNode.isWord}"！`,
+                            text: `路徑: ${newPath.map(p => board[p[0]][p[1]]).join('→')}`,
+                            formula: `result.insert("${nextNode.isWord}")`
+                        }
+                    });
+                } else if (newPath.length > 1) {
+                    steps.push({
+                        board: board,
+                        words: words,
+                        path: newPath,
+                        found: [...found],
+                        highlightLines: [14, 15, 16],
+                        explanation: {
+                            title: `DFS 探索`,
+                            text: `目前路徑: ${newPath.map(p => board[p[0]][p[1]]).join('→')}<br>繼續探索四個方向`,
+                            formula: `path = "${newPath.map(p => board[p[0]][p[1]]).join('')}"`
+                        }
+                    });
+                }
+                
+                dfs(i+1, j, nextNode, newPath, newVisited);
+                dfs(i-1, j, nextNode, newPath, newVisited);
+                dfs(i, j+1, nextNode, newPath, newVisited);
+                dfs(i, j-1, nextNode, newPath, newVisited);
+            }
+
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    dfs(i, j, trie, [], new Set());
+                }
+            }
+
+            steps.push({
+                board: board,
+                words: words,
+                path: [],
+                found: [...found],
+                final: true,
+                highlightLines: [8],
+                explanation: {
+                    title: '🎉 完成！',
+                    text: `找到 ${found.size} 個單詞: [${[...found].join(', ')}]<br><br>Time: O(m×n×4^L), Space: O(W×L)`,
+                    formula: `return [${[...found].join(', ')}]`
+                }
+            });
+
             return steps;
         }
 
+        function runCustomInput() {
+            const boardInput = document.getElementById('boardInput').value;
+            const wordsInput = document.getElementById('wordsInput').value;
+            currentBoard = parseBoard(boardInput);
+            currentWords = wordsInput.split(',').map(w => w.trim().toLowerCase());
+            init(currentBoard, currentWords);
+        }
+
         let viz;
-        function init() {
+        function init(board = currentBoard, words = currentWords) {
+            const n = board[0].length;
+            document.getElementById('gridDisplay').style.gridTemplateColumns = `repeat(${n}, 40px)`;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
-                    for (let i = 0; i < 4; i++) {
-                        for (let j = 0; j < 4; j++) {
+                    for (let i = 0; i < step.board.length; i++) {
+                        for (let j = 0; j < step.board[0].length; j++) {
                             const onPath = step.path?.some(p => p[0] === i && p[1] === j);
-                            html += `<div class="cell ${onPath ? 'path' : ''}">${board[i][j]}</div>`;
+                            let cls = 'cell';
+                            if (onPath) cls += ' path';
+                            html += `<div class="${cls}">${step.board[i][j]}</div>`;
                         }
                     }
                     document.getElementById('gridDisplay').innerHTML = html;
-                    document.getElementById('wordsDisplay').innerHTML = words.map(w =>
-                        `<span class="word-item ${step.found?.includes(w) ? 'found' : ''}">${w}</span>`
-                    ).join('');
+                    
+                    document.getElementById('wordsDisplay').innerHTML = step.words.map(w => {
+                        let cls = 'word-item';
+                        if (step.found?.includes(w)) cls += ' found';
+                        else if (step.currentWord === w) cls += ' searching';
+                        return `<span class="${cls}">${w}</span>`;
+                    }).join('');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(board, words));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

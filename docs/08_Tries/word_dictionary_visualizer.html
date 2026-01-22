@@ -6,17 +6,22 @@
     <title>Design Add and Search Words - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .trie { display: flex; flex-direction: column; align-items: center; margin: 20px 0; }
-        .level { display: flex; gap: 10px; margin: 5px 0; }
+        .trie { display: flex; flex-direction: column; align-items: center; margin: 20px 0; min-height: 100px; }
+        .level { display: flex; gap: 10px; margin: 5px 0; justify-content: center; }
         .node { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; font-size: 0.9rem; }
         .node.end { border: 3px solid var(--viz-success); }
         .node.current { background: var(--viz-warning); color: #0f172a; }
         .node.matched { background: var(--viz-success); color: #0f172a; }
-        .operations { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .op { padding: 8px 12px; border-radius: 6px; }
-        .op.add { background: var(--viz-primary); color: white; }
-        .op.search { background: var(--viz-secondary); color: #0f172a; }
-        .op.current { border: 3px solid var(--viz-warning); }
+        .node.wildcard { background: var(--viz-secondary); color: #0f172a; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
+        .words-list { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+        .word-tag { padding: 4px 10px; background: var(--viz-success); color: #0f172a; border-radius: 4px; font-size: 0.85rem; }
+        .op-display { text-align: center; font-size: 1.1rem; color: var(--viz-secondary); margin: 10px 0; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -25,9 +30,19 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">添加與搜索單詞（TRIE + DFS）</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="wordInput" placeholder="輸入單詞" value="bad" style="width: 120px;">
+                        <button onclick="addWord()">addWord</button>
+                        <button onclick="searchWord()">search</button>
+                    </div>
+                    <div class="input-hint">"." 可匹配任意字母，例如: ".ad" 匹配 "bad", "dad"</div>
+                    <div style="text-align: center; color: var(--text-muted); margin-top: 10px;">已添加單詞</div>
+                    <div class="words-list" id="wordsList"></div>
+                </div>
+                <div class="op-display" id="opDisplay">-</div>
                 <div class="trie" id="trieDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">操作</div>
-                <div class="operations" id="opsDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
@@ -44,17 +59,19 @@
                         </select>
                     </div>
                 </div>
-            </div>
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">addWord:</span> O(m)
+                    <span class="label" style="margin-left: 12px;">search:</span> O(26^m)
                 </div>
-            
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                </div>
                 <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                    <div class="legend-item"><div class="legend-color normal"></div>一般節點</div>
+                    <div class="legend-item"><div class="legend-color current"></div>萬用字元</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>單詞結尾</div>
                 </div>
+            </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
@@ -70,56 +87,197 @@
             { line: 'class WordDictionary {', id: 0 },
             { line: '    TrieNode* root;', id: 1 },
             { line: 'public:', id: 2 },
-            { line: '    void addWord(string word) {', id: 3 },
-            { line: '        // 標準 Trie 插入', id: 4 },
-            { line: '    }', id: 5 },
-            { line: '    bool search(string word) {', id: 6 },
-            { line: '        return dfs(root, word, 0);', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '    bool dfs(TrieNode* node, string& word, int i) {', id: 9 },
-            { line: '        if (i == word.size()) return node->isEnd;', id: 10 },
-            { line: '        if (word[i] == \'.\') {', id: 11 },
-            { line: '            for (auto& [c, child] : node->children)', id: 12 },
-            { line: '                if (dfs(child, word, i+1)) return true;', id: 13 },
-            { line: '        } else {', id: 14 },
-            { line: '            if (node->children.count(word[i]))', id: 15 },
-            { line: '                return dfs(node->children[word[i]], word, i+1);', id: 16 },
-            { line: '        }', id: 17 },
-            { line: '        return false;', id: 18 },
-            { line: '    }', id: 19 },
-            { line: '};', id: 20 },
+            { line: '    void addWord(string word) { /* 標準插入 */ }', id: 3 },
+            { line: '    bool search(string word) {', id: 4 },
+            { line: '        return dfs(root, word, 0);', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    bool dfs(TrieNode* node, string& word, int i) {', id: 7 },
+            { line: '        if (i == word.size()) return node->isEnd;', id: 8 },
+            { line: '        if (word[i] == \'.\') {', id: 9 },
+            { line: '            for (auto& [c, child] : node->children)', id: 10 },
+            { line: '                if (dfs(child, word, i+1)) return true;', id: 11 },
+            { line: '        } else {', id: 12 },
+            { line: '            if (node->children.count(word[i]))', id: 13 },
+            { line: '                return dfs(node->children[word[i]], word, i+1);', id: 14 },
+            { line: '        }', id: 15 },
+            { line: '        return false;', id: 16 },
+            { line: '    }', id: 17 },
+            { line: '};', id: 18 },
         ];
-        function generateAlgorithmSteps() {
+
+        let trie = {};
+        let insertedWords = [];
+
+        function insertWordToTrie(word) {
+            let node = trie;
+            for (const c of word) {
+                if (!node[c]) node[c] = {};
+                node = node[c];
+            }
+            node.isEnd = true;
+        }
+
+        function searchInTrie(word, node = trie, idx = 0) {
+            if (idx === word.length) return node.isEnd === true;
+            const c = word[idx];
+            if (c === '.') {
+                for (const key in node) {
+                    if (key !== 'isEnd' && searchInTrie(word, node[key], idx + 1)) return true;
+                }
+                return false;
+            }
+            if (!node[c]) return false;
+            return searchInTrie(word, node[c], idx + 1);
+        }
+
+        function generateAddSteps(word) {
             const steps = [];
-            steps.push({ ops: [], words: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: 'WordDictionary 使用 Trie<br><br>特殊：支援 "." 萬用字元<br>搜索時用 DFS 嘗試所有可能' } });
-            steps.push({ ops: [{type:'add',word:'bad'}], words: ['bad'], currentOp: 0, highlightLines: [3,4,5], explanation: { title: 'addWord("bad")', text: '插入 b → a → d<br>標記 d 為結尾' } });
-            steps.push({ ops: [{type:'add',word:'bad'},{type:'add',word:'dad'}], words: ['bad','dad'], currentOp: 1, highlightLines: [3,4,5], explanation: { title: 'addWord("dad")', text: '插入 d → a → d<br>標記 d 為結尾' } });
-            steps.push({ ops: [{type:'add',word:'bad'},{type:'add',word:'dad'},{type:'search',word:'.ad',result:true}], words: ['bad','dad'], currentOp: 2, highlightLines: [6,7,9,11,12,13], explanation: { title: 'search(".ad") = true', text: '"." 匹配 b 或 d<br>找到 "bad" 或 "dad"' } });
-            steps.push({ ops: [{type:'add',word:'bad'},{type:'add',word:'dad'},{type:'search',word:'.ad',result:true},{type:'search',word:'b..',result:true}], words: ['bad','dad'], currentOp: 3, final: true, highlightLines: [6,7,9,11,12,13], explanation: { title: 'search("b..") = true', text: '"b.." 匹配 "bad"<br><br>時間：addWord O(m), search O(26^m)' } });
+            steps.push({
+                op: `addWord("${word}")`,
+                highlightLines: [3],
+                explanation: {
+                    title: `添加 "${word}"`,
+                    text: `標準 Trie 插入操作<br>建立路徑並標記結尾`,
+                    formula: 'insert(word)'
+                }
+            });
+            insertWordToTrie(word);
+            steps.push({
+                op: `addWord("${word}") ✓`,
+                path: word.split(''),
+                highlightLines: [3],
+                explanation: {
+                    title: `完成添加`,
+                    text: `"${word}" 已加入 Trie`,
+                    formula: 'node->isEnd = true'
+                }
+            });
             return steps;
         }
+
+        function generateSearchSteps(word) {
+            const steps = [];
+            const hasWildcard = word.includes('.');
+            
+            steps.push({
+                op: `search("${word}")`,
+                highlightLines: [4, 5],
+                explanation: {
+                    title: `搜尋 "${word}"`,
+                    text: hasWildcard 
+                        ? `包含 "." 萬用字元<br>需要 DFS 嘗試所有可能`
+                        : `標準 Trie 搜尋`,
+                    formula: 'dfs(root, word, 0)'
+                }
+            });
+
+            const result = searchInTrie(word);
+            
+            if (hasWildcard) {
+                steps.push({
+                    op: `search("${word}")`,
+                    wildcardIdx: word.indexOf('.'),
+                    highlightLines: [9, 10, 11],
+                    explanation: {
+                        title: `遇到 "."`,
+                        text: `嘗試所有可能的字母<br>任一成功即返回 true`,
+                        formula: 'for (c in children) dfs(child, i+1)'
+                    }
+                });
+            }
+
+            steps.push({
+                op: `search("${word}") ${result ? '✓' : '✗'}`,
+                result: result,
+                highlightLines: result ? [8] : [16],
+                explanation: {
+                    title: result ? '找到！' : '未找到',
+                    text: result ? `"${word}" 存在於字典中` : `"${word}" 不存在`,
+                    formula: `return ${result}`
+                }
+            });
+
+            return steps;
+        }
+
+        function addWord() {
+            const word = document.getElementById('wordInput').value.toLowerCase();
+            if (!word || word.includes('.')) {
+                alert('addWord 不能包含 "."');
+                return;
+            }
+            insertedWords.push(word);
+            updateWordsList();
+            viz.setSteps(generateAddSteps(word));
+        }
+
+        function searchWord() {
+            const word = document.getElementById('wordInput').value.toLowerCase();
+            if (!word) return;
+            viz.setSteps(generateSearchSteps(word));
+        }
+
+        function updateWordsList() {
+            document.getElementById('wordsList').innerHTML = 
+                insertedWords.map(w => `<span class="word-tag">${w}</span>`).join('') || 
+                '<span style="color: var(--text-muted)">無</span>';
+        }
+
+        function renderTrie() {
+            function buildHtml(obj, depth = 0) {
+                const entries = Object.entries(obj).filter(([k]) => k !== 'isEnd');
+                if (entries.length === 0) return '';
+                
+                let html = '<div class="level">';
+                for (const [char, child] of entries) {
+                    let cls = 'node';
+                    if (child.isEnd) cls += ' end';
+                    html += `<div class="${cls}">${char}</div>`;
+                }
+                html += '</div>';
+                
+                for (const [char, child] of entries) {
+                    html += buildHtml(child, depth + 1);
+                }
+                return html;
+            }
+
+            const entries = Object.entries(trie).filter(([k]) => k !== 'isEnd');
+            if (entries.length === 0) {
+                return '<div class="level"><div class="node" style="background: var(--viz-warning)">root</div></div>';
+            }
+            return '<div class="level"><div class="node" style="background: var(--viz-warning)">root</div></div>' + buildHtml(trie);
+        }
+
         let viz;
         function init() {
+            trie = {};
+            insertedWords = [];
+            updateWordsList();
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    // Simple trie display
-                    let trieHtml = '<div class="level"><div class="node">root</div></div>';
-                    if (step.words?.length > 0) {
-                        trieHtml += '<div class="level">' + (step.words.includes('bad') ? '<div class="node">b</div>' : '') + (step.words.includes('dad') ? '<div class="node">d</div>' : '') + '</div>';
-                        trieHtml += '<div class="level"><div class="node">a</div>' + (step.words.length > 1 ? '<div class="node">a</div>' : '') + '</div>';
-                        trieHtml += '<div class="level"><div class="node end">d</div>' + (step.words.length > 1 ? '<div class="node end">d</div>' : '') + '</div>';
-                    }
-                    document.getElementById('trieDisplay').innerHTML = trieHtml;
-                    document.getElementById('opsDisplay').innerHTML = (step.ops || []).map((op, i) => {
-                        let cls = `op ${op.type}`;
-                        if (i === step.currentOp) cls += ' current';
-                        const result = op.result !== undefined ? ` → ${op.result}` : '';
-                        return `<div class="${cls}">${op.type}("${op.word}")${result}</div>`;
-                    }).join('') || '無操作';
+                    document.getElementById('opDisplay').textContent = step.op || '-';
+                    document.getElementById('resultDisplay').textContent = 
+                        step.result === true ? 'true ✓' : 
+                        step.result === false ? 'false ✗' : '-';
+                    document.getElementById('resultDisplay').style.color = 
+                        step.result === true ? 'var(--viz-success)' : 
+                        step.result === false ? 'var(--viz-error)' : 'var(--viz-text)';
+                    document.getElementById('trieDisplay').innerHTML = renderTrie();
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            
+            viz.setSteps([{
+                op: '初始化',
+                highlightLines: [0, 1, 2],
+                explanation: {
+                    title: '初始化 WordDictionary',
+                    text: '使用 Trie 支援 "." 萬用字元搜尋<br>"." 可匹配任意單個字母',
+                    formula: 'support wildcard "."'
+                }
+            }]);
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
