@@ -17,7 +17,12 @@
         .element.prefix { background: var(--viz-success); color: #0f172a; }
         .element.suffix { background: var(--viz-warning); color: #0f172a; }
         .element.result { background: var(--viz-secondary); color: #0f172a; }
-        .element.current { border: 3px solid var(--viz-error); }
+        .element.current { border: 3px solid var(--viz-error); transform: scale(1.1); }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { flex: 1; min-width: 150px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -43,17 +48,23 @@
                         </select>
                     </div>
                 </div>
-            </div>
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1) — 不計輸出陣列
                 </div>
-            
                 <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-primary);"></div>輸入</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>前綴乘積</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-secondary);"></div>結果</div>
                 </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customNums" placeholder="輸入陣列，例: 1,2,3,4" value="1,2,3,4">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+            </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
@@ -84,42 +95,63 @@
             { line: '    return result;', id: 15 },
             { line: '}', id: 16 },
         ];
-        const nums = [1, 2, 3, 4];
-        function generateAlgorithmSteps() {
+        let currentNums = [1, 2, 3, 4];
+        function generateAlgorithmSteps(nums) {
             const steps = [];
-            steps.push({ input: nums, prefix: [1,1,1,1], suffix: [], result: [], highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: `輸入：[${nums.join(', ')}]<br><br>不能用除法！<br>result[i] = 左邊乘積 × 右邊乘積` } });
-            // Prefix pass
-            steps.push({ input: nums, prefix: [1, 1, 2, 6], current: 'prefix', highlightLines: [5,6,7,8], explanation: { title: '前綴乘積', text: 'prefix[0] = 1<br>prefix[1] = 1<br>prefix[2] = 1×2 = 2<br>prefix[3] = 1×2×3 = 6', formula: 'result[i] = 左邊所有數的乘積' } });
-            // Suffix pass
-            steps.push({ input: nums, prefix: [1, 1, 2, 6], suffix: [24, 12, 4, 1], result: [24, 12, 8, 6], current: 'suffix', highlightLines: [9,10,11,12,13], explanation: { title: '後綴乘積', text: '從右往左：<br>result[3] = 6×1 = 6<br>result[2] = 2×4 = 8<br>result[1] = 1×12 = 12<br>result[0] = 1×24 = 24', formula: 'result[i] *= 右邊所有數的乘積' } });
-            steps.push({ input: nums, result: [24, 12, 8, 6], final: true, highlightLines: [15], explanation: { title: '完成！', text: `結果：[24, 12, 8, 6]<br><br>驗證：24=2×3×4, 12=1×3×4...<br><br>時間 O(n)，空間 O(1)` } });
+            const n = nums.length;
+            // 初始化
+            steps.push({ input: nums, prefix: Array(n).fill(1), result: [], currentIdx: -1, highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: `輸入：[${nums.join(', ')}]<br><br>關鍵洞察：不能用除法！<br>result[i] = 左邊乘積 × 右邊乘積`, formula: `result[i] = prefix[i] × suffix[i]` } });
+            // 前綴乘積步驟
+            const prefix = [];
+            let p = 1;
+            for (let i = 0; i < n; i++) {
+                prefix.push(p);
+                steps.push({ input: nums, prefix: [...prefix, ...Array(n - prefix.length).fill('?')], currentIdx: i, phase: 'prefix', highlightLines: [5,6,7], explanation: { title: `前綴乘積 [${i}]`, text: `prefix = ${p}<br>result[${i}] = ${p}<br>prefix = ${p} × ${nums[i]} = ${p * nums[i]}`, formula: `result[${i}] = ∏(nums[0..${i-1}]) = ${p}` } });
+                p *= nums[i];
+            }
+            // 後綴乘積步驟並計算結果
+            const result = [...prefix];
+            let s = 1;
+            for (let i = n - 1; i >= 0; i--) {
+                result[i] *= s;
+                steps.push({ input: nums, prefix, result: [...result], currentIdx: i, phase: 'suffix', highlightLines: [10,11,12,13], explanation: { title: `後綴乘積 [${i}]`, text: `suffix = ${s}<br>result[${i}] = ${prefix[i]} × ${s} = ${result[i]}<br>suffix = ${s} × ${nums[i]} = ${s * nums[i]}`, formula: `result[${i}] = prefix × suffix = ${prefix[i]} × ${s} = ${result[i]}` } });
+                s *= nums[i];
+            }
+            // 完成
+            steps.push({ input: nums, result, final: true, highlightLines: [15], explanation: { title: '🎉 完成！', text: `結果：[${result.join(', ')}]<br><br>驗證：result[i] = 除 nums[i] 以外所有數的乘積`, formula: `result[i] = ∏(nums) / nums[i]` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(nums = currentNums) {
+            currentNums = nums;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '<div class="array-row"><span class="array-label">輸入:</span><div class="elements">';
-                    nums.forEach((n, i) => html += `<div class="element input"><div class="val">${n}</div><div class="idx">[${i}]</div></div>`);
+                    currentNums.forEach((n, i) => html += `<div class="element input${i === step.currentIdx ? ' current' : ''}"><div class="val">${n}</div><div class="idx">[${i}]</div></div>`);
                     html += '</div></div>';
                     if (step.prefix) {
                         html += '<div class="array-row"><span class="array-label">前綴:</span><div class="elements">';
-                        step.prefix.forEach((n, i) => html += `<div class="element prefix${step.current === 'prefix' ? ' current' : ''}"><div class="val">${n}</div></div>`);
+                        step.prefix.forEach((n, i) => html += `<div class="element prefix${step.phase === 'prefix' && i === step.currentIdx ? ' current' : ''}"><div class="val">${n}</div></div>`);
                         html += '</div></div>';
                     }
                     if (step.result?.length > 0) {
                         html += '<div class="array-row"><span class="array-label">結果:</span><div class="elements">';
-                        step.result.forEach((n, i) => html += `<div class="element result"><div class="val">${n}</div></div>`);
+                        step.result.forEach((n, i) => html += `<div class="element result${step.phase === 'suffix' && i === step.currentIdx ? ' current' : ''}"><div class="val">${n}</div></div>`);
                         html += '</div></div>';
                     }
                     document.getElementById('arraysDisplay').innerHTML = html;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNums));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const nums = document.getElementById('customNums').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            if (nums.length < 2 || nums.length > 8) { alert('請輸入 2-8 個數字'); return; }
+            init(nums);
+        }
+        function resetVisualization() { init(currentNums); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

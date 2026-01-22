@@ -6,14 +6,24 @@
     <title>Two Sum 兩數之和 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .array { display: flex; gap: 6px; justify-content: center; margin: 20px 0; }
+        .array { display: flex; gap: 6px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
         .element { width: 50px; height: 55px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
         .element .val { font-weight: bold; font-size: 1.1rem; }
         .element .idx { font-size: 0.65rem; opacity: 0.7; }
-        .element.current { background: var(--viz-secondary); color: #0f172a; }
-        .element.found { background: var(--viz-success); color: #0f172a; }
-        .hashmap { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .hash-item { background: var(--viz-warning); color: #0f172a; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; }
+        .element.current { background: var(--viz-secondary); color: #0f172a; transform: scale(1.1); }
+        .element.found { background: var(--viz-success); color: #0f172a; animation: pulse 0.5s; }
+        .element.checked { opacity: 0.5; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        .hashmap { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; min-height: 40px; }
+        .hash-item { background: var(--viz-warning); color: #0f172a; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: 500; }
+        /* 自訂輸入樣式 */
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row:last-child { margin-bottom: 0; }
+        .input-row label { min-width: 60px; }
+        .input-row input { flex: 1; min-width: 80px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -47,13 +57,27 @@
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">目標值</div><div class="state-value">9</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">目標值</div><div class="state-value" id="targetDisplay">9</div></div>
                     <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>未檢查</div>
+                    <div class="legend-item"><div class="legend-color current"></div>目前檢查</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>找到!</div>
+                </div>
+                
+                <!-- 自訂輸入區塊 -->
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>陣列:</label>
+                        <input type="text" id="customNums" placeholder="例: 2,7,11,15" value="2,7,11,15">
+                    </div>
+                    <div class="input-row">
+                        <label>目標:</label>
+                        <input type="number" id="customTarget" placeholder="目標值" value="9" style="max-width: 80px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -69,50 +93,165 @@
     <script>
         const codeStructure = [
             { line: 'vector<int> twoSum(vector<int>& nums, int target) {', id: 0 },
-            { line: '    unordered_map<int, int> map;', id: 1 },
+            { line: '    unordered_map<int, int> map;  // {value → index}', id: 1 },
             { line: '    for (int i = 0; i < nums.size(); i++) {', id: 2 },
             { line: '        int complement = target - nums[i];', id: 3 },
-            { line: '        if (map.count(complement))', id: 4 },
+            { line: '        if (map.count(complement))  // O(1) 查詢', id: 4 },
             { line: '            return {map[complement], i};', id: 5 },
-            { line: '        map[nums[i]] = i;', id: 6 },
+            { line: '        map[nums[i]] = i;  // 存入 HashMap', id: 6 },
             { line: '    }', id: 7 },
-            { line: '    return {};', id: 8 },
+            { line: '    return {};  // 無解', id: 8 },
             { line: '}', id: 9 },
         ];
-        const nums = [2, 7, 11, 15];
-        const target = 9;
-        function generateAlgorithmSteps() {
+        
+        let currentNums = [2, 7, 11, 15];
+        let currentTarget = 9;
+        
+        function generateAlgorithmSteps(nums, target) {
             const steps = [];
-            steps.push({ current: -1, map: {}, highlightLines: [0,1], explanation: { title: '初始化', text: `陣列：[${nums.join(', ')}]<br>目標：${target}<br><br>使用 HashMap 存儲已遍歷的值` } });
-            steps.push({ current: 0, map: {}, highlightLines: [2,3,4], explanation: { title: '處理 nums[0]=2', text: `complement = 9 - 2 = 7<br>HashMap 中沒有 7<br>加入 {2→0}`, formula: 'complement = 9 - 2 = 7' } });
-            steps.push({ current: 0, map: {2:0}, highlightLines: [6], explanation: { title: '存入 HashMap', text: 'map[2] = 0' } });
-            steps.push({ current: 1, map: {2:0}, found: [0,1], highlightLines: [2,3,4,5], explanation: { title: '🎉 找到答案！', text: `處理 nums[1]=7<br>complement = 9 - 7 = 2<br>HashMap 中有 2！→ index 0<br><br>回傳 [0, 1]`, formula: 'complement = 9 - 7 = 2 ✓ 在 map 中' } });
+            const map = {};
+            const checked = [];
+            let foundPair = null;
+            
+            // 步驟 0: 初始化
+            steps.push({ 
+                current: -1, map: {}, checked: [],
+                highlightLines: [0,1], 
+                explanation: { 
+                    title: '初始化', 
+                    text: `陣列：[${nums.join(', ')}]<br>目標：${target}<br><br>使用 HashMap 存儲：{值 → 索引}<br>對於每個 nums[i]，尋找是否存在 complement = target - nums[i]`,
+                    formula: `complement = target - nums[i]`
+                }
+            });
+            
+            // 遍歷每個元素
+            for (let i = 0; i < nums.length; i++) {
+                const num = nums[i];
+                const complement = target - num;
+                
+                // 檢查 complement 是否在 map 中
+                if (map.hasOwnProperty(complement)) {
+                    foundPair = [map[complement], i];
+                    steps.push({ 
+                        current: i, map: {...map}, checked: [...checked],
+                        found: foundPair,
+                        highlightLines: [2,3,4,5], 
+                        explanation: { 
+                            title: `🎉 找到答案！`, 
+                            text: `處理 nums[${i}] = ${num}<br>complement = ${target} - ${num} = ${complement}<br><br><strong style="color: var(--viz-success);">HashMap 中有 ${complement}！index = ${map[complement]}</strong><br><br>回傳 [${foundPair[0]}, ${foundPair[1]}]`,
+                            formula: `nums[${foundPair[0]}] + nums[${foundPair[1]}] = ${nums[foundPair[0]]} + ${nums[foundPair[1]]} = ${target} ✓`
+                        }
+                    });
+                    break;
+                }
+                
+                // 沒找到，存入 map
+                steps.push({ 
+                    current: i, map: {...map}, checked: [...checked],
+                    highlightLines: [2,3,4], 
+                    explanation: { 
+                        title: `處理 nums[${i}] = ${num}`, 
+                        text: `計算 complement = ${target} - ${num} = ${complement}<br><br>HashMap 中沒有 ${complement}`,
+                        formula: `complement = ${target} - ${num} = ${complement}`
+                    }
+                });
+                
+                map[num] = i;
+                checked.push(i);
+                
+                steps.push({ 
+                    current: i, map: {...map}, checked: [...checked],
+                    highlightLines: [6], 
+                    explanation: { 
+                        title: `存入 HashMap`, 
+                        text: `map[${num}] = ${i}<br><br>HashMap 現有：${Object.entries(map).map(([k,v]) => `{${k}→${v}}`).join(', ')}`,
+                        formula: `map[${num}] = ${i}`
+                    }
+                });
+            }
+            
+            // 如果沒找到
+            if (!foundPair) {
+                steps.push({ 
+                    current: -1, map: {...map}, checked: [...checked],
+                    highlightLines: [8], 
+                    explanation: { 
+                        title: '❌ 無解', 
+                        text: `遍歷完所有元素<br>沒有找到兩數之和等於 ${target}`,
+                        formula: `∄i,j: nums[i] + nums[j] = ${target}`
+                    },
+                    result: []
+                });
+            }
+            
             return steps;
         }
+        
         let viz;
-        function init() {
+        function init(nums = currentNums, target = currentTarget) {
+            currentNums = nums;
+            currentTarget = target;
+            document.getElementById('targetDisplay').textContent = target;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
-                    for (let i = 0; i < nums.length; i++) {
+                    for (let i = 0; i < currentNums.length; i++) {
                         let cls = 'element';
-                        if (i === step.current) cls += ' current';
                         if (step.found?.includes(i)) cls += ' found';
-                        html += `<div class="${cls}"><div class="val">${nums[i]}</div><div class="idx">[${i}]</div></div>`;
+                        else if (i === step.current) cls += ' current';
+                        else if (step.checked?.includes(i)) cls += ' checked';
+                        html += `<div class="${cls}"><div class="val">${currentNums[i]}</div><div class="idx">[${i}]</div></div>`;
                     }
                     document.getElementById('arrayDisplay').innerHTML = html;
+                    
                     const mapEntries = Object.entries(step.map || {});
                     document.getElementById('hashmapDisplay').innerHTML = mapEntries.length > 0 
                         ? mapEntries.map(([k,v]) => `<span class="hash-item">${k}→${v}</span>`).join('') 
                         : '空';
-                    document.getElementById('resultDisplay').textContent = step.found ? '[0, 1]' : '?';
+                    
+                    if (step.found) {
+                        document.getElementById('resultDisplay').textContent = `[${step.found[0]}, ${step.found[1]}]`;
+                        document.getElementById('resultDisplay').style.color = 'var(--viz-success)';
+                    } else if (step.result !== undefined && step.result.length === 0) {
+                        document.getElementById('resultDisplay').textContent = '[]';
+                        document.getElementById('resultDisplay').style.color = 'var(--viz-error)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '?';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNums, currentTarget));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        
+        function runCustomInput() {
+            const numsInput = document.getElementById('customNums').value;
+            const targetInput = document.getElementById('customTarget').value;
+            try {
+                const nums = numsInput.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+                const target = parseInt(targetInput);
+                if (nums.length < 2) {
+                    alert('請輸入至少 2 個數字');
+                    return;
+                }
+                if (nums.length > 10) {
+                    alert('為了視覺化效果，請輸入不超過 10 個數字');
+                    return;
+                }
+                if (isNaN(target)) {
+                    alert('請輸入有效的目標值');
+                    return;
+                }
+                init(nums, target);
+            } catch (e) {
+                alert('輸入格式錯誤');
+            }
+        }
+        
+        function resetVisualization() { init(currentNums, currentTarget); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>
+

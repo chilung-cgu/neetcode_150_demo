@@ -10,13 +10,23 @@
         .string-box { text-align: center; }
         .string-label { color: var(--text-muted); margin-bottom: 8px; }
         .chars { display: flex; gap: 4px; }
-        .char { width: 35px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; border-radius: 6px; background: var(--viz-primary); color: white; }
+        .char { width: 35px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
         .char.s { background: var(--viz-success); color: #0f172a; }
         .char.t { background: var(--viz-secondary); color: #0f172a; }
+        .char.current { transform: scale(1.15); box-shadow: 0 0 10px var(--viz-primary); }
         .counter { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 15px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .count-item { display: flex; flex-direction: column; align-items: center; padding: 8px; background: var(--viz-bg-primary); border-radius: 6px; min-width: 40px; }
+        .count-item { display: flex; flex-direction: column; align-items: center; padding: 8px; background: var(--viz-bg-primary); border-radius: 6px; min-width: 40px; transition: all 0.3s; }
+        .count-item.positive { background: var(--viz-success); }
+        .count-item.negative { background: var(--viz-error); }
         .count-item .letter { font-weight: bold; font-size: 1.1rem; color: var(--viz-secondary); }
         .count-item .count { font-size: 0.9rem; color: var(--text-primary); }
+        /* 自訂輸入樣式 */
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row:last-child { margin-bottom: 0; }
+        .input-row input { flex: 1; min-width: 100px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -29,7 +39,7 @@
                     <div class="string-box"><div class="string-label">字串 s</div><div class="chars" id="sDisplay"></div></div>
                     <div class="string-box"><div class="string-label">字串 t</div><div class="chars" id="tDisplay"></div></div>
                 </div>
-                <div style="text-align: center; color: var(--text-muted); margin: 5px 0;">字母計數</div>
+                <div style="text-align: center; color: var(--text-muted); margin: 5px 0;">字母計數 (s[i] +1, t[i] -1)</div>
                 <div class="counter" id="counterDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
@@ -50,15 +60,28 @@
                 
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1) — 只有 26 個字母
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
                 </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>字串 s</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-secondary);"></div>字串 t</div>
+                </div>
+                
+                <!-- 自訂輸入區塊 -->
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>s:</label>
+                        <input type="text" id="customS" placeholder="字串 s" value="anagram">
+                    </div>
+                    <div class="input-row">
+                        <label>t:</label>
+                        <input type="text" id="customT" placeholder="字串 t" value="nagaram">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -75,49 +98,138 @@
         const codeStructure = [
             { line: 'bool isAnagram(string s, string t) {', id: 0 },
             { line: '    if (s.size() != t.size()) return false;', id: 1 },
-            { line: '    int count[26] = {0};', id: 2 },
+            { line: '    int count[26] = {0};  // 只有小寫字母', id: 2 },
             { line: '    for (int i = 0; i < s.size(); i++) {', id: 3 },
-            { line: '        count[s[i] - \'a\']++;', id: 4 },
-            { line: '        count[t[i] - \'a\']--;', id: 5 },
+            { line: '        count[s[i] - \'a\']++;  // s 的字母 +1', id: 4 },
+            { line: '        count[t[i] - \'a\']--;  // t 的字母 -1', id: 5 },
             { line: '    }', id: 6 },
             { line: '    for (int c : count)', id: 7 },
             { line: '        if (c != 0) return false;', id: 8 },
             { line: '    return true;', id: 9 },
             { line: '}', id: 10 },
         ];
-        const s = "anagram", t = "nagaram";
-        function generateAlgorithmSteps() {
+        
+        let currentS = "anagram", currentT = "nagaram";
+        
+        function generateAlgorithmSteps(s, t) {
             const steps = [];
-            steps.push({ counter: {}, highlightLines: [0,1,2], explanation: { title: '初始化', text: `s = "${s}"<br>t = "${t}"<br><br>遍歷兩字串，s 的字母 +1，t 的字母 -1<br>最後所有計數都應為 0` } });
+            
+            // 步驟 0: 長度檢查
+            if (s.length !== t.length) {
+                steps.push({ 
+                    currentIdx: -1, counter: {}, 
+                    highlightLines: [0,1], 
+                    explanation: { 
+                        title: '長度不同！', 
+                        text: `s = "${s}" (長度 ${s.length})<br>t = "${t}" (長度 ${t.length})<br><br>長度不同，直接回傳 false`,
+                        formula: `|s| = ${s.length} ≠ ${t.length} = |t| → return false`
+                    },
+                    result: false
+                });
+                return steps;
+            }
+            
+            // 步驟 1: 初始化
+            steps.push({ 
+                currentIdx: -1, counter: {}, 
+                highlightLines: [0,1,2], 
+                explanation: { 
+                    title: '初始化', 
+                    text: `s = "${s}"<br>t = "${t}"<br>長度相同 = ${s.length}<br><br>建立計數陣列，遍歷時 s[i] +1, t[i] -1`,
+                    formula: `count[26] = {0, 0, ..., 0}`
+                }
+            });
+            
+            // 遍歷每個字符
             const counter = {};
             for (let i = 0; i < s.length; i++) {
-                counter[s[i]] = (counter[s[i]] || 0) + 1;
-                counter[t[i]] = (counter[t[i]] || 0) - 1;
-                if (counter[s[i]] === 0) delete counter[s[i]];
-                if (counter[t[i]] === 0) delete counter[t[i]];
+                const sc = s[i], tc = t[i];
+                counter[sc] = (counter[sc] || 0) + 1;
+                counter[tc] = (counter[tc] || 0) - 1;
+                
+                // 清理 0 值
+                const displayCounter = {...counter};
+                Object.keys(displayCounter).forEach(k => {
+                    if (displayCounter[k] === 0) delete displayCounter[k];
+                });
+                
+                steps.push({ 
+                    currentIdx: i, counter: {...counter},
+                    highlightLines: [3,4,5], 
+                    explanation: { 
+                        title: `處理第 ${i+1} 個字元`, 
+                        text: `s[${i}] = '${sc}' → count['${sc}']++<br>t[${i}] = '${tc}' → count['${tc}']--`,
+                        formula: `count['${sc}'] += 1, count['${tc}'] -= 1`
+                    }
+                });
             }
-            steps.push({ counter: {a:0,n:0,g:0,r:0,m:0}, highlightLines: [3,4,5,6], explanation: { title: '計數完成', text: '遍歷兩字串後<br>所有字母計數都是 0！' } });
-            steps.push({ counter: {}, result: true, highlightLines: [7,8,9], explanation: { title: '🎉 是異位詞！', text: '所有計數都為 0<br><br>s 和 t 包含相同字母<br>回傳 true' } });
+            
+            // 最終檢查
+            const allZero = Object.values(counter).every(v => v === 0);
+            steps.push({ 
+                currentIdx: -1, counter: {...counter},
+                highlightLines: [7,8,9], 
+                explanation: { 
+                    title: allZero ? '🎉 是異位詞！' : '❌ 不是異位詞', 
+                    text: allZero 
+                        ? `所有字母計數都為 0！<br><br>"${s}" 和 "${t}" 包含相同字母<br>回傳 true`
+                        : `存在計數不為 0 的字母<br><br>回傳 false`,
+                    formula: allZero ? `∀c: count[c] = 0 → return true` : `∃c: count[c] ≠ 0 → return false`
+                },
+                result: allZero
+            });
+            
             return steps;
         }
+        
         let viz;
-        function init() {
+        function init(s = currentS, t = currentT) {
+            currentS = s; currentT = t;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('sDisplay').innerHTML = s.split('').map(c => `<div class="char s">${c}</div>`).join('');
-                    document.getElementById('tDisplay').innerHTML = t.split('').map(c => `<div class="char t">${c}</div>`).join('');
-                    const entries = Object.entries(step.counter || {});
+                    // 顯示字串 s
+                    document.getElementById('sDisplay').innerHTML = currentS.split('').map((c, i) => 
+                        `<div class="char s ${i === step.currentIdx ? 'current' : ''}">${c}</div>`
+                    ).join('');
+                    // 顯示字串 t
+                    document.getElementById('tDisplay').innerHTML = currentT.split('').map((c, i) => 
+                        `<div class="char t ${i === step.currentIdx ? 'current' : ''}">${c}</div>`
+                    ).join('');
+                    // 顯示計數
+                    const entries = Object.entries(step.counter || {}).filter(([k,v]) => v !== 0);
                     document.getElementById('counterDisplay').innerHTML = entries.length > 0 
-                        ? entries.map(([k,v]) => `<div class="count-item"><div class="letter">${k}</div><div class="count">${v}</div></div>`).join('') 
+                        ? entries.map(([k,v]) => `<div class="count-item ${v > 0 ? 'positive' : 'negative'}"><div class="letter">${k}</div><div class="count">${v > 0 ? '+' : ''}${v}</div></div>`).join('') 
                         : '<span style="color:var(--viz-success)">全部為 0 ✓</span>';
-                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
+                    // 結果
+                    if (step.result !== undefined) {
+                        document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : 'false ✗';
+                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '?';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentS, currentT));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        
+        function runCustomInput() {
+            const s = document.getElementById('customS').value.toLowerCase().replace(/[^a-z]/g, '');
+            const t = document.getElementById('customT').value.toLowerCase().replace(/[^a-z]/g, '');
+            if (s.length === 0 || t.length === 0) {
+                alert('請輸入有效的字串（只包含字母）');
+                return;
+            }
+            if (s.length > 12 || t.length > 12) {
+                alert('為了視覺化效果，請輸入不超過 12 個字母');
+                return;
+            }
+            init(s, t);
+        }
+        
+        function resetVisualization() { init(currentS, currentT); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>
+

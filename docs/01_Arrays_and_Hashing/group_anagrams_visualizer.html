@@ -8,13 +8,18 @@
     <style>
         .words { display: flex; gap: 8px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
         .word { padding: 8px 14px; border-radius: 6px; background: var(--viz-primary); color: white; font-weight: bold; transition: all 0.3s; }
-        .word.current { background: var(--viz-secondary); color: #0f172a; }
+        .word.current { background: var(--viz-secondary); color: #0f172a; transform: scale(1.1); }
         .word.grouped { opacity: 0.5; }
         .groups { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
         .group { display: flex; gap: 8px; align-items: center; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .group-key { color: var(--viz-secondary); font-family: monospace; min-width: 60px; }
+        .group-key { color: var(--viz-secondary); font-family: monospace; min-width: 60px; font-weight: 600; }
         .group-words { display: flex; gap: 6px; flex-wrap: wrap; }
         .group-word { background: var(--viz-success); color: #0f172a; padding: 4px 10px; border-radius: 4px; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { flex: 1; min-width: 200px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -42,18 +47,24 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n·k log k)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n·k)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">分組數</div><div class="state-value" id="groupCountDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
                 </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>未處理</div>
+                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>已分組</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customWords" placeholder="輸入字串，用逗號分隔" value="eat,tea,tan,ate,nat,bat">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -72,7 +83,7 @@
             { line: '    unordered_map<string, vector<string>> map;', id: 1 },
             { line: '    for (string& s : strs) {', id: 2 },
             { line: '        string key = s;', id: 3 },
-            { line: '        sort(key.begin(), key.end());', id: 4 },
+            { line: '        sort(key.begin(), key.end());  // O(k log k)', id: 4 },
             { line: '        map[key].push_back(s);', id: 5 },
             { line: '    }', id: 6 },
             { line: '    vector<vector<string>> result;', id: 7 },
@@ -81,46 +92,42 @@
             { line: '    return result;', id: 10 },
             { line: '}', id: 11 },
         ];
-        const words = ["eat", "tea", "tan", "ate", "nat", "bat"];
-        function generateAlgorithmSteps() {
+        let currentWords = ["eat", "tea", "tan", "ate", "nat", "bat"];
+        function generateAlgorithmSteps(words) {
             const steps = [];
             const groups = {};
-            steps.push({ current: -1, grouped: [], groups: {}, highlightLines: [0,1], explanation: { title: '初始化', text: `字串：["${words.join('", "')}"]<br><br>關鍵：排序後相同的字串是異位詞<br>"eat" → "aet"<br>"tea" → "aet"` } });
+            steps.push({ current: -1, grouped: [], groups: {}, highlightLines: [0,1], explanation: { title: '初始化', text: `輸入：["${words.join('", "')}"]<br>共 ${words.length} 個字串<br><br>關鍵洞察：排序後相同的字串是異位詞`, formula: `key = sort(s)` } });
             for (let i = 0; i < words.length; i++) {
                 const w = words[i];
                 const key = w.split('').sort().join('');
+                const isNewGroup = !groups[key];
                 if (!groups[key]) groups[key] = [];
                 groups[key].push(w);
-                steps.push({ current: i, grouped: [...Array(i+1).keys()], groups: JSON.parse(JSON.stringify(groups)), key, highlightLines: [2,3,4,5], explanation: { title: `處理 "${w}"`, text: `排序後："${key}"<br>加入 map["${key}"] 分組`, formula: `"${w}" → sort → "${key}"` } });
+                steps.push({ current: i, grouped: [...Array(i+1).keys()], groups: JSON.parse(JSON.stringify(groups)), key, highlightLines: [2,3,4,5], explanation: { title: `處理 "${w}"`, text: `排序後："${key}"<br>${isNewGroup ? '建立新分組' : '加入現有分組'}`, formula: `"${w}" → sort → "${key}"` } });
             }
-            steps.push({ current: -1, grouped: [...Array(words.length).keys()], groups, final: true, highlightLines: [7,8,9,10], explanation: { title: '完成！', text: `共 ${Object.keys(groups).length} 組：<br>${Object.entries(groups).map(([k,v]) => `"${k}": [${v.join(', ')}]`).join('<br>')}<br><br>時間：O(n × k log k)` } });
+            steps.push({ current: -1, grouped: [...Array(words.length).keys()], groups, final: true, highlightLines: [7,8,9,10], explanation: { title: '🎉 完成！', text: `共 ${Object.keys(groups).length} 組`, formula: `∀s₁,s₂: sort(s₁) = sort(s₂) ⟺ 異位詞` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(words = currentWords) {
+            currentWords = words;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    for (let i = 0; i < words.length; i++) {
-                        let cls = 'word';
-                        if (i === step.current) cls += ' current';
-                        else if (step.grouped?.includes(i)) cls += ' grouped';
-                        html += `<div class="${cls}">${words[i]}</div>`;
-                    }
-                    document.getElementById('wordsDisplay').innerHTML = html;
-                    let gHtml = '';
-                    for (const [key, group] of Object.entries(step.groups || {})) {
-                        gHtml += `<div class="group"><span class="group-key">${key}:</span><div class="group-words">${group.map(w => `<span class="group-word">${w}</span>`).join('')}</div></div>`;
-                    }
-                    document.getElementById('groupsDisplay').innerHTML = gHtml || '<div style="text-align:center;color:var(--text-muted)">空</div>';
+                    document.getElementById('wordsDisplay').innerHTML = currentWords.map((w, i) => `<div class="word${i === step.current ? ' current' : step.grouped?.includes(i) ? ' grouped' : ''}">${w}</div>`).join('');
+                    document.getElementById('groupsDisplay').innerHTML = Object.entries(step.groups || {}).map(([key, group]) => `<div class="group"><span class="group-key">${key}:</span><div class="group-words">${group.map(w => `<span class="group-word">${w}</span>`).join('')}</div></div>`).join('') || '<div style="text-align:center;color:var(--text-muted)">空</div>';
                     document.getElementById('groupCountDisplay').textContent = Object.keys(step.groups || {}).length;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentWords));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const words = document.getElementById('customWords').value.split(',').map(s => s.trim().toLowerCase()).filter(s => s.length > 0 && /^[a-z]+$/.test(s));
+            if (words.length === 0 || words.length > 10) { alert('請輸入 1-10 個有效字串'); return; }
+            init(words);
+        }
+        function resetVisualization() { init(currentWords); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

@@ -14,6 +14,13 @@
         @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         .hashset { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; min-height: 40px; }
         .set-item { background: var(--viz-success); color: #0f172a; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
+        /* 自訂輸入樣式 */
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); display: flex; align-items: center; gap: 6px; }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { flex: 1; min-width: 150px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .input-row button:hover { transform: translateY(-1px); opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -48,12 +55,21 @@
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">Set 大小</div><div class="state-value" id="sizeDisplay">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
                     <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>未處理</div>
+                    <div class="legend-item"><div class="legend-color current"></div>目前檢查</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-error);"></div>重複!</div>
+                </div>
+                
+                <!-- 自訂輸入區塊 -->
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customInput" placeholder="輸入陣列，例: 1,2,3,1 或 5,4,3,2,1" value="1,2,3,1">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -71,46 +87,143 @@
             { line: 'bool containsDuplicate(vector<int>& nums) {', id: 0 },
             { line: '    unordered_set<int> seen;', id: 1 },
             { line: '    for (int num : nums) {', id: 2 },
-            { line: '        if (seen.count(num))', id: 3 },
+            { line: '        if (seen.count(num))  // O(1) 查詢', id: 3 },
             { line: '            return true;', id: 4 },
-            { line: '        seen.insert(num);', id: 5 },
+            { line: '        seen.insert(num);     // O(1) 插入', id: 5 },
             { line: '    }', id: 6 },
             { line: '    return false;', id: 7 },
             { line: '}', id: 8 },
         ];
-        const nums = [1, 2, 3, 1];
-        function generateAlgorithmSteps() {
+        
+        let currentNums = [1, 2, 3, 1];
+        
+        function generateAlgorithmSteps(nums) {
             const steps = [];
-            steps.push({ current: -1, set: [], seen: [], highlightLines: [0,1], explanation: { title: '初始化', text: `陣列：[${nums.join(', ')}]<br><br>使用 HashSet 記錄已見過的數字<br>遇到重複就回傳 true` } });
-            steps.push({ current: 0, set: [1], seen: [0], highlightLines: [2,3,5], explanation: { title: '處理 1', text: 'HashSet 中沒有 1<br>加入 Set' } });
-            steps.push({ current: 1, set: [1,2], seen: [0,1], highlightLines: [2,3,5], explanation: { title: '處理 2', text: 'HashSet 中沒有 2<br>加入 Set' } });
-            steps.push({ current: 2, set: [1,2,3], seen: [0,1,2], highlightLines: [2,3,5], explanation: { title: '處理 3', text: 'HashSet 中沒有 3<br>加入 Set' } });
-            steps.push({ current: 3, set: [1,2,3], seen: [0,1,2], duplicate: 3, highlightLines: [3,4], explanation: { title: '🚨 發現重複！', text: '1 已經在 HashSet 中！<br><br>回傳 true', formula: 'seen.count(1) == true → return true' } });
+            const seen = new Set();
+            let foundDuplicate = -1;
+            
+            // 步驟 0: 初始化
+            steps.push({ 
+                current: -1, 
+                set: [], 
+                seen: [], 
+                highlightLines: [0,1], 
+                explanation: { 
+                    title: '初始化', 
+                    text: `輸入陣列：[${nums.join(', ')}]<br>陣列長度 n = ${nums.length}<br><br>建立空的 HashSet 來記錄已見過的數字`,
+                    formula: `HashSet = ∅，|HashSet| = 0`
+                } 
+            });
+            
+            // 遍歷每個元素
+            for (let i = 0; i < nums.length; i++) {
+                const num = nums[i];
+                const isDuplicate = seen.has(num);
+                
+                if (isDuplicate) {
+                    foundDuplicate = i;
+                    steps.push({ 
+                        current: i, 
+                        set: [...seen], 
+                        seen: [...Array(i).keys()],
+                        duplicate: i,
+                        highlightLines: [3,4], 
+                        explanation: { 
+                            title: `🚨 發現重複！nums[${i}] = ${num}`, 
+                            text: `檢查 ${num} 是否在 HashSet 中...<br><strong style="color: var(--viz-error);">Yes! ${num} 已存在！</strong><br><br>演算法結束，回傳 true`,
+                            formula: `seen.count(${num}) == 1 → return true`
+                        } 
+                    });
+                    break;
+                } else {
+                    seen.add(num);
+                    steps.push({ 
+                        current: i, 
+                        set: [...seen], 
+                        seen: [...Array(i+1).keys()],
+                        highlightLines: [2,3,5], 
+                        explanation: { 
+                            title: `處理 nums[${i}] = ${num}`, 
+                            text: `檢查 ${num} 是否在 HashSet 中...<br>No, ${num} 不在集合中<br><br>將 ${num} 加入 HashSet`,
+                            formula: `seen.count(${num}) == 0 → seen.insert(${num})<br>|HashSet| = ${seen.size}`
+                        } 
+                    });
+                }
+            }
+            
+            // 如果沒有找到重複
+            if (foundDuplicate === -1) {
+                steps.push({ 
+                    current: -1, 
+                    set: [...seen], 
+                    seen: [...Array(nums.length).keys()],
+                    result: false,
+                    highlightLines: [7], 
+                    explanation: { 
+                        title: '✅ 沒有重複', 
+                        text: `遍歷完所有 ${nums.length} 個元素<br>沒有發現任何重複<br><br>回傳 false`,
+                        formula: `∀i,j: nums[i] ≠ nums[j] → return false`
+                    } 
+                });
+            }
+            
             return steps;
         }
+        
         let viz;
-        function init() {
+        function init(nums = currentNums) {
+            currentNums = nums;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
-                    for (let i = 0; i < nums.length; i++) {
+                    for (let i = 0; i < currentNums.length; i++) {
                         let cls = 'element';
                         if (i === step.current) cls += ' current';
                         if (i === step.duplicate) cls += ' duplicate';
-                        else if (step.seen?.includes(i)) cls += ' seen';
-                        html += `<div class="${cls}">${nums[i]}</div>`;
+                        else if (step.seen?.includes(i) && i !== step.current) cls += ' seen';
+                        html += `<div class="${cls}">${currentNums[i]}</div>`;
                     }
                     document.getElementById('arrayDisplay').innerHTML = html;
                     document.getElementById('hashsetDisplay').innerHTML = (step.set || []).map(n => `<span class="set-item">${n}</span>`).join('') || '空';
                     document.getElementById('sizeDisplay').textContent = step.set?.length ?? 0;
-                    document.getElementById('resultDisplay').textContent = step.duplicate !== undefined ? 'true (有重複)' : '?';
+                    
+                    if (step.duplicate !== undefined) {
+                        document.getElementById('resultDisplay').textContent = 'true (有重複)';
+                        document.getElementById('resultDisplay').style.color = 'var(--viz-error)';
+                    } else if (step.result === false) {
+                        document.getElementById('resultDisplay').textContent = 'false (無重複)';
+                        document.getElementById('resultDisplay').style.color = 'var(--viz-success)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '?';
+                        document.getElementById('resultDisplay').style.color = 'var(--viz-success)';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNums));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        
+        function runCustomInput() {
+            const input = document.getElementById('customInput').value;
+            try {
+                const nums = input.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+                if (nums.length === 0) {
+                    alert('請輸入有效的數字陣列，例如: 1,2,3,1');
+                    return;
+                }
+                if (nums.length > 15) {
+                    alert('為了視覺化效果，請輸入不超過 15 個數字');
+                    return;
+                }
+                init(nums);
+            } catch (e) {
+                alert('輸入格式錯誤，請使用逗號分隔數字');
+            }
+        }
+        
+        function resetVisualization() { init(currentNums); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>
+

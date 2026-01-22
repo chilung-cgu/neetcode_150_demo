@@ -8,11 +8,16 @@
     <style>
         .nums { display: flex; gap: 6px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
         .num { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
-        .num.checking { background: var(--viz-secondary); color: #0f172a; }
+        .num.checking { background: var(--viz-secondary); color: #0f172a; transform: scale(1.1); }
         .num.sequence { background: var(--viz-success); color: #0f172a; }
         .num.start { border: 3px solid var(--viz-warning); }
         .hashset { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
         .set-item { background: var(--viz-bg-primary); padding: 4px 10px; border-radius: 4px; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { flex: 1; min-width: 150px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -22,7 +27,7 @@
             <div class="viz-card">
                 <div class="viz-title">最長連續序列（HASH SET）</div>
                 <div class="nums" id="numsDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">HashSet</div>
+                <div style="text-align: center; color: var(--text-muted);">HashSet（已排序顯示）</div>
                 <div class="hashset" id="hashsetDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
@@ -40,19 +45,25 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">當前序列</div><div class="state-value" id="seqDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">最長長度</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
                 <div class="legend">
                     <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
+                    <div class="legend-item"><div class="legend-color current"></div>檢查中</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>連續序列</div>
                 </div>
-                    <div class="state-item"><div class="state-label">最長長度</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">0</div></div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customNums" placeholder="輸入陣列，例: 100,4,200,1,3,2" value="100,4,200,1,3,2">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -72,7 +83,7 @@
             { line: '    int maxLen = 0;', id: 2 },
             { line: '    for (int n : set) {', id: 3 },
             { line: '        // 只從序列起點開始計算', id: 4 },
-            { line: '        if (!set.count(n - 1)) {', id: 5 },
+            { line: '        if (!set.count(n - 1)) {  // n 是起點', id: 5 },
             { line: '            int len = 1;', id: 6 },
             { line: '            while (set.count(n + len)) len++;', id: 7 },
             { line: '            maxLen = max(maxLen, len);', id: 8 },
@@ -81,44 +92,65 @@
             { line: '    return maxLen;', id: 11 },
             { line: '}', id: 12 },
         ];
-        const nums = [100, 4, 200, 1, 3, 2];
-        function generateAlgorithmSteps() {
+        let currentNums = [100, 4, 200, 1, 3, 2];
+        function generateAlgorithmSteps(nums) {
             const steps = [];
-            const sorted = [...new Set(nums)].sort((a,b) => a-b);
-            steps.push({ checking: null, sequence: [], maxLen: 0, highlightLines: [0,1,2], explanation: { title: '初始化', text: `陣列：[${nums.join(', ')}]<br><br>放入 HashSet<br>只從序列「起點」開始計算<br>（前一個數不在 set 中）` } });
-            // Check 1 (is a start)
-            steps.push({ checking: 1, start: 1, sequence: [], maxLen: 0, highlightLines: [3,4,5], explanation: { title: '檢查 1', text: '1-1=0 不在 set 中<br>1 是序列起點！' } });
-            steps.push({ checking: 1, start: 1, sequence: [1,2,3,4], maxLen: 4, highlightLines: [6,7,8], explanation: { title: '擴展序列', text: '1→2→3→4 都在 set 中<br>長度 = 4<br>maxLen = 4', formula: '序列: 1, 2, 3, 4 → 長度 4' } });
-            // Check 100 (is a start)
-            steps.push({ checking: 100, start: 100, sequence: [100], maxLen: 4, highlightLines: [3,5,7], explanation: { title: '檢查 100', text: '99 不在 set 中<br>100 是序列起點<br>101 不在 → 長度 = 1' } });
-            // Check 200 (is a start)
-            steps.push({ checking: 200, start: 200, sequence: [200], maxLen: 4, highlightLines: [3,5,7], explanation: { title: '檢查 200', text: '199 不在 set 中<br>200 是序列起點<br>201 不在 → 長度 = 1' } });
-            steps.push({ checking: null, sequence: [1,2,3,4], maxLen: 4, final: true, highlightLines: [11], explanation: { title: '完成！', text: '最長連續序列：1, 2, 3, 4<br>長度 = 4<br><br>時間：O(n)' } });
+            const set = new Set(nums);
+            const sortedSet = [...set].sort((a,b) => a - b);
+            // 初始化
+            steps.push({ checking: null, sequence: [], maxLen: 0, highlightLines: [0,1,2], explanation: { title: '初始化', text: `陣列：[${nums.join(', ')}]<br><br>放入 HashSet<br>只從序列「起點」開始計算（前一個數不在 set 中）`, formula: `起點條件：!set.count(n - 1)` } });
+            // 找出所有序列起點並計算
+            let maxLen = 0;
+            let bestSeq = [];
+            for (const n of sortedSet) {
+                if (!set.has(n - 1)) { // n 是起點
+                    // 計算序列長度
+                    const seq = [n];
+                    let len = 1;
+                    while (set.has(n + len)) {
+                        seq.push(n + len);
+                        len++;
+                    }
+                    steps.push({ checking: n, start: n, sequence: seq, seqLen: len, maxLen: Math.max(maxLen, len), highlightLines: [3,4,5,6,7,8], explanation: { title: `檢查 ${n}`, text: `${n-1} 不在 set 中<br>${n} 是序列起點！<br><br>擴展：${seq.join(' → ')}<br>長度 = ${len}`, formula: `while(set.count(${n} + len)) → 長度 ${len}` } });
+                    if (len > maxLen) {
+                        maxLen = len;
+                        bestSeq = seq;
+                    }
+                } else {
+                    steps.push({ checking: n, skipped: true, sequence: bestSeq, maxLen, highlightLines: [3,5], explanation: { title: `跳過 ${n}`, text: `${n-1} 在 set 中<br>${n} 不是序列起點，跳過`, formula: `set.count(${n-1}) = true → skip` } });
+                }
+            }
+            // 完成
+            steps.push({ checking: null, sequence: bestSeq, maxLen, final: true, highlightLines: [11], explanation: { title: '🎉 完成！', text: `最長連續序列：${bestSeq.join(' → ')}<br>長度 = ${maxLen}<br><br>時間 O(n)：每個數最多被訪問 2 次`, formula: `return ${maxLen}` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(nums = currentNums) {
+            currentNums = nums;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    nums.forEach(n => {
+                    document.getElementById('numsDisplay').innerHTML = currentNums.map(n => {
                         let cls = 'num';
                         if (n === step.checking) cls += ' checking';
                         if (step.sequence?.includes(n)) cls += ' sequence';
                         if (n === step.start) cls += ' start';
-                        html += `<div class="${cls}">${n}</div>`;
-                    });
-                    document.getElementById('numsDisplay').innerHTML = html;
-                    document.getElementById('hashsetDisplay').innerHTML = [...new Set(nums)].sort((a,b)=>a-b).map(n => `<span class="set-item">${n}</span>`).join('');
+                        return `<div class="${cls}">${n}</div>`;
+                    }).join('');
+                    document.getElementById('hashsetDisplay').innerHTML = [...new Set(currentNums)].sort((a,b) => a - b).map(n => `<span class="set-item">${n}</span>`).join('');
                     document.getElementById('seqDisplay').textContent = step.sequence?.length > 0 ? step.sequence.join('→') : '-';
                     document.getElementById('maxDisplay').textContent = step.maxLen ?? 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNums));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const nums = document.getElementById('customNums').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            if (nums.length < 1 || nums.length > 15) { alert('請輸入 1-15 個數字'); return; }
+            init(nums);
+        }
+        function resetVisualization() { init(currentNums); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>
