@@ -14,6 +14,11 @@
         .node-box.next { background: var(--viz-warning); color: #0f172a; }
         .arrow { color: var(--text-muted); font-size: 1.2rem; }
         .arrow.reversed { color: var(--viz-success); transform: scaleX(-1); }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { flex: 1; min-width: 150px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -39,20 +44,26 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">prev</div><div class="state-value" id="prevDisplay" style="color: var(--viz-success);">null</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
                     <div class="state-item"><div class="state-label">curr</div><div class="state-value" id="currDisplay" style="color: var(--viz-secondary);">1</div></div>
                     <div class="state-item"><div class="state-label">next</div><div class="state-value" id="nextDisplay" style="color: var(--viz-warning);">2</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>prev</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-secondary);"></div>curr</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-warning);"></div>next</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customNodes" placeholder="節點值" value="1,2,3,4,5">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -79,24 +90,25 @@
             { line: '    return prev;', id: 9 },
             { line: '}', id: 10 },
         ];
-        const nodes = [1, 2, 3, 4, 5];
-        function generateAlgorithmSteps() {
+        let currentNodes = [1, 2, 3, 4, 5];
+        function generateAlgorithmSteps(nodes) {
             const steps = [];
-            steps.push({ nodes, prev: null, curr: 0, next: 1, reversed: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: '鏈表：1→2→3→4→5<br><br>prev = null<br>curr = head (1)' } });
+            steps.push({ nodes, prev: null, curr: 0, next: nodes.length > 1 ? 1 : null, reversed: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: `鏈表：${nodes.join('→')}<br><br>prev = null<br>curr = head (${nodes[0]})`, formula: `prev = nullptr; curr = head` } });
             for (let i = 0; i < nodes.length; i++) {
-                steps.push({ nodes, prev: i > 0 ? i-1 : null, curr: i, next: i < nodes.length-1 ? i+1 : null, reversed: [...Array(i).keys()], highlightLines: [3,4,5], explanation: { title: `反轉節點 ${nodes[i]}`, text: `next = curr->next = ${i < nodes.length-1 ? nodes[i+1] : 'null'}<br>curr->next = prev<br><br>節點 ${nodes[i]} 現在指向 ${i > 0 ? nodes[i-1] : 'null'}` } });
-                steps.push({ nodes, prev: i, curr: i < nodes.length-1 ? i+1 : null, next: i < nodes.length-2 ? i+2 : null, reversed: [...Array(i+1).keys()], highlightLines: [6,7], explanation: { title: '移動指標', text: `prev = curr = ${nodes[i]}<br>curr = next = ${i < nodes.length-1 ? nodes[i+1] : 'null'}` } });
+                steps.push({ nodes, prev: i > 0 ? i-1 : null, curr: i, next: i < nodes.length-1 ? i+1 : null, reversed: [...Array(i).keys()], highlightLines: [3,4,5], explanation: { title: `反轉節點 ${nodes[i]}`, text: `next = curr->next = ${i < nodes.length-1 ? nodes[i+1] : 'null'}<br>curr->next = prev<br><br>節點 ${nodes[i]} 現在指向 ${i > 0 ? nodes[i-1] : 'null'}`, formula: `${nodes[i]}->next = ${i > 0 ? nodes[i-1] : 'null'}` } });
+                steps.push({ nodes, prev: i, curr: i < nodes.length-1 ? i+1 : null, next: i < nodes.length-2 ? i+2 : null, reversed: [...Array(i+1).keys()], highlightLines: [6,7], explanation: { title: '移動指標', text: `prev = curr = ${nodes[i]}<br>curr = next = ${i < nodes.length-1 ? nodes[i+1] : 'null'}`, formula: `prev = ${nodes[i]}; curr = ${i < nodes.length-1 ? nodes[i+1] : 'null'}` } });
             }
-            steps.push({ nodes: nodes.slice().reverse(), prev: nodes.length-1, curr: null, next: null, reversed: [...Array(nodes.length).keys()], final: true, highlightLines: [9], explanation: { title: '🎉 反轉完成！', text: '鏈表：5→4→3→2→1<br><br>回傳 prev（新的 head）<br>時間：O(n), 空間：O(1)' } });
+            steps.push({ nodes: nodes.slice().reverse(), prev: nodes.length-1, curr: null, next: null, reversed: [...Array(nodes.length).keys()], final: true, highlightLines: [9], explanation: { title: '🎉 反轉完成！', text: `鏈表：${nodes.slice().reverse().join('→')}<br><br>回傳 prev（新的 head）`, formula: `return prev = ${nodes[nodes.length-1]}` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(nodes = currentNodes) {
+            currentNodes = nodes;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
-                    const displayNodes = step.final ? step.nodes : nodes;
+                    const displayNodes = step.final ? step.nodes : currentNodes;
                     for (let i = 0; i < displayNodes.length; i++) {
                         let cls = 'node-box';
                         if (step.prev === i) cls += ' prev';
@@ -107,15 +119,20 @@
                         html += '</div>';
                     }
                     document.getElementById('listDisplay').innerHTML = html;
-                    document.getElementById('prevDisplay').textContent = step.prev !== null ? nodes[step.prev] : 'null';
-                    document.getElementById('currDisplay').textContent = step.curr !== null ? nodes[step.curr] : 'null';
-                    document.getElementById('nextDisplay').textContent = step.next !== null ? nodes[step.next] : 'null';
+                    document.getElementById('prevDisplay').textContent = step.prev !== null ? currentNodes[step.prev] : 'null';
+                    document.getElementById('currDisplay').textContent = step.curr !== null ? currentNodes[step.curr] : 'null';
+                    document.getElementById('nextDisplay').textContent = step.next !== null ? currentNodes[step.next] : 'null';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNodes));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const nodes = document.getElementById('customNodes').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            if (nodes.length < 1 || nodes.length > 8) { alert('請輸入 1-8 個節點值'); return; }
+            init(nodes);
+        }
+        function resetVisualization() { init(currentNodes); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

@@ -9,13 +9,18 @@
         .lists { display: flex; flex-direction: column; gap: 15px; margin: 20px 0; }
         .list-row { display: flex; align-items: center; gap: 10px; justify-content: center; }
         .list-label { width: 60px; color: var(--text-muted); font-size: 0.9rem; }
-        .nodes { display: flex; gap: 6px; }
-        .node { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; transition: all 0.3s; }
+        .nodes { display: flex; gap: 6px; flex-wrap: wrap; }
+        .node { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; transition: all 0.3s; }
         .node.list1 { background: var(--viz-primary); color: white; }
         .node.list2 { background: var(--viz-secondary); color: #0f172a; }
         .node.merged { background: var(--viz-success); color: #0f172a; }
         .node.current { border: 3px solid var(--viz-error); }
         .node.used { opacity: 0.3; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { flex: 1; min-width: 100px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -41,18 +46,29 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n+m)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">合併長度</div><div class="state-value" id="lenDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
                 </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-primary);"></div>List1</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-secondary);"></div>List2</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>合併</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>List1:</label>
+                        <input type="text" id="customList1" placeholder="已排序" value="1,2,4">
+                    </div>
+                    <div class="input-row">
+                        <label>List2:</label>
+                        <input type="text" id="customList2" placeholder="已排序" value="1,3,4">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -82,42 +98,43 @@
             { line: '    return dummy.next;', id: 12 },
             { line: '}', id: 13 },
         ];
-        const list1 = [1, 2, 4], list2 = [1, 3, 4];
-        function generateAlgorithmSteps() {
+        let currentList1 = [1, 2, 4], currentList2 = [1, 3, 4];
+        function generateAlgorithmSteps(list1, list2) {
             const steps = [];
-            steps.push({ l1: [...list1], l2: [...list2], merged: [], i1: 0, i2: 0, highlightLines: [0,1,2], explanation: { title: '初始化', text: 'List1: 1→2→4<br>List2: 1→3→4<br><br>使用 dummy 節點簡化處理' } });
+            steps.push({ l1: [...list1], l2: [...list2], merged: [], i1: 0, i2: 0, highlightLines: [0,1,2], explanation: { title: '初始化', text: `List1: ${list1.join('→')}<br>List2: ${list2.join('→')}<br><br>使用 dummy 節點簡化處理`, formula: `dummy + tail 合併策略` } });
             let i1 = 0, i2 = 0;
             const merged = [];
             while (i1 < list1.length && i2 < list2.length) {
                 if (list1[i1] <= list2[i2]) {
                     merged.push({ val: list1[i1], from: 1 });
-                    steps.push({ l1: [...list1], l2: [...list2], merged: [...merged], i1, i2, used1: i1, highlightLines: [3,4,5], explanation: { title: `比較 ${list1[i1]} vs ${list2[i2]}`, text: `${list1[i1]} ≤ ${list2[i2]}<br>取 List1 的 ${list1[i1]}`, formula: `${list1[i1]} ≤ ${list2[i2]} → 取 List1` } });
+                    steps.push({ l1: [...list1], l2: [...list2], merged: [...merged], i1, i2, highlightLines: [3,4,5], explanation: { title: `比較 ${list1[i1]} vs ${list2[i2]}`, text: `${list1[i1]} ≤ ${list2[i2]}<br>取 List1 的 ${list1[i1]}`, formula: `${list1[i1]} ≤ ${list2[i2]} → 取 List1` } });
                     i1++;
                 } else {
                     merged.push({ val: list2[i2], from: 2 });
-                    steps.push({ l1: [...list1], l2: [...list2], merged: [...merged], i1, i2, used2: i2, highlightLines: [3,6,7], explanation: { title: `比較 ${list1[i1]} vs ${list2[i2]}`, text: `${list1[i1]} > ${list2[i2]}<br>取 List2 的 ${list2[i2]}`, formula: `${list1[i1]} > ${list2[i2]} → 取 List2` } });
+                    steps.push({ l1: [...list1], l2: [...list2], merged: [...merged], i1, i2, highlightLines: [3,6,7], explanation: { title: `比較 ${list1[i1]} vs ${list2[i2]}`, text: `${list1[i1]} > ${list2[i2]}<br>取 List2 的 ${list2[i2]}`, formula: `${list1[i1]} > ${list2[i2]} → 取 List2` } });
                     i2++;
                 }
             }
-            while (i1 < list1.length) { merged.push({ val: list1[i1++], from: 1 }); }
-            while (i2 < list2.length) { merged.push({ val: list2[i2++], from: 2 }); }
-            steps.push({ l1: [...list1], l2: [...list2], merged: [...merged], final: true, highlightLines: [11,12], explanation: { title: '🎉 合併完成！', text: `結果：${merged.map(m=>m.val).join('→')}<br><br>時間：O(n+m), 空間：O(1)` } });
+            while (i1 < list1.length) merged.push({ val: list1[i1++], from: 1 });
+            while (i2 < list2.length) merged.push({ val: list2[i2++], from: 2 });
+            steps.push({ l1: [...list1], l2: [...list2], merged: [...merged], final: true, highlightLines: [11,12], explanation: { title: '🎉 合併完成！', text: `結果：${merged.map(m=>m.val).join('→')}`, formula: `return ${merged.map(m=>m.val).join('→')}` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(list1 = currentList1, list2 = currentList2) {
+            currentList1 = list1; currentList2 = list2;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '<div class="list-row"><span class="list-label">List1:</span><div class="nodes">';
-                    list1.forEach((n, i) => {
+                    currentList1.forEach((n, i) => {
                         let cls = 'node list1';
                         if (i === step.i1) cls += ' current';
                         if (i < step.i1 || step.final) cls += ' used';
                         html += `<div class="${cls}">${n}</div>`;
                     });
                     html += '</div></div><div class="list-row"><span class="list-label">List2:</span><div class="nodes">';
-                    list2.forEach((n, i) => {
+                    currentList2.forEach((n, i) => {
                         let cls = 'node list2';
                         if (i === step.i2) cls += ' current';
                         if (i < step.i2 || step.final) cls += ' used';
@@ -130,10 +147,19 @@
                     document.getElementById('lenDisplay').textContent = step.merged?.length ?? 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentList1, currentList2));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const list1 = document.getElementById('customList1').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)).sort((a,b) => a-b);
+            const list2 = document.getElementById('customList2').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)).sort((a,b) => a-b);
+            if (list1.length < 1 || list1.length > 8) { alert('List1 請輸入 1-8 個數字'); return; }
+            if (list2.length < 1 || list2.length > 8) { alert('List2 請輸入 1-8 個數字'); return; }
+            document.getElementById('customList1').value = list1.join(',');
+            document.getElementById('customList2').value = list2.join(',');
+            init(list1, list2);
+        }
+        function resetVisualization() { init(currentList1, currentList2); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>
