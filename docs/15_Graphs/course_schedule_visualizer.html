@@ -3,17 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Schedule 課程表 - 視覺化</title>
+    <title>Course Schedule - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .courses { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .course { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .courses-container { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .course { 
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; transition: all 0.3s;
+        }
         .course.visiting { background: var(--viz-warning); color: #0f172a; }
         .course.visited { background: var(--viz-success); color: #0f172a; }
         .course.cycle { background: var(--viz-error); animation: shake 0.3s; }
         @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        .prereqs { text-align: center; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; font-size: 0.9rem; }
-        .arrow { margin: 0 5px; color: var(--text-muted); }
+
+        .prereqs-display { 
+            text-align: center; margin: 10px 0; padding: 12px; 
+            background: var(--viz-bg-secondary); border-radius: 8px; font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -21,21 +31,27 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">課程表（拓撲排序 / DFS）</div>
-                <div class="courses" id="coursesDisplay"></div>
-                <div class="prereqs" id="prereqsDisplay"></div>
+                <div class="viz-title">課程表 (Course Schedule)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">範例1 (可完成)</button>
+                        <button onclick="setExample(2)">範例2 (有環)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="courses-container" id="coursesDisplay"></div>
+                <div class="prereqs-display" id="prereqsDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
@@ -46,13 +62,7 @@
                     <span class="label" style="margin-left: 12px;">Space:</span> O(V+E)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">課程數</div><div class="state-value">4</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -69,59 +79,130 @@
         const codeStructure = [
             { line: 'bool canFinish(int n, vector<vector<int>>& prereqs) {', id: 0 },
             { line: '    vector<vector<int>> graph(n);', id: 1 },
-            { line: '    for (auto& p : prereqs)', id: 2 },
-            { line: '        graph[p[1]].push_back(p[0]);', id: 3 },
-            { line: '    vector<int> state(n, 0); // 0:未訪問 1:訪問中 2:完成', id: 4 },
-            { line: '    function<bool(int)> dfs = [&](int course) {', id: 5 },
-            { line: '        if (state[course] == 1) return false; // 環！', id: 6 },
-            { line: '        if (state[course] == 2) return true;', id: 7 },
-            { line: '        state[course] = 1; // 標記訪問中', id: 8 },
-            { line: '        for (int next : graph[course])', id: 9 },
-            { line: '            if (!dfs(next)) return false;', id: 10 },
-            { line: '        state[course] = 2; // 標記完成', id: 11 },
-            { line: '        return true;', id: 12 },
-            { line: '    };', id: 13 },
-            { line: '    for (int i = 0; i < n; i++)', id: 14 },
-            { line: '        if (!dfs(i)) return false;', id: 15 },
-            { line: '    return true;', id: 16 },
-            { line: '}', id: 17 },
+            { line: '    for (auto& p : prereqs) graph[p[1]].push_back(p[0]);', id: 2 },
+            { line: '    vector<int> state(n, 0); // 0:未訪 1:訪中 2:完成', id: 3 },
+            { line: '    function<bool(int)> dfs = [&](int course) {', id: 4 },
+            { line: '        if (state[course] == 1) return false; // 環!', id: 5 },
+            { line: '        if (state[course] == 2) return true;', id: 6 },
+            { line: '        state[course] = 1;', id: 7 },
+            { line: '        for (int next : graph[course])', id: 8 },
+            { line: '            if (!dfs(next)) return false;', id: 9 },
+            { line: '        state[course] = 2;', id: 10 },
+            { line: '        return true;', id: 11 },
+            { line: '    };', id: 12 },
+            { line: '    for (int i = 0; i < n; i++)', id: 13 },
+            { line: '        if (!dfs(i)) return false;', id: 14 },
+            { line: '    return true;', id: 15 },
+            { line: '}', id: 16 },
         ];
-        // Prerequisites: [[1,0], [2,0], [3,1], [3,2]]
-        // 0 → 1 → 3
-        // 0 → 2 → 3
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: { n: 4, prereqs: [[1,0],[2,0],[3,1],[3,2]], desc: '0→1→3, 0→2→3 (可完成)' },
+            2: { n: 2, prereqs: [[0,1],[1,0]], desc: '0↔1 (循環依賴)' }
+        };
+        
+        let currentExample = examples[1];
+
+        function setExample(n) {
+            currentExample = examples[n];
+            init();
+        }
+
+        function generateAlgorithmSteps(numCourses, prereqs) {
             const steps = [];
-            steps.push({ state: [0,0,0,0], highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: '4 門課程，先修關係：<br>0 → 1, 0 → 2<br>1 → 3, 2 → 3<br><br>檢查是否有環（deadlock）' } });
-            steps.push({ state: [1,0,0,0], current: 0, highlightLines: [5,8], explanation: { title: 'DFS 課程 0', text: 'state[0] = 1（訪問中）<br>檢查依賴課程 1, 2' } });
-            steps.push({ state: [1,1,0,0], current: 1, highlightLines: [9,10,8], explanation: { title: 'DFS 課程 1', text: 'state[1] = 1<br>檢查依賴課程 3' } });
-            steps.push({ state: [1,1,0,1], current: 3, highlightLines: [9,10,8], explanation: { title: 'DFS 課程 3', text: 'state[3] = 1<br>無依賴，標記完成' } });
-            steps.push({ state: [1,1,0,2], current: 3, highlightLines: [11], explanation: { title: '課程 3 完成', text: 'state[3] = 2' } });
-            steps.push({ state: [1,2,0,2], current: 1, highlightLines: [11], explanation: { title: '課程 1 完成', text: 'state[1] = 2' } });
-            steps.push({ state: [1,2,1,2], current: 2, highlightLines: [9,10,8], explanation: { title: 'DFS 課程 2', text: 'state[2] = 1<br>依賴課程 3 已完成' } });
-            steps.push({ state: [1,2,2,2], current: 2, highlightLines: [7,11], explanation: { title: '課程 2 完成', text: 'state[3]=2 → 直接返回 true<br>state[2] = 2' } });
-            steps.push({ state: [2,2,2,2], result: true, highlightLines: [16], explanation: { title: '🎉 可以完成！', text: '無環，可以修完所有課程<br><br>順序：0 → 1 → 2 → 3<br>或：0 → 2 → 1 → 3' } });
+            const state = Array(numCourses).fill(0);
+            const graph = Array(numCourses).fill(null).map(() => []);
+            
+            for (const [a, b] of prereqs) {
+                graph[b].push(a);
+            }
+            
+            const prereqStr = prereqs.map(p => `${p[1]}→${p[0]}`).join(', ');
+            
+            steps.push({
+                state: [...state], current: null, prereqs: prereqStr,
+                highlightLines: [0, 1, 2, 3],
+                explanation: { title: '初始化', text: `${numCourses} 門課程<br>先修: ${prereqStr}<br>DFS 檢測環`, formula: 'setup' }
+            });
+
+            let hasCycle = false;
+            
+            function dfs(course, path = []) {
+                if (hasCycle) return false;
+                if (state[course] === 1) {
+                    hasCycle = true;
+                    steps.push({
+                        state: [...state], current: course, cycle: true, prereqs: prereqStr,
+                        highlightLines: [5],
+                        explanation: { title: '發現環!', text: `課程 ${course} 正在訪問中<br>存在循環依賴`, formula: 'return false' }
+                    });
+                    return false;
+                }
+                if (state[course] === 2) return true;
+                
+                state[course] = 1;
+                steps.push({
+                    state: [...state], current: course, prereqs: prereqStr,
+                    highlightLines: [7, 8],
+                    explanation: { title: `DFS 課程 ${course}`, text: `state[${course}] = 1 (訪問中)`, formula: `visiting ${course}` }
+                });
+                
+                for (const next of graph[course]) {
+                    if (!dfs(next)) return false;
+                }
+                
+                state[course] = 2;
+                return true;
+            }
+
+            for (let i = 0; i < numCourses && !hasCycle; i++) {
+                if (state[i] === 0) {
+                    dfs(i);
+                }
+            }
+
+            const result = !hasCycle;
+            steps.push({
+                state: [...state], result, prereqs: prereqStr, final: true,
+                highlightLines: result ? [15] : [14],
+                explanation: { 
+                    title: result ? '完成!' : '失敗!', 
+                    text: result ? '可以修完所有課程' : '存在循環依賴',
+                    formula: `return ${result}`
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const states = step.state || [0,0,0,0];
+                    const states = step.state || [];
                     let html = '';
-                    for (let i = 0; i < 4; i++) {
+                    for (let i = 0; i < states.length; i++) {
                         let cls = 'course';
-                        if (states[i] === 1) cls += ' visiting';
+                        if (states[i] === 1) cls += step.cycle && step.current === i ? ' cycle' : ' visiting';
                         if (states[i] === 2) cls += ' visited';
                         html += `<div class="${cls}">${i}</div>`;
                     }
                     document.getElementById('coursesDisplay').innerHTML = html;
-                    document.getElementById('prereqsDisplay').innerHTML = '0<span class="arrow">→</span>1<span class="arrow">→</span>3 &nbsp;|&nbsp; 0<span class="arrow">→</span>2<span class="arrow">→</span>3';
-                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
+                    document.getElementById('prereqsDisplay').textContent = `先修關係: ${step.prereqs || ''}`;
+                    
+                    if (step.result !== undefined) {
+                        document.getElementById('resultDisplay').textContent = step.result ? 'True ✓' : 'False ✗';
+                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '-';
+                        document.getElementById('resultDisplay').style.color = 'inherit';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentExample.n, currentExample.prereqs));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>
