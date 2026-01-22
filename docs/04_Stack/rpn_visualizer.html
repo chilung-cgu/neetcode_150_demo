@@ -8,12 +8,17 @@
     <style>
         .tokens { display: flex; gap: 6px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
         .token { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s; }
-        .token.current { background: var(--viz-secondary); color: #0f172a; }
+        .token.current { background: var(--viz-secondary); color: #0f172a; transform: scale(1.1); }
         .token.processed { opacity: 0.4; }
         .token.op { color: var(--viz-error); }
         .stack { display: flex; flex-direction: column-reverse; gap: 4px; min-height: 120px; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; width: 100px; margin: 0 auto; align-items: center; }
         .stack-item { width: 80px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; }
         .calc-display { text-align: center; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 6px; font-size: 1.1rem; color: var(--viz-secondary); }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { flex: 1; min-width: 150px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -42,18 +47,23 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
                 </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-secondary);"></div>當前</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-error);"></div>運算子</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customTokens" placeholder="用空格分隔" value="2 1 + 3 *">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -83,43 +93,62 @@
             { line: '    return st.top();', id: 12 },
             { line: '}', id: 13 },
         ];
-        const tokens = ["2", "1", "+", "3", "*"];
-        // (2 + 1) * 3 = 9
-        function generateAlgorithmSteps() {
+        const ops = ['+', '-', '*', '/'];
+        let currentTokens = ["2", "1", "+", "3", "*"];
+        function generateAlgorithmSteps(tokens) {
             const steps = [];
-            steps.push({ current: -1, stack: [], processed: [], highlightLines: [0,1], explanation: { title: '初始化', text: `表達式：["2", "1", "+", "3", "*"]<br>等同於：(2 + 1) × 3 = 9<br><br>遇到數字 → Push<br>遇到運算子 → Pop 兩數計算後 Push` } });
-            steps.push({ current: 0, stack: [2], processed: [0], calc: 'Push 2', highlightLines: [2,10], explanation: { title: '處理 "2"', text: '數字 → Push 到 Stack' } });
-            steps.push({ current: 1, stack: [2, 1], processed: [0,1], calc: 'Push 1', highlightLines: [2,10], explanation: { title: '處理 "1"', text: '數字 → Push 到 Stack' } });
-            steps.push({ current: 2, stack: [3], processed: [0,1,2], calc: '2 + 1 = 3', highlightLines: [3,4,5,6], explanation: { title: '處理 "+"', text: 'Pop b=1, a=2<br>計算 a + b = 2 + 1 = 3<br>Push 結果 3', formula: '2 + 1 = 3' } });
-            steps.push({ current: 3, stack: [3, 3], processed: [0,1,2,3], calc: 'Push 3', highlightLines: [2,10], explanation: { title: '處理 "3"', text: '數字 → Push 到 Stack' } });
-            steps.push({ current: 4, stack: [9], processed: [0,1,2,3,4], calc: '3 × 3 = 9', highlightLines: [3,4,5,8], explanation: { title: '處理 "*"', text: 'Pop b=3, a=3<br>計算 a × b = 3 × 3 = 9<br>Push 結果 9', formula: '3 × 3 = 9' } });
-            steps.push({ current: -1, stack: [9], processed: [0,1,2,3,4], result: 9, highlightLines: [12], explanation: { title: '完成！', text: '結果 = 9<br><br>時間：O(n), 空間：O(n)' } });
+            const stack = [];
+            steps.push({ current: -1, stack: [], processed: [], highlightLines: [0,1], explanation: { title: '初始化', text: `表達式：[${tokens.map(t => `"${t}"`).join(', ')}]<br><br>遇到數字 → Push<br>遇到運算子 → Pop 兩數計算後 Push`, formula: `RPN 不需要括號來表示優先順序` } });
+            for (let i = 0; i < tokens.length; i++) {
+                const t = tokens[i];
+                if (ops.includes(t)) {
+                    if (stack.length < 2) { steps.push({ current: i, stack: [...stack], error: true, highlightLines: [4,5], explanation: { title: '❌ 錯誤', text: 'Stack 中元素不足' } }); return steps; }
+                    const b = stack.pop(), a = stack.pop();
+                    let result;
+                    if (t === '+') result = a + b;
+                    else if (t === '-') result = a - b;
+                    else if (t === '*') result = a * b;
+                    else result = Math.trunc(a / b);
+                    stack.push(result);
+                    steps.push({ current: i, stack: [...stack], processed: Array.from({length: i+1}, (_, j) => j), calc: `${a} ${t} ${b} = ${result}`, highlightLines: [3,4,5,6,7,8,9], explanation: { title: `處理 "${t}"`, text: `Pop b=${b}, a=${a}<br>計算 ${a} ${t} ${b} = ${result}<br>Push ${result}`, formula: `${a} ${t} ${b} = ${result}` } });
+                } else {
+                    const num = parseInt(t);
+                    if (isNaN(num)) { steps.push({ current: i, stack: [...stack], error: true, explanation: { title: '❌ 錯誤', text: `無效 token: "${t}"` } }); return steps; }
+                    stack.push(num);
+                    steps.push({ current: i, stack: [...stack], processed: Array.from({length: i+1}, (_, j) => j), calc: `Push ${num}`, highlightLines: [2,10], explanation: { title: `處理 "${t}"`, text: `數字 → Push 到 Stack`, formula: `st.push(${num})` } });
+                }
+            }
+            steps.push({ current: -1, stack: [...stack], processed: Array.from({length: tokens.length}, (_, j) => j), result: stack[0], highlightLines: [12], explanation: { title: '🎉 完成！', text: `結果 = ${stack[0]}`, formula: `return ${stack[0]}` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(tokens = currentTokens) {
+            currentTokens = tokens;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    const ops = ['+', '-', '*', '/'];
-                    for (let i = 0; i < tokens.length; i++) {
+                    document.getElementById('tokensDisplay').innerHTML = currentTokens.map((t, i) => {
                         let cls = 'token';
                         if (i === step.current) cls += ' current';
                         if (step.processed?.includes(i)) cls += ' processed';
-                        if (ops.includes(tokens[i])) cls += ' op';
-                        html += `<div class="${cls}">${tokens[i]}</div>`;
-                    }
-                    document.getElementById('tokensDisplay').innerHTML = html;
+                        if (ops.includes(t)) cls += ' op';
+                        return `<div class="${cls}">${t}</div>`;
+                    }).join('');
                     document.getElementById('stackDisplay').innerHTML = (step.stack || []).map(v => `<div class="stack-item">${v}</div>`).join('');
                     document.getElementById('calcDisplay').textContent = step.calc || '-';
                     document.getElementById('resultDisplay').textContent = step.result ?? '?';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentTokens));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const input = document.getElementById('customTokens').value.trim();
+            const tokens = input.split(/\s+/).filter(t => t.length > 0);
+            if (tokens.length < 1 || tokens.length > 15) { alert('請輸入 1-15 個 token（用空格分隔）'); return; }
+            init(tokens);
+        }
+        function resetVisualization() { init(currentTokens); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

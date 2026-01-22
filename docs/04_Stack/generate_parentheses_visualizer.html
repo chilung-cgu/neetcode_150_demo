@@ -3,13 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generate Parentheses Visualization</title>
+    <title>Generate Parentheses 生成括號 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .tree-display { text-align: center; font-family: monospace; }
-        .current-str { font-size: 1.5rem; color: var(--viz-secondary); margin: 15px 0; }
-        .result-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-        .result-item { background: var(--viz-success); color: #0f172a; padding: 6px 12px; border-radius: 6px; }
+        .current-str { font-size: 1.5rem; color: var(--viz-secondary); margin: 15px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .result-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
+        .result-item { background: var(--viz-success); color: #0f172a; padding: 6px 12px; border-radius: 6px; font-family: monospace; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { width: 60px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; text-align: center; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -17,18 +22,18 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">GENERATE PARENTHESES (n=3)</div>
+                <div class="viz-title">生成括號（BACKTRACKING）</div>
                 <div class="tree-display">
                     <div class="current-str" id="currentStr">""</div>
                     <div style="margin-top: 10px;">Open: <span id="openCount">0</span> | Close: <span id="closeCount">0</span></div>
                 </div>
-                <div class="viz-title" style="margin-top: 15px;">RESULTS</div>
+                <div class="viz-title" style="margin-top: 15px;">結果</div>
                 <div class="result-list" id="resultList"></div>
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
@@ -40,20 +45,32 @@
                         </select>
                     </div>
                 </div>
-            <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O(4ⁿ/√n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">n</div><div class="state-value" id="nDisplay">3</div></div>
+                    <div class="state-item"><div class="state-label">結果數</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-secondary);"></div>當前</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>完成</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>n =</label>
+                        <input type="number" id="customN" value="3" min="1" max="4">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BACKTRACKING</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -66,41 +83,51 @@
             { line: '        result.push_back(cur);', id: 2 },
             { line: '        return;', id: 3 },
             { line: '    }', id: 4 },
-            { line: '    if (open < n) backtrack(open+1, close, cur+"(");', id: 5 },
-            { line: '    if (close < open) backtrack(open, close+1, cur+")");', id: 6 },
-            { line: '}', id: 7 },
+            { line: '    if (open < n)', id: 5 },
+            { line: '        backtrack(open+1, close, cur+"(");', id: 6 },
+            { line: '    if (close < open)', id: 7 },
+            { line: '        backtrack(open, close+1, cur+")");', id: 8 },
+            { line: '}', id: 9 },
         ];
-        const n = 3;
-
-        function generateAlgorithmSteps() {
+        let currentN = 3;
+        function generateAlgorithmSteps(n) {
             const steps = [];
             const results = [];
             function backtrack(open, close, cur) {
-                steps.push({ str: cur, open, close, results: [...results], highlightLines: cur.length === 2*n ? [1, 2] : [5, 6], explanation: { title: cur || '""', text: cur.length === 2*n ? '✓ Complete!' : `open=${open}, close=${close}` }});
-                if (cur.length === 2 * n) { results.push(cur); return; }
+                const complete = cur.length === 2 * n;
+                steps.push({ str: cur || '""', open, close, results: [...results], highlightLines: complete ? [1,2,3] : (open < n && close < open ? [5,6,7,8] : open < n ? [5,6] : [7,8]), explanation: { title: cur || '空字串', text: complete ? `✓ 長度達到 ${2*n}，加入結果` : `open=${open}, close=${close}<br>${open < n ? '可加 (' : ''}${close < open ? (open < n ? ', ' : '') + '可加 )' : ''}`, formula: complete ? `result.push("${cur}")` : `open=${open}, close=${close}` } });
+                if (complete) { results.push(cur); return; }
                 if (open < n) backtrack(open + 1, close, cur + '(');
                 if (close < open) backtrack(open, close + 1, cur + ')');
             }
+            steps.push({ str: '""', open: 0, close: 0, results: [], highlightLines: [0], explanation: { title: '初始化', text: `n = ${n}<br><br>回溯規則：<br>• open < n 時可加 (<br>• close < open 時可加 )`, formula: `生成 n=${n} 對括號` } });
             backtrack(0, 0, '');
-            steps.push({ str: '', open: 0, close: 0, results, highlightLines: [0], explanation: { title: 'Done!', text: `Found ${results.length} combinations` }});
+            steps.push({ str: '完成', open: n, close: n, results: [...results], final: true, highlightLines: [], explanation: { title: '🎉 完成！', text: `共 ${results.length} 個有效組合`, formula: `Catalan(${n}) = ${results.length}` } });
             return steps;
         }
-
         let viz;
-        function init() {
+        function init(n = currentN) {
+            currentN = n;
+            document.getElementById('nDisplay').textContent = n;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('currentStr').textContent = `"${step.str}"`;
+                    document.getElementById('currentStr').textContent = step.str;
                     document.getElementById('openCount').textContent = step.open;
                     document.getElementById('closeCount').textContent = step.close;
-                    document.getElementById('resultList').innerHTML = step.results.map(r => `<span class="result-item">${r}</span>`).join('') || '-';
+                    document.getElementById('resultList').innerHTML = (step.results || []).map(r => `<span class="result-item">${r}</span>`).join('');
+                    document.getElementById('countDisplay').textContent = step.results?.length || 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentN));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const n = parseInt(document.getElementById('customN').value);
+            if (isNaN(n) || n < 1 || n > 4) { alert('n 請輸入 1-4'); return; }
+            init(n);
+        }
+        function resetVisualization() { init(currentN); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

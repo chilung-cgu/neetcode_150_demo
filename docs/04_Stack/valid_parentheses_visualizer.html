@@ -6,13 +6,19 @@
     <title>Valid Parentheses 有效括號 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .string { display: flex; gap: 4px; justify-content: center; margin: 15px 0; }
+        .string { display: flex; gap: 4px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
         .char { width: 35px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s; }
-        .char.current { background: var(--viz-secondary); color: #0f172a; }
+        .char.current { background: var(--viz-secondary); color: #0f172a; transform: scale(1.1); }
         .char.matched { background: var(--viz-success); color: #0f172a; }
+        .char.error { background: var(--viz-error); color: white; }
         .stack { display: flex; flex-direction: column-reverse; gap: 4px; min-height: 120px; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; margin: 15px auto; width: 60px; align-items: center; }
         .stack-item { width: 40px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; border-radius: 4px; background: var(--viz-primary); color: white; animation: slideIn 0.3s; }
         @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { flex: 1; min-width: 150px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; font-size: 1.1rem; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -41,19 +47,25 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">Stack 大小</div><div class="state-value" id="sizeDisplay">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
                     <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-secondary);"></div>當前</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>匹配</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-error);"></div>錯誤</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customStr" placeholder="輸入括號" value="({[]})">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -70,56 +82,80 @@
         const codeStructure = [
             { line: 'bool isValid(string s) {', id: 0 },
             { line: '    stack<char> st;', id: 1 },
-            { line: '    for (char c : s) {', id: 2 },
-            { line: '        if (c == \'(\' || c == \'[\' || c == \'{\')', id: 3 },
-            { line: '            st.push(c);', id: 4 },
-            { line: '        else {', id: 5 },
-            { line: '            if (st.empty()) return false;', id: 6 },
-            { line: '            if (c == \')\' && st.top() != \'(\') return false;', id: 7 },
-            { line: '            if (c == \']\' && st.top() != \'[\') return false;', id: 8 },
-            { line: '            if (c == \'}\' && st.top() != \'{\') return false;', id: 9 },
+            { line: '    unordered_map<char,char> pairs = ', id: 2 },
+            { line: '        {{\')\':\'{\'}, {\']\':\'[\'}, {\'}\':\'{\'}}};', id: 3 },
+            { line: '    for (char c : s) {', id: 4 },
+            { line: '        if (c == \'(\' || c == \'[\' || c == \'{\')', id: 5 },
+            { line: '            st.push(c);', id: 6 },
+            { line: '        else {', id: 7 },
+            { line: '            if (st.empty() || st.top() != pairs[c])', id: 8 },
+            { line: '                return false;', id: 9 },
             { line: '            st.pop();', id: 10 },
             { line: '        }', id: 11 },
             { line: '    }', id: 12 },
             { line: '    return st.empty();', id: 13 },
             { line: '}', id: 14 },
         ];
-        const str = "({[]})";
-        function generateAlgorithmSteps() {
+        const pairs = {')': '(', ']': '[', '}': '{'};
+        let currentStr = "({[]})";
+        function generateAlgorithmSteps(str) {
             const steps = [];
-            steps.push({ stack: [], current: -1, matched: [], highlightLines: [0,1], explanation: { title: '初始化', text: `字串："${str}"<br><br>使用 Stack 追蹤開括號<br>遇到閉括號時檢查是否匹配` } });
-            steps.push({ stack: ['('], current: 0, matched: [], highlightLines: [2,3,4], explanation: { title: '遇到 (', text: '左括號 → Push 到 Stack' } });
-            steps.push({ stack: ['(','{'], current: 1, matched: [], highlightLines: [2,3,4], explanation: { title: '遇到 {', text: '左括號 → Push 到 Stack' } });
-            steps.push({ stack: ['(','{','['], current: 2, matched: [], highlightLines: [2,3,4], explanation: { title: '遇到 [', text: '左括號 → Push 到 Stack' } });
-            steps.push({ stack: ['(','{'], current: 3, matched: [2,3], highlightLines: [5,8,10], explanation: { title: '遇到 ]', text: 'Stack.top() = [ 匹配 ]<br>Pop！' } });
-            steps.push({ stack: ['('], current: 4, matched: [2,3,1,4], highlightLines: [5,9,10], explanation: { title: '遇到 }', text: 'Stack.top() = { 匹配 }<br>Pop！' } });
-            steps.push({ stack: [], current: 5, matched: [2,3,1,4,0,5], highlightLines: [5,7,10], explanation: { title: '遇到 )', text: 'Stack.top() = ( 匹配 )<br>Pop！' } });
-            steps.push({ stack: [], current: -1, matched: [0,1,2,3,4,5], result: true, highlightLines: [13], explanation: { title: '🎉 有效！', text: 'Stack 為空，所有括號都匹配<br><br>回傳 true' } });
+            const stack = [];
+            const matched = [];
+            steps.push({ stack: [], current: -1, matched: [], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `字串："${str}"<br><br>使用 Stack 追蹤開括號<br>遇到閉括號時檢查是否匹配`, formula: `pairs = {')':'(', ']':'[', '}':'{'}` } });
+            for (let i = 0; i < str.length; i++) {
+                const c = str[i];
+                if (c === '(' || c === '[' || c === '{') {
+                    stack.push(c);
+                    steps.push({ stack: [...stack], current: i, matched: [...matched], highlightLines: [4,5,6], explanation: { title: `遇到 '${c}'`, text: `左括號 → Push 到 Stack<br>Stack: [${stack.join(', ')}]`, formula: `st.push('${c}')` } });
+                } else if (c === ')' || c === ']' || c === '}') {
+                    if (stack.length === 0 || stack[stack.length - 1] !== pairs[c]) {
+                        steps.push({ stack: [...stack], current: i, matched: [...matched], error: true, result: false, highlightLines: [8,9], explanation: { title: `❌ 不匹配！`, text: `'${c}' 需要 '${pairs[c]}' 但 Stack${stack.length === 0 ? '為空' : `.top() = '${stack[stack.length-1]}'`}`, formula: `return false` } });
+                        return steps;
+                    }
+                    matched.push(i);
+                    for (let j = i - 1; j >= 0; j--) {
+                        if (str[j] === pairs[c] && !matched.includes(j)) { matched.push(j); break; }
+                    }
+                    stack.pop();
+                    steps.push({ stack: [...stack], current: i, matched: [...matched], highlightLines: [7,8,10], explanation: { title: `遇到 '${c}'`, text: `Stack.top() = '${pairs[c]}' 匹配！ Pop<br>Stack: [${stack.join(', ') || '空'}]`, formula: `st.pop()` } });
+                }
+            }
+            const result = stack.length === 0;
+            steps.push({ stack: [...stack], current: -1, matched: [...matched], result, highlightLines: [13], explanation: { title: result ? '🎉 有效！' : '❌ 無效', text: result ? 'Stack 為空，所有括號都匹配' : `Stack 不為空：[${stack.join(', ')}]`, formula: `return ${result}` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(str = currentStr) {
+            currentStr = str;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const chars = str.split('');
-                    let html = '';
-                    for (let i = 0; i < chars.length; i++) {
+                    document.getElementById('stringDisplay').innerHTML = currentStr.split('').map((c, i) => {
                         let cls = 'char';
-                        if (i === step.current) cls += ' current';
-                        if (step.matched?.includes(i)) cls += ' matched';
-                        html += `<div class="${cls}">${chars[i]}</div>`;
-                    }
-                    document.getElementById('stringDisplay').innerHTML = html;
+                        if (i === step.current) cls += step.error ? ' error' : ' current';
+                        else if (step.matched?.includes(i)) cls += ' matched';
+                        return `<div class="${cls}">${c}</div>`;
+                    }).join('');
                     document.getElementById('stackDisplay').innerHTML = (step.stack || []).map(c => `<div class="stack-item">${c}</div>`).join('');
                     document.getElementById('sizeDisplay').textContent = step.stack?.length ?? 0;
-                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
+                    if (step.result !== undefined) {
+                        document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : 'false ✗';
+                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '?';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentStr));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const str = document.getElementById('customStr').value.replace(/[^()\[\]{}]/g, '');
+            if (str.length === 0 || str.length > 20) { alert('請輸入 1-20 個括號 ()[]{}'); return; }
+            init(str);
+        }
+        function resetVisualization() { init(currentStr); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

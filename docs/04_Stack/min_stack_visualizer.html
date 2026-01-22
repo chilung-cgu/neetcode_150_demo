@@ -15,6 +15,13 @@
         .stack-item.min { background: var(--viz-success); color: #0f172a; }
         @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .op-display { text-align: center; font-size: 1.1rem; color: var(--viz-secondary); margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 6px; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .input-row input { width: 60px; padding: 8px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; text-align: center; }
+        .input-row button { padding: 8px 12px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+        .input-row button.pop-btn { background: var(--viz-error); }
+        .input-row button.getmin-btn { background: var(--viz-success); color: #0f172a; }
     </style>
 </head>
 <body>
@@ -44,18 +51,26 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(1)
+                    <span class="label">Time:</span> O(1) 所有操作
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">getMin()</div><div class="state-value" id="minDisplay" style="color: var(--viz-success);">-</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
                 </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-primary);"></div>主 Stack</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>Min Stack</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 互動測試</div>
+                    <div class="input-row">
+                        <input type="number" id="pushValue" placeholder="值" value="5">
+                        <button onclick="interactivePush()">Push</button>
+                        <button class="pop-btn" onclick="interactivePop()">Pop</button>
+                        <button class="getmin-btn" onclick="interactiveGetMin()">getMin</button>
+                        <button onclick="resetVisualization()">重置</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -83,22 +98,37 @@
             { line: '            minStack.pop();', id: 10 },
             { line: '        mainStack.pop();', id: 11 },
             { line: '    }', id: 12 },
-            { line: '    int getMin() { return minStack.top(); }', id: 13 },
-            { line: '};', id: 14 },
+            { line: '    int top() { return mainStack.top(); }', id: 13 },
+            { line: '    int getMin() { return minStack.top(); }', id: 14 },
+            { line: '};', id: 15 },
         ];
+        let mainStack = [], minStack = [], operations = [];
         function generateAlgorithmSteps() {
             const steps = [];
-            steps.push({ main: [], min: [], op: '初始化', highlightLines: [0,1,2], explanation: { title: '資料結構設計', text: '使用兩個 Stack：<br><br>mainStack：存所有元素<br>minStack：追蹤最小值<br><br>所有操作都是 O(1)！' } });
-            steps.push({ main: [-2], min: [-2], op: 'push(-2)', highlightLines: [3,4,5,6], explanation: { title: 'push(-2)', text: 'mainStack.push(-2)<br>-2 ≤ 空 → minStack.push(-2)' } });
-            steps.push({ main: [-2, 0], min: [-2], op: 'push(0)', highlightLines: [3,4,5], explanation: { title: 'push(0)', text: 'mainStack.push(0)<br>0 > -2 → minStack 不變' } });
-            steps.push({ main: [-2, 0, -3], min: [-2, -3], op: 'push(-3)', highlightLines: [3,4,5,6], explanation: { title: 'push(-3)', text: 'mainStack.push(-3)<br>-3 ≤ -2 → minStack.push(-3)' } });
-            steps.push({ main: [-2, 0, -3], min: [-2, -3], op: 'getMin() → -3', highlightLines: [13], explanation: { title: 'getMin()', text: 'minStack.top() = -3<br><br>O(1) 取得最小值！' } });
-            steps.push({ main: [-2, 0], min: [-2], op: 'pop()', highlightLines: [8,9,10,11], explanation: { title: 'pop()', text: '-3 == minStack.top()<br>所以 minStack 也要 pop<br><br>現在 min = -2' } });
-            steps.push({ main: [-2, 0], min: [-2], op: 'getMin() → -2', highlightLines: [13], explanation: { title: 'getMin()', text: 'minStack.top() = -2' } });
+            steps.push({ main: [], min: [], op: '初始化', highlightLines: [0,1,2], explanation: { title: '資料結構設計', text: '使用兩個 Stack：<br><br>mainStack：存所有元素<br>minStack：追蹤最小值<br><br>所有操作都是 O(1)！', formula: `getMin() = minStack.top()` } });
+            const ops = [['push', -2], ['push', 0], ['push', -3], ['getMin'], ['pop'], ['getMin']];
+            let main = [], min = [];
+            for (const op of ops) {
+                if (op[0] === 'push') {
+                    const val = op[1];
+                    main.push(val);
+                    if (min.length === 0 || val <= min[min.length - 1]) min.push(val);
+                    steps.push({ main: [...main], min: [...min], op: `push(${val})`, highlightLines: [3,4,5,6], explanation: { title: `push(${val})`, text: `mainStack.push(${val})<br>${val} ${min.length === 0 || val <= min[min.length - 1] ? '≤' : '>'} ${min.length > 0 ? min[min.length - 1] : '空'} → ${min.includes(val) && min[min.length-1] === val ? 'minStack.push' : 'minStack 不變'}`, formula: `minStack.top() = ${min[min.length - 1]}` } });
+                } else if (op[0] === 'pop') {
+                    const val = main[main.length - 1];
+                    const wasMin = val === min[min.length - 1];
+                    main.pop();
+                    if (wasMin) min.pop();
+                    steps.push({ main: [...main], min: [...min], op: 'pop()', highlightLines: [8,9,10,11], explanation: { title: 'pop()', text: `${val} ${wasMin ? '==' : '!='} minStack.top()<br>${wasMin ? 'minStack 也 pop' : 'minStack 不變'}`, formula: `getMin() = ${min.length > 0 ? min[min.length - 1] : '空'}` } });
+                } else if (op[0] === 'getMin') {
+                    steps.push({ main: [...main], min: [...min], op: `getMin() → ${min[min.length - 1]}`, highlightLines: [14], explanation: { title: 'getMin()', text: `O(1) 取得最小值！<br><br>minStack.top() = ${min[min.length - 1]}`, formula: `return ${min[min.length - 1]}` } });
+                }
+            }
             return steps;
         }
         let viz;
         function init() {
+            mainStack = []; minStack = [];
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
@@ -109,6 +139,30 @@
                 }
             });
             viz.setSteps(generateAlgorithmSteps());
+        }
+        function interactivePush() {
+            const val = parseInt(document.getElementById('pushValue').value);
+            if (isNaN(val)) { alert('請輸入有效數字'); return; }
+            mainStack.push(val);
+            if (minStack.length === 0 || val <= minStack[minStack.length - 1]) minStack.push(val);
+            updateInteractiveDisplay(`push(${val})`);
+        }
+        function interactivePop() {
+            if (mainStack.length === 0) { alert('Stack 為空'); return; }
+            const val = mainStack[mainStack.length - 1];
+            if (val === minStack[minStack.length - 1]) minStack.pop();
+            mainStack.pop();
+            updateInteractiveDisplay('pop()');
+        }
+        function interactiveGetMin() {
+            if (minStack.length === 0) { alert('Stack 為空'); return; }
+            updateInteractiveDisplay(`getMin() → ${minStack[minStack.length - 1]}`);
+        }
+        function updateInteractiveDisplay(op) {
+            document.getElementById('mainStack').innerHTML = mainStack.map(v => `<div class="stack-item main">${v}</div>`).join('');
+            document.getElementById('minStack').innerHTML = minStack.map(v => `<div class="stack-item min">${v}</div>`).join('');
+            document.getElementById('opDisplay').textContent = op;
+            document.getElementById('minDisplay').textContent = minStack.length > 0 ? minStack[minStack.length - 1] : '-';
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

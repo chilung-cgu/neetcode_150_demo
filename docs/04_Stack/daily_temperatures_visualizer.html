@@ -7,17 +7,22 @@
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .temps { display: flex; gap: 4px; justify-content: center; align-items: flex-end; margin: 20px 0; height: 140px; }
-        .temp { width: 40px; display: flex; flex-direction: column; align-items: center; }
-        .temp-bar { width: 100%; border-radius: 4px 4px 0 0; transition: all 0.3s; display: flex; align-items: flex-end; justify-content: center; color: white; font-size: 0.8rem; font-weight: bold; padding-bottom: 2px; }
+        .temp { width: 38px; display: flex; flex-direction: column; align-items: center; }
+        .temp-bar { width: 100%; border-radius: 4px 4px 0 0; transition: all 0.3s; display: flex; align-items: flex-end; justify-content: center; color: white; font-size: 0.75rem; font-weight: bold; padding-bottom: 2px; }
         .temp-bar.normal { background: var(--viz-primary); }
         .temp-bar.instack { background: var(--viz-warning); color: #0f172a; }
         .temp-bar.current { background: var(--viz-secondary); color: #0f172a; }
         .temp-bar.done { background: var(--viz-success); color: #0f172a; }
         .temp-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
         .result { display: flex; gap: 4px; justify-content: center; margin: 10px 0; }
-        .result-item { width: 40px; height: 30px; display: flex; align-items: center; justify-content: center; background: var(--viz-bg-secondary); border-radius: 4px; font-weight: bold; }
-        .stack { display: flex; gap: 4px; justify-content: center; margin: 10px 0; padding: 8px; background: var(--viz-bg-secondary); border-radius: 6px; min-height: 35px; }
-        .stack-item { background: var(--viz-warning); color: #0f172a; padding: 4px 10px; border-radius: 4px; }
+        .result-item { width: 38px; height: 30px; display: flex; align-items: center; justify-content: center; background: var(--viz-bg-secondary); border-radius: 4px; font-weight: bold; }
+        .stack { display: flex; gap: 4px; justify-content: center; margin: 10px 0; padding: 8px; background: var(--viz-bg-secondary); border-radius: 6px; min-height: 35px; flex-wrap: wrap; }
+        .stack-item { background: var(--viz-warning); color: #0f172a; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { flex: 1; min-width: 150px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -47,17 +52,23 @@
                         </select>
                     </div>
                 </div>
-            </div>
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
-            
                 <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-secondary);"></div>當前</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-warning);"></div>在 Stack</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>已完成</div>
                 </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customTemps" placeholder="輸入溫度" value="73,74,75,71,69,72,76,73">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+            </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
@@ -73,7 +84,7 @@
             { line: 'vector<int> dailyTemperatures(vector<int>& temps) {', id: 0 },
             { line: '    int n = temps.size();', id: 1 },
             { line: '    vector<int> result(n, 0);', id: 2 },
-            { line: '    stack<int> st; // 存索引', id: 3 },
+            { line: '    stack<int> st;  // 存索引，維護單調遞減', id: 3 },
             { line: '    for (int i = 0; i < n; i++) {', id: 4 },
             { line: '        while (!st.empty() && temps[i] > temps[st.top()]) {', id: 5 },
             { line: '            int idx = st.top(); st.pop();', id: 6 },
@@ -84,48 +95,52 @@
             { line: '    return result;', id: 11 },
             { line: '}', id: 12 },
         ];
-        const temps = [73, 74, 75, 71, 69, 72, 76, 73];
-        function generateAlgorithmSteps() {
+        let currentTemps = [73, 74, 75, 71, 69, 72, 76, 73];
+        function generateAlgorithmSteps(temps) {
             const steps = [];
             const result = Array(temps.length).fill(0);
             const stack = [];
-            steps.push({ current: -1, stack: [], result: [...result], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `溫度：[${temps.join(', ')}]<br><br>單調遞減 Stack<br>當遇到更高溫度時，彈出並計算等待天數` } });
+            steps.push({ current: -1, stack: [], result: [...result], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `溫度：[${temps.join(', ')}]<br><br>單調遞減 Stack<br>當遇到更高溫度時，彈出並計算等待天數`, formula: `result[idx] = i - idx` } });
             for (let i = 0; i < temps.length; i++) {
                 while (stack.length > 0 && temps[i] > temps[stack[stack.length - 1]]) {
                     const idx = stack.pop();
                     result[idx] = i - idx;
-                    steps.push({ current: i, stack: [...stack], result: [...result], popped: idx, highlightLines: [5,6,7], explanation: { title: `${temps[i]} > ${temps[idx]}`, text: `彈出索引 ${idx}（溫度 ${temps[idx]}）<br>result[${idx}] = ${i} - ${idx} = ${result[idx]}`, formula: `result[${idx}] = ${i} - ${idx} = ${result[idx]}` } });
+                    steps.push({ current: i, stack: [...stack], result: [...result], highlightLines: [5,6,7], explanation: { title: `${temps[i]}° > ${temps[idx]}°`, text: `彈出索引 ${idx}（${temps[idx]}°）<br>等待天數 = ${i} - ${idx} = ${result[idx]}`, formula: `result[${idx}] = ${i} - ${idx} = ${result[idx]}` } });
                 }
                 stack.push(i);
-                steps.push({ current: i, stack: [...stack], result: [...result], highlightLines: [9], explanation: { title: `Push 索引 ${i}`, text: `溫度 ${temps[i]} 入 Stack` } });
+                steps.push({ current: i, stack: [...stack], result: [...result], highlightLines: [9], explanation: { title: `Push 索引 ${i}`, text: `溫度 ${temps[i]}° 入 Stack`, formula: `st.push(${i})` } });
             }
-            steps.push({ current: -1, stack: [...stack], result: [...result], final: true, highlightLines: [11], explanation: { title: '完成！', text: `結果：[${result.join(', ')}]<br><br>Stack 中剩餘的索引：沒有更熱的天<br>時間：O(n)` } });
+            steps.push({ current: -1, stack: [...stack], result: [...result], final: true, highlightLines: [11], explanation: { title: '🎉 完成！', text: `結果：[${result.join(', ')}]<br><br>Stack 中剩餘：沒有更熱的天`, formula: `return [${result.join(', ')}]` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(temps = currentTemps) {
+            currentTemps = temps;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const maxT = Math.max(...temps);
-                    let html = '';
-                    for (let i = 0; i < temps.length; i++) {
+                    const maxT = Math.max(...currentTemps);
+                    document.getElementById('tempsDisplay').innerHTML = currentTemps.map((t, i) => {
                         let cls = 'temp-bar normal';
                         if (i === step.current) cls = 'temp-bar current';
                         else if (step.stack?.includes(i)) cls = 'temp-bar instack';
                         else if (step.result?.[i] > 0) cls = 'temp-bar done';
-                        const h = (temps[i] / maxT) * 100;
-                        html += `<div class="temp"><div class="${cls}" style="height:${h}px">${temps[i]}</div><div class="temp-label">${i}</div></div>`;
-                    }
-                    document.getElementById('tempsDisplay').innerHTML = html;
-                    document.getElementById('stackDisplay').innerHTML = (step.stack || []).map(i => `<span class="stack-item">${i}(${temps[i]}°)</span>`).join('') || '空';
+                        const h = (t / maxT) * 100;
+                        return `<div class="temp"><div class="${cls}" style="height:${h}px">${t}</div><div class="temp-label">${i}</div></div>`;
+                    }).join('');
+                    document.getElementById('stackDisplay').innerHTML = (step.stack || []).map(i => `<span class="stack-item">${i}(${currentTemps[i]}°)</span>`).join('') || '空';
                     document.getElementById('resultDisplay').innerHTML = (step.result || []).map(r => `<div class="result-item">${r}</div>`).join('');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentTemps));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const temps = document.getElementById('customTemps').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
+            if (temps.length < 2 || temps.length > 10) { alert('請輸入 2-10 個正整數溫度'); return; }
+            init(temps);
+        }
+        function resetVisualization() { init(currentTemps); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>
