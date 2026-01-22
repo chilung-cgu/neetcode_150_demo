@@ -3,16 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koko Eating Bananas - 視覺化</title>
+    <title>Koko Eating Bananas 珂珂吃香蕉 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .piles { display: flex; gap: 8px; justify-content: center; align-items: flex-end; margin: 20px 0; height: 120px; }
+        .piles { display: flex; gap: 8px; justify-content: center; align-items: flex-end; margin: 20px 0; height: 120px; flex-wrap: wrap; }
         .pile { display: flex; flex-direction: column; align-items: center; }
-        .pile-bar { width: 40px; background: var(--viz-warning); border-radius: 4px 4px 0 0; display: flex; align-items: flex-end; justify-content: center; color: #0f172a; font-weight: bold; padding-bottom: 4px; }
+        .pile-bar { width: 38px; background: var(--viz-warning); border-radius: 4px 4px 0 0; display: flex; align-items: flex-end; justify-content: center; color: #0f172a; font-weight: bold; padding-bottom: 4px; font-size: 0.9rem; }
         .pile-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
         .speed-test { text-align: center; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
         .speed-test .k { font-size: 1.3rem; font-weight: bold; color: var(--viz-secondary); }
         .speed-test .hours { color: var(--text-muted); }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { flex: 1; min-width: 80px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -20,7 +25,7 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">吃香蕉的珂珂（BINARY SEARCH）</div>
+                <div class="viz-title">吃香蕉的珂珂（BINARY SEARCH ON ANSWER）</div>
                 <div class="piles" id="pilesDisplay"></div>
                 <div class="speed-test" id="speedTest"></div>
                 <div class="controls" style="margin-top: 15px;">
@@ -39,20 +44,29 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n log m)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">時限 h</div><div class="state-value">8</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">L / M / R</div><div class="state-value" id="lmrDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">時限 h</div><div class="state-value" id="hDisplay">8</div></div>
+                    <div class="state-item"><div class="state-label">L / k / R</div><div class="state-value" id="lmrDisplay">-</div></div>
                     <div class="state-item"><div class="state-label">最小 k</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-warning);"></div>香蕉堆</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>堆:</label>
+                        <input type="text" id="customPiles" placeholder="香蕉堆" value="3,6,7,11">
+                    </div>
+                    <div class="input-row">
+                        <label>h:</label>
+                        <input type="number" id="customH" value="8" style="width: 60px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -73,7 +87,7 @@
             { line: '        int k = l + (r - l) / 2;', id: 3 },
             { line: '        int hours = 0;', id: 4 },
             { line: '        for (int p : piles)', id: 5 },
-            { line: '            hours += (p + k - 1) / k; // ceil(p/k)', id: 6 },
+            { line: '            hours += (p + k - 1) / k;  // ceil(p/k)', id: 6 },
             { line: '        if (hours <= h)', id: 7 },
             { line: '            r = k;     // 可以更慢', id: 8 },
             { line: '        else', id: 9 },
@@ -82,38 +96,55 @@
             { line: '    return l;', id: 12 },
             { line: '}', id: 13 },
         ];
-        const piles = [3, 6, 7, 11];
-        const h = 8;
-        function generateAlgorithmSteps() {
+        let currentPiles = [3, 6, 7, 11];
+        let currentH = 8;
+        function calcHours(piles, k) { return piles.reduce((sum, p) => sum + Math.ceil(p / k), 0); }
+        function generateAlgorithmSteps(piles, h) {
             const steps = [];
-            steps.push({ l: 1, r: 11, k: 6, hours: 7, highlightLines: [0,1,2,3,4,5,6], explanation: { title: '初始化', text: `香蕉堆：[${piles.join(', ')}]<br>時限：${h} 小時<br><br>二分搜尋吃的速度 k<br>l=1, r=11（最大堆）` } });
-            steps.push({ l: 1, r: 6, k: 3, hours: 10, highlightLines: [7,8], explanation: { title: 'k=6 可行', text: 'k=6 需要 7 小時 ≤ 8<br>可以嘗試更慢<br>r = k = 6', formula: 'ceil(3/6)+ceil(6/6)+ceil(7/6)+ceil(11/6) = 1+1+2+2 = 6' } });
-            steps.push({ l: 4, r: 6, k: 5, hours: 8, highlightLines: [9,10], explanation: { title: 'k=3 太慢', text: 'k=3 需要 10 小時 > 8<br>需要更快<br>l = k + 1 = 4', formula: 'ceil(3/3)+ceil(6/3)+ceil(7/3)+ceil(11/3) = 1+2+3+4 = 10' } });
-            steps.push({ l: 4, r: 5, k: 4, hours: 8, highlightLines: [7,8], explanation: { title: 'k=5 可行', text: 'k=5 需要 8 小時 = 8<br>剛好！嘗試更慢<br>r = 5', formula: 'ceil(3/5)+ceil(6/5)+ceil(7/5)+ceil(11/5) = 1+2+2+3 = 8' } });
-            steps.push({ l: 4, r: 4, k: 4, hours: 8, result: 4, highlightLines: [12], explanation: { title: '🎉 找到答案！', text: 'k=4 需要 8 小時<br>最小速度 = 4<br><br>時間：O(n log m)', formula: 'ceil(3/4)+ceil(6/4)+ceil(7/4)+ceil(11/4) = 1+2+2+3 = 8' } });
+            let l = 1, r = Math.max(...piles);
+            steps.push({ l, r, k: Math.floor((l + r) / 2), hours: calcHours(piles, Math.floor((l + r) / 2)), highlightLines: [0,1,2,3,4,5,6], explanation: { title: '初始化', text: `香蕉堆：[${piles.join(', ')}]<br>時限：${h} 小時<br><br>二分搜尋吃的速度 k<br>l=1, r=${r}（最大堆）`, formula: `hours = Σ ceil(pile[i] / k)` } });
+            while (l < r) {
+                const k = Math.floor((l + r) / 2);
+                const hours = calcHours(piles, k);
+                if (hours <= h) {
+                    steps.push({ l, r, k, hours, highlightLines: [7,8], explanation: { title: `k=${k} 可行 ✓`, text: `需要 ${hours} 小時 ≤ ${h}<br>可以嘗試更慢<br>r = k = ${k}`, formula: `${piles.map(p => `⌈${p}/${k}⌉`).join('+')} = ${hours} ≤ ${h}` } });
+                    r = k;
+                } else {
+                    steps.push({ l, r, k, hours, highlightLines: [9,10], explanation: { title: `k=${k} 太慢 ✗`, text: `需要 ${hours} 小時 > ${h}<br>需要更快<br>l = k + 1 = ${k + 1}`, formula: `${piles.map(p => `⌈${p}/${k}⌉`).join('+')} = ${hours} > ${h}` } });
+                    l = k + 1;
+                }
+            }
+            steps.push({ l, r, k: l, hours: calcHours(piles, l), result: l, highlightLines: [12], explanation: { title: '🎉 找到答案！', text: `最小速度 k = ${l}<br>需要 ${calcHours(piles, l)} 小時`, formula: `return ${l}` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(piles = currentPiles, h = currentH) {
+            currentPiles = piles; currentH = h;
+            document.getElementById('hDisplay').textContent = h;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const maxP = Math.max(...piles);
-                    let html = '';
-                    piles.forEach((p, i) => {
-                        const h = (p / maxP) * 100;
-                        html += `<div class="pile"><div class="pile-bar" style="height:${h}px">${p}</div><div class="pile-label">堆${i+1}</div></div>`;
-                    });
-                    document.getElementById('pilesDisplay').innerHTML = html;
-                    document.getElementById('speedTest').innerHTML = `<div class="k">k = ${step.k ?? '-'}</div><div class="hours">需要 ${step.hours ?? '-'} 小時</div>`;
+                    const maxP = Math.max(...currentPiles);
+                    document.getElementById('pilesDisplay').innerHTML = currentPiles.map((p, i) => {
+                        const ht = (p / maxP) * 100;
+                        return `<div class="pile"><div class="pile-bar" style="height:${ht}px">${p}</div><div class="pile-label">堆${i+1}</div></div>`;
+                    }).join('');
+                    document.getElementById('speedTest').innerHTML = `<div class="k">k = ${step.k ?? '-'}</div><div class="hours">需要 ${step.hours ?? '-'} 小時${step.hours !== undefined ? (step.hours <= currentH ? ' ✓' : ' ✗') : ''}</div>`;
                     document.getElementById('lmrDisplay').textContent = `${step.l} / ${step.k ?? '-'} / ${step.r}`;
                     document.getElementById('resultDisplay').textContent = step.result ?? '?';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentPiles, currentH));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const piles = document.getElementById('customPiles').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
+            const h = parseInt(document.getElementById('customH').value);
+            if (piles.length < 1 || piles.length > 8) { alert('請輸入 1-8 個正整數'); return; }
+            if (isNaN(h) || h < piles.length) { alert(`h 必須 >= ${piles.length}（香蕉堆數量）`); return; }
+            init(piles, h);
+        }
+        function resetVisualization() { init(currentPiles, currentH); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>
