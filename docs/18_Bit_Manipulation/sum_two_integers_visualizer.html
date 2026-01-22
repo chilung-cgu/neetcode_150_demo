@@ -3,16 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sum of Two Integers 兩整數之和 - 視覺化</title>
+    <title>Sum of Two Integers - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .bits { display: flex; flex-direction: column; gap: 10px; align-items: center; margin: 20px 0; }
-        .bit-row { display: flex; gap: 4px; align-items: center; }
-        .bit-label { width: 80px; color: var(--text-muted); font-size: 0.85rem; text-align: right; margin-right: 10px; }
-        .bit { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); font-family: monospace; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .bits-container { margin: 20px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 10px; }
+        .bit-row { display: flex; gap: 4px; align-items: center; margin: 8px 0; justify-content: center; }
+        .bit-label { width: 100px; color: var(--viz-text-muted); font-size: 0.85rem; text-align: right; margin-right: 10px; }
+        .bit { 
+            width: 32px; height: 34px; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border-radius: 4px; background: var(--viz-bg-primary); 
+            font-family: monospace; font-size: 1rem;
+        }
         .bit.one { background: var(--viz-primary); color: white; }
         .bit.carry { background: var(--viz-warning); color: #0f172a; }
         .bit.result { background: var(--viz-success); color: #0f172a; }
+
+        .operation-display {
+            text-align: center; margin: 15px 0; padding: 15px;
+            background: var(--viz-bg-secondary); border-radius: 8px;
+            font-family: monospace; font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
@@ -20,45 +34,48 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">兩整數之和（位運算）</div>
-                <div class="bits" id="bitsDisplay"></div>
+                <div class="viz-title">兩整數之和 (Sum of Two Integers)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試 (不用 +/-)</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">1 + 2 = 3</button>
+                        <button onclick="setExample(2)">5 + 3 = 8</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="bits-container" id="bitsDisplay"></div>
+                
+                <div class="operation-display" id="operationDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(1) 固定位數
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">a</div><div class="state-value" id="aDisplay">1</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">b</div><div class="state-value" id="bDisplay">2</div></div>
-                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                    <div class="state-item"><div class="state-label">a</div><div class="state-value" id="aDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">b</div><div class="state-value" id="bDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay">?</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">位運算加法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -68,43 +85,126 @@
         const codeStructure = [
             { line: 'int getSum(int a, int b) {', id: 0 },
             { line: '    while (b != 0) {', id: 1 },
-            { line: '        int carry = (a & b) << 1; // 進位', id: 2 },
-            { line: '        a = a ^ b;                // 無進位加法', id: 3 },
+            { line: '        int carry = (a & b) << 1;  // 進位', id: 2 },
+            { line: '        a = a ^ b;                 // 無進位和', id: 3 },
             { line: '        b = carry;', id: 4 },
             { line: '    }', id: 5 },
             { line: '    return a;', id: 6 },
             { line: '}', id: 7 },
         ];
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: { a: 1, b: 2 },
+            2: { a: 5, b: 3 }
+        };
+        
+        let currentExample = examples[1];
+        const BITS = 4;
+
+        function setExample(n) {
+            currentExample = examples[n];
+            init();
+        }
+
+        function toBinary(n) {
+            return (n >>> 0).toString(2).padStart(BITS, '0');
+        }
+
+        function generateAlgorithmSteps(initA, initB) {
             const steps = [];
-            steps.push({ a: '001', b: '010', highlightLines: [0,1], explanation: { title: '初始化', text: 'a = 1 (001)<br>b = 2 (010)<br><br>不用 +/-，用位運算<br>XOR = 無進位加法<br>AND << 1 = 進位' } });
-            steps.push({ a: '001', b: '010', xor: '011', carry: '000', highlightLines: [2,3,4], explanation: { title: '第 1 輪', text: 'a XOR b = 011 (3)<br>a AND b = 000<br>carry = 000<br><br>b = 0，停止' } });
-            steps.push({ a: '011', b: '000', result: 3, final: true, highlightLines: [6], explanation: { title: '🎉 完成！', text: '1 + 2 = 3<br><br>時間：O(1)' } });
+            let a = initA, b = initB;
+            
+            steps.push({
+                a, b, carry: null, round: 0,
+                highlightLines: [0, 1],
+                explanation: { 
+                    title: '初始化', 
+                    text: `a = ${initA}, b = ${initB}<br><br>不用 +/- 運算符<br>XOR = 無進位加法<br>(a & b) << 1 = 進位`,
+                    formula: 'setup'
+                }
+            });
+
+            let round = 0;
+            while (b !== 0 && round < 10) {
+                round++;
+                const carry = (a & b) << 1;
+                const xorResult = a ^ b;
+                
+                steps.push({
+                    a, b, xorResult, carry, round,
+                    highlightLines: [2, 3, 4],
+                    explanation: { 
+                        title: `第 ${round} 輪`, 
+                        text: `a = ${toBinary(a)} (${a})<br>b = ${toBinary(b)} (${b})<br><br>a ^ b = ${toBinary(xorResult)} (${xorResult})<br>carry = ${toBinary(carry)} (${carry})`,
+                        formula: `a=${xorResult}, b=${carry}`
+                    }
+                });
+
+                a = xorResult;
+                b = carry;
+            }
+
+            steps.push({
+                a, b: 0, carry: null, round, final: true,
+                highlightLines: [5, 6],
+                explanation: { 
+                    title: '完成!', 
+                    text: `b = 0，迴圈結束<br><br>${initA} + ${initB} = ${a}`,
+                    formula: `return ${a}`
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
+            const { a, b } = currentExample;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
-                    const showBits = (label, bits, cls) => {
+                    
+                    const showBits = (label, value, cls) => {
+                        const binary = toBinary(value);
                         html += `<div class="bit-row"><span class="bit-label">${label}</span>`;
-                        bits.split('').forEach(b => html += `<div class="bit ${b==='1'?cls:''}">${b}</div>`);
-                        html += `</div>`;
+                        binary.split('').forEach(bit => {
+                            html += `<div class="bit ${bit === '1' ? cls : ''}">${bit}</div>`;
+                        });
+                        html += `<span style="margin-left: 10px; color: var(--viz-text-muted);">= ${value}</span></div>`;
                     };
-                    showBits('a:', step.a || '001', 'one');
-                    showBits('b:', step.b || '010', 'one');
-                    if (step.xor) showBits('a XOR b:', step.xor, 'result');
-                    if (step.carry) showBits('carry:', step.carry, 'carry');
+                    
+                    showBits('a:', step.a, 'one');
+                    showBits('b:', step.b, 'one');
+                    if (step.xorResult !== undefined) {
+                        html += '<div style="text-align: center; color: var(--viz-text-muted); margin: 5px 0;">───────────</div>';
+                        showBits('a ^ b:', step.xorResult, 'result');
+                        showBits('carry:', step.carry, 'carry');
+                    }
                     document.getElementById('bitsDisplay').innerHTML = html;
-                    document.getElementById('aDisplay').textContent = parseInt(step.a || '001', 2);
-                    document.getElementById('bDisplay').textContent = parseInt(step.b || '010', 2);
-                    document.getElementById('resultDisplay').textContent = step.result ?? '?';
+                    
+                    // Operation display
+                    if (step.round > 0 && !step.final) {
+                        document.getElementById('operationDisplay').innerHTML = 
+                            `第 ${step.round} 輪: a = ${step.xorResult}, b = ${step.carry}`;
+                    } else if (step.final) {
+                        document.getElementById('operationDisplay').innerHTML = 
+                            `<span style="color: var(--viz-success);">${currentExample.a} + ${currentExample.b} = ${step.a}</span>`;
+                    } else {
+                        document.getElementById('operationDisplay').innerHTML = 
+                            '<span style="color: var(--viz-text-muted);">等待開始...</span>';
+                    }
+                    
+                    document.getElementById('aDisplay').textContent = step.a;
+                    document.getElementById('bDisplay').textContent = step.b;
+                    document.getElementById('resultDisplay').textContent = step.final ? step.a : '?';
+                    document.getElementById('resultDisplay').style.color = step.final ? 'var(--viz-success)' : 'inherit';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(a, b));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

@@ -3,13 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reverse Integer Visualization</title>
+    <title>Reverse Integer - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .numbers { text-align: center; margin: 20px 0; }
-        .num { font-family: monospace; font-size: 2rem; padding: 10px 20px; border-radius: 8px; margin: 5px; display: inline-block; }
-        .num.input { background: var(--viz-primary); color: white; }
-        .num.output { background: var(--viz-success); color: #0f172a; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .numbers-display { text-align: center; margin: 20px 0; }
+        .num-box { 
+            font-family: monospace; font-size: 2.5rem; font-weight: bold;
+            padding: 15px 25px; border-radius: 10px; margin: 10px; display: inline-block;
+        }
+        .num-box.input { background: var(--viz-primary); color: white; }
+        .num-box.output { background: var(--viz-success); color: #0f172a; }
+
+        .digits-container {
+            display: flex; gap: 8px; justify-content: center; margin: 15px 0;
+        }
+        .digit { 
+            width: 45px; height: 55px; display: flex; align-items: center; justify-content: center; 
+            font-size: 1.5rem; font-weight: bold; border-radius: 8px; font-family: monospace;
+            background: var(--viz-primary); color: white; transition: all 0.3s;
+        }
+        .digit.current { background: var(--viz-warning); color: #0f172a; transform: scale(1.1); }
+        .digit.processed { opacity: 0.4; }
+
+        .result-digits {
+            display: flex; gap: 8px; justify-content: center; margin: 15px 0;
+        }
+        .result-digit { 
+            width: 45px; height: 55px; display: flex; align-items: center; justify-content: center; 
+            font-size: 1.5rem; font-weight: bold; border-radius: 8px; font-family: monospace;
+            background: var(--viz-success); color: #0f172a;
+        }
+        .result-digit.new { animation: pulse 0.4s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+
+        .operation-display {
+            text-align: center; margin: 15px 0; padding: 15px;
+            background: var(--viz-bg-secondary); border-radius: 8px;
+            font-family: monospace; font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
@@ -17,38 +52,52 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">REVERSE INTEGER</div>
-                <div class="numbers" id="numbersDisplay"></div>
+                <div class="viz-title">整數反轉 (Reverse Integer)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">123 → 321</button>
+                        <button onclick="setExample(2)">-456 → -654</button>
+                        <button onclick="setExample(3)">120 → 21</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">原始 (從右取位)</div>
+                <div class="digits-container" id="inputDigits"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">結果 (從左建立)</div>
+                <div class="result-digits" id="outputDigits"></div>
+                
+                <div class="operation-display" id="operationDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
-            <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O(log x) 位數
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">x</div><div class="state-value" id="xDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">result</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">MODULO & DIVIDE</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -61,7 +110,7 @@
             { line: '    while (x != 0) {', id: 2 },
             { line: '        int digit = x % 10;', id: 3 },
             { line: '        x /= 10;', id: 4 },
-            { line: '        // Check overflow before multiply', id: 5 },
+            { line: '        // 溢出檢查', id: 5 },
             { line: '        if (result > INT_MAX/10 || result < INT_MIN/10)', id: 6 },
             { line: '            return 0;', id: 7 },
             { line: '        result = result * 10 + digit;', id: 8 },
@@ -69,15 +118,68 @@
             { line: '    return result;', id: 10 },
             { line: '}', id: 11 },
         ];
+        
+        const examples = {
+            1: 123,
+            2: -456,
+            3: 120
+        };
+        
+        let currentNumber = examples[1];
 
-        function generateAlgorithmSteps() {
+        function setExample(n) {
+            currentNumber = examples[n];
+            init();
+        }
+
+        function generateAlgorithmSteps(input) {
             const steps = [];
-            // 123 -> 321
-            steps.push({ input: 123, output: 0, highlightLines: [0, 1], explanation: { title: 'Reverse 123', text: 'Extract digits from right' }});
-            steps.push({ input: 12, output: 3, digit: 3, highlightLines: [3, 4, 8], explanation: { title: '123 % 10 = 3', text: 'result = 0 * 10 + 3 = 3' }});
-            steps.push({ input: 1, output: 32, digit: 2, highlightLines: [3, 4, 8], explanation: { title: '12 % 10 = 2', text: 'result = 3 * 10 + 2 = 32' }});
-            steps.push({ input: 0, output: 321, digit: 1, highlightLines: [3, 4, 8], explanation: { title: '1 % 10 = 1', text: 'result = 32 * 10 + 1 = 321' }});
-            steps.push({ input: 0, output: 321, highlightLines: [10], explanation: { title: 'Done!', text: '123 → 321' }});
+            const sign = input < 0 ? -1 : 1;
+            let x = Math.abs(input);
+            const originalDigits = String(x).split('');
+            let result = 0;
+            let processed = 0;
+            
+            steps.push({
+                x: input, result: 0, originalDigits, processed: 0, currentDigit: null,
+                sign,
+                highlightLines: [0, 1],
+                explanation: { 
+                    title: '初始化', 
+                    text: `x = ${input}<br>result = 0<br><br>取模取最後一位<br>累加到 result`,
+                    formula: 'setup'
+                }
+            });
+
+            while (x !== 0) {
+                const digit = x % 10;
+                x = Math.floor(x / 10);
+                result = result * 10 + digit;
+                processed++;
+                
+                steps.push({
+                    x: sign * x, result: sign * result, 
+                    originalDigits, processed, currentDigit: digit, sign,
+                    highlightLines: [2, 3, 4, 8],
+                    explanation: { 
+                        title: `取位 ${digit}`, 
+                        text: `digit = ${input > 0 ? Math.abs(input) : input} % 10 之前的值 % 10 = ${digit}<br>result = ${sign * (result - digit) / 10} * 10 + ${digit} = ${sign * result}`,
+                        formula: `result = ${sign * result}`
+                    }
+                });
+            }
+
+            steps.push({
+                x: 0, result: sign * result, 
+                originalDigits, processed, currentDigit: null, sign, final: true,
+                highlightLines: [10],
+                explanation: { 
+                    title: '完成!', 
+                    text: `${input} → ${sign * result}`,
+                    formula: `return ${sign * result}`
+                }
+            });
+
             return steps;
         }
 
@@ -86,14 +188,51 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('numbersDisplay').innerHTML = `
-                        <div><span style="color: var(--viz-text-muted);">x = </span><span class="num input">${step.input}</span></div>
-                        <div style="margin-top: 10px;"><span style="color: var(--viz-text-muted);">result = </span><span class="num output">${step.output}</span></div>
-                    `;
+                    const digits = step.originalDigits || [];
+                    const processed = step.processed || 0;
+                    
+                    // Input digits
+                    document.getElementById('inputDigits').innerHTML = 
+                        (step.sign < 0 ? '<span class="digit">-</span>' : '') +
+                        digits.map((d, i) => {
+                            let cls = 'digit';
+                            const fromRight = digits.length - 1 - i;
+                            if (fromRight < processed) cls += ' processed';
+                            if (fromRight === processed - 1 && step.currentDigit !== null) cls += ' current';
+                            return `<span class="${cls}">${d}</span>`;
+                        }).join('');
+                    
+                    // Output digits
+                    const resultAbs = Math.abs(step.result || 0);
+                    const resultDigits = resultAbs === 0 && processed === 0 ? [] : String(resultAbs).split('');
+                    document.getElementById('outputDigits').innerHTML = 
+                        (step.sign < 0 && resultDigits.length > 0 ? '<span class="result-digit">-</span>' : '') +
+                        (resultDigits.length > 0 
+                            ? resultDigits.map((d, i) => 
+                                `<span class="result-digit ${i === resultDigits.length - 1 && step.currentDigit !== null ? 'new' : ''}">${d}</span>`
+                              ).join('')
+                            : '<span style="color: var(--viz-text-muted);">0</span>');
+                    
+                    // Operation
+                    if (step.currentDigit !== null) {
+                        document.getElementById('operationDisplay').innerHTML = 
+                            `digit = ${step.currentDigit}, result = ${step.result}`;
+                    } else if (step.final) {
+                        document.getElementById('operationDisplay').innerHTML = 
+                            `<span style="color: var(--viz-success);">${currentNumber} → ${step.result}</span>`;
+                    } else {
+                        document.getElementById('operationDisplay').innerHTML = 
+                            '<span style="color: var(--viz-text-muted);">等待開始...</span>';
+                    }
+                    
+                    document.getElementById('xDisplay').textContent = step.x ?? currentNumber;
+                    document.getElementById('resultDisplay').textContent = step.result ?? 0;
+                    document.getElementById('resultDisplay').style.color = step.final ? 'var(--viz-success)' : 'inherit';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNumber));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

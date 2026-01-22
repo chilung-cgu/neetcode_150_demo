@@ -3,13 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number of 1 Bits Visualization</title>
+    <title>Number of 1 Bits - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .binary { display: flex; gap: 3px; justify-content: center; margin: 15px 0; }
-        .bit { width: 28px; height: 32px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .number-display { text-align: center; margin: 15px 0; font-size: 1.5rem; font-weight: bold; }
+        
+        .binary-container { 
+            display: flex; gap: 4px; justify-content: center; margin: 20px 0; 
+            padding: 15px; background: var(--viz-bg-secondary); border-radius: 10px;
+        }
+        .bit { 
+            width: 30px; height: 36px; display: flex; align-items: center; justify-content: center; 
+            font-family: monospace; font-size: 1.1rem; font-weight: bold;
+            background: var(--viz-bg-primary); color: var(--viz-text-muted); border-radius: 4px;
+            transition: all 0.3s;
+        }
         .bit.one { background: var(--viz-success); color: #0f172a; }
-        .bit.current { border: 2px solid var(--viz-secondary); }
+        .bit.clearing { background: var(--viz-warning); color: #0f172a; animation: pulse 0.4s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+
+        .operation-display {
+            text-align: center; margin: 15px 0; padding: 15px;
+            background: var(--viz-bg-secondary); border-radius: 8px;
+            font-family: monospace;
+        }
+        .op-row { margin: 5px 0; font-size: 1rem; }
+        .op-label { color: var(--viz-text-muted); margin-right: 10px; }
     </style>
 </head>
 <body>
@@ -17,49 +40,48 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">NUMBER OF 1 BITS (HAMMING WEIGHT)</div>
-                <div class="binary" id="binaryDisplay"></div>
-                <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">1 的位數 (Number of 1 Bits)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">n = 11</button>
+                        <button onclick="setExample(2)">n = 128</button>
+                        <button onclick="setExample(3)">n = 255</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
                 </div>
-                <div class="controls-row-2">
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                
+                <div class="number-display">n = <span id="numberDisplay">0</span></div>
+                <div class="binary-container" id="binaryDisplay"></div>
+                
+                <div class="operation-display" id="operationDisplay"></div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
-
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(k) k=1的個數
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Count</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">1 的個數</div><div class="state-value" id="countDisplay">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BRIAN KERNIGHAN'S</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">Brian Kernighan's Algorithm (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -70,25 +92,78 @@
             { line: 'int hammingWeight(uint32_t n) {', id: 0 },
             { line: '    int count = 0;', id: 1 },
             { line: '    while (n) {', id: 2 },
-            { line: '        n &= (n - 1); // clear rightmost 1', id: 3 },
+            { line: '        n &= (n - 1);  // 清除最右邊的 1', id: 3 },
             { line: '        count++;', id: 4 },
             { line: '    }', id: 5 },
             { line: '    return count;', id: 6 },
             { line: '}', id: 7 },
         ];
-        // 11 = 1011 in binary, has 3 ones
-        const binary = '00001011';
-        const onePositions = [0, 1, 3]; // positions of 1s from right
+        
+        const examples = {
+            1: 11,   // 1011 - 3 ones
+            2: 128,  // 10000000 - 1 one
+            3: 255   // 11111111 - 8 ones
+        };
+        
+        let currentNumber = examples[1];
 
-        function generateAlgorithmSteps() {
+        function setExample(n) {
+            currentNumber = examples[n];
+            init();
+        }
+
+        function toBinary(n, bits = 8) {
+            return (n >>> 0).toString(2).padStart(bits, '0');
+        }
+
+        function generateAlgorithmSteps(n) {
             const steps = [];
+            const original = n;
+            let count = 0;
             
-            steps.push({ cleared: [], count: 0, highlightLines: [0, 1], explanation: { title: 'n = 11 (1011)', text: 'Count 1 bits' }});
-            steps.push({ cleared: [0], count: 1, highlightLines: [3, 4], explanation: { title: 'n &= (n-1)', text: '1011 & 1010 = 1010' }});
-            steps.push({ cleared: [0, 1], count: 2, highlightLines: [3, 4], explanation: { title: 'n &= (n-1)', text: '1010 & 1001 = 1000' }});
-            steps.push({ cleared: [0, 1, 3], count: 3, highlightLines: [3, 4], explanation: { title: 'n &= (n-1)', text: '1000 & 0111 = 0000' }});
-            steps.push({ cleared: [0, 1, 3], count: 3, highlightLines: [6], explanation: { title: 'Done!', text: 'Hamming weight = 3' }});
-            
+            steps.push({
+                n, count: 0, original, clearingBit: -1,
+                highlightLines: [0, 1],
+                explanation: { 
+                    title: '初始化', 
+                    text: `n = ${original} = ${toBinary(original)}<br><br>Brian Kernighan's 演算法:<br>n & (n-1) 會清除最右邊的 1<br>重複直到 n = 0`,
+                    formula: 'setup'
+                }
+            });
+
+            while (n > 0) {
+                const prev = n;
+                const prevMinus1 = n - 1;
+                
+                // Find position of rightmost 1
+                const binary = toBinary(prev);
+                const rightmost1 = binary.length - 1 - binary.lastIndexOf('1');
+                
+                n &= (n - 1);
+                count++;
+                
+                steps.push({
+                    n, count, original, clearingBit: rightmost1,
+                    prev, prevMinus1,
+                    highlightLines: [2, 3, 4],
+                    explanation: { 
+                        title: `n & (n-1)`, 
+                        text: `${toBinary(prev)}<br>& ${toBinary(prevMinus1)}<br>= ${toBinary(n)}<br><br>清除了最右邊的 1`,
+                        formula: `count = ${count}`
+                    }
+                });
+            }
+
+            steps.push({
+                n: 0, count, original, clearingBit: -1, final: true,
+                highlightLines: [6],
+                explanation: { 
+                    title: '完成!', 
+                    text: `${original} 的二進位有 ${count} 個 1<br><br>只迭代了 ${count} 次<br>(而不是 32 次檢查每一位)`,
+                    formula: `return ${count}`
+                }
+            });
+
             return steps;
         }
 
@@ -97,18 +172,41 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const bits = binary.split('').reverse();
-                    document.getElementById('binaryDisplay').innerHTML = bits.reverse().map((b, i) => {
-                        const pos = 7 - i;
-                        const isOne = b === '1';
-                        const isCleared = step.cleared?.includes(pos);
-                        return `<span class="bit ${isOne && !isCleared ? 'one' : ''}">${isCleared ? '0' : b}</span>`;
-                    }).join('');
-                    document.getElementById('countDisplay').textContent = step.count;
+                    document.getElementById('numberDisplay').textContent = step.original ?? currentNumber;
+                    
+                    // Binary display
+                    const n = step.prev !== undefined ? step.prev : (step.n ?? currentNumber);
+                    const binary = toBinary(n);
+                    document.getElementById('binaryDisplay').innerHTML = 
+                        binary.split('').map((b, i) => {
+                            let cls = 'bit';
+                            if (b === '1') cls += ' one';
+                            const pos = 7 - i;
+                            if (step.clearingBit === pos && step.prev !== undefined) cls += ' clearing';
+                            return `<span class="${cls}">${b}</span>`;
+                        }).join('');
+                    
+                    // Operation display
+                    if (step.prev !== undefined) {
+                        document.getElementById('operationDisplay').innerHTML = `
+                            <div class="op-row"><span class="op-label">n =</span>${toBinary(step.prev)}</div>
+                            <div class="op-row"><span class="op-label">n-1 =</span>${toBinary(step.prevMinus1)}</div>
+                            <div class="op-row"><span class="op-label">n & (n-1) =</span>${toBinary(step.n)}</div>
+                        `;
+                    } else if (step.final) {
+                        document.getElementById('operationDisplay').innerHTML = 
+                            `<div style="color: var(--viz-success); font-size: 1.2rem;">Hamming Weight = ${step.count}</div>`;
+                    } else {
+                        document.getElementById('operationDisplay').innerHTML = 
+                            '<div style="color: var(--viz-text-muted)">等待開始...</div>';
+                    }
+                    
+                    document.getElementById('countDisplay').textContent = step.count ?? 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNumber));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

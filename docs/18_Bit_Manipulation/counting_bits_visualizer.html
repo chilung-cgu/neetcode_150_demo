@@ -3,18 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Counting Bits 比特位計數 - 視覺化</title>
+    <title>Counting Bits - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .numbers { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .num-card { display: flex; flex-direction: column; align-items: center; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; min-width: 60px; transition: all 0.3s; }
-        .num-card.current { background: var(--viz-secondary); color: #0f172a; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .numbers-container { 
+            display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; 
+            margin: 20px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 10px;
+        }
+        .num-card { 
+            display: flex; flex-direction: column; align-items: center; 
+            padding: 12px; background: var(--viz-bg-primary); border-radius: 8px; 
+            min-width: 65px; transition: all 0.3s;
+        }
+        .num-card.current { background: var(--viz-warning); color: #0f172a; }
         .num-card.done { background: var(--viz-success); color: #0f172a; }
-        .num-card .decimal { font-weight: bold; font-size: 1.2rem; }
-        .num-card .binary { font-size: 0.75rem; font-family: monospace; }
-        .num-card .count { font-size: 0.9rem; color: var(--viz-warning); }
-        .result { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
-        .result-item { background: var(--viz-primary); color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
+        .num-card .decimal { font-weight: bold; font-size: 1.3rem; }
+        .num-card .binary { font-size: 0.75rem; font-family: monospace; margin-top: 3px; }
+        .num-card .count { font-size: 0.85rem; margin-top: 5px; font-weight: bold; }
+
+        .dp-formula {
+            text-align: center; margin: 15px 0; padding: 15px;
+            background: var(--viz-bg-secondary); border-radius: 8px;
+            font-family: monospace; font-size: 1.1rem;
+        }
+
+        .result-container { 
+            display: flex; gap: 6px; justify-content: center; margin: 15px 0; 
+            flex-wrap: wrap;
+        }
+        .result-item { 
+            background: var(--viz-primary); color: white; padding: 8px 14px; 
+            border-radius: 6px; font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -22,42 +46,46 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">比特位計數（DP + 位運算）</div>
-                <div class="numbers" id="numbersDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">結果陣列</div>
-                <div class="result" id="resultDisplay"></div>
+                <div class="viz-title">比特位計數 (Counting Bits)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">n = 5</button>
+                        <button onclick="setExample(2)">n = 8</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="numbers-container" id="numbersDisplay"></div>
+                
+                <div class="dp-formula" id="formulaDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">結果陣列</div>
+                <div class="result-container" id="resultDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
-            </div>
+                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
-            
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
-                </div>
+            </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">DP + 位運算 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -68,43 +96,118 @@
             { line: 'vector<int> countBits(int n) {', id: 0 },
             { line: '    vector<int> dp(n + 1, 0);', id: 1 },
             { line: '    for (int i = 1; i <= n; i++) {', id: 2 },
-            { line: '        // dp[i] = dp[i >> 1] + (i & 1)', id: 3 },
-            { line: '        dp[i] = dp[i / 2] + i % 2;', id: 4 },
-            { line: '    }', id: 5 },
-            { line: '    return dp;', id: 6 },
-            { line: '}', id: 7 },
+            { line: '        // i >> 1 = i / 2 (去掉最低位)', id: 3 },
+            { line: '        // i & 1 = 最低位是否為 1', id: 4 },
+            { line: '        dp[i] = dp[i >> 1] + (i & 1);', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return dp;', id: 7 },
+            { line: '}', id: 8 },
         ];
-        const n = 5;
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: 5,
+            2: 8
+        };
+        
+        let currentN = examples[1];
+
+        function setExample(num) {
+            currentN = examples[num];
+            init();
+        }
+
+        function toBinary(n, bits = 4) {
+            return n.toString(2).padStart(bits, '0');
+        }
+
+        function generateAlgorithmSteps(n) {
             const steps = [];
             const dp = [0];
-            steps.push({ dp: [0], current: -1, highlightLines: [0,1], explanation: { title: '初始化', text: 'n = 5<br><br>DP 關係：<br>dp[i] = dp[i/2] + i%2<br><br>例：dp[5] = dp[2] + 1' } });
+            
+            steps.push({
+                dp: [0], current: -1, n,
+                highlightLines: [0, 1],
+                explanation: { 
+                    title: '初始化', 
+                    text: `n = ${n}<br><br>DP 遞推關係:<br>dp[i] = dp[i >> 1] + (i & 1)<br><br>i >> 1 = i / 2 (去掉最低位)<br>i & 1 = 最低位是否為 1`,
+                    formula: 'setup'
+                }
+            });
+
             for (let i = 1; i <= n; i++) {
-                dp.push(dp[Math.floor(i/2)] + (i % 2));
-                steps.push({ dp: [...dp], current: i, highlightLines: [2,3,4], explanation: { title: `計算 dp[${i}]`, text: `${i} = ${i.toString(2)}₂<br>dp[${i}] = dp[${Math.floor(i/2)}] + ${i%2} = ${dp[i]}`, formula: `dp[${i}] = dp[${Math.floor(i/2)}] + ${i%2} = ${dp[i]}` } });
+                const halfIdx = i >> 1;
+                const lastBit = i & 1;
+                dp.push(dp[halfIdx] + lastBit);
+                
+                steps.push({
+                    dp: [...dp], current: i, n, halfIdx, lastBit,
+                    highlightLines: [2, 3, 4, 5],
+                    explanation: { 
+                        title: `計算 dp[${i}]`, 
+                        text: `${i} = ${toBinary(i)}<br><br>dp[${i}] = dp[${halfIdx}] + ${lastBit}<br>= ${dp[halfIdx]} + ${lastBit} = ${dp[i]}`,
+                        formula: `dp[${i}] = dp[${halfIdx}] + ${lastBit}`
+                    }
+                });
             }
-            steps.push({ dp: [...dp], current: -1, final: true, highlightLines: [6], explanation: { title: '🎉 完成！', text: `結果：[${dp.join(', ')}]<br><br>時間：O(n)` } });
+
+            steps.push({
+                dp: [...dp], current: -1, n, final: true,
+                highlightLines: [7],
+                explanation: { 
+                    title: '完成!', 
+                    text: `結果: [${dp.join(', ')}]<br><br>每個數只需 O(1) 時間計算<br>總時間 O(n)`,
+                    formula: 'return dp'
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
+                    const n = step.n || currentN;
+                    
+                    // Numbers display
                     let html = '';
                     for (let i = 0; i <= n; i++) {
                         let cls = 'num-card';
                         if (i === step.current) cls += ' current';
                         else if (step.dp?.[i] !== undefined && i < step.current) cls += ' done';
+                        
                         const count = step.dp?.[i] ?? '?';
-                        html += `<div class="${cls}"><div class="decimal">${i}</div><div class="binary">${i.toString(2).padStart(3,'0')}</div><div class="count">${count} 個 1</div></div>`;
+                        html += `
+                            <div class="${cls}">
+                                <div class="decimal">${i}</div>
+                                <div class="binary">${toBinary(i)}</div>
+                                <div class="count">${count} 個 1</div>
+                            </div>
+                        `;
                     }
                     document.getElementById('numbersDisplay').innerHTML = html;
-                    document.getElementById('resultDisplay').innerHTML = (step.dp || []).map(c => `<span class="result-item">${c}</span>`).join('');
+                    
+                    // Formula display
+                    if (step.current > 0 && step.halfIdx !== undefined) {
+                        document.getElementById('formulaDisplay').innerHTML = 
+                            `dp[${step.current}] = dp[${step.halfIdx}] + (${step.current} & 1) = ${step.dp[step.halfIdx]} + ${step.lastBit} = <strong>${step.dp[step.current]}</strong>`;
+                    } else if (step.final) {
+                        document.getElementById('formulaDisplay').innerHTML = 
+                            `<span style="color: var(--viz-success);">完成! 結果: [${step.dp.join(', ')}]</span>`;
+                    } else {
+                        document.getElementById('formulaDisplay').innerHTML = 
+                            '<span style="color: var(--viz-text-muted);">dp[i] = dp[i >> 1] + (i & 1)</span>';
+                    }
+                    
+                    // Result display
+                    document.getElementById('resultDisplay').innerHTML = 
+                        (step.dp || []).map(c => `<span class="result-item">${c}</span>`).join('');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentN));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

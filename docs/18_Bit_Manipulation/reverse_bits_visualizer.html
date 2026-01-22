@@ -3,16 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reverse Bits 顛倒二進位位元 - 視覺化</title>
+    <title>Reverse Bits - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .binary-row { display: flex; gap: 3px; justify-content: center; margin: 10px 0; font-family: monospace; }
-        .bit { width: 25px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; font-size: 0.9rem; }
-        .bit.zero { background: var(--viz-bg-secondary); color: var(--text-muted); }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .binary-section { margin: 20px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 10px; }
+        .section-label { text-align: center; color: var(--viz-text-muted); font-size: 0.85rem; margin-bottom: 10px; }
+        
+        .binary-row { display: flex; gap: 3px; justify-content: center; font-family: monospace; }
+        .bit { 
+            width: 28px; height: 34px; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border-radius: 4px; font-size: 1rem; transition: all 0.3s;
+        }
+        .bit.zero { background: var(--viz-bg-primary); color: var(--viz-text-muted); }
         .bit.one { background: var(--viz-success); color: #0f172a; }
-        .bit.current { border: 2px solid var(--viz-warning); }
-        .label { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 5px 0; }
-        .arrow { text-align: center; font-size: 1.5rem; color: var(--viz-secondary); margin: 10px 0; }
+        .bit.current { border: 3px solid var(--viz-warning); transform: scale(1.1); }
+        .bit.new { animation: pulse 0.4s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+
+        .arrow-display { text-align: center; font-size: 1.5rem; color: var(--viz-secondary); margin: 15px 0; }
+
+        .operation-display {
+            text-align: center; margin: 15px 0; padding: 12px;
+            background: var(--viz-bg-secondary); border-radius: 8px;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -20,41 +38,50 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">顛倒二進位位元</div>
-                <div class="label">原始（從右往左讀取）</div>
-                <div class="binary-row" id="originalDisplay"></div>
-                <div class="arrow">↓ 顛倒 ↓</div>
-                <div class="label">結果（從左往右建立）</div>
-                <div class="binary-row" id="resultDisplay"></div>
+                <div class="viz-title">顛倒二進位位元 (Reverse Bits)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試 (8位簡化示範)</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">n = 43 (00101011)</button>
+                        <button onclick="setExample(2)">n = 165 (10100101)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="binary-section">
+                    <div class="section-label">原始 (從右往左讀取)</div>
+                    <div class="binary-row" id="originalDisplay"></div>
+                </div>
+                
+                <div class="arrow-display">↓ 顛倒 ↓</div>
+                
+                <div class="binary-section">
+                    <div class="section-label">結果 (從左往右建立)</div>
+                    <div class="binary-row" id="resultDisplay"></div>
+                </div>
+                
+                <div class="operation-display" id="operationDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(1) 固定32位
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">輸入</div><div class="state-value" id="inputDisplay">43261596</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">輸出</div><div class="state-value" id="outputDisplay" style="color: var(--viz-success);">?</div></div>
+                    <div class="state-item"><div class="state-label">輸入</div><div class="state-value" id="inputDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">輸出</div><div class="state-value" id="outputDisplay">-</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -79,43 +106,117 @@
             { line: '    return result;', id: 7 },
             { line: '}', id: 8 },
         ];
-        // 簡化：用 8 位示範
-        const input = 0b10100101;
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: 43,   // 00101011
+            2: 165   // 10100101
+        };
+        
+        let currentNumber = examples[1];
+        const BITS = 8;  // Simplified demo
+
+        function setExample(num) {
+            currentNumber = examples[num];
+            init();
+        }
+
+        function toBinary(n) {
+            return (n >>> 0).toString(2).padStart(BITS, '0');
+        }
+
+        function generateAlgorithmSteps(input) {
             const steps = [];
-            steps.push({ n: input, result: 0, pos: -1, highlightLines: [0,1], explanation: { title: '初始化', text: '以 8 位示範<br>輸入：10100101<br><br>每次取最低位加到結果' } });
-            let n = input, result = 0;
-            for (let i = 0; i < 8; i++) {
-                result = (result << 1) | (n & 1);
+            let n = input;
+            let result = 0;
+            
+            steps.push({
+                n: input, result: 0, pos: -1, originalPos: -1, input,
+                highlightLines: [0, 1],
+                explanation: { 
+                    title: '初始化', 
+                    text: `輸入: ${input} = ${toBinary(input)}<br><br>演算法:<br>1. result 左移<br>2. 加入 n 的最低位<br>3. n 右移<br>重複 32 次`,
+                    formula: 'setup'
+                }
+            });
+
+            for (let i = 0; i < BITS; i++) {
+                const bit = n & 1;
+                result = (result << 1) | bit;
                 n >>= 1;
-                steps.push({ n, result, pos: i, highlightLines: [2,3,4,5], explanation: { title: `步驟 ${i+1}`, text: `取位元 ${(input >> i) & 1}<br>result = ${result.toString(2).padStart(i+1,'0')}`, formula: `result |= ${(input >> i) & 1}` } });
+                
+                steps.push({
+                    n, result, pos: i, originalPos: i, input, currentBit: bit,
+                    highlightLines: [2, 3, 4, 5],
+                    explanation: { 
+                        title: `步驟 ${i + 1}`, 
+                        text: `取最低位: ${bit}<br>result = ${toBinary(result)}<br><br>result <<= 1, 然後 |= ${bit}`,
+                        formula: `bit = ${bit}`
+                    }
+                });
             }
-            steps.push({ n: 0, result, pos: -1, final: true, highlightLines: [7], explanation: { title: '🎉 完成！', text: `10100101 → 10100101<br><br>時間：O(1)（固定 32 次）` } });
+
+            steps.push({
+                n: 0, result, pos: -1, originalPos: -1, input, final: true,
+                highlightLines: [7],
+                explanation: { 
+                    title: '完成!', 
+                    text: `${toBinary(input)} → ${toBinary(result)}<br><br>${input} → ${result}<br><br>位元順序完全顛倒`,
+                    formula: `return ${result}`
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const orig = input.toString(2).padStart(8,'0');
-                    const res = (step.result || 0).toString(2).padStart(8,'0');
-                    let origHtml = '', resHtml = '';
-                    for (let i = 0; i < 8; i++) {
-                        const cls = `bit ${orig[i] === '1' ? 'one' : 'zero'}${7-i === step.pos ? ' current' : ''}`;
-                        origHtml += `<div class="${cls}">${orig[i]}</div>`;
+                    const input = step.input || currentNumber;
+                    const inputBinary = toBinary(input);
+                    const resultBinary = toBinary(step.result || 0);
+                    
+                    // Original display (reading from right)
+                    document.getElementById('originalDisplay').innerHTML = 
+                        inputBinary.split('').map((b, i) => {
+                            let cls = `bit ${b === '1' ? 'one' : 'zero'}`;
+                            if (step.originalPos >= 0 && (BITS - 1 - i) === step.originalPos) {
+                                cls += ' current';
+                            }
+                            return `<span class="${cls}">${b}</span>`;
+                        }).join('');
+                    
+                    // Result display (building from left)
+                    document.getElementById('resultDisplay').innerHTML = 
+                        resultBinary.split('').map((b, i) => {
+                            let cls = `bit ${b === '1' ? 'one' : 'zero'}`;
+                            if (step.pos >= 0 && i === (BITS - 1 - step.pos)) {
+                                cls += ' new';
+                            }
+                            return `<span class="${cls}">${b}</span>`;
+                        }).join('');
+                    
+                    // Operation display
+                    if (step.currentBit !== undefined) {
+                        document.getElementById('operationDisplay').innerHTML = 
+                            `取位元 <strong>${step.currentBit}</strong> → result = ${toBinary(step.result)}`;
+                    } else if (step.final) {
+                        document.getElementById('operationDisplay').innerHTML = 
+                            `<span style="color: var(--viz-success);">完成! ${input} → ${step.result}</span>`;
+                    } else {
+                        document.getElementById('operationDisplay').innerHTML = 
+                            '<span style="color: var(--viz-text-muted);">等待開始...</span>';
                     }
-                    for (let i = 0; i < 8; i++) {
-                        const cls = `bit ${res[i] === '1' ? 'one' : 'zero'}${i === step.pos ? ' current' : ''}`;
-                        resHtml += `<div class="${cls}">${res[i]}</div>`;
-                    }
-                    document.getElementById('originalDisplay').innerHTML = origHtml;
-                    document.getElementById('resultDisplay').innerHTML = resHtml;
-                    document.getElementById('outputDisplay').textContent = step.final ? step.result : '?';
+                    
+                    document.getElementById('inputDisplay').textContent = input;
+                    document.getElementById('outputDisplay').textContent = step.final ? step.result : '-';
+                    document.getElementById('outputDisplay').style.color = step.final ? 'var(--viz-success)' : 'inherit';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNumber));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>
