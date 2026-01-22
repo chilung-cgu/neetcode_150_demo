@@ -6,17 +6,33 @@
     <title>Last Stone Weight 最後一塊石頭 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .stones { display: flex; gap: 8px; justify-content: center; margin: 15px 0; flex-wrap: wrap; align-items: flex-end; }
+        .stones { display: flex; gap: 8px; justify-content: center; margin: 15px 0; flex-wrap: wrap; align-items: flex-end; min-height: 80px; }
         .stone { 
             border-radius: 50%; display: flex; align-items: center; justify-content: center; 
             font-family: monospace; font-weight: bold; background: var(--viz-primary); color: white;
-            transition: all 0.3s ease;
+            transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
-        .stone.smash { background: var(--viz-error); animation: shake 0.3s; }
-        .stone.result { background: var(--viz-success); color: #0f172a; }
-        .stone.new { background: var(--viz-secondary); color: #0f172a; border: 2px dashed var(--viz-success); }
+        .stone.smash { background: var(--viz-error); animation: shake 0.5s; }
+        .stone.result { background: var(--viz-success); color: #0f172a; border: 3px solid #fff; }
+        .stone.new { background: var(--viz-warning); color: #0f172a; animation: popIn 0.5s; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        .battle { text-align: center; margin: 10px 0; font-size: 1.2rem; color: var(--viz-secondary); }
+        @keyframes popIn { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        
+        .battle-arena { 
+            text-align: center; margin: 15px auto; padding: 15px; 
+            background: var(--viz-bg-secondary); border-radius: 12px; width: fit-content; min-width: 200px;
+        }
+        .battle-text { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; }
+        .battle-visual { font-size: 2rem; }
+        
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .heap-view { display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
+        .heap-bar { width: 40px; background: var(--viz-primary); margin: 0 2px; border-radius: 4px 4px 0 0; transition: height 0.3s; }
+        .heap-container { display: flex; align-items: flex-end; height: 100px; border-bottom: 2px solid var(--viz-border); padding-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -25,8 +41,22 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">最後一塊石頭的重量（MAX HEAP）</div>
-                <div class="battle" id="battleDisplay">-</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="stonesInput" value="2, 7, 4, 1, 8, 1" style="width: 200px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
+                <div class="battle-arena">
+                    <div class="battle-text" id="battleText">準備開始</div>
+                    <div class="battle-visual" id="battleVisual">⚖️</div>
+                </div>
+                
+                <div style="text-align: center; color: var(--text-muted); margin-top: 10px;">目前石頭 (Max Heap)</div>
                 <div class="stones" id="stonesDisplay"></div>
+                
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
@@ -45,32 +75,23 @@
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
+                    <span class="label">Time:</span> O(n log n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item">
-                        <div class="state-label">Heap 大小</div>
-                        <div class="state-value" id="heapSizeDisplay">6</div>
-                    </div>
+                    <div class="state-item"><div class="state-label">剩餘石頭數</div><div class="state-value" id="countDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">最終結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
                 <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item">
-                        <div class="state-label">最終結果</div>
-                        <div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div>
-                    </div>
+                    <div class="legend-item"><div class="legend-color normal"></div>石頭</div>
+                    <div class="legend-item"><div class="legend-color smash" style="background:var(--viz-error)"></div>碰撞</div>
+                    <div class="legend-item"><div class="legend-color new" style="background:var(--viz-warning)"></div>新產生</div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">演算法說明</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
+            <div class="viz-card" style="height: 100%;">
                 <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
@@ -80,79 +101,87 @@
     <script>
         const codeStructure = [
             { line: 'int lastStoneWeight(vector<int>& stones) {', id: 0 },
-            { line: '    // 建立 Max Heap', id: 1 },
-            { line: '    priority_queue<int> pq(stones.begin(), stones.end());', id: 2 },
-            { line: '', id: 3 },
-            { line: '    while (pq.size() > 1) {', id: 4 },
-            { line: '        int y = pq.top(); pq.pop(); // 最重的', id: 5 },
-            { line: '        int x = pq.top(); pq.pop(); // 第二重', id: 6 },
-            { line: '        if (y > x)', id: 7 },
-            { line: '            pq.push(y - x); // 碎成 y-x', id: 8 },
-            { line: '    }', id: 9 },
-            { line: '    return pq.empty() ? 0 : pq.top();', id: 10 },
-            { line: '}', id: 11 },
+            { line: '    priority_queue<int> pq(stones.begin(), stones.end());', id: 1 },
+            { line: '    while (pq.size() > 1) {', id: 2 },
+            { line: '        int y = pq.top(); pq.pop();', id: 3 },
+            { line: '        int x = pq.top(); pq.pop();', id: 4 },
+            { line: '        if (y > x) {', id: 5 },
+            { line: '            pq.push(y - x);', id: 6 },
+            { line: '        }', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return pq.empty() ? 0 : pq.top();', id: 9 },
+            { line: '}', id: 10 },
         ];
         
-        // stones = [2, 7, 4, 1, 8, 1]
-        const initialStones = [2, 7, 4, 1, 8, 1];
+        let currentStones = [2, 7, 4, 1, 8, 1];
 
-        function generateAlgorithmSteps() {
+        function parseStones(input) {
+            return input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+        }
+
+        function generateAlgorithmSteps(stones) {
             const steps = [];
-            let heap = [...initialStones].sort((a, b) => b - a); // Max heap
+            // Use array to simulate Max Heap (sorted descending)
+            let heap = [...stones].sort((a, b) => b - a);
             
             steps.push({
                 stones: [...heap],
-                battle: null,
-                highlightLines: [0, 1, 2],
+                battleText: "初始化 Heap",
+                battleVisual: "🏗️",
+                highlightLines: [0, 1],
                 explanation: { 
                     title: '建立 Max Heap', 
-                    text: `將所有石頭放入 Max Heap。<br><br>排序後（大到小）：[${heap.join(', ')}]<br><br>每次我們會取出「最重」和「第二重」的石頭碰撞。` 
+                    text: `所有石頭放入 Max Heap<br>排序後：[${heap.join(', ')}]`,
+                    formula: 'priority_queue<int> pq'
                 }
             });
             
             while (heap.length > 1) {
-                const y = heap[0]; // 最重
-                const x = heap[1]; // 第二重
+                const y = heap[0];
+                const x = heap[1];
                 
                 steps.push({
                     stones: [...heap],
                     smashIdx: [0, 1],
-                    battle: `${y} 💥 ${x}`,
-                    highlightLines: [4, 5, 6],
+                    battleText: `碰撞：${y} vs ${x}`,
+                    battleVisual: "💥",
+                    highlightLines: [2, 3, 4],
                     explanation: { 
-                        title: `碰撞：${y} vs ${x}`, 
-                        text: `取出兩塊最重的石頭進行碰撞：<br><br>石頭 Y（最重）= ${y}<br>石頭 X（次重）= ${x}`,
-                        formula: `y = ${y}, x = ${x}`
+                        title: `取出最重兩塊`, 
+                        text: `Y = ${y} (最重)<br>X = ${x} (次重)`,
+                        formula: `y=${y}, x=${x}`
                     }
                 });
                 
-                // 執行碰撞
-                heap = heap.slice(2); // 移除前兩個
-                const diff = y - x;
+                heap = heap.slice(2); // pop two
                 
-                if (diff > 0) {
+                if (y > x) {
+                    const diff = y - x;
                     heap.push(diff);
                     heap.sort((a, b) => b - a);
                     
                     steps.push({
                         stones: [...heap],
                         newStone: diff,
-                        battle: `${y} - ${x} = ${diff}`,
-                        highlightLines: [7, 8],
+                        battleText: `${y} - ${x} = ${diff}`,
+                        battleVisual: "✨",
+                        highlightLines: [5, 6],
                         explanation: { 
-                            title: `碎成新石頭：${diff}`, 
-                            text: `${y} > ${x}，所以碎成重量 ${y} - ${x} = ${diff} 的新石頭。<br><br>新石頭放回 Heap。`,
-                            formula: `y - x = ${y} - ${x} = ${diff}`
+                            title: `產生新石頭 ${diff}`, 
+                            text: `${y} > ${x}，兩者相減產生新石頭 ${diff}<br>放回 Heap`,
+                            formula: `push(${y} - ${x})`
                         }
                     });
                 } else {
                     steps.push({
                         stones: [...heap],
-                        battle: `${y} = ${x} → 全碎！`,
-                        highlightLines: [7],
+                        battleText: `${y} = ${x} (抵銷)`,
+                        battleVisual: "💨",
+                        highlightLines: [5],
                         explanation: { 
-                            title: '兩塊石頭抵銷', 
-                            text: `${y} = ${x}，兩塊石頭重量相同，全部碎掉！<br><br>沒有新石頭產生。` 
+                            title: '完全抵銷', 
+                            text: `${y} == ${x}，兩塊石頭完全粉碎<br>無新石頭`,
+                            formula: `y == x`
                         }
                     });
                 }
@@ -161,18 +190,25 @@
             const result = heap.length === 0 ? 0 : heap[0];
             steps.push({
                 stones: [...heap],
-                result: true,
-                battle: result === 0 ? '全部碎光！' : `剩餘：${result}`,
-                highlightLines: [10],
+                result: result,
+                battleText: `最終結果: ${result}`,
+                battleVisual: "🏆",
+                highlightLines: [9],
                 explanation: { 
-                    title: '演算法結束！', 
-                    text: result === 0 
-                        ? '所有石頭都碎光了，回傳 0！' 
-                        : `最後剩下一塊石頭，重量為 <strong>${result}</strong>。<br><br>時間複雜度：O(n log n)<br>空間複雜度：O(n)` 
+                    title: '結束', 
+                    text: heap.length === 0 ? '所有石頭粉碎' : `剩下一塊石頭：${result}`,
+                    formula: `return ${result}` 
                 }
             });
             
             return steps;
+        }
+
+        function runCustomInput() {
+            const input = document.getElementById('stonesInput').value;
+            currentStones = parseStones(input);
+            if (currentStones.length === 0) { alert('請輸入有效數字'); return; }
+            init();
         }
 
         let viz;
@@ -181,23 +217,22 @@
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     document.getElementById('stonesDisplay').innerHTML = (step.stones || []).map((s, i) => {
-                        const size = 30 + s * 4;
+                        const size = Math.min(60, 30 + s * 3);
                         let cls = 'stone';
                         if (step.smashIdx?.includes(i)) cls += ' smash';
-                        if (step.newStone === s && i === step.stones.length - 1) cls += ' new';
-                        if (step.result && step.stones.length === 1) cls += ' result';
+                        if (step.newStone === s && !step.smashIdx) cls += ' new'; // Simple heuristic
+                        if (step.result !== undefined && step.stones.length === 1) cls += ' result';
                         return `<div class="${cls}" style="width: ${size}px; height: ${size}px;">${s}</div>`;
                     }).join('');
                     
-                    document.getElementById('battleDisplay').textContent = step.battle || '-';
-                    document.getElementById('heapSizeDisplay').textContent = step.stones?.length ?? 0;
-                    document.getElementById('resultDisplay').textContent = 
-                        step.result ? (step.stones?.[0] ?? 0) : '?';
+                    document.getElementById('battleText').textContent = step.battleText || '-';
+                    document.getElementById('battleVisual').textContent = step.battleVisual || '';
+                    document.getElementById('countDisplay').textContent = step.stones?.length ?? 0;
+                    document.getElementById('resultDisplay').textContent = step.result ?? '?';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentStones));
         }
-        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

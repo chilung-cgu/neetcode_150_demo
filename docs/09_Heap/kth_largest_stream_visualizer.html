@@ -6,15 +6,23 @@
     <title>Kth Largest Element in Stream - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .heap { display: flex; flex-direction: column; align-items: center; margin: 20px 0; }
+        .heap { display: flex; flex-direction: column; align-items: center; margin: 20px 0; min-height: 120px; }
         .heap-level { display: flex; gap: 10px; margin: 5px 0; justify-content: center; }
-        .heap-node { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; font-size: 1.1rem; }
+        .heap-node { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; font-size: 1.1rem; transition: all 0.3s; }
         .heap-node.root { background: var(--viz-success); color: #0f172a; }
-        .heap-node.new { animation: popIn 0.3s; border: 3px solid var(--viz-warning); }
-        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+        .heap-node.new { animation: popIn 0.5s; border: 3px solid var(--viz-warning); }
+        .heap-node.pop { opacity: 0.5; transform: scale(0.8); background: var(--viz-error); }
+        @keyframes popIn { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        
         .stream { display: flex; gap: 8px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
-        .stream-item { padding: 8px 15px; background: var(--viz-bg-secondary); border-radius: 6px; font-weight: bold; }
+        .stream-item { padding: 8px 15px; background: var(--viz-bg-secondary); border-radius: 6px; font-weight: bold; font-family: monospace; }
         .stream-item.added { background: var(--viz-warning); color: #0f172a; }
+        
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -23,10 +31,28 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">數據流中第 K 大元素（MIN HEAP）</div>
-                <div style="text-align: center; color: var(--text-muted);">Min Heap（大小 = k）</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>初始流:</label>
+                        <input type="text" id="initialStream" value="4, 5, 8, 2" style="width: 150px;">
+                        <label>K:</label>
+                        <input type="number" id="kValue" value="3" style="width: 50px;" min="1">
+                        <button onclick="resetWithCustom()">重置</button>
+                    </div>
+                    <div class="input-row">
+                        <label>Add:</label>
+                        <input type="number" id="addValue" value="3" style="width: 60px;">
+                        <button onclick="addSingleValue()">加入</button>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; color: var(--text-muted); margin-top: 10px;">Min Heap (Size ≤ K)</div>
                 <div class="heap" id="heapDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">數據流</div>
+                
+                <div style="text-align: center; color: var(--text-muted);">歷史數據流</div>
                 <div class="stream" id="streamDisplay"></div>
+                
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
@@ -45,17 +71,18 @@
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(log k) add
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(k)
                 </div>
+                
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">K</div><div class="state-value">3</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">K</div><div class="state-value" id="kDisplay">3</div></div>
                     <div class="state-item"><div class="state-label">第 K 大</div><div class="state-value" id="kthDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color root"></div>堆頂 (第 K 大)</div>
+                    <div class="legend-item"><div class="legend-color new"></div>新加入</div>
+                    <div class="legend-item"><div class="legend-color pop"></div>移除</div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -84,42 +111,183 @@
             { line: '    }', id: 11 },
             { line: '};', id: 12 },
         ];
-        function generateAlgorithmSteps() {
+
+        let currentK = 3;
+        let currentStream = [4, 5, 8, 2];
+        let addedValues = [];
+
+        function parseStream(input) {
+            return input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+        }
+
+        // Min Heap Implementation
+        class MinHeap {
+            constructor() { this.heap = []; }
+            push(val) {
+                this.heap.push(val);
+                this.bubbleUp(this.heap.length - 1);
+            }
+            pop() {
+                if (this.heap.length === 0) return null;
+                const min = this.heap[0];
+                const last = this.heap.pop();
+                if (this.heap.length > 0) {
+                    this.heap[0] = last;
+                    this.bubbleDown(0);
+                }
+                return min;
+            }
+            peek() { return this.heap[0]; }
+            size() { return this.heap.length; }
+            bubbleUp(idx) {
+                while (idx > 0) {
+                    let pIdx = Math.floor((idx - 1) / 2);
+                    if (this.heap[idx] >= this.heap[pIdx]) break;
+                    [this.heap[idx], this.heap[pIdx]] = [this.heap[pIdx], this.heap[idx]];
+                    idx = pIdx;
+                }
+            }
+            bubbleDown(idx) {
+                while (true) {
+                    let left = 2 * idx + 1, right = 2 * idx + 2, swap = idx;
+                    if (left < this.heap.length && this.heap[left] < this.heap[swap]) swap = left;
+                    if (right < this.heap.length && this.heap[right] < this.heap[swap]) swap = right;
+                    if (swap === idx) break;
+                    [this.heap[idx], this.heap[swap]] = [this.heap[swap], this.heap[idx]];
+                    idx = swap;
+                }
+            }
+        }
+
+        function generateAlgorithmSteps(k, initialNums, adds) {
             const steps = [];
-            steps.push({ heap: [], stream: [], highlightLines: [0,1,2,3,4,5,6], explanation: { title: '初始化', text: 'k = 3<br>初始：[4, 5, 8, 2]<br><br>維護大小為 k 的 Min Heap<br>堆頂 = 第 k 大元素' } });
-            steps.push({ heap: [4,5,8], stream: [4,5,8,2], newVal: 2, kth: 4, highlightLines: [7,8,9,10], explanation: { title: '初始化完成', text: '加入 4,5,8,2 後<br>保留最大的 3 個：[4,5,8]<br>堆頂 4 = 第 3 大' } });
-            steps.push({ heap: [4,5,8], stream: [4,5,8,2,3], addedIdx: 4, kth: 4, highlightLines: [7,8,9,10], explanation: { title: 'add(3)', text: '3 < 堆頂 4<br>加入後 pop 掉<br>第 3 大仍是 4' } });
-            steps.push({ heap: [5,8,10], stream: [4,5,8,2,3,5,10], addedIdx: 6, newHeapVal: 10, kth: 5, highlightLines: [7,8,9,10], explanation: { title: 'add(5), add(10)', text: '10 > 堆頂，加入<br>pop 掉 4<br>新堆：[5,8,10]<br>第 3 大是 5' } });
-            steps.push({ heap: [8,9,10], stream: [4,5,8,2,3,5,10,9], addedIdx: 7, newHeapVal: 9, kth: 8, final: true, highlightLines: [10], explanation: { title: 'add(9)', text: '9 > 堆頂 5，加入<br>pop 掉 5<br>新堆：[8,9,10]<br>第 3 大是 8' } });
+            const mh = new MinHeap();
+            const fullStream = [...initialNums];
+            
+            steps.push({
+                heap: [],
+                stream: [...initialNums],
+                k: k,
+                kth: null,
+                highlightLines: [0, 1, 2, 4],
+                explanation: {
+                    title: '初始化',
+                    text: `K = ${k}<br>初始數據流: [${initialNums.join(', ')}]<br>準備建立 Min Heap`,
+                    formula: 'priority_queue<int, vector<int>, greater<int>> minHeap'
+                }
+            });
+
+            // Process initial stream
+            for (const n of initialNums) {
+                mh.push(n);
+                const popped = mh.size() > k ? mh.pop() : null;
+                
+                steps.push({
+                    heap: [...mh.heap],
+                    stream: [...initialNums],
+                    addedVal: n,
+                    poppedVal: popped,
+                    k: k,
+                    kth: mh.size() === k ? mh.peek() : null,
+                    highlightLines: [5, 8, 9],
+                    explanation: {
+                        title: `初始化: 加入 ${n}`,
+                        text: `加入 ${n}${popped !== null ? `，Heap 大小 > K，移除最小元素 ${popped}` : ''}<br>目前堆頂(第 ${k} 大): ${mh.size() === k ? mh.peek() : '不足 K 個'}`,
+                        formula: `minHeap.push(${n})` + (popped ? `; minHeap.pop()` : '')
+                    }
+                });
+            }
+
+            // Process added values
+            for (const val of adds) {
+                fullStream.push(val);
+                mh.push(val);
+                const popped = mh.size() > k ? mh.pop() : null;
+                const kth = mh.peek();
+
+                steps.push({
+                    heap: [...mh.heap],
+                    stream: [...fullStream],
+                    addedVal: val,
+                    poppedVal: popped,
+                    k: k,
+                    kth: kth,
+                    highlightLines: [7, 8, 9, 10],
+                    explanation: {
+                        title: `Add(${val})`,
+                        text: `加入 ${val}${popped !== null ? `，Heap > K，移除 ${popped}` : ''}<br>更新後堆頂 = ${kth} (即第 ${k} 大)`,
+                        formula: `return ${kth}`
+                    }
+                });
+            }
+
             return steps;
         }
+
+        function resetWithCustom() {
+            const streamStr = document.getElementById('initialStream').value;
+            const kVal = parseInt(document.getElementById('kValue').value);
+            if (isNaN(kVal) || kVal < 1) { alert('K 必須 >= 1'); return; }
+            
+            currentStream = parseStream(streamStr);
+            currentK = kVal;
+            addedValues = [];
+            init();
+        }
+
+        function addSingleValue() {
+            const val = parseInt(document.getElementById('addValue').value);
+            if (isNaN(val)) return;
+            addedValues.push(val);
+            init(); // Re-run visually with new history
+        }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const heap = step.heap || [];
+                    document.getElementById('kDisplay').textContent = step.k;
+                    document.getElementById('kthDisplay').textContent = step.kth !== null ? step.kth : '-';
+                    
+                    // Render Heap
                     let heapHtml = '';
-                    if (heap.length > 0) {
-                        heapHtml = `<div class="heap-level"><div class="heap-node root${heap[0]===step.newHeapVal?' new':''}">${heap[0]}</div></div>`;
-                        if (heap.length > 1) {
-                            heapHtml += `<div class="heap-level">`;
-                            for (let i = 1; i < Math.min(3, heap.length); i++) {
-                                heapHtml += `<div class="heap-node${heap[i]===step.newHeapVal?' new':''}">${heap[i]}</div>`;
+                    const heap = step.heap || [];
+                    if (heap.length === 0) heapHtml = '<div style="color:var(--text-muted)">空</div>';
+                    else {
+                        // Simple level rendering logic
+                        let idx = 0;
+                        let levelSize = 1;
+                        while (idx < heap.length) {
+                            heapHtml += '<div class="heap-level">';
+                            for (let i = 0; i < levelSize && idx < heap.length; i++) {
+                                const val = heap[idx];
+                                let cls = 'heap-node';
+                                if (idx === 0) cls += ' root';
+                                if (val === step.addedVal && step.poppedVal === undefined) cls += ' new'; 
+                                heapHtml += `<div class="${cls}">${val}</div>`;
+                                idx++;
                             }
-                            heapHtml += `</div>`;
+                            heapHtml += '</div>';
+                            levelSize *= 2;
                         }
-                    } else {
-                        heapHtml = '<div style="color:var(--text-muted)">空</div>';
                     }
                     document.getElementById('heapDisplay').innerHTML = heapHtml;
-                    document.getElementById('streamDisplay').innerHTML = (step.stream || []).map((n, i) => `<span class="stream-item${i===step.addedIdx?' added':''}">${n}</span>`).join('');
-                    document.getElementById('kthDisplay').textContent = step.kth ?? '?';
+                    
+                    // Render Stream
+                    document.getElementById('streamDisplay').innerHTML = (step.stream || []).map(n => {
+                        let cls = 'stream-item';
+                        if (n === step.addedVal) cls += ' added';
+                        return `<span class="${cls}">${n}</span>`;
+                    }).join('');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentK, currentStream, addedValues));
         }
-        function resetVisualization() { init(); }
+        function resetVisualization() { 
+            addedValues = [];
+            init(); 
+        }
         window.addEventListener('load', init);
     </script>
 </body>

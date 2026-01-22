@@ -6,16 +6,18 @@
     <title>Task Scheduler - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .tasks { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .task { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; color: white; }
-        .task.A { background: #3b82f6; }
-        .task.B { background: #8b5cf6; }
-        .task.idle { background: var(--viz-bg-secondary); color: var(--text-muted); }
-        .timeline { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .slot { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; font-size: 0.85rem; }
-        .slot.A { background: #3b82f6; color: white; }
-        .slot.B { background: #8b5cf6; color: white; }
-        .slot.idle { background: #374151; color: #9ca3af; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .timeline { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 8px; min-height: 50px; }
+        .time-slot { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-weight: bold; background: var(--viz-bg-secondary); border: 1px solid var(--viz-border); }
+        .time-slot.task { background: var(--viz-primary); color: white; border-color: transparent; }
+        .time-slot.idle { background: var(--viz-error); color: white; opacity: 0.5; }
+        
+        .freq-info { margin-top: 10px; display: flex; gap: 10px; justify-content: center; }
+        .freq-badge { padding: 4px 8px; background: var(--viz-bg-secondary); border-radius: 4px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -23,23 +25,33 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">任務調度器（貪心 + 數學）</div>
-                <div style="text-align: center; color: var(--text-muted);">任務</div>
-                <div class="tasks" id="tasksDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">執行時間線</div>
+                <div class="viz-title">任務調度器 (Task Scheduler)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>任務:</label>
+                        <input type="text" id="tasksInput" value="A,A,A,B,B,B" style="width: 150px;" placeholder="A,B,C...">
+                        <label>冷卻時間 n:</label>
+                        <input type="number" id="nInput" value="2" style="width: 50px;" min="0">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; color: var(--text-muted); margin-top: 10px;">頻率統計</div>
+                <div class="freq-info" id="freqDisplay"></div>
+                
+                <div style="text-align: center; color: var(--text-muted); margin-top: 20px;">執行時間線 (Greedy 填充)</div>
                 <div class="timeline" id="timelineDisplay"></div>
+                
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
@@ -47,16 +59,12 @@
                 
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">冷卻時間 n</div><div class="state-value">2</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">總時間</div><div class="state-value" id="totalDisplay" style="color: var(--viz-success);">?</div></div>
+                    <div class="state-item"><div class="state-label">maxFreq</div><div class="state-value" id="maxFreq">-</div></div>
+                    <div class="state-item"><div class="state-label">maxCount</div><div class="state-value" id="maxCount">-</div></div>
+                    <div class="state-item"><div class="state-label">最少時間</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -72,36 +80,268 @@
     <script>
         const codeStructure = [
             { line: 'int leastInterval(vector<char>& tasks, int n) {', id: 0 },
-            { line: '    vector<int> freq(26, 0);', id: 1 },
-            { line: '    for (char t : tasks) freq[t - \'A\']++;', id: 2 },
-            { line: '    int maxFreq = *max_element(freq.begin(), freq.end());', id: 3 },
-            { line: '    int maxCount = count(freq.begin(), freq.end(), maxFreq);', id: 4 },
-            { line: '    // 公式：(maxFreq-1) * (n+1) + maxCount', id: 5 },
-            { line: '    int result = (maxFreq - 1) * (n + 1) + maxCount;', id: 6 },
-            { line: '    return max((int)tasks.size(), result);', id: 7 },
-            { line: '}', id: 8 },
+            { line: '    vector<int> freq(26);', id: 1 },
+            { line: '    int maxFreq = 0;', id: 2 },
+            { line: '    for (char t : tasks) {', id: 3 },
+            { line: '        freq[t-\'A\']++;', id: 4 },
+            { line: '        maxFreq = max(maxFreq, freq[t-\'A\']);', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    int maxCount = 0;', id: 7 },
+            { line: '    for (int f : freq) if (f == maxFreq) maxCount++;', id: 8 },
+            { line: '    ', id: 9 },
+            { line: '    int partCount = maxFreq - 1;', id: 10 },
+            { line: '    int partLength = n - (maxCount - 1);', id: 11 },
+            { line: '    int emptySlots = partCount * partLength;', id: 12 },
+            { line: '    int availableTasks = tasks.size() - maxFreq * maxCount;', id: 13 },
+            { line: '    int idles = max(0, emptySlots - availableTasks);', id: 14 },
+            { line: '    ', id: 15 },
+            { line: '    return tasks.size() + idles;', id: 16 },
+            { line: '}', id: 17 },
         ];
-        const tasks = ['A','A','A','B','B','B'];
-        function generateAlgorithmSteps() {
+
+        let currentTasks = ['A','A','A','B','B','B'];
+        let currentN = 2;
+
+        function runCustomInput() {
+            const tStr = document.getElementById('tasksInput').value.toUpperCase();
+            const nVal = parseInt(document.getElementById('nInput').value);
+            
+            const tasks = tStr.split(/[^A-Z]/).filter(c => c && c.length === 1);
+            if (tasks.length === 0 || isNaN(nVal) || nVal < 0) {
+                alert('輸入無效');
+                return;
+            }
+            currentTasks = tasks;
+            currentN = nVal;
+            init();
+        }
+
+        function generateAlgorithmSteps(tasks, n) {
             const steps = [];
-            steps.push({ timeline: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: '任務：A×3, B×3<br>冷卻時間 n = 2<br><br>相同任務間隔至少 n' } });
-            steps.push({ timeline: [], freq: {A:3,B:3}, highlightLines: [3,4], explanation: { title: '統計頻率', text: 'maxFreq = 3<br>maxCount = 2 (A和B都是3次)' } });
-            steps.push({ timeline: ['A','B','idle','A','B','idle','A','B'], highlightLines: [5,6], explanation: { title: '計算公式', text: '(3-1) × (2+1) + 2 = 8<br><br>框架：A_B_A_B_AB' } });
-            steps.push({ timeline: ['A','B','idle','A','B','idle','A','B'], total: 8, final: true, highlightLines: [7], explanation: { title: '🎉 完成！', text: '最少時間 = 8<br><br>時間：O(n)' } });
+            const freq = {};
+            tasks.forEach(t => freq[t] = (freq[t] || 0) + 1);
+            
+            const maxFreq = Math.max(...Object.values(freq));
+            const maxCount = Object.values(freq).filter(f => f === maxFreq).length;
+            const totalTasks = tasks.length;
+            
+            // Step 1: Count Freq
+            steps.push({
+                timeline: [], freq, maxFreq, maxCount, n,
+                highlightLines: [1,2,3,4,5,6],
+                explanation: {
+                    title: '統計頻率',
+                    text: `總任務數: ${tasks.length}, n = ${n}<br>與最高頻率任務數量相同的有 ${maxCount} 個`,
+                    formula: `maxFreq = ${maxFreq}, maxCount = ${maxCount}`
+                }
+            });
+
+            // Step 2: Ideal frame calculation
+            // Maximize visualization: Draw the chunks
+            const timeline = [];
+            const chunkCount = maxFreq - 1;
+            const chunkLen = n + 1;
+            
+            steps.push({
+                timeline: [], freq, maxFreq, maxCount, n,
+                highlightLines: [10, 11, 12],
+                explanation: {
+                    title: '建立骨架',
+                    text: `以最高頻率 ${maxFreq} 建立框架。<br>需要 ${maxFreq - 1} 個間隔區域，每個區域長度至少 ${n}。<br>最後加上結尾的 ${maxCount} 個任務。`,
+                    formula: `partCount = ${maxFreq} - 1 = ${maxFreq - 1}`
+                }
+            });
+
+            // Formula calculation details
+            // Formula: (maxFreq - 1) * (n + 1) + maxCount
+            // OR max(tasks.size(), calculated)
+            
+            // Let's visualize the "filling" conceptually
+            // We can construct a visual representation string
+            // Frame: A _ _ A _ _ A
+            // With n=2, maxFreq=3 (A)
+            
+            const simpleFormulaResult = (maxFreq - 1) * (n + 1) + maxCount;
+            const finalResult = Math.max(totalTasks, simpleFormulaResult);
+
+            // Construct a visual "timeline" for demonstration
+            // This is a simplified simulation for visualization purposes
+            // Actual element placement
+            const sortedTasks = Object.keys(freq).sort((a,b) => freq[b] - freq[a]);
+            const matrixHeight = maxFreq; // Rows
+            // Actually the "rows" approach is better for visualization
+            // But let's stick to the timeline array approach
+            
+            let simulatedTimeline = [];
+            const cols = (maxFreq - 1) * (n + 1) + maxCount;
+             // Just use the formula value for "slots"
+             // if result > tasks.size(), we have idles
+             
+            steps.push({
+                 timeline: [], freq, maxFreq, maxCount, n,
+                 highlightLines: [13, 14, 15, 16],
+                 explanation: {
+                     title: '計算結果',
+                     text: `公式計算：(maxFreq - 1) * (n + 1) + maxCount<br>= (${maxFreq}-1) * (${n}+1) + ${maxCount} = ${simpleFormulaResult}<br><br>最終結果取 max(總任務數, 公式值)`,
+                     formula: `max(${totalTasks}, ${simpleFormulaResult}) = ${finalResult}`
+                 }
+            });
+            
+            // Generate a visual fill
+            // This is "greedy" filling for visualization
+            const resultTimeline = new Array(finalResult).fill('idle');
+            let idx = 0;
+            // Fill MaxFreq tasks first
+            // A . . A . . A
+            // B . . B . . B
+            
+            // A more accurate greedy simulation for visualization:
+            // Priority Queue simulation
+            
+            let simStepsString = [];
+            let counts = {...freq};
+            let time = 0;
+            // Simple simulation to generate timeline
+            // Since we already have the formula result, we can just show "Idles" if any
+            
+            // Let's just create a schematic timeline based on formula
+            // Group 1: A B ... (n idle)
+            // Group 2: A B ...
+            // ...
+            // Group Last: A B
+            
+            let displayTimeline = [];
+            for(let i=0; i<maxFreq-1; i++) {
+                // Add "maxCount" tasks
+                // Then (n - maxCount + 1) idles... strictly this logic is complex to render perfectly 
+                // Let's simplified render:
+                // Just A, B, ... n idles, A, B...
+                // Only if total tasks > formula result, we don't show idles.
+                
+                // If formula > tasks, we have idles
+            }
+            
+            if (finalResult > totalTasks) {
+                // Must simulate idles
+                // Simply: fill columns
+                // Col 0: A A A
+                // Col 1: B B B
+                // ...
+                // But visualized as linear time
+                
+                // Let's run a micro-simulation to get the exact timeline for visualization
+                // It makes it much better
+                
+                let q = []; // [count, char]
+                for(let k in freq) q.push([freq[k], k]);
+                q.sort((a,b) => b[0] - a[0]); // Sort by freq desc
+                
+                let t = 0;
+                let history = [];
+                
+                while(q.length > 0) {
+                    let k_cycle = n + 1;
+                    let temp = [];
+                    while (k_cycle > 0 && q.length > 0) {
+                        let top = q.shift(); // remove max freq
+                        top[0]--;
+                        history.push(top[1]);
+                        temp.push(top);
+                        k_cycle--;
+                        t++;
+                    }
+                    
+                    for(let item of temp) {
+                        if (item[0] > 0) q.push(item);
+                    }
+                    q.sort((a,b) => b[0] - a[0]); // re-sort
+                    
+                    if (q.length === 0) break; // done
+                    
+                    // IF there are still tasks, we must fill the rest of cycle with idle
+                    while (k_cycle > 0) {
+                        history.push('idle');
+                        k_cycle--;
+                        t++;
+                    }
+                }
+                displayTimeline = history;
+            } else {
+                 // No idles, just packed
+                  displayTimeline = tasks.sort(); // naive packing visual
+                  // Actually if no idles, order doesn't impact total time, just show packed
+                  
+                  // For better visual, show interleaved
+                   let q = [];
+                    for(let k in freq) q.push([freq[k], k]);
+                    q.sort((a,b) => b[0] - a[0]);
+                    
+                    // Simple interleaved string
+                    // This is hard to get perfect without full simulation, but full simulation is O(N) which is fine
+                    // Re-use logic above
+                     let q2 = []; // [count, char]
+                    for(let k in freq) q2.push([freq[k], k]);
+                    q2.sort((a,b) => b[0] - a[0]); 
+                    let history = [];
+                    while(q2.length > 0) {
+                        let k_cycle = n + 1;
+                        let temp = [];
+                        while (k_cycle > 0 && q2.length > 0) {
+                             let top = q2.shift(); 
+                             top[0]--;
+                             history.push(top[1]);
+                             temp.push(top);
+                             k_cycle--;
+                        }
+                        for(let item of temp) if (item[0] > 0) q2.push(item);
+                        q2.sort((a,b) => b[0] - a[0]);
+                        // Don't add idles if finished
+                    }
+                    displayTimeline = history;
+            }
+
+            steps.push({
+                timeline: displayTimeline,
+                freq, maxFreq, maxCount, n,
+                final: true,
+                result: finalResult,
+                highlightLines: [16, 17],
+                explanation: {
+                    title: '完成',
+                    text: `模擬執行序列如上圖。<br>總長度: ${finalResult} (紅色為 IDLE)`,
+                    formula: `return ${finalResult}`
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('tasksDisplay').innerHTML = tasks.map(t => `<span class="task ${t}">${t}</span>`).join('');
-                    document.getElementById('timelineDisplay').innerHTML = (step.timeline || []).map(t => `<span class="slot ${t}">${t}</span>`).join('') || '等待調度...';
-                    document.getElementById('totalDisplay').textContent = step.total ?? '?';
+                    // Update Freq
+                    document.getElementById('freqDisplay').innerHTML = Object.entries(step.freq || {}).map(([k,v]) => 
+                        `<div class="freq-badge">${k}: ${v}</div>`
+                    ).join('');
+                    
+                    document.getElementById('maxFreq').textContent = step.maxFreq ?? '-';
+                    document.getElementById('maxCount').textContent = step.maxCount ?? '-';
+                    document.getElementById('resultDisplay').textContent = step.result ?? '?';
+                    
+                    // Update Timeline
+                    document.getElementById('timelineDisplay').innerHTML = (step.timeline || []).map(t => {
+                        let cls = 'time-slot';
+                        if (t === 'idle') cls += ' idle';
+                        else cls += ' task';
+                        return `<div class="${cls}">${t === 'idle' ? '🛑' : t}</div>`;
+                    }).join('');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentTasks, currentN));
         }
+
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

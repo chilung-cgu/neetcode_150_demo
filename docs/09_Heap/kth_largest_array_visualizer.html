@@ -3,58 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kth Largest Element in Array Visualization</title>
+    <title>Kth Largest Element in Array - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .chart-container { 
+            display: flex; align-items: flex-end; justify-content: center; 
+            height: 200px; gap: 5px; margin: 20px 0; padding-bottom: 20px;
+        }
+        .bar-wrapper {
+            display: flex; flex-direction: column; align-items: center; width: 40px;
+            transition: all 0.3s;
+        }
+        .bar { 
+            width: 100%; background: var(--viz-primary); 
+            border-radius: 4px 4px 0 0; transition: height 0.3s, background 0.3s; 
+        }
+        .bar-label { margin-top: 5px; font-weight: bold; }
+        .bar.pivot { background: var(--viz-warning); }
+        .bar.left { background: #3b82f6; }
+        .bar.right { background: #8b5cf6; }
+        .bar.found { background: var(--viz-success); box-shadow: 0 0 10px var(--viz-success); }
+        .bar.ignore { background: var(--viz-bg-secondary); opacity: 0.3; }
+        
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        
+        .partition-info {
+            display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;
+            font-size: 0.9rem; color: var(--viz-text-muted); padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px;
+        }
+    </style>
 </head>
 <body>
     <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">KTH LARGEST (QUICKSELECT) k=2</div>
-                <div class="chart-container" id="chartContainer"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">數組中的第 K 個最大元素 (QuickSelect)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>陣列:</label>
+                        <input type="text" id="arrayInput" value="3, 2, 1, 5, 6, 4" style="width: 200px;">
+                        <label>K:</label>
+                        <input type="number" id="kInput" value="2" style="width: 50px;" min="1">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
-                <div class="controls-row-2">
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                
+                <div class="partition-info">
+                    <div>Range: [<span id="rangeL">-</span>, <span id="rangeR">-</span>]</div>
+                    <div>Target Index: <span id="targetIdxDisplay">-</span></div>
+                    <div>Pivot: <span id="pivotValDisplay">-</span></div>
+                </div>
+
+                <div class="chart-container" id="chartContainer"></div>
+                
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> Avg O(n), Worst O(n²)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Pivot</div><div class="state-value" id="pivotDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">第 K 大</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
                 <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
+                    <div class="legend-item"><div class="legend-color pivot" style="background:var(--viz-warning)"></div>Pivot</div>
+                    <div class="legend-item"><div class="legend-color left" style="background:#3b82f6"></div>&lt; Pivot</div>
+                    <div class="legend-item"><div class="legend-color right" style="background:#8b5cf6"></div>&gt; Pivot</div>
+                    <div class="legend-item"><div class="legend-color found" style="background:var(--viz-success)"></div>Found</div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">QUICKSELECT O(n)</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -63,48 +102,211 @@
     <script>
         const codeStructure = [
             { line: 'int findKthLargest(nums, k) {', id: 0 },
-            { line: '    // Convert to kth smallest index', id: 1 },
-            { line: '    k = nums.size() - k;', id: 2 },
-            { line: '    return quickSelect(nums, 0, n-1, k);', id: 3 },
-            { line: '}', id: 4 },
-            { line: 'int quickSelect(nums, l, r, k) {', id: 5 },
-            { line: '    int pivot = partition(nums, l, r);', id: 6 },
-            { line: '    if (pivot == k) return nums[pivot];', id: 7 },
-            { line: '    if (pivot < k) return quickSelect(nums, pivot+1, r, k);', id: 8 },
-            { line: '    return quickSelect(nums, l, pivot-1, k);', id: 9 },
-            { line: '}', id: 10 },
+            { line: '    int target = nums.size() - k;', id: 1 },
+            { line: '    return quickSelect(nums, 0, n-1, target);', id: 2 },
+            { line: '}', id: 3 },
+            { line: 'int quickSelect(nums, l, r, k) {', id: 4 },
+            { line: '    int p = partition(nums, l, r);', id: 5 },
+            { line: '    if (p == k) return nums[p];', id: 6 },
+            { line: '    if (p < k) return quickSelect(nums, p+1, r, k);', id: 7 },
+            { line: '    else return quickSelect(nums, l, p-1, k);', id: 8 },
+            { line: '}', id: 9 },
         ];
-        const nums = [3, 2, 1, 5, 6, 4];
-        const k = 2;
 
-        function generateAlgorithmSteps() {
+        let currentNums = [3, 2, 1, 5, 6, 4];
+        let currentK = 2;
+
+        function parseArray(str) {
+            return str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+        }
+
+        // QuickSelect implementation with step generation
+        function generateAlgorithmSteps(numsInput, k) {
             const steps = [];
-            const arr = [...nums];
-            const targetIdx = nums.length - k; // 4 (5th element in sorted = 5)
+            const nums = [...numsInput]; // Local copy to mutate
+            const target = nums.length - k;
             
-            steps.push({ arr: [...arr], pivot: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: `Find ${k}th largest = ${nums.length - k}th smallest index` }});
-            
-            // Simulated quickselect
-            arr.sort((a, b) => a - b); // [1,2,3,4,5,6]
-            steps.push({ arr: [3, 2, 1, 5, 6, 4], pivotVal: 4, pivotIdx: 3, highlightLines: [6], explanation: { title: 'Partition with pivot 4', text: 'Elements < 4 go left, > 4 go right' }});
-            steps.push({ arr: [1, 2, 3, 4, 5, 6], pivotIdx: 3, highlightLines: [8], explanation: { title: 'pivot(3) < target(4)', text: 'Search right half' }});
-            steps.push({ arr: [1, 2, 3, 4, 5, 6], pivotIdx: 4, result: 5, highlightLines: [7], explanation: { title: 'Found!', text: `2nd largest = ${arr[targetIdx]}` }});
-            
+            steps.push({
+                arr: [...nums],
+                l: 0, r: nums.length - 1,
+                target: target,
+                pivotIdx: null,
+                highlightLines: [0, 1, 2],
+                explanation: {
+                    title: '初始化 QuickSelect',
+                    text: `尋找第 ${k} 大元素 = 排序後第 ${target} 小元素 (index ${target})<br>範圍: [0, ${nums.length-1}]`,
+                    formula: `target = size - k = ${nums.length} - ${k} = ${target}`
+                }
+            });
+
+            function partition(l, r) {
+                const pivot = nums[r];
+                let p = l;
+                
+                steps.push({
+                    arr: [...nums], l, r, target,
+                    pivotIdx: r, p: p,
+                    highlightLines: [5],
+                    explanation: {
+                        title: `Partition [${l}, ${r}]`,
+                        text: `選擇 Pivot: ${pivot} (index ${r})<br>開始分區...`,
+                        formula: `pivot = nums[${r}]`
+                    }
+                });
+
+                for (let i = l; i < r; i++) {
+                    const isLess = nums[i] <= pivot;
+                    steps.push({
+                        arr: [...nums], l, r, target,
+                        pivotIdx: r, p: p, currentIdx: i,
+                        highlightLines: [5],
+                        explanation: {
+                            title: `比較 ${nums[i]} vs ${pivot}`,
+                            text: `${nums[i]} ${isLess ? '<=' : '>'} ${pivot}<br>${isLess ? '交換到前面' : '保留'}`,
+                            formula: `nums[${i}] <= ${pivot}`
+                        }
+                    });
+
+                    if (isLess) {
+                        [nums[i], nums[p]] = [nums[p], nums[i]];
+                        p++;
+                    }
+                }
+
+                [nums[p], nums[r]] = [nums[r], nums[p]];
+                
+                steps.push({
+                    arr: [...nums], l, r, target,
+                    pivotIdx: p, // Pivot is now at p
+                    finalPivot: true,
+                    highlightLines: [5],
+                    explanation: {
+                        title: 'Partition 完成',
+                        text: `Pivot ${pivot} 放置在 index ${p}<br>左側 <= ${pivot}，右側 > ${pivot}`,
+                        formula: `pivotIndex = ${p}`
+                    }
+                });
+
+                return p;
+            }
+
+            function quickSelect(l, r) {
+                if (l > r) return;
+
+                const p = partition(l, r);
+
+                if (p === target) {
+                    steps.push({
+                        arr: [...nums], l, r, target,
+                        pivotIdx: p,
+                        found: true,
+                        highlightLines: [6],
+                        explanation: {
+                            title: '找到目標！',
+                            text: `Pivot index ${p} 等於 Target index ${target}<br>結果為 ${nums[p]}`,
+                            formula: `return nums[${p}]`
+                        }
+                    });
+                    return nums[p];
+                } else if (p < target) {
+                    steps.push({
+                        arr: [...nums], l, r, target,
+                        pivotIdx: p,
+                        highlightLines: [7],
+                        explanation: {
+                            title: '往右搜尋',
+                            text: `Index ${p} < Target ${target}，目標在右側 [${p+1}, ${r}]`,
+                            formula: `quickSelect(p+1, r, k)`
+                        }
+                    });
+                    return quickSelect(p + 1, r);
+                } else {
+                    steps.push({
+                        arr: [...nums], l, r, target,
+                        pivotIdx: p,
+                        highlightLines: [8],
+                        explanation: {
+                            title: '往左搜尋',
+                            text: `Index ${p} > Target ${target}，目標在左側 [${l}, ${p-1}]`,
+                            formula: `quickSelect(l, p-1, k)`
+                        }
+                    });
+                    return quickSelect(l, p - 1);
+                }
+            }
+
+            quickSelect(0, nums.length - 1);
             return steps;
+        }
+
+        function runCustomInput() {
+            const arrStr = document.getElementById('arrayInput').value;
+            const kVal = parseInt(document.getElementById('kInput').value);
+            const arr = parseArray(arrStr);
+            if (arr.length === 0 || isNaN(kVal) || kVal < 1 || kVal > arr.length) {
+                alert('輸入無效');
+                return;
+            }
+            currentNums = arr;
+            currentK = kVal;
+            init();
         }
 
         let viz;
         function init() {
+            // Determine max value for chart scaling
+            const maxVal = Math.max(...currentNums, 1);
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const states = step.arr.map((_, i) => i === step.pivotIdx ? 'current' : (step.result && step.arr[i] === step.result ? 'in-stack' : ''));
-                    AlgorithmVisualizer.renderBars(document.getElementById('chartContainer'), step.arr, states, { height: 180 });
-                    document.getElementById('pivotDisplay').textContent = step.pivotVal ?? '-';
-                    document.getElementById('resultDisplay').textContent = step.result ?? '-';
+                    // Update Chart
+                    const chart = document.getElementById('chartContainer');
+                    chart.innerHTML = '';
+                    
+                    step.arr.forEach((val, idx) => {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'bar-wrapper';
+                        
+                        const bar = document.createElement('div');
+                        bar.className = 'bar';
+                        bar.style.height = `${(val / maxVal) * 150}px`; // 150px max height
+                        
+                        // Apply styling
+                        if (step.found && idx === step.target) bar.classList.add('found');
+                        else if (idx === step.pivotIdx && (step.finalPivot || step.currentIdx !== undefined)) bar.classList.add('pivot');
+                        else if (step.l <= idx && idx <= step.r) {
+                            // In current range
+                            if (step.pivotIdx !== undefined && step.pivotIdx !== null) {
+                                if (step.finalPivot) {
+                                     if (idx < step.pivotIdx) bar.classList.add('left');
+                                     else if (idx > step.pivotIdx) bar.classList.add('right');
+                                } else {
+                                     // During partition
+                                }
+                            }
+                        } else {
+                            bar.classList.add('ignore');
+                        }
+                        
+                        wrapper.appendChild(bar);
+                        
+                        const label = document.createElement('div');
+                        label.className = 'bar-label';
+                        label.textContent = val;
+                        wrapper.appendChild(label);
+                        
+                        chart.appendChild(wrapper);
+                    });
+
+                    document.getElementById('rangeL').textContent = step.l ?? '-';
+                    document.getElementById('rangeR').textContent = step.r ?? '-';
+                    document.getElementById('targetIdxDisplay').textContent = step.target ?? '-';
+                    document.getElementById('pivotValDisplay').textContent = (step.pivotIdx !== null && step.pivotIdx !== undefined) ? step.arr[step.pivotIdx] : '-';
+                    document.getElementById('resultDisplay').textContent = step.found ? step.arr[step.target] : '?';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNums, currentK));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

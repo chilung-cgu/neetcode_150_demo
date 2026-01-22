@@ -6,13 +6,28 @@
     <title>Design Twitter - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .users { display: flex; gap: 20px; justify-content: center; margin: 20px 0; }
-        .user { padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; min-width: 120px; }
-        .user-name { font-weight: bold; color: var(--viz-primary); margin-bottom: 8px; }
-        .tweets { display: flex; flex-direction: column; gap: 4px; }
-        .tweet { padding: 4px 8px; background: var(--viz-primary); color: white; border-radius: 4px; font-size: 0.85rem; }
-        .feed { display: flex; gap: 6px; justify-content: center; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .feed-item { padding: 8px 12px; background: var(--viz-success); color: #0f172a; border-radius: 6px; font-weight: bold; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        
+        .users-container { display: flex; gap: 15px; margin: 20px 0; overflow-x: auto; padding-bottom: 10px; }
+        .user-card { 
+            min-width: 140px; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; 
+            border: 2px solid transparent; transition: all 0.3s;
+        }
+        .user-card.active { border-color: var(--viz-primary); box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
+        .user-header { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid var(--viz-border); padding-bottom: 4px; display: flex; justify-content: space-between; }
+        .tweet-list { display: flex; flex-direction: column; gap: 4px; margin-top: 5px; max-height: 150px; overflow-y: auto; }
+        .tweet-item { font-size: 0.8rem; padding: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .follows-list { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px; }
+        
+        .feed-display { 
+            margin-top: 20px; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .feed-item { padding: 8px 12px; background: var(--viz-success); color: #0f172a; border-radius: 6px; font-weight: bold; display: flex; justify-content: space-between; }
+        .feed-meta { font-size: 0.8rem; opacity: 0.8; font-weight: normal; }
     </style>
 </head>
 <body>
@@ -20,37 +35,43 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">設計 Twitter（OOP + Heap）</div>
-                <div class="users" id="usersDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">User 1 的 Feed（最新 10 條）</div>
-                <div class="feed" id="feedDisplay"></div>
+                <div class="viz-title">設計 Twitter (Max Heap Merge)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 互動操作</div>
+                    <div class="input-row">
+                        <label>User ID:</label>
+                        <input type="number" id="userIdInput" value="1" style="width: 50px;" min="1" max="5">
+                        <button onclick="postTweet()">發推文 (Post)</button>
+                        <button onclick="getFeed()">刷新動態 (GetFeed)</button>
+                    </div>
+                    <div class="input-row">
+                        <label>追蹤 (User ID -> Target ID):</label>
+                        <input type="number" id="followerId" value="1" style="width: 50px;" min="1" max="5">
+                        <span>→</span>
+                        <input type="number" id="followeeId" value="2" style="width: 50px;" min="1" max="5">
+                        <button onclick="followUser()">Follow</button>
+                        <button onclick="unfollowUser()">Unfollow</button>
+                    </div>
+                </div>
+                
+                <div style="font-weight:bold; margin-top:10px;">使用者資料庫</div>
+                <div class="users-container" id="usersDisplay"></div>
+                
+                <div style="font-weight:bold; margin-top:10px;">News Feed 結果 (最新 10 則)</div>
+                <div class="feed-display" id="feedDisplay"></div>
+                
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
-                    <div class="speed-control">
-                        <label>速度:</label>
-                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
-                        </select>
-                    </div>
+                </div>
+                
+                <div class="complexity-badge">
+                    <span class="label">GetFeed Time:</span> O(K log K)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(U + T)
                 </div>
             </div>
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-            
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
-                </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
@@ -64,42 +85,229 @@
     <script>
         const codeStructure = [
             { line: 'class Twitter {', id: 0 },
-            { line: '    unordered_map<int, vector<pair<int,int>>> tweets; // userId -> [(time, tweetId)]', id: 1 },
-            { line: '    unordered_map<int, unordered_set<int>> following; // userId -> {followeeIds}', id: 2 },
-            { line: '    int time = 0;', id: 3 },
-            { line: 'public:', id: 4 },
-            { line: '    void postTweet(int userId, int tweetId);', id: 5 },
-            { line: '    vector<int> getNewsFeed(int userId); // Merge K sorted lists', id: 6 },
-            { line: '    void follow(int followerId, int followeeId);', id: 7 },
-            { line: '    void unfollow(int followerId, int followeeId);', id: 8 },
-            { line: '};', id: 9 },
+            { line: '    // Map: userId -> list of tweets {time, id}', id: 1 },
+            { line: '    unordered_map<int, vector<pair<int,int>>> tweets;', id: 2 },
+            { line: '    // Map: userId -> set of followees', id: 3 },
+            { line: '    unordered_map<int, unordered_set<int>> following;', id: 4 },
+            { line: 'public:', id: 5 },
+            { line: '    void postTweet(int userId, int tweetId);', id: 6 },
+            { line: '    vector<int> getNewsFeed(int userId);', id: 7 },
+            { line: '    void follow(int followerId, int followeeId);', id: 8 },
+            { line: '    void unfollow(int followerId, int followeeId);', id: 9 },
+            { line: '};', id: 10 },
         ];
-        function generateAlgorithmSteps() {
+
+        // System State
+        let globalTime = 0;
+        let tweets = {}; // userId -> [{time, id}]
+        let following = {}; // userId -> Set(followeeId)
+        
+        // Operation History for "Steps"
+        // Since this is an interactive system design visualizer, we map each USER ACTION to a set of steps.
+        // We maintain the "current state" in JS variables, but generate steps for the visualizer to animate the LAST action.
+        
+        function getOrInitUser(uid) {
+            if (!tweets[uid]) tweets[uid] = [];
+            if (!following[uid]) following[uid] = new Set([uid]); // Follow self
+        }
+
+        function generateStepsForAction(actionType, params) {
             const steps = [];
-            steps.push({ users: {1:[],2:[]}, follows: {}, feed: [], highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: '資料結構：<br>- tweets: userId → [(time, tweetId)]<br>- following: userId → {followeeIds}' } });
-            steps.push({ users: {1:[5],2:[]}, follows: {}, feed: [5], highlightLines: [5], explanation: { title: 'postTweet(1, 5)', text: 'User 1 發推 5' } });
-            steps.push({ users: {1:[5],2:[]}, follows: {1:[2]}, feed: [5], highlightLines: [7], explanation: { title: 'follow(1, 2)', text: 'User 1 關注 User 2' } });
-            steps.push({ users: {1:[5],2:[6]}, follows: {1:[2]}, feed: [6,5], highlightLines: [5], explanation: { title: 'postTweet(2, 6)', text: 'User 2 發推 6' } });
-            steps.push({ users: {1:[5],2:[6]}, follows: {1:[2]}, feed: [6,5], final: true, highlightLines: [6], explanation: { title: 'getNewsFeed(1)', text: '合併自己和關注者的推文<br>Feed: [6, 5]<br><br>時間：O(k log k)' } });
+            const usersState = JSON.parse(JSON.stringify(tweets));
+            const followsState = {};
+            for(let u in following) followsState[u] = Array.from(following[u]);
+
+            const baseState = {
+                users: usersState,
+                follows: followsState,
+                feed: [],
+                highlightLines: [0],
+                focusUser: params.userId ||params.followerId,
+                explanation: { title: '操作開始', text: `執行 ${actionType}` }
+            };
+
+            if (actionType === 'POST') {
+                const { userId, tweetId, time } = params;
+                steps.push({ ...baseState, highlightLines: [6], explanation: { title: 'postTweet', text: `User ${userId} 發布 Tweet #${tweetId} (Time: ${time})`, formula: `tweets[${userId}].push({${time}, ${tweetId}})` } });
+                
+                // Update local state for next step visualization
+                if (!usersState[userId]) usersState[userId] = [];
+                usersState[userId].unshift({time, id: tweetId});
+                
+                steps.push({ ...baseState, users: usersState, highlightLines: [6], explanation: { title: '儲存推文', text: `推文已加入 User ${userId} 的列表`, formula: 'Saved' } });
+            } 
+            else if (actionType === 'FOLLOW') {
+                const { followerId, followeeId } = params;
+                steps.push({ ...baseState, highlightLines: [8], explanation: { title: 'follow', text: `User ${followerId} 關注 User ${followeeId}`, formula: `following[${followerId}].insert(${followeeId})` } });
+                
+                if (!followsState[followerId]) followsState[followerId] = [followerId];
+                if (!followsState[followerId].includes(followeeId)) followsState[followerId].push(followeeId);
+                
+                steps.push({ ...baseState, follows: followsState, highlightLines: [8], explanation: { title: '更新關注列表', text: `關注成功`, formula: 'Updated' } });
+            }
+            else if (actionType === 'UNFOLLOW') {
+                const { followerId, followeeId } = params;
+                steps.push({ ...baseState, highlightLines: [9], explanation: { title: 'unfollow', text: `User ${followerId} 取消關注 User ${followeeId}`, formula: `following[${followerId}].erase(${followeeId})` } });
+                
+                if (followsState[followerId]) followsState[followerId] = followsState[followerId].filter(id => id !== followeeId);
+                
+                steps.push({ ...baseState, follows: followsState, highlightLines: [9], explanation: { title: '更新關注列表', text: `取消關注成功`, formula: 'Updated' } });
+            }
+            else if (actionType === 'FEED') {
+                const { userId } = params;
+                steps.push({ ...baseState, highlightLines: [7], explanation: { title: 'getNewsFeed', text: `獲取 User ${userId} 的動態牆`, formula: 'MaxHeap Merge K Lists' } });
+                
+                // Simulate Merge K Sorted Lists
+                const followees = followsState[userId] || [userId];
+                let allTweets = [];
+                for (let fid of followees) {
+                    if (usersState[fid]) {
+                        // Add latest 10 from each
+                        allTweets = allTweets.concat(usersState[fid].map(t => ({...t, author: fid})));
+                    }
+                }
+                allTweets.sort((a,b) => b.time - a.time); // Max Heap logic simulation
+                const feed = allTweets.slice(0, 10);
+                
+                steps.push({ 
+                    ...baseState, 
+                    feed: feed, 
+                    highlightLines: [7], 
+                    explanation: { 
+                        title: '合併排序', 
+                        text: `從關注者 [${followees.join(',')}] 的推文中取出最新的。<br>共找到 ${allTweets.length} 則，取前 10 則。`, 
+                        formula: 'Top 10 by time' 
+                    } 
+                });
+            }
+
             return steps;
         }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const users = step.users || {1:[],2:[]};
-                    let html = '';
-                    for (let id of [1,2]) {
-                        html += `<div class="user"><div class="user-name">User ${id}</div><div class="tweets">${(users[id]||[]).map(t=>`<div class="tweet">Tweet ${t}</div>`).join('')||'無推文'}</div></div>`;
-                    }
-                    document.getElementById('usersDisplay').innerHTML = html;
-                    document.getElementById('feedDisplay').innerHTML = (step.feed || []).map(t => `<span class="feed-item">${t}</span>`).join('') || '無';
+                    renderUsers(step.users || tweets, step.follows || following, step.focusUser);
+                    renderFeed(step.feed);
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            // Initial dummy step
+            viz.setSteps([{ 
+                users: tweets, follows: following, feed: [], highlightLines: [0,1,2,3,4],
+                explanation: { title: '就緒', text: '請使用上方按鈕操作系統' } 
+            }]);
         }
-        function resetVisualization() { init(); }
+
+        function renderUsers(usersMap, followsMap, focusId) {
+            const container = document.getElementById('usersDisplay');
+            container.innerHTML = '';
+            
+            // Collect all involved User IDs to show
+            let allIds = new Set([1,2]); // Default show 1,2
+            Object.keys(usersMap).forEach(k => allIds.add(parseInt(k)));
+            Object.keys(followsMap).forEach(k => allIds.add(parseInt(k)));
+            
+            Array.from(allIds).sort((a,b)=>a-b).forEach(uid => {
+                const uDiv = document.createElement('div');
+                uDiv.className = `user-card ${uid === parseInt(focusId) ? 'active' : ''}`;
+                
+                const fSet = followsMap[uid];
+                const follows = Array.isArray(fSet) ? fSet : (fSet ? Array.from(fSet) : []);
+                const tweetsList = usersMap[uid] || [];
+                
+                uDiv.innerHTML = `
+                    <div class="user-header"><span>User ${uid}</span> <span>📝${tweetsList.length}</span></div>
+                    <div class="follows-list">Follows: [${follows.filter(id=>id!==uid).join(', ') || '-'}]</div>
+                    <div class="tweet-list">
+                        ${tweetsList.slice(0, 5).map(t => `<div class="tweet-item">ID:${t.id} (T:${t.time})</div>`).join('')}
+                        ${tweetsList.length > 5 ? '<div style="font-size:0.7rem;text-align:center">...</div>' : ''}
+                    </div>
+                `;
+                container.appendChild(uDiv);
+            });
+        }
+
+        function renderFeed(feed) {
+            const container = document.getElementById('feedDisplay');
+            if (!feed || feed.length === 0) {
+                container.innerHTML = '<div style="color:var(--text-muted);text-align:center">無資料</div>';
+                return;
+            }
+            container.innerHTML = feed.map(t => `
+                <div class="feed-item">
+                    <span>Tweet #${t.id}</span>
+                    <span class="feed-meta">by User ${t.author} @ T=${t.time}</span>
+                </div>
+            `).join('');
+        }
+
+        // Actions
+        function postTweet() {
+            const uid = parseInt(document.getElementById('userIdInput').value);
+            getOrInitUser(uid);
+            globalTime++;
+            const tid = Math.floor(Math.random() * 1000) + 1; // Random ID
+            
+            // Execute Logic
+            if (!tweets[uid]) tweets[uid] = [];
+            tweets[uid].unshift({time: globalTime, id: tid});
+            
+            // Visualize
+            const steps = generateStepsForAction('POST', {userId: uid, tweetId: tid, time: globalTime});
+            viz.setSteps(steps);
+            viz.setStep(0);
+            setTimeout(() => viz.play(), 500);
+        }
+
+        function followUser() {
+            const follower = parseInt(document.getElementById('followerId').value);
+            const followee = parseInt(document.getElementById('followeeId').value);
+            if (follower === followee) return;
+            
+            getOrInitUser(follower);
+            getOrInitUser(followee);
+            
+            following[follower].add(followee);
+            
+            const steps = generateStepsForAction('FOLLOW', {followerId: follower, followeeId: followee});
+            viz.setSteps(steps);
+            viz.setStep(0);
+            setTimeout(() => viz.play(), 500);
+        }
+
+        function unfollowUser() {
+            const follower = parseInt(document.getElementById('followerId').value);
+            const followee = parseInt(document.getElementById('followeeId').value);
+            if (follower === followee) return;
+            
+            getOrInitUser(follower);
+            following[follower].delete(followee);
+            
+            const steps = generateStepsForAction('UNFOLLOW', {followerId: follower, followeeId: followee});
+            viz.setSteps(steps);
+            viz.setStep(0);
+            setTimeout(() => viz.play(), 500);
+        }
+
+        function getFeed() {
+            const uid = parseInt(document.getElementById('userIdInput').value);
+            getOrInitUser(uid);
+            
+            const steps = generateStepsForAction('FEED', {userId: uid});
+            viz.setSteps(steps);
+            viz.setStep(0);
+            setTimeout(() => viz.play(), 500);
+        }
+
+        function resetVisualization() {
+            globalTime = 0;
+            tweets = {};
+            following = {};
+            init();
+        }
+        
         window.addEventListener('load', init);
     </script>
 </body>
