@@ -3,18 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pow(x, n) 快速冪 - 視覺化</title>
+    <title>Pow(x, n) - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .calc { text-align: center; margin: 20px 0; }
-        .calc .expr { font-size: 2rem; font-weight: bold; color: var(--viz-secondary); }
-        .calc .result { font-size: 1.5rem; color: var(--viz-success); margin-top: 10px; }
-        .steps-list { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .step-item { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 6px; }
-        .step-item.current { background: var(--viz-warning); color: #0f172a; }
-        .step-item.done { background: var(--viz-success); color: #0f172a; }
-        .step-item .n { font-weight: bold; min-width: 40px; }
-        .step-item .op { color: var(--text-muted); }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .expression-display { 
+            text-align: center; margin: 20px 0; padding: 20px;
+            background: var(--viz-bg-secondary); border-radius: 10px;
+        }
+        .expression { font-size: 2.5rem; font-weight: bold; color: var(--viz-secondary); }
+        .result { font-size: 1.5rem; color: var(--viz-success); margin-top: 10px; }
+
+        .recursion-tree {
+            display: flex; flex-direction: column; gap: 8px; margin: 20px 0; 
+            padding: 15px; background: var(--viz-bg-secondary); border-radius: 10px;
+        }
+        .tree-level { 
+            display: flex; align-items: center; gap: 10px; padding: 10px 15px; 
+            border-radius: 8px; font-family: monospace; transition: all 0.3s;
+        }
+        .tree-level.current { background: var(--viz-warning); color: #0f172a; }
+        .tree-level.computed { background: var(--viz-success); color: #0f172a; }
+        .tree-level.pending { background: var(--viz-bg-primary); }
+        .tree-level .n-value { font-weight: bold; min-width: 50px; }
+        .tree-level .formula { flex: 1; }
+        .tree-level .result { font-weight: bold; color: var(--viz-success); }
     </style>
 </head>
 <body>
@@ -22,44 +38,48 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">快速冪（分治法）</div>
-                <div class="calc">
-                    <div class="expr" id="exprDisplay">2^10</div>
+                <div class="viz-title">快速冪 Pow(x, n)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">2^10 = 1024</button>
+                        <button onclick="setExample(2)">3^5 = 243</button>
+                        <button onclick="setExample(3)">2^(-3) = 0.125</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="expression-display">
+                    <div class="expression" id="expressionDisplay">-</div>
                     <div class="result" id="resultDisplay">= ?</div>
                 </div>
-                <div class="steps-list" id="stepsDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">遞迴樹 (分治法)</div>
+                <div class="recursion-tree" id="treeDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
-            </div>
+                
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(log n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(log n) 遞迴
                 </div>
-            
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
-                </div>
+            </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">分治法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -70,45 +90,159 @@
             { line: 'double myPow(double x, int n) {', id: 0 },
             { line: '    if (n == 0) return 1;', id: 1 },
             { line: '    if (n < 0) {', id: 2 },
-            { line: '        x = 1 / x; n = -n;', id: 3 },
-            { line: '    }', id: 4 },
-            { line: '    double half = myPow(x, n / 2);', id: 5 },
-            { line: '    if (n % 2 == 0)', id: 6 },
-            { line: '        return half * half;', id: 7 },
-            { line: '    else', id: 8 },
-            { line: '        return half * half * x;', id: 9 },
-            { line: '}', id: 10 },
+            { line: '        x = 1 / x;', id: 3 },
+            { line: '        n = -n;', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    double half = myPow(x, n / 2);', id: 6 },
+            { line: '    if (n % 2 == 0)', id: 7 },
+            { line: '        return half * half;', id: 8 },
+            { line: '    else', id: 9 },
+            { line: '        return half * half * x;', id: 10 },
+            { line: '}', id: 11 },
         ];
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: { x: 2, n: 10 },
+            2: { x: 3, n: 5 },
+            3: { x: 2, n: -3 }
+        };
+        
+        let currentExample = examples[1];
+
+        function setExample(num) {
+            currentExample = examples[num];
+            init();
+        }
+
+        function generateAlgorithmSteps(x, n) {
             const steps = [];
-            steps.push({ n: 10, result: null, stack: [], highlightLines: [0,5], explanation: { title: '初始化', text: '計算 2^10<br><br>暴力：O(n) 次乘法<br>快速冪：O(log n) 次<br><br>關鍵：x^n = (x^(n/2))²' } });
-            steps.push({ n: 10, stack: [{n:10,op:'half²'}], highlightLines: [5,6,7], explanation: { title: 'n=10（偶數）', text: '2^10 = (2^5)²<br>遞迴計算 2^5', formula: '2^10 = (2^5)²' } });
-            steps.push({ n: 5, stack: [{n:10,op:'half²'},{n:5,op:'half²×x'}], highlightLines: [5,6,8,9], explanation: { title: 'n=5（奇數）', text: '2^5 = (2^2)² × 2<br>遞迴計算 2^2', formula: '2^5 = (2^2)² × 2' } });
-            steps.push({ n: 2, stack: [{n:10,op:'half²'},{n:5,op:'half²×x'},{n:2,op:'half²'}], highlightLines: [5,6,7], explanation: { title: 'n=2（偶數）', text: '2^2 = (2^1)²<br>遞迴計算 2^1', formula: '2^2 = (2^1)²' } });
-            steps.push({ n: 1, stack: [{n:10},{n:5},{n:2},{n:1,op:'half²×x',val:2}], highlightLines: [5,6,8,9], explanation: { title: 'n=1（奇數）', text: '2^1 = (2^0)² × 2 = 1 × 2 = 2', formula: '2^1 = 1² × 2 = 2' } });
-            steps.push({ n: 2, stack: [{n:10},{n:5},{n:2,val:4}], result: 4, highlightLines: [7], explanation: { title: '回溯 n=2', text: '2^2 = 2² = 4', formula: '2² = 4' } });
-            steps.push({ n: 5, stack: [{n:10},{n:5,val:32}], result: 32, highlightLines: [9], explanation: { title: '回溯 n=5', text: '2^5 = 4² × 2 = 32', formula: '4² × 2 = 32' } });
-            steps.push({ n: 10, stack: [{n:10,val:1024}], result: 1024, final: true, highlightLines: [7], explanation: { title: '🎉 完成！', text: '2^10 = 32² = 1024<br><br>只用了 4 次乘法！<br>時間：O(log n)', formula: '32² = 1024' } });
+            const originalN = n;
+            const isNegative = n < 0;
+            
+            if (isNegative) {
+                x = 1 / x;
+                n = -n;
+            }
+
+            // Build recursion tree
+            const tree = [];
+            let tempN = n;
+            while (tempN > 0) {
+                tree.push({ n: tempN, isOdd: tempN % 2 === 1, result: null });
+                tempN = Math.floor(tempN / 2);
+            }
+            tree.push({ n: 0, isOdd: false, result: 1 });
+            tree.reverse();
+
+            steps.push({
+                x, n: originalN, tree: tree.map(t => ({...t})), currentLevel: -1, finalResult: null,
+                highlightLines: [0, 1, 2, 3, 4, 5],
+                explanation: { 
+                    title: '初始化', 
+                    text: `計算 ${currentExample.x}^${originalN}<br>${isNegative ? `負指數: x = 1/${currentExample.x}, n = ${n}` : ''}<br><br>關鍵: x^n = (x^(n/2))²<br>時間 O(log n) 而非 O(n)`,
+                    formula: 'setup'
+                }
+            });
+
+            // Forward recursion (descending)
+            for (let i = 1; i < tree.length; i++) {
+                const level = tree[i];
+                steps.push({
+                    x, n: originalN, tree: tree.map(t => ({...t})), currentLevel: i, finalResult: null,
+                    highlightLines: [6],
+                    explanation: { 
+                        title: `遞迴 n = ${level.n}`, 
+                        text: `n = ${level.n}${level.isOdd ? ' (奇數)' : ' (偶數)'}<br>計算 pow(x, ${Math.floor(level.n / 2)})`,
+                        formula: `n / 2 = ${Math.floor(level.n / 2)}`
+                    }
+                });
+            }
+
+            // Backward computation (ascending)
+            let result = 1;  // pow(x, 0) = 1
+            tree[0].result = 1;
+            
+            for (let i = 1; i < tree.length; i++) {
+                const level = tree[i];
+                const half = result;
+                result = half * half;
+                if (level.isOdd) result *= x;
+                tree[i].result = result;
+                
+                steps.push({
+                    x, n: originalN, tree: tree.map(t => ({...t})), currentLevel: i, computingBack: true,
+                    finalResult: null,
+                    highlightLines: level.isOdd ? [9, 10] : [7, 8],
+                    explanation: { 
+                        title: `回溯 n = ${level.n}`, 
+                        text: level.isOdd 
+                            ? `${half}² × ${x} = ${result.toFixed(4)}`
+                            : `${half}² = ${result.toFixed(4)}`,
+                        formula: level.isOdd ? 'half² × x' : 'half²'
+                    }
+                });
+            }
+
+            const finalResult = isNegative ? result : result;
+            steps.push({
+                x, n: originalN, tree: tree.map(t => ({...t})), currentLevel: -1,
+                finalResult, final: true,
+                highlightLines: [8, 10],
+                explanation: { 
+                    title: '完成!', 
+                    text: `${currentExample.x}^${originalN} = ${Number.isInteger(finalResult) ? finalResult : finalResult.toFixed(6)}<br><br>只用了 ${tree.length - 1} 次乘法!`,
+                    formula: 'done'
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
+            const { x, n } = currentExample;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('exprDisplay').textContent = `2^${step.n}`;
-                    document.getElementById('resultDisplay').textContent = step.result ? `= ${step.result}` : '= ?';
-                    let html = '';
-                    (step.stack || []).forEach((s, i) => {
-                        const isCurrent = i === step.stack.length - 1;
-                        const cls = s.val ? 'step-item done' : (isCurrent ? 'step-item current' : 'step-item');
-                        html += `<div class="${cls}"><span class="n">n=${s.n}</span><span class="op">${s.op || ''}</span>${s.val ? `<span>= ${s.val}</span>` : ''}</div>`;
-                    });
-                    document.getElementById('stepsDisplay').innerHTML = html || '<div style="text-align:center;color:var(--text-muted)">等待開始...</div>';
+                    // Expression
+                    document.getElementById('expressionDisplay').textContent = 
+                        `${currentExample.x}^${currentExample.n}`;
+                    
+                    // Result
+                    if (step.finalResult !== null) {
+                        const r = step.finalResult;
+                        document.getElementById('resultDisplay').textContent = 
+                            `= ${Number.isInteger(r) ? r : r.toFixed(6)}`;
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '= ?';
+                    }
+                    
+                    // Tree
+                    const tree = step.tree || [];
+                    document.getElementById('treeDisplay').innerHTML = tree.map((level, i) => {
+                        let cls = 'tree-level';
+                        if (i === step.currentLevel) cls += step.computingBack ? ' computed' : ' current';
+                        else if (level.result !== null) cls += ' computed';
+                        else cls += ' pending';
+                        
+                        const formula = level.n === 0 
+                            ? 'base case' 
+                            : (level.isOdd ? `(x^${Math.floor(level.n/2)})² × x` : `(x^${Math.floor(level.n/2)})²`);
+                        
+                        return `
+                            <div class="${cls}">
+                                <span class="n-value">n = ${level.n}</span>
+                                <span class="formula">${formula}</span>
+                                <span class="result">${level.result !== null ? '= ' + (Number.isInteger(level.result) ? level.result : level.result.toFixed(4)) : ''}</span>
+                            </div>
+                        `;
+                    }).join('');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(x, n));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

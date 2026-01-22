@@ -3,12 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plus One Visualization</title>
+    <title>Plus One - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .digits { display: flex; gap: 4px; justify-content: center; margin: 15px 0; }
-        .digit { width: 40px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1.5rem; background: var(--viz-primary); color: white; }
-        .digit.changed { background: var(--viz-success); color: #0f172a; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .digits-container { 
+            display: flex; gap: 6px; justify-content: center; margin: 20px 0; 
+            align-items: center; flex-wrap: wrap;
+        }
+        .digit { 
+            width: 50px; height: 60px; border-radius: 10px; display: flex; 
+            align-items: center; justify-content: center; font-family: monospace; 
+            font-size: 1.8rem; font-weight: bold; background: var(--viz-primary); 
+            color: white; transition: all 0.3s;
+        }
+        .digit.processing { background: var(--viz-warning); color: #0f172a; border: 2px solid white; }
+        .digit.changed { background: var(--viz-success); color: #0f172a; animation: pulse 0.4s; }
+        .digit.new { background: var(--viz-secondary); color: #0f172a; animation: slideIn 0.4s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes slideIn { 0% { opacity: 0; transform: translateX(-20px); } 100% { opacity: 1; transform: translateX(0); } }
+
+        .carry-display {
+            display: flex; justify-content: center; gap: 10px; margin: 15px 0;
+            padding: 12px; background: var(--viz-bg-secondary); border-radius: 8px;
+        }
+        .carry-indicator { padding: 8px 15px; border-radius: 6px; background: var(--viz-warning); color: #0f172a; font-weight: bold; }
+        .carry-indicator.none { background: var(--viz-bg-primary); color: var(--viz-text-muted); }
+
+        .number-display {
+            text-align: center; margin: 10px 0; font-size: 1.2rem; color: var(--viz-text-muted);
+        }
     </style>
 </head>
 <body>
@@ -16,38 +43,48 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">PLUS ONE</div>
-                <div class="digits" id="digitsDisplay"></div>
+                <div class="viz-title">加一 (Plus One)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">[1, 2, 3]</button>
+                        <button onclick="setExample(2)">[9, 9, 9]</button>
+                        <button onclick="setExample(3)">[1, 2, 9]</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="number-display" id="numberDisplay"></div>
+                <div class="digits-container" id="digitsDisplay"></div>
+                
+                <div class="carry-display">
+                    <span>進位: </span>
+                    <span class="carry-indicator" id="carryIndicator">無</span>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
-            <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1) 原地
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">CARRY PROPAGATION</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -61,25 +98,102 @@
             { line: '            digits[i]++;', id: 3 },
             { line: '            return digits;', id: 4 },
             { line: '        }', id: 5 },
-            { line: '        digits[i] = 0;', id: 6 },
+            { line: '        digits[i] = 0;  // 進位', id: 6 },
             { line: '    }', id: 7 },
-            { line: '    digits.insert(digits.begin(), 1);', id: 8 },
-            { line: '    return digits;', id: 9 },
-            { line: '}', id: 10 },
+            { line: '    // 所有位都是 9，需要新增一位', id: 8 },
+            { line: '    digits.insert(digits.begin(), 1);', id: 9 },
+            { line: '    return digits;', id: 10 },
+            { line: '}', id: 11 },
         ];
+        
+        const examples = {
+            1: [1, 2, 3],
+            2: [9, 9, 9],
+            3: [1, 2, 9]
+        };
+        
+        let currentDigits = examples[1];
 
-        function generateAlgorithmSteps() {
+        function setExample(n) {
+            currentDigits = [...examples[n]];
+            init();
+        }
+
+        function generateAlgorithmSteps(initialDigits) {
             const steps = [];
+            let digits = [...initialDigits];
+            const originalNum = digits.join('');
             
-            steps.push({ digits: [1, 2, 3], changed: [], highlightLines: [0, 1], explanation: { title: '123 + 1', text: 'Start from rightmost' }});
-            steps.push({ digits: [1, 2, 4], changed: [2], highlightLines: [2, 3, 4], explanation: { title: '3 < 9', text: 'Simply increment → 124' }});
-            
-            steps.push({ digits: [9, 9, 9], changed: [], highlightLines: [0, 1], explanation: { title: '999 + 1', text: 'Start from rightmost' }});
-            steps.push({ digits: [9, 9, 0], changed: [2], highlightLines: [6], explanation: { title: '9 → 0', text: 'Carry' }});
-            steps.push({ digits: [9, 0, 0], changed: [1, 2], highlightLines: [6], explanation: { title: '9 → 0', text: 'Carry' }});
-            steps.push({ digits: [0, 0, 0], changed: [0, 1, 2], highlightLines: [6], explanation: { title: '9 → 0', text: 'Carry' }});
-            steps.push({ digits: [1, 0, 0, 0], changed: [0], highlightLines: [8], explanation: { title: 'Insert 1', text: 'Result: 1000' }});
-            
+            steps.push({
+                digits: [...digits], processing: -1, changed: [], carry: false,
+                highlightLines: [0, 1],
+                explanation: { 
+                    title: '初始化', 
+                    text: `${originalNum} + 1 = ?<br><br>從最右邊開始，逐位處理<br>如果 < 9，直接加 1<br>如果 = 9，變 0 並進位`,
+                    formula: 'setup'
+                }
+            });
+
+            let carry = true;  // We need to add 1
+            const changed = [];
+
+            for (let i = digits.length - 1; i >= 0 && carry; i--) {
+                steps.push({
+                    digits: [...digits], processing: i, changed: [...changed], carry: true,
+                    highlightLines: [1, 2],
+                    explanation: { 
+                        title: `處理位置 ${i}`, 
+                        text: `digits[${i}] = ${digits[i]}<br>${digits[i] < 9 ? '< 9，可以直接加 1' : '= 9，需要進位'}`,
+                        formula: `check digits[${i}]`
+                    }
+                });
+
+                if (digits[i] < 9) {
+                    digits[i]++;
+                    changed.push(i);
+                    carry = false;
+                    
+                    steps.push({
+                        digits: [...digits], processing: -1, changed: [...changed], carry: false, final: true,
+                        highlightLines: [3, 4],
+                        explanation: { 
+                            title: '完成!', 
+                            text: `${digits[i] - 1} + 1 = ${digits[i]}<br>結果: ${digits.join('')}`,
+                            formula: 'return'
+                        }
+                    });
+                    return steps;
+                } else {
+                    digits[i] = 0;
+                    changed.push(i);
+                    
+                    steps.push({
+                        digits: [...digits], processing: i, changed: [...changed], carry: true,
+                        highlightLines: [6],
+                        explanation: { 
+                            title: `9 → 0，進位`, 
+                            text: `digits[${i}] = 0<br>繼續處理下一位`,
+                            formula: 'carry'
+                        }
+                    });
+                }
+            }
+
+            // All digits were 9
+            if (carry) {
+                digits.unshift(1);
+                
+                steps.push({
+                    digits: [...digits], processing: -1, changed: [], newDigit: true, carry: false, final: true,
+                    highlightLines: [8, 9, 10],
+                    explanation: { 
+                        title: '插入新位!', 
+                        text: `所有位都進位完畢<br>在最前面插入 1<br>結果: ${digits.join('')}`,
+                        formula: 'insert 1'
+                    }
+                });
+            }
+
             return steps;
         }
 
@@ -88,13 +202,36 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('digitsDisplay').innerHTML = step.digits.map((d, i) =>
-                        `<span class="digit ${step.changed?.includes(i) ? 'changed' : ''}">${d}</span>`
-                    ).join('');
+                    const digits = step.digits || [];
+                    
+                    // Number display
+                    document.getElementById('numberDisplay').textContent = 
+                        `${currentDigits.join('')} + 1 = ${step.final ? digits.join('') : '?'}`;
+                    
+                    // Digits display
+                    document.getElementById('digitsDisplay').innerHTML = 
+                        digits.map((d, i) => {
+                            let cls = 'digit';
+                            if (step.processing === i) cls += ' processing';
+                            if (step.changed?.includes(i)) cls += ' changed';
+                            if (step.newDigit && i === 0) cls += ' new';
+                            return `<span class="${cls}">${d}</span>`;
+                        }).join('');
+                    
+                    // Carry indicator
+                    const carryEl = document.getElementById('carryIndicator');
+                    if (step.carry) {
+                        carryEl.textContent = '有進位';
+                        carryEl.className = 'carry-indicator';
+                    } else {
+                        carryEl.textContent = '無';
+                        carryEl.className = 'carry-indicator none';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentDigits));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

@@ -3,17 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiply Strings 字符串相乘 - 視覺化</title>
+    <title>Multiply Strings - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .nums { display: flex; flex-direction: column; gap: 10px; align-items: center; margin: 20px 0; }
-        .num-row { display: flex; gap: 4px; }
-        .digit { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-primary); color: white; font-size: 1.1rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .multiplication-display { text-align: center; margin: 20px 0; }
+        .num-row { display: flex; gap: 4px; justify-content: center; margin: 5px 0; }
+        .digit { 
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; 
+            font-size: 1.2rem; transition: all 0.3s;
+        }
+        .digit.current { border: 3px solid var(--viz-warning); transform: scale(1.1); }
         .digit.result { background: var(--viz-success); color: #0f172a; }
-        .digit.current { border: 3px solid var(--viz-warning); }
-        .multiply-grid { display: inline-grid; gap: 2px; margin: 15px auto; }
-        .grid-cell { width: 30px; height: 25px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 3px; background: var(--viz-bg-secondary); font-size: 0.85rem; }
-        .grid-cell.active { background: var(--viz-warning); color: #0f172a; }
+
+        .result-array {
+            display: flex; gap: 3px; justify-content: center; margin: 15px 0;
+            padding: 12px; background: var(--viz-bg-secondary); border-radius: 8px;
+        }
+        .result-cell {
+            width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; border-radius: 4px; background: var(--viz-bg-primary); font-size: 1rem;
+        }
+        .result-cell.active { background: var(--viz-warning); color: #0f172a; }
+        .result-cell.filled { background: var(--viz-success); color: #0f172a; }
+
+        .calculation-display {
+            text-align: center; margin: 10px 0; padding: 12px;
+            background: var(--viz-bg-secondary); border-radius: 8px;
+            font-family: monospace; font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
@@ -21,36 +43,41 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">字符串相乘（模擬手算）</div>
-                <div class="nums" id="numsDisplay"></div>
-                <div style="text-align: center;"><div class="multiply-grid" id="gridDisplay"></div></div>
+                <div class="viz-title">字符串相乘 (Multiply Strings)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">123 × 45</button>
+                        <button onclick="setExample(2)">99 × 99</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="multiplication-display" id="multiDisplay"></div>
+                
+                <div class="calculation-display" id="calcDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">結果陣列 (位置 i+j 和 i+j+1)</div>
+                <div class="result-array" id="resultDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-            </div>
+                
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(m×n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(m+n)
                 </div>
-            
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
-                </div>
+            </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
@@ -68,7 +95,7 @@
             { line: '    vector<int> result(m + n, 0);', id: 2 },
             { line: '    for (int i = m - 1; i >= 0; i--) {', id: 3 },
             { line: '        for (int j = n - 1; j >= 0; j--) {', id: 4 },
-            { line: '            int mul = (num1[i] - \'0\') * (num2[j] - \'0\');', id: 5 },
+            { line: '            int mul = (num1[i]-\'0\') * (num2[j]-\'0\');', id: 5 },
             { line: '            int p1 = i + j, p2 = i + j + 1;', id: 6 },
             { line: '            int sum = mul + result[p2];', id: 7 },
             { line: '            result[p2] = sum % 10;', id: 8 },
@@ -76,35 +103,122 @@
             { line: '        }', id: 10 },
             { line: '    }', id: 11 },
             { line: '    // 轉字符串，去前導零', id: 12 },
-            { line: '    return result_string;', id: 13 },
-            { line: '}', id: 14 },
+            { line: '    string str = "";', id: 13 },
+            { line: '    for (int d : result) if (!(str.empty() && d==0)) str += to_string(d);', id: 14 },
+            { line: '    return str.empty() ? "0" : str;', id: 15 },
+            { line: '}', id: 16 },
         ];
-        const num1 = "123", num2 = "45";
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: { num1: "123", num2: "45" },
+            2: { num1: "99", num2: "99" }
+        };
+        
+        let currentExample = examples[1];
+
+        function setExample(n) {
+            currentExample = examples[n];
+            init();
+        }
+
+        function generateAlgorithmSteps(num1, num2) {
             const steps = [];
-            steps.push({ result: [0,0,0,0,0], highlightLines: [0,1,2], explanation: { title: '初始化', text: '123 × 45<br><br>結果陣列大小 = 3+2 = 5<br>模擬手算乘法' } });
-            steps.push({ i: 2, j: 1, mul: 15, result: [0,0,0,1,5], highlightLines: [3,4,5,6,7,8,9], explanation: { title: '3 × 5 = 15', text: 'p1=3, p2=4<br>result[4]=5, result[3]+=1' } });
-            steps.push({ i: 2, j: 0, mul: 12, result: [0,0,1,3,5], highlightLines: [3,4,5,6,7,8,9], explanation: { title: '3 × 4 = 12', text: 'p1=2, p2=3<br>12+1=13<br>result[3]=3, result[2]+=1' } });
-            steps.push({ result: [0,5,5,3,5], highlightLines: [3,4,5,6,7,8,9], explanation: { title: '繼續計算...', text: '2×5=10, 2×4=8<br>1×5=5, 1×4=4' } });
-            steps.push({ result: '5535', final: true, highlightLines: [12,13], explanation: { title: '🎉 完成！', text: '123 × 45 = 5535<br><br>時間：O(m×n)' } });
+            const m = num1.length, n = num2.length;
+            const result = Array(m + n).fill(0);
+            
+            steps.push({
+                num1, num2, result: [...result], i: -1, j: -1, p1: -1, p2: -1, calc: null,
+                highlightLines: [0, 1, 2],
+                explanation: { 
+                    title: '初始化', 
+                    text: `${num1} × ${num2}<br><br>結果陣列大小 = ${m} + ${n} = ${m + n}<br>關鍵: result[i+j] 和 result[i+j+1] 存儲乘積`,
+                    formula: 'setup'
+                }
+            });
+
+            for (let i = m - 1; i >= 0; i--) {
+                for (let j = n - 1; j >= 0; j--) {
+                    const d1 = parseInt(num1[i]);
+                    const d2 = parseInt(num2[j]);
+                    const mul = d1 * d2;
+                    const p1 = i + j, p2 = i + j + 1;
+                    const sum = mul + result[p2];
+                    
+                    result[p2] = sum % 10;
+                    result[p1] += Math.floor(sum / 10);
+                    
+                    steps.push({
+                        num1, num2, result: [...result], 
+                        i, j, p1, p2,
+                        calc: `${d1} × ${d2} = ${mul}`,
+                        highlightLines: [3, 4, 5, 6, 7, 8, 9],
+                        explanation: { 
+                            title: `num1[${i}] × num2[${j}]`, 
+                            text: `${d1} × ${d2} = ${mul}<br>sum = ${mul} + ${sum - mul} = ${sum}<br>result[${p2}] = ${sum % 10}, result[${p1}] += ${Math.floor(sum / 10)}`,
+                            formula: `${d1}×${d2}=${mul}`
+                        }
+                    });
+                }
+            }
+
+            // Final result
+            const finalStr = result.join('').replace(/^0+/, '') || '0';
+            steps.push({
+                num1, num2, result: [...result], i: -1, j: -1, p1: -1, p2: -1,
+                finalResult: finalStr, final: true,
+                highlightLines: [12, 13, 14, 15],
+                explanation: { 
+                    title: '完成!', 
+                    text: `${num1} × ${num2} = ${finalStr}`,
+                    formula: 'return'
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
+            const { num1, num2 } = currentExample;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = `<div class="num-row">${num1.split('').map(d => `<span class="digit">${d}</span>`).join('')}</div>`;
-                    html += `<div style="color: var(--text-muted)">×</div>`;
-                    html += `<div class="num-row">${num2.split('').map(d => `<span class="digit">${d}</span>`).join('')}</div>`;
-                    html += `<div style="color: var(--text-muted); margin: 10px 0;">────────</div>`;
-                    const res = typeof step.result === 'string' ? step.result : (step.result || []).join('');
-                    html += `<div class="num-row">${res.split('').map(d => `<span class="digit result">${d}</span>`).join('')}</div>`;
-                    document.getElementById('numsDisplay').innerHTML = html;
+                    // Multiplication display
+                    let html = `<div class="num-row">${step.num1.split('').map((d, idx) => 
+                        `<span class="digit ${step.i === idx ? 'current' : ''}">${d}</span>`
+                    ).join('')}</div>`;
+                    html += '<div style="color: var(--viz-text-muted); margin: 5px 0;">×</div>';
+                    html += `<div class="num-row">${step.num2.split('').map((d, idx) => 
+                        `<span class="digit ${step.j === idx ? 'current' : ''}">${d}</span>`
+                    ).join('')}</div>`;
+                    html += '<div style="color: var(--viz-text-muted); margin: 10px 0;">────────</div>';
+                    
+                    if (step.finalResult) {
+                        html += `<div class="num-row">${step.finalResult.split('').map(d => 
+                            `<span class="digit result">${d}</span>`
+                        ).join('')}</div>`;
+                    }
+                    document.getElementById('multiDisplay').innerHTML = html;
+                    
+                    // Calculation
+                    document.getElementById('calcDisplay').innerHTML = step.calc 
+                        ? `<span>${step.calc}</span>` 
+                        : '<span style="color: var(--viz-text-muted)">-</span>';
+                    
+                    // Result array
+                    const result = step.result || [];
+                    document.getElementById('resultDisplay').innerHTML = result.map((d, idx) => {
+                        let cls = 'result-cell';
+                        if (idx === step.p1 || idx === step.p2) cls += ' active';
+                        if (d !== 0) cls += ' filled';
+                        return `<span class="${cls}">${d}</span>`;
+                    }).join('');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(num1, num2));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

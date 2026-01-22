@@ -3,14 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Set Matrix Zeroes Visualization</title>
+    <title>Set Matrix Zeroes - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: grid; gap: 2px; max-width: 200px; margin: 0 auto; }
-        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1rem; border-radius: 4px; }
-        .cell.zero { background: var(--viz-error); color: white; }
-        .cell.number { background: var(--viz-primary); color: white; }
-        .cell.marked { background: var(--viz-secondary); color: #0f172a; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .matrix-container { display: inline-grid; gap: 3px; margin: 20px auto; padding: 12px; background: var(--viz-bg-secondary); border-radius: 10px; }
+        .cell { 
+            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 1rem; border-radius: 6px; 
+            background: var(--viz-primary); color: white; transition: all 0.3s;
+        }
+        .cell.zero { background: var(--viz-error); }
+        .cell.marker { background: var(--viz-warning); color: #0f172a; border: 2px dashed white; }
+        .cell.to-zero { background: var(--viz-secondary); color: #0f172a; animation: pulse 0.4s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+        .phase-display {
+            display: flex; justify-content: center; gap: 20px; margin: 15px 0;
+            padding: 12px; background: var(--viz-bg-secondary); border-radius: 8px;
+        }
+        .phase-item { text-align: center; padding: 8px 15px; border-radius: 6px; }
+        .phase-item.active { background: var(--viz-warning); color: #0f172a; font-weight: bold; }
+        .phase-item.completed { background: var(--viz-success); color: #0f172a; }
+
+        .markers-display {
+            display: flex; gap: 15px; justify-content: center; margin: 10px 0;
+            padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -18,38 +40,52 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SET MATRIX ZEROES</div>
-                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(4, 40px);"></div>
+                <div class="viz-title">矩陣置零 (Set Matrix Zeroes)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">範例1 (3×4)</button>
+                        <button onclick="setExample(2)">範例2 (4×4)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="phase-display">
+                    <div class="phase-item" id="phase1">① 找零並標記</div>
+                    <div class="phase-item" id="phase2">② 根據標記置零</div>
+                    <div class="phase-item" id="phase3">③ 處理首行首列</div>
+                </div>
+                
+                <div class="markers-display">
+                    <span>首行有零: <strong id="firstRowZero">否</strong></span>
+                    <span>首列有零: <strong id="firstColZero">否</strong></span>
+                </div>
+                
+                <div style="text-align: center;"><div class="matrix-container" id="matrixDisplay"></div></div>
+
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
-            <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O(m×n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1) 原地
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">IN-PLACE O(1) SPACE</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -57,51 +93,214 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'void setZeroes(matrix) {', id: 0 },
-            { line: '    bool firstRowZero = false, firstColZero = false;', id: 1 },
-            { line: '    // Mark first row/col', id: 2 },
-            { line: '    for (i, j) if (matrix[i][j] == 0) {', id: 3 },
-            { line: '        matrix[i][0] = matrix[0][j] = 0;', id: 4 },
-            { line: '    }', id: 5 },
-            { line: '    // Set cells to zero based on marks', id: 6 },
-            { line: '    for (i = 1..m, j = 1..n)', id: 7 },
-            { line: '        if (matrix[i][0] == 0 || matrix[0][j] == 0)', id: 8 },
-            { line: '            matrix[i][j] = 0;', id: 9 },
-            { line: '    // Handle first row/col', id: 10 },
-            { line: '}', id: 11 },
+            { line: 'void setZeroes(vector<vector<int>>& matrix) {', id: 0 },
+            { line: '    int m = matrix.size(), n = matrix[0].size();', id: 1 },
+            { line: '    bool firstRowZero = false, firstColZero = false;', id: 2 },
+            { line: '    // 檢查首行首列是否有零', id: 3 },
+            { line: '    for (int j = 0; j < n; j++) if (matrix[0][j] == 0) firstRowZero = true;', id: 4 },
+            { line: '    for (int i = 0; i < m; i++) if (matrix[i][0] == 0) firstColZero = true;', id: 5 },
+            { line: '    // 用首行首列作為標記', id: 6 },
+            { line: '    for (int i = 1; i < m; i++)', id: 7 },
+            { line: '        for (int j = 1; j < n; j++)', id: 8 },
+            { line: '            if (matrix[i][j] == 0)', id: 9 },
+            { line: '                matrix[i][0] = matrix[0][j] = 0;', id: 10 },
+            { line: '    // 根據標記置零', id: 11 },
+            { line: '    for (int i = 1; i < m; i++)', id: 12 },
+            { line: '        for (int j = 1; j < n; j++)', id: 13 },
+            { line: '            if (matrix[i][0] == 0 || matrix[0][j] == 0)', id: 14 },
+            { line: '                matrix[i][j] = 0;', id: 15 },
+            { line: '    // 處理首行首列', id: 16 },
+            { line: '    if (firstRowZero) for (int j = 0; j < n; j++) matrix[0][j] = 0;', id: 17 },
+            { line: '    if (firstColZero) for (int i = 0; i < m; i++) matrix[i][0] = 0;', id: 18 },
+            { line: '}', id: 19 },
         ];
-        const original = [[1,1,1,1],[1,0,1,1],[1,1,1,1]];
+        
+        const examples = {
+            1: [[1,1,1,1],[1,0,1,1],[1,1,1,0]],
+            2: [[0,1,2,0],[3,4,5,2],[1,3,1,5],[4,2,0,1]]
+        };
+        
+        let currentMatrix = examples[1];
 
-        function generateAlgorithmSteps() {
+        function setExample(n) {
+            currentMatrix = examples[n].map(r => [...r]);
+            init();
+        }
+
+        function generateAlgorithmSteps(initialMatrix) {
             const steps = [];
+            const m = initialMatrix.length, n = initialMatrix[0].length;
+            let matrix = initialMatrix.map(r => [...r]);
             
-            steps.push({ grid: [[1,1,1,1],[1,0,1,1],[1,1,1,1]], marked: [], highlightLines: [0, 1], explanation: { title: 'Original', text: 'Find zeros and mark' }});
-            steps.push({ grid: [[1,0,1,1],[0,0,1,1],[1,1,1,1]], marked: [[0,1], [1,0]], highlightLines: [3, 4], explanation: { title: 'Mark', text: 'Use first row/col as markers' }});
-            steps.push({ grid: [[1,0,1,1],[0,0,0,0],[1,1,1,1]], marked: [], highlightLines: [7, 8, 9], explanation: { title: 'Zero row 1', text: 'matrix[1][0] = 0' }});
-            steps.push({ grid: [[1,0,1,1],[0,0,0,0],[1,0,1,1]], marked: [], highlightLines: [7, 8, 9], explanation: { title: 'Zero col 1', text: 'matrix[0][1] = 0' }});
+            // Find original zeros
+            const originalZeros = [];
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (matrix[i][j] === 0) originalZeros.push([i, j]);
+                }
+            }
             
+            steps.push({
+                matrix: matrix.map(r => [...r]), phase: 0,
+                originalZeros, markers: [], firstRowZero: false, firstColZero: false,
+                highlightLines: [0, 1, 2],
+                explanation: { 
+                    title: '初始化', 
+                    text: `${m}×${n} 矩陣<br>原始零位置: ${originalZeros.map(z => `(${z[0]},${z[1]})`).join(', ')}<br><br>O(1) 空間：用首行首列作標記`,
+                    formula: 'setup'
+                }
+            });
+
+            // Check first row and column
+            let firstRowZero = false, firstColZero = false;
+            for (let j = 0; j < n; j++) if (matrix[0][j] === 0) firstRowZero = true;
+            for (let i = 0; i < m; i++) if (matrix[i][0] === 0) firstColZero = true;
+
+            steps.push({
+                matrix: matrix.map(r => [...r]), phase: 1,
+                originalZeros, markers: [], firstRowZero, firstColZero,
+                highlightLines: [3, 4, 5],
+                explanation: { 
+                    title: '檢查首行首列', 
+                    text: `首行有零: ${firstRowZero ? '是' : '否'}<br>首列有零: ${firstColZero ? '是' : '否'}`,
+                    formula: 'check edges'
+                }
+            });
+
+            // Mark
+            const markers = [];
+            for (let i = 1; i < m; i++) {
+                for (let j = 1; j < n; j++) {
+                    if (matrix[i][j] === 0) {
+                        matrix[i][0] = 0;
+                        matrix[0][j] = 0;
+                        markers.push([i, 0], [0, j]);
+                    }
+                }
+            }
+
+            if (markers.length > 0) {
+                steps.push({
+                    matrix: matrix.map(r => [...r]), phase: 1,
+                    originalZeros, markers: [...markers], firstRowZero, firstColZero,
+                    highlightLines: [6, 7, 8, 9, 10],
+                    explanation: { 
+                        title: '標記首行首列', 
+                        text: `發現零，標記對應的首行/首列位置`,
+                        formula: 'mark'
+                    }
+                });
+            }
+
+            // Set zeros based on markers
+            const toZero = [];
+            for (let i = 1; i < m; i++) {
+                for (let j = 1; j < n; j++) {
+                    if (matrix[i][0] === 0 || matrix[0][j] === 0) {
+                        if (matrix[i][j] !== 0) {
+                            toZero.push([i, j]);
+                            matrix[i][j] = 0;
+                        }
+                    }
+                }
+            }
+
+            if (toZero.length > 0) {
+                steps.push({
+                    matrix: matrix.map(r => [...r]), phase: 2,
+                    originalZeros, markers, toZero, firstRowZero, firstColZero,
+                    highlightLines: [11, 12, 13, 14, 15],
+                    explanation: { 
+                        title: '根據標記置零', 
+                        text: `${toZero.length} 個格子被置零`,
+                        formula: 'set zeros'
+                    }
+                });
+            }
+
+            // Handle first row and column
+            if (firstRowZero) {
+                for (let j = 0; j < n; j++) matrix[0][j] = 0;
+            }
+            if (firstColZero) {
+                for (let i = 0; i < m; i++) matrix[i][0] = 0;
+            }
+
+            if (firstRowZero || firstColZero) {
+                steps.push({
+                    matrix: matrix.map(r => [...r]), phase: 3,
+                    originalZeros, markers: [], firstRowZero, firstColZero,
+                    highlightLines: [16, 17, 18],
+                    explanation: { 
+                        title: '處理首行首列', 
+                        text: `${firstRowZero ? '首行置零 ' : ''}${firstColZero ? '首列置零' : ''}`,
+                        formula: 'handle edges'
+                    }
+                });
+            }
+
+            steps.push({
+                matrix: matrix.map(r => [...r]), phase: 3, final: true,
+                firstRowZero, firstColZero,
+                highlightLines: [19],
+                explanation: { 
+                    title: '完成!', 
+                    text: `O(1) 空間完成矩陣置零`,
+                    formula: 'done'
+                }
+            });
+
             return steps;
         }
 
         let viz;
         function init() {
+            const m = currentMatrix.length, n = currentMatrix[0].length;
+            const gridEl = document.getElementById('matrixDisplay');
+            gridEl.style.gridTemplateColumns = `repeat(${n}, 45px)`;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
+                    const matrix = step.matrix || currentMatrix;
+                    const rows = matrix.length, cols = matrix[0].length;
+                    gridEl.style.gridTemplateColumns = `repeat(${cols}, 45px)`;
+                    
                     let html = '';
-                    for (let i = 0; i < 3; i++) {
-                        for (let j = 0; j < 4; j++) {
-                            const v = step.grid[i][j];
-                            const marked = step.marked?.some(m => m[0] === i && m[1] === j);
-                            html += `<div class="cell ${v === 0 ? 'zero' : 'number'} ${marked ? 'marked' : ''}">${v}</div>`;
+                    for (let i = 0; i < rows; i++) {
+                        for (let j = 0; j < cols; j++) {
+                            let cls = 'cell';
+                            const val = matrix[i][j];
+                            
+                            if (val === 0) cls += ' zero';
+                            if (step.markers?.some(m => m[0] === i && m[1] === j)) cls += ' marker';
+                            if (step.toZero?.some(z => z[0] === i && z[1] === j)) cls += ' to-zero';
+                            
+                            html += `<div class="${cls}">${val}</div>`;
                         }
                     }
-                    document.getElementById('gridDisplay').innerHTML = html;
+                    gridEl.innerHTML = html;
+                    
+                    // Phase indicators
+                    ['phase1', 'phase2', 'phase3'].forEach((id, idx) => {
+                        const el = document.getElementById(id);
+                        el.className = 'phase-item';
+                        if (step.phase === idx + 1) el.className += ' active';
+                        if (step.phase > idx + 1 || step.final) el.className += ' completed';
+                    });
+                    
+                    // Markers
+                    document.getElementById('firstRowZero').textContent = step.firstRowZero ? '是' : '否';
+                    document.getElementById('firstColZero').textContent = step.firstColZero ? '是' : '否';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentMatrix));
         }
-        function resetVisualization() { init(); }
+        
+        function resetVisualization() {
+            currentMatrix = currentMatrix.length === 3 ? examples[1].map(r => [...r]) : examples[2].map(r => [...r]);
+            init();
+        }
         window.addEventListener('load', init);
     </script>
 </body>

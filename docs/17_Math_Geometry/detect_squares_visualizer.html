@@ -3,14 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detect Squares 檢測正方形 - 視覺化</title>
+    <title>Detect Squares - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { position: relative; width: 200px; height: 200px; margin: 20px auto; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .point { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: var(--viz-primary); transform: translate(-50%, -50%); }
-        .point.query { background: var(--viz-warning); width: 16px; height: 16px; }
-        .point.square { background: var(--viz-success); }
-        .square-outline { position: absolute; border: 2px dashed var(--viz-success); }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .grid-container { 
+            position: relative; width: 280px; height: 280px; margin: 20px auto; 
+            background: var(--viz-bg-secondary); border-radius: 10px; overflow: hidden;
+        }
+        .grid-line { position: absolute; background: var(--viz-border); opacity: 0.3; }
+        .grid-line.h { width: 100%; height: 1px; }
+        .grid-line.v { width: 1px; height: 100%; }
+        
+        .point { 
+            position: absolute; width: 16px; height: 16px; border-radius: 50%; 
+            background: var(--viz-primary); transform: translate(-50%, -50%);
+            transition: all 0.3s; z-index: 2;
+        }
+        .point.query { background: var(--viz-warning); width: 20px; height: 20px; z-index: 3; }
+        .point.square-point { background: var(--viz-success); }
+        .point.diagonal { background: var(--viz-secondary); }
+        
+        .square-outline { 
+            position: absolute; border: 3px dashed var(--viz-success); 
+            z-index: 1; border-radius: 4px;
+        }
+
+        .points-list {
+            display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+            padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; margin: 10px 0;
+        }
+        .point-tag { padding: 5px 10px; border-radius: 4px; background: var(--viz-primary); color: white; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -18,36 +44,38 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">檢測正方形（Hash Map）</div>
-                <div class="grid" id="gridDisplay"></div>
+                <div class="viz-title">檢測正方形 (Detect Squares)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 操作範例</div>
+                    <div class="input-row">
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="grid-container" id="gridContainer"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">已加入的點</div>
+                <div class="points-list" id="pointsList"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">add:</span> O(1)
+                    <span class="label" style="margin-left: 12px;">count:</span> O(n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">正方形數</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">正方形數</div><div class="state-value" id="countDisplay">0</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -63,55 +91,183 @@
     <script>
         const codeStructure = [
             { line: 'class DetectSquares {', id: 0 },
-            { line: '    map<pair<int,int>, int> points; // 點 -> 計數', id: 1 },
+            { line: '    unordered_map<string, int> points;', id: 1 },
             { line: 'public:', id: 2 },
-            { line: '    void add(vector<int> point) {', id: 3 },
-            { line: '        points[{point[0], point[1]}]++;', id: 4 },
+            { line: '    void add(vector<int> p) {', id: 3 },
+            { line: '        points[to_string(p[0])+","+to_string(p[1])]++;', id: 4 },
             { line: '    }', id: 5 },
-            { line: '    int count(vector<int> point) {', id: 6 },
-            { line: '        int px = point[0], py = point[1], result = 0;', id: 7 },
-            { line: '        for (auto& [p, cnt] : points) {', id: 8 },
-            { line: '            if (p.first != px && abs(p.first - px) == abs(p.second - py)) {', id: 9 },
-            { line: '                // 對角線點，檢查另外兩點', id: 10 },
-            { line: '                result += cnt * points[{px, p.second}] * points[{p.first, py}];', id: 11 },
-            { line: '            }', id: 12 },
-            { line: '        }', id: 13 },
-            { line: '        return result;', id: 14 },
-            { line: '    }', id: 15 },
-            { line: '};', id: 16 },
+            { line: '    int count(vector<int> p) {', id: 6 },
+            { line: '        int px = p[0], py = p[1], result = 0;', id: 7 },
+            { line: '        for (auto& [key, cnt] : points) {', id: 8 },
+            { line: '            // 找對角線點: |dx| == |dy| && dx != 0', id: 9 },
+            { line: '            int x = ..., y = ...;', id: 10 },
+            { line: '            if (abs(x-px) == abs(y-py) && x != px) {', id: 11 },
+            { line: '                // 檢查另外兩個角', id: 12 },
+            { line: '                result += cnt * count(px,y) * count(x,py);', id: 13 },
+            { line: '            }', id: 14 },
+            { line: '        }', id: 15 },
+            { line: '        return result;', id: 16 },
+            { line: '    }', id: 17 },
+            { line: '};', id: 18 },
         ];
-        const points = [[3,10],[11,2],[3,2]];
+
+        // Scale factor and offset for visualization
+        const SCALE = 20;
+        const OFFSET = 20;
+
+        function toScreen(x, y) {
+            return [OFFSET + x * SCALE, 280 - OFFSET - y * SCALE];
+        }
+
         function generateAlgorithmSteps() {
             const steps = [];
-            steps.push({ points: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: '用 HashMap 存儲點<br><br>add: 加入點<br>count: 計算與查詢點形成的正方形數' } });
-            steps.push({ points: [[3,10]], highlightLines: [3,4,5], explanation: { title: 'add([3,10])', text: '加入點 (3,10)' } });
-            steps.push({ points: [[3,10],[11,2]], highlightLines: [3,4,5], explanation: { title: 'add([11,2])', text: '加入點 (11,2)' } });
-            steps.push({ points: [[3,10],[11,2],[3,2]], highlightLines: [3,4,5], explanation: { title: 'add([3,2])', text: '加入點 (3,2)' } });
-            steps.push({ points: [[3,10],[11,2],[3,2]], query: [11,10], count: 1, square: true, highlightLines: [6,7,8,9,10,11], explanation: { title: 'count([11,10])', text: '查詢 (11,10)<br>找到對角 (3,2)<br>邊長 = 8<br>正方形數 = 1' } });
-            steps.push({ points: [[3,10],[11,2],[3,2]], query: [11,10], count: 1, final: true, highlightLines: [14], explanation: { title: '🎉 完成！', text: '找到 1 個正方形<br><br>count: O(n)' } });
+            const points = [];
+            
+            steps.push({
+                points: [], query: null, squares: [],
+                highlightLines: [0, 1, 2],
+                explanation: { 
+                    title: '初始化', 
+                    text: `DetectSquares 類別<br><br>用 HashMap 存儲點及其出現次數<br>add: 加入點 O(1)<br>count: 統計正方形數 O(n)`,
+                    formula: 'setup'
+                }
+            });
+
+            // Add points
+            const addPoints = [[3, 10], [11, 2], [3, 2], [11, 10]];
+            for (const p of addPoints) {
+                points.push(p);
+                steps.push({
+                    points: points.map(pp => [...pp]), query: null, squares: [],
+                    highlightLines: [3, 4, 5],
+                    explanation: { 
+                        title: `add([${p[0]}, ${p[1]}])`, 
+                        text: `加入點 (${p[0]}, ${p[1]})<br>目前共 ${points.length} 個點`,
+                        formula: `add(${p[0]},${p[1]})`
+                    }
+                });
+            }
+
+            // Query
+            const queryPoint = [11, 10];
+            
+            steps.push({
+                points: points.map(pp => [...pp]), query: queryPoint, squares: [],
+                highlightLines: [6, 7, 8],
+                explanation: { 
+                    title: `count([${queryPoint[0]}, ${queryPoint[1]}])`, 
+                    text: `查詢點 (${queryPoint[0]}, ${queryPoint[1]})<br>遍歷所有點找對角線點`,
+                    formula: 'start query'
+                }
+            });
+
+            // Find diagonal - (3, 2) is diagonal to (11, 10)
+            const diagonal = [3, 2];
+            steps.push({
+                points: points.map(pp => [...pp]), query: queryPoint, 
+                diagonal: diagonal, squares: [],
+                highlightLines: [9, 10, 11],
+                explanation: { 
+                    title: `找到對角線點 (${diagonal[0]}, ${diagonal[1]})`, 
+                    text: `|${diagonal[0]} - ${queryPoint[0]}| = |${diagonal[1]} - ${queryPoint[1]}| = 8<br>這是對角線關係!`,
+                    formula: `|dx| = |dy| = 8`
+                }
+            });
+
+            // Check other corners
+            const corners = [[queryPoint[0], diagonal[1]], [diagonal[0], queryPoint[1]]];
+            steps.push({
+                points: points.map(pp => [...pp]), query: queryPoint, 
+                diagonal: diagonal, checkCorners: corners, squares: [],
+                highlightLines: [12, 13],
+                explanation: { 
+                    title: `檢查另外兩角`, 
+                    text: `(${corners[0][0]}, ${corners[0][1]}) 和 (${corners[1][0]}, ${corners[1][1]})<br>都存在!`,
+                    formula: 'check corners'
+                }
+            });
+
+            // Found square
+            steps.push({
+                points: points.map(pp => [...pp]), query: queryPoint,
+                squares: [[diagonal, queryPoint]], count: 1,
+                highlightLines: [13],
+                explanation: { 
+                    title: `找到正方形!`, 
+                    text: `四個角: (3,2), (3,10), (11,2), (11,10)<br>邊長 = 8`,
+                    formula: 'result += 1'
+                }
+            });
+
+            steps.push({
+                points: points.map(pp => [...pp]), query: queryPoint,
+                squares: [[diagonal, queryPoint]], count: 1, final: true,
+                highlightLines: [16],
+                explanation: { 
+                    title: '完成!', 
+                    text: `共找到 1 個正方形`,
+                    formula: 'return 1'
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
+            // Draw grid lines
+            const container = document.getElementById('gridContainer');
+            let gridHtml = '';
+            for (let i = 0; i <= 14; i++) {
+                gridHtml += `<div class="grid-line h" style="top: ${i * SCALE}px;"></div>`;
+                gridHtml += `<div class="grid-line v" style="left: ${i * SCALE}px;"></div>`;
+            }
+            container.innerHTML = gridHtml;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
-                    (step.points || []).forEach(p => {
-                        html += `<div class="point${step.square?' square':''}" style="left:${p[0]*15+20}px;top:${200-p[1]*15-20}px"></div>`;
-                    });
+                    
+                    // Draw squares
+                    for (const sq of (step.squares || [])) {
+                        const [p1, p2] = sq;
+                        const [x1, y1] = toScreen(Math.min(p1[0], p2[0]), Math.max(p1[1], p2[1]));
+                        const size = Math.abs(p2[0] - p1[0]) * SCALE;
+                        html += `<div class="square-outline" style="left:${x1}px;top:${y1}px;width:${size}px;height:${size}px;"></div>`;
+                    }
+                    
+                    // Draw points
+                    for (const p of (step.points || [])) {
+                        const [sx, sy] = toScreen(p[0], p[1]);
+                        let cls = 'point';
+                        if (step.diagonal && p[0] === step.diagonal[0] && p[1] === step.diagonal[1]) cls += ' diagonal';
+                        if (step.squares?.length > 0) cls += ' square-point';
+                        html += `<div class="${cls}" style="left:${sx}px;top:${sy}px;"></div>`;
+                    }
+                    
+                    // Draw query point
                     if (step.query) {
-                        html += `<div class="point query" style="left:${step.query[0]*15+20}px;top:${200-step.query[1]*15-20}px"></div>`;
+                        const [sx, sy] = toScreen(step.query[0], step.query[1]);
+                        html += `<div class="point query" style="left:${sx}px;top:${sy}px;"></div>`;
                     }
-                    if (step.square) {
-                        html += `<div class="square-outline" style="left:${3*15+20-6}px;top:${200-10*15-20-6}px;width:${8*15}px;height:${8*15}px"></div>`;
-                    }
-                    document.getElementById('gridDisplay').innerHTML = html;
+                    
+                    // Append to grid lines
+                    const gridLines = Array.from(container.querySelectorAll('.grid-line'));
+                    container.innerHTML = gridLines.map(el => el.outerHTML).join('') + html;
+                    
+                    // Points list
+                    document.getElementById('pointsList').innerHTML = 
+                        (step.points || []).length > 0
+                            ? step.points.map(p => `<span class="point-tag">(${p[0]}, ${p[1]})</span>`).join('')
+                            : '<span style="color: var(--viz-text-muted)">無</span>';
+                    
                     document.getElementById('countDisplay').textContent = step.count ?? 0;
                 }
             });
             viz.setSteps(generateAlgorithmSteps());
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

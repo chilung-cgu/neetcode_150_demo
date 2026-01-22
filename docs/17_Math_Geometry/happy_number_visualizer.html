@@ -3,14 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy Number Visualization</title>
+    <title>Happy Number - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .sequence { display: flex; gap: 6px; justify-content: center; margin: 15px 0; flex-wrap: wrap; align-items: center; }
-        .num { padding: 10px 14px; border-radius: 8px; font-family: monospace; font-size: 1.1rem; background: var(--viz-primary); color: white; }
-        .num.current { background: var(--viz-secondary); color: #0f172a; }
-        .num.happy { background: var(--viz-success); color: #0f172a; }
-        .arrow { color: var(--viz-text-muted); }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .sequence-container { 
+            display: flex; gap: 8px; justify-content: center; margin: 20px 0; 
+            flex-wrap: wrap; align-items: center; min-height: 60px;
+        }
+        .num-node { 
+            padding: 12px 18px; border-radius: 10px; font-family: monospace; font-size: 1.2rem;
+            font-weight: bold; background: var(--viz-primary); color: white; transition: all 0.3s;
+        }
+        .num-node.current { background: var(--viz-warning); color: #0f172a; transform: scale(1.1); border: 2px solid white; }
+        .num-node.happy { background: var(--viz-success); color: #0f172a; }
+        .num-node.cycle { background: var(--viz-error); }
+        .arrow { color: var(--viz-text-muted); font-size: 1.2rem; }
+
+        .calculation-display {
+            text-align: center; margin: 15px 0; padding: 15px;
+            background: var(--viz-bg-secondary); border-radius: 8px;
+            font-family: monospace; font-size: 1.1rem;
+        }
+        .digit { display: inline-block; padding: 5px 8px; margin: 0 2px; background: var(--viz-primary); color: white; border-radius: 4px; }
+        .digit-squared { color: var(--viz-warning); }
     </style>
 </head>
 <body>
@@ -18,49 +37,47 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">HAPPY NUMBER</div>
-                <div class="sequence" id="sequenceDisplay"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">快樂數 (Happy Number)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">n = 19 (快樂)</button>
+                        <button onclick="setExample(2)">n = 2 (不快樂)</button>
+                        <button onclick="setExample(3)">n = 7 (快樂)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
                 </div>
-                <div class="controls-row-2">
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                
+                <div class="calculation-display" id="calculationDisplay"></div>
+                
+                <div class="sequence-container" id="sequenceDisplay"></div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
-
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(log n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1) Floyd's
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Is Happy?</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">是快樂數?</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">FLOYD'S CYCLE DETECTION</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">Floyd's Cycle Detection (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -76,23 +93,121 @@
             { line: '    } while (slow != fast);', id: 5 },
             { line: '    return slow == 1;', id: 6 },
             { line: '}', id: 7 },
-            { line: 'int sumOfSquares(int n) {', id: 8 },
-            { line: '    int sum = 0;', id: 9 },
-            { line: '    while (n) { int d = n % 10; sum += d*d; n /= 10; }', id: 10 },
-            { line: '    return sum;', id: 11 },
-            { line: '}', id: 12 },
+            { line: '', id: 8 },
+            { line: 'int sumOfSquares(int n) {', id: 9 },
+            { line: '    int sum = 0;', id: 10 },
+            { line: '    while (n > 0) {', id: 11 },
+            { line: '        int d = n % 10;', id: 12 },
+            { line: '        sum += d * d;', id: 13 },
+            { line: '        n /= 10;', id: 14 },
+            { line: '    }', id: 15 },
+            { line: '    return sum;', id: 16 },
+            { line: '}', id: 17 },
         ];
-        // 19 → 1^2+9^2=82 → 8^2+2^2=68 → 100 → 1 (happy!)
-        const sequence = [19, 82, 68, 100, 1];
+        
+        const examples = {
+            1: 19,  // Happy: 19 → 82 → 68 → 100 → 1
+            2: 2,   // Not happy: 2 → 4 → 16 → 37 → 58 → 89 → 145 → 42 → 20 → 4 (cycle)
+            3: 7    // Happy: 7 → 49 → 97 → 130 → 10 → 1
+        };
+        
+        let currentNumber = examples[1];
 
-        function generateAlgorithmSteps() {
-            const steps = [];
-            
-            for (let i = 0; i < sequence.length; i++) {
-                const isHappy = sequence[i] === 1;
-                steps.push({ seq: sequence.slice(0, i + 1), current: i, happy: isHappy, highlightLines: i === sequence.length - 1 ? [6] : [3, 4], explanation: { title: i === 0 ? 'Start: 19' : `${sequence[i - 1]} → ${sequence[i]}`, text: i === 0 ? '1² + 9² = 82' : isHappy ? '✓ Happy number!' : `Sum of squares = ${sequence[i]}` }});
+        function setExample(n) {
+            currentNumber = examples[n];
+            init();
+        }
+
+        function sumOfSquares(n) {
+            let sum = 0;
+            while (n > 0) {
+                const d = n % 10;
+                sum += d * d;
+                n = Math.floor(n / 10);
             }
+            return sum;
+        }
+
+        function getCalculation(n) {
+            const digits = String(n).split('').map(Number);
+            const squared = digits.map(d => d * d);
+            const sum = squared.reduce((a, b) => a + b, 0);
+            return {
+                digits,
+                squared,
+                sum,
+                formula: digits.map(d => `${d}²`).join(' + ') + ' = ' + squared.join(' + ') + ' = ' + sum
+            };
+        }
+
+        function generateAlgorithmSteps(n) {
+            const steps = [];
+            const seen = new Set();
+            const sequence = [n];
             
+            steps.push({
+                sequence: [n], currentIndex: 0, isHappy: null,
+                calculation: null,
+                highlightLines: [0, 1],
+                explanation: { 
+                    title: '初始化', 
+                    text: `n = ${n}<br><br>快樂數: 各位數字平方和<br>重複直到 = 1 (快樂) 或 循環 (不快樂)`,
+                    formula: 'setup'
+                }
+            });
+
+            let current = n;
+            seen.add(current);
+
+            for (let iter = 0; iter < 15; iter++) {
+                const calc = getCalculation(current);
+                const next = calc.sum;
+                
+                steps.push({
+                    sequence: [...sequence], currentIndex: sequence.length - 1,
+                    calculation: calc, isHappy: null,
+                    highlightLines: [9, 10, 11, 12, 13, 14, 15, 16],
+                    explanation: { 
+                        title: `計算 ${current}`, 
+                        text: calc.formula,
+                        formula: `${current} → ${next}`
+                    }
+                });
+
+                sequence.push(next);
+                
+                if (next === 1) {
+                    steps.push({
+                        sequence: [...sequence], currentIndex: sequence.length - 1,
+                        calculation: calc, isHappy: true, final: true,
+                        highlightLines: [6],
+                        explanation: { 
+                            title: '😊 快樂數!', 
+                            text: `到達 1，${n} 是快樂數`,
+                            formula: 'return true'
+                        }
+                    });
+                    return steps;
+                }
+
+                if (seen.has(next)) {
+                    steps.push({
+                        sequence: [...sequence], currentIndex: sequence.length - 1,
+                        calculation: calc, isHappy: false, cycleStart: next, final: true,
+                        highlightLines: [5, 6],
+                        explanation: { 
+                            title: '😢 不是快樂數', 
+                            text: `${next} 已出現過，進入循環<br>${n} 不是快樂數`,
+                            formula: 'return false'
+                        }
+                    });
+                    return steps;
+                }
+
+                seen.add(next);
+                current = next;
+            }
+
             return steps;
         }
 
@@ -101,17 +216,45 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    step.seq.forEach((n, i) => {
-                        if (i > 0) html += '<span class="arrow">→</span>';
-                        html += `<span class="num ${i === step.current ? 'current' : ''} ${n === 1 ? 'happy' : ''}">${n}</span>`;
-                    });
-                    document.getElementById('sequenceDisplay').innerHTML = html;
-                    document.getElementById('resultDisplay').textContent = step.happy ? 'Yes! 😊' : '-';
+                    // Sequence
+                    const seq = step.sequence || [];
+                    document.getElementById('sequenceDisplay').innerHTML = 
+                        seq.map((n, i) => {
+                            let cls = 'num-node';
+                            if (i === step.currentIndex) cls += ' current';
+                            if (n === 1) cls += ' happy';
+                            if (step.cycleStart === n && i === seq.length - 1) cls += ' cycle';
+                            return `${i > 0 ? '<span class="arrow">→</span>' : ''}<span class="${cls}">${n}</span>`;
+                        }).join('');
+                    
+                    // Calculation
+                    if (step.calculation) {
+                        const calc = step.calculation;
+                        document.getElementById('calculationDisplay').innerHTML = 
+                            `${calc.digits.map(d => `<span class="digit">${d}</span>`).join('')} → ` +
+                            `${calc.digits.map(d => `${d}²`).join(' + ')} = ` +
+                            `<span class="digit-squared">${calc.sum}</span>`;
+                    } else {
+                        document.getElementById('calculationDisplay').innerHTML = 
+                            '<span style="color: var(--viz-text-muted)">等待計算...</span>';
+                    }
+                    
+                    // Result
+                    if (step.isHappy === true) {
+                        document.getElementById('resultDisplay').textContent = '是 😊';
+                        document.getElementById('resultDisplay').style.color = 'var(--viz-success)';
+                    } else if (step.isHappy === false) {
+                        document.getElementById('resultDisplay').textContent = '否 😢';
+                        document.getElementById('resultDisplay').style.color = 'var(--viz-error)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '-';
+                        document.getElementById('resultDisplay').style.color = 'inherit';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNumber));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

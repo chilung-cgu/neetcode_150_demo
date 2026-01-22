@@ -3,16 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spiral Matrix 螺旋矩陣 - 視覺化</title>
+    <title>Spiral Matrix - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .matrix { display: inline-grid; gap: 3px; margin: 20px auto; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .cell { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .matrix-container { display: inline-grid; gap: 3px; margin: 20px auto; padding: 12px; background: var(--viz-bg-secondary); border-radius: 10px; }
+        .cell { 
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; 
+            transition: all 0.3s; font-size: 1rem;
+        }
         .cell.visited { background: var(--viz-success); color: #0f172a; }
-        .cell.current { background: var(--viz-warning); color: #0f172a; animation: pulse 0.3s; }
-        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-        .result { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .result-item { background: var(--viz-success); color: #0f172a; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; }
+        .cell.current { background: var(--viz-warning); color: #0f172a; transform: scale(1.1); border: 2px solid white; }
+
+        .direction-display {
+            display: flex; justify-content: center; gap: 15px; margin: 10px 0;
+            padding: 12px; background: var(--viz-bg-secondary); border-radius: 8px; font-size: 1.2rem;
+        }
+        .dir-arrow { padding: 8px 15px; border-radius: 6px; background: var(--viz-bg-primary); }
+        .dir-arrow.active { background: var(--viz-warning); color: #0f172a; font-weight: bold; }
+
+        .result-container { 
+            display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; 
+            margin: 15px 0; padding: 12px; background: var(--viz-bg-secondary); border-radius: 8px;
+            max-height: 80px; overflow-y: auto;
+        }
+        .result-item { 
+            background: var(--viz-success); color: #0f172a; padding: 5px 10px; 
+            border-radius: 4px; font-weight: bold; font-size: 0.9rem;
+        }
+        .result-item.latest { background: var(--viz-warning); }
     </style>
 </head>
 <body>
@@ -20,38 +43,45 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">螺旋矩陣</div>
-                <div style="text-align: center;"><div class="matrix" id="matrixDisplay"></div></div>
-                <div style="text-align: center; color: var(--text-muted);">輸出順序</div>
-                <div class="result" id="resultDisplay"></div>
+                <div class="viz-title">螺旋矩陣 (Spiral Matrix)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">範例1 (3×3)</button>
+                        <button onclick="setExample(2)">範例2 (3×4)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="direction-display">
+                    <span class="dir-arrow" id="dir-right">→ 右</span>
+                    <span class="dir-arrow" id="dir-down">↓ 下</span>
+                    <span class="dir-arrow" id="dir-left">← 左</span>
+                    <span class="dir-arrow" id="dir-up">↑ 上</span>
+                </div>
+                
+                <div style="text-align: center;"><div class="matrix-container" id="matrixDisplay"></div></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">輸出順序</div>
+                <div class="result-container" id="resultDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
+                            <option value="200">3x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">方向</div><div class="state-value" id="dirDisplay">→</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <span class="label">Time:</span> O(m×n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1) 不計輸出
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -70,53 +100,200 @@
             { line: '    vector<int> result;', id: 1 },
             { line: '    int top = 0, bottom = m-1, left = 0, right = n-1;', id: 2 },
             { line: '    while (top <= bottom && left <= right) {', id: 3 },
-            { line: '        for (int i = left; i <= right; i++) // →', id: 4 },
-            { line: '            result.push_back(matrix[top][i]);', id: 5 },
-            { line: '        top++;', id: 6 },
-            { line: '        for (int i = top; i <= bottom; i++) // ↓', id: 7 },
-            { line: '            result.push_back(matrix[i][right]);', id: 8 },
-            { line: '        right--;', id: 9 },
-            { line: '        // ... ← 和 ↑ 類似', id: 10 },
-            { line: '    }', id: 11 },
-            { line: '    return result;', id: 12 },
-            { line: '}', id: 13 },
+            { line: '        // → 右', id: 4 },
+            { line: '        for (int i = left; i <= right; i++)', id: 5 },
+            { line: '            result.push_back(matrix[top][i]);', id: 6 },
+            { line: '        top++;', id: 7 },
+            { line: '        // ↓ 下', id: 8 },
+            { line: '        for (int i = top; i <= bottom; i++)', id: 9 },
+            { line: '            result.push_back(matrix[i][right]);', id: 10 },
+            { line: '        right--;', id: 11 },
+            { line: '        // ← 左 (需檢查邊界)', id: 12 },
+            { line: '        if (top <= bottom) for (int i = right; i >= left; i--)', id: 13 },
+            { line: '            result.push_back(matrix[bottom][i]);', id: 14 },
+            { line: '        bottom--;', id: 15 },
+            { line: '        // ↑ 上 (需檢查邊界)', id: 16 },
+            { line: '        if (left <= right) for (int i = bottom; i >= top; i--)', id: 17 },
+            { line: '            result.push_back(matrix[i][left]);', id: 18 },
+            { line: '        left++;', id: 19 },
+            { line: '    }', id: 20 },
+            { line: '    return result;', id: 21 },
+            { line: '}', id: 22 },
         ];
-        const matrix = [[1,2,3],[4,5,6],[7,8,9]];
-        const spiral = [1,2,3,6,9,8,7,4,5];
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: [[1,2,3],[4,5,6],[7,8,9]],
+            2: [[1,2,3,4],[5,6,7,8],[9,10,11,12]]
+        };
+        
+        let currentMatrix = examples[1];
+
+        function setExample(n) {
+            currentMatrix = examples[n];
+            init();
+        }
+
+        function generateAlgorithmSteps(matrix) {
             const steps = [];
-            steps.push({ visited: [], current: null, result: [], dir: '→', highlightLines: [0,1,2,3], explanation: { title: '初始化', text: '3×3 矩陣<br><br>順時針螺旋：<br>→ 右 → ↓ 下 → ← 左 → ↑ 上<br>重複直到遍歷完' } });
-            const dirs = ['→','→','→','↓','↓','←','←','↑','→'];
-            for (let i = 0; i < spiral.length; i++) {
-                steps.push({ visited: spiral.slice(0, i), current: spiral[i], result: spiral.slice(0, i+1), dir: dirs[i], highlightLines: [4,5,7,8], explanation: { title: `訪問 ${spiral[i]}`, text: `方向：${dirs[i]}` } });
+            const m = matrix.length, n = matrix[0].length;
+            const result = [];
+            const visited = new Set();
+            
+            steps.push({
+                visited: new Set(), current: null, result: [], direction: null, matrix,
+                highlightLines: [0, 1, 2, 3],
+                explanation: { 
+                    title: '初始化', 
+                    text: `${m}×${n} 矩陣<br><br>螺旋順序: → 右 → ↓ 下 → ← 左 → ↑ 上<br>重複直到遍歷完`,
+                    formula: 'setup'
+                }
+            });
+
+            let top = 0, bottom = m - 1, left = 0, right = n - 1;
+            const dirNames = { 'right': '→ 右', 'down': '↓ 下', 'left': '← 左', 'up': '↑ 上' };
+            const dirLines = { 'right': [4,5,6], 'down': [8,9,10], 'left': [12,13,14], 'up': [16,17,18] };
+
+            while (top <= bottom && left <= right) {
+                // Right
+                for (let i = left; i <= right; i++) {
+                    const val = matrix[top][i];
+                    visited.add(`${top},${i}`);
+                    result.push(val);
+                    
+                    steps.push({
+                        visited: new Set(visited), current: [top, i], result: [...result],
+                        direction: 'right', matrix,
+                        highlightLines: dirLines['right'],
+                        explanation: { 
+                            title: `訪問 (${top},${i}) = ${val}`, 
+                            text: `方向: ${dirNames['right']}`,
+                            formula: `result[${result.length - 1}] = ${val}`
+                        }
+                    });
+                }
+                top++;
+
+                // Down
+                for (let i = top; i <= bottom; i++) {
+                    const val = matrix[i][right];
+                    visited.add(`${i},${right}`);
+                    result.push(val);
+                    
+                    steps.push({
+                        visited: new Set(visited), current: [i, right], result: [...result],
+                        direction: 'down', matrix,
+                        highlightLines: dirLines['down'],
+                        explanation: { 
+                            title: `訪問 (${i},${right}) = ${val}`, 
+                            text: `方向: ${dirNames['down']}`,
+                            formula: `result[${result.length - 1}] = ${val}`
+                        }
+                    });
+                }
+                right--;
+
+                // Left
+                if (top <= bottom) {
+                    for (let i = right; i >= left; i--) {
+                        const val = matrix[bottom][i];
+                        visited.add(`${bottom},${i}`);
+                        result.push(val);
+                        
+                        steps.push({
+                            visited: new Set(visited), current: [bottom, i], result: [...result],
+                            direction: 'left', matrix,
+                            highlightLines: dirLines['left'],
+                            explanation: { 
+                                title: `訪問 (${bottom},${i}) = ${val}`, 
+                                text: `方向: ${dirNames['left']}`,
+                                formula: `result[${result.length - 1}] = ${val}`
+                            }
+                        });
+                    }
+                    bottom--;
+                }
+
+                // Up
+                if (left <= right) {
+                    for (let i = bottom; i >= top; i--) {
+                        const val = matrix[i][left];
+                        visited.add(`${i},${left}`);
+                        result.push(val);
+                        
+                        steps.push({
+                            visited: new Set(visited), current: [i, left], result: [...result],
+                            direction: 'up', matrix,
+                            highlightLines: dirLines['up'],
+                            explanation: { 
+                                title: `訪問 (${i},${left}) = ${val}`, 
+                                text: `方向: ${dirNames['up']}`,
+                                formula: `result[${result.length - 1}] = ${val}`
+                            }
+                        });
+                    }
+                    left++;
+                }
             }
-            steps.push({ visited: spiral, current: null, result: spiral, final: true, highlightLines: [12], explanation: { title: '🎉 完成！', text: `輸出：[${spiral.join(',')}]<br><br>時間：O(m×n)` } });
+
+            steps.push({
+                visited, current: null, result, direction: null, matrix, final: true,
+                highlightLines: [21],
+                explanation: { 
+                    title: '完成!', 
+                    text: `螺旋順序: [${result.join(',')}]`,
+                    formula: 'done'
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
+            const matrix = currentMatrix;
+            const m = matrix.length, n = matrix[0].length;
+            const gridEl = document.getElementById('matrixDisplay');
+            gridEl.style.gridTemplateColumns = `repeat(${n}, 50px)`;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const grid = document.getElementById('matrixDisplay');
-                    grid.style.gridTemplateColumns = 'repeat(3, 45px)';
+                    const mat = step.matrix || currentMatrix;
+                    const rows = mat.length, cols = mat[0].length;
+                    gridEl.style.gridTemplateColumns = `repeat(${cols}, 50px)`;
+                    
                     let html = '';
-                    for (let r = 0; r < 3; r++) {
-                        for (let c = 0; c < 3; c++) {
-                            const val = matrix[r][c];
+                    for (let i = 0; i < rows; i++) {
+                        for (let j = 0; j < cols; j++) {
                             let cls = 'cell';
-                            if (val === step.current) cls += ' current';
-                            else if (step.visited?.includes(val)) cls += ' visited';
-                            html += `<div class="${cls}">${val}</div>`;
+                            const isCurrent = step.current && step.current[0] === i && step.current[1] === j;
+                            const isVisited = step.visited?.has(`${i},${j}`);
+                            
+                            if (isCurrent) cls += ' current';
+                            else if (isVisited) cls += ' visited';
+                            
+                            html += `<div class="${cls}">${mat[i][j]}</div>`;
                         }
                     }
-                    grid.innerHTML = html;
-                    document.getElementById('resultDisplay').innerHTML = (step.result || []).map(v => `<span class="result-item">${v}</span>`).join('') || '-';
-                    document.getElementById('dirDisplay').textContent = step.dir || '→';
+                    gridEl.innerHTML = html;
+                    
+                    // Direction indicators
+                    ['right', 'down', 'left', 'up'].forEach(d => {
+                        const el = document.getElementById(`dir-${d}`);
+                        el.className = step.direction === d ? 'dir-arrow active' : 'dir-arrow';
+                    });
+                    
+                    // Result
+                    const result = step.result || [];
+                    document.getElementById('resultDisplay').innerHTML = 
+                        result.length > 0 
+                            ? result.map((v, i) => `<span class="result-item ${i === result.length - 1 ? 'latest' : ''}">${v}</span>`).join('')
+                            : '<span style="color: var(--viz-text-muted)">-</span>';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentMatrix));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>
