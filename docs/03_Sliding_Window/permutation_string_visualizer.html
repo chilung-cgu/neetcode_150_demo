@@ -7,13 +7,18 @@
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .strings { display: flex; flex-direction: column; gap: 15px; align-items: center; margin: 20px 0; }
-        .string-row { display: flex; gap: 4px; }
-        .char { width: 35px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-primary); color: white; font-size: 1.1rem; }
+        .string-row { display: flex; gap: 4px; flex-wrap: wrap; }
+        .char { width: 32px; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-primary); color: white; font-size: 1rem; }
         .char.window { background: var(--viz-warning); color: #0f172a; }
         .char.match { background: var(--viz-success); color: #0f172a; }
         .freq { display: flex; gap: 8px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
         .freq-item { padding: 6px 12px; background: var(--viz-bg-secondary); border-radius: 4px; font-size: 0.85rem; }
         .freq-item.zero { background: var(--viz-success); color: #0f172a; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { flex: 1; min-width: 80px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -44,19 +49,29 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(26) = O(1)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">窗口</div><div class="state-value" id="windowDisplay">[0,0]</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
                     <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-warning);"></div>窗口</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>匹配!</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>s1:</label>
+                        <input type="text" id="customS1" placeholder="要找的排列" value="ab">
+                    </div>
+                    <div class="input-row">
+                        <label>s2:</label>
+                        <input type="text" id="customS2" placeholder="在這裡找" value="eidbaooo">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -76,48 +91,68 @@
             { line: '    for (char c : s1) count[c - \'a\']++;', id: 2 },
             { line: '    int left = 0, matched = 0;', id: 3 },
             { line: '    for (int right = 0; right < s2.size(); right++) {', id: 4 },
-            { line: '        if (--count[s2[right] - \'a\'] >= 0) matched++;', id: 5 },
+            { line: '        if (--count[s2[right]-\'a\'] >= 0) matched++;', id: 5 },
             { line: '        if (right - left + 1 > s1.size()) {', id: 6 },
-            { line: '            if (count[s2[left++] - \'a\']++ >= 0) matched--;', id: 7 },
+            { line: '            if (count[s2[left++]-\'a\']++ >= 0) matched--;', id: 7 },
             { line: '        }', id: 8 },
             { line: '        if (matched == s1.size()) return true;', id: 9 },
             { line: '    }', id: 10 },
             { line: '    return false;', id: 11 },
             { line: '}', id: 12 },
         ];
-        const s1 = "ab", s2 = "eidbaooo";
-        function generateAlgorithmSteps() {
+        let currentS1 = "ab", currentS2 = "eidbaooo";
+        function generateAlgorithmSteps(s1, s2) {
             const steps = [];
-            steps.push({ window: [0, -1], freq: {a:1,b:1}, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `s1 = "ab", s2 = "eidbaooo"<br><br>需要匹配：a=1, b=1<br>固定窗口大小 = 2` } });
-            steps.push({ window: [0, 1], freq: {a:1,b:1}, highlightLines: [4,5,6], explanation: { title: '窗口 [0,1]: "ei"', text: 'e, i 都不在 s1 中<br>matched = 0' } });
-            steps.push({ window: [1, 2], freq: {a:1,b:1}, highlightLines: [4,5,6,7], explanation: { title: '窗口 [1,2]: "id"', text: '移除 e，加入 d<br>matched = 0' } });
-            steps.push({ window: [2, 3], freq: {a:1,b:0}, highlightLines: [4,5,6,7], explanation: { title: '窗口 [2,3]: "db"', text: '找到 b！<br>matched = 1' } });
-            steps.push({ window: [3, 4], freq: {a:0,b:0}, match: true, highlightLines: [4,5,9], explanation: { title: '窗口 [3,4]: "ba"', text: '找到 a！<br>matched = 2 = s1.length<br>找到排列！' } });
-            steps.push({ window: [3, 4], freq: {a:0,b:0}, result: true, final: true, highlightLines: [9], explanation: { title: '🎉 找到排列！', text: '"ba" 是 "ab" 的排列<br><br>時間：O(n)' } });
+            const need = {};
+            for (const c of s1) need[c] = (need[c] || 0) + 1;
+            steps.push({ window: [0, -1], freq: {...need}, matched: 0, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `s1 = "${s1}", s2 = "${s2}"<br><br>需要匹配：${Object.entries(need).map(([k,v])=>`${k}=${v}`).join(', ')}<br>固定窗口大小 = ${s1.length}`, formula: `窗口大小 = s1.length = ${s1.length}` } });
+            const count = {...need};
+            let matched = 0, l = 0;
+            let found = false;
+            for (let r = 0; r < s2.length && !found; r++) {
+                const c = s2[r];
+                if (count[c] !== undefined) { count[c]--; if (count[c] >= 0) matched++; }
+                if (r - l + 1 > s1.length) {
+                    const lc = s2[l];
+                    if (count[lc] !== undefined) { if (count[lc] >= 0) matched--; count[lc]++; }
+                    l++;
+                }
+                const isMatch = matched === s1.length;
+                steps.push({ window: [l, r], freq: {...count}, matched, match: isMatch, highlightLines: isMatch ? [9] : [4,5,6,7], explanation: { title: `窗口 [${l},${r}]: "${s2.slice(l,r+1)}"`, text: `matched = ${matched} / ${s1.length}${isMatch ? '<br><strong style="color:var(--viz-success)">找到排列!</strong>' : ''}`, formula: `matched = ${matched}${isMatch ? ` = ${s1.length} ✓` : ''}` } });
+                if (isMatch) found = true;
+            }
+            steps.push({ window: [l, s2.length-1], freq: {...count}, result: found, final: true, highlightLines: [found ? 9 : 11], explanation: { title: found ? '🎉 找到排列！' : '❌ 未找到', text: found ? `s2 中包含 s1 的排列` : `s2 中不包含 s1 的排列`, formula: `return ${found}` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(s1 = currentS1, s2 = currentS2) {
+            currentS1 = s1; currentS2 = s2;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('s1Display').innerHTML = s1.split('').map(c => `<span class="char">${c}</span>`).join('');
-                    let html = '';
-                    for (let i = 0; i < s2.length; i++) {
+                    document.getElementById('s1Display').innerHTML = currentS1.split('').map(c => `<span class="char">${c}</span>`).join('');
+                    document.getElementById('s2Display').innerHTML = currentS2.split('').map((c, i) => {
                         let cls = 'char';
                         if (step.window && i >= step.window[0] && i <= step.window[1]) cls += step.match ? ' match' : ' window';
-                        html += `<span class="${cls}">${s2[i]}</span>`;
-                    }
-                    document.getElementById('s2Display').innerHTML = html;
+                        return `<span class="${cls}">${c}</span>`;
+                    }).join('');
                     document.getElementById('freqDisplay').innerHTML = Object.entries(step.freq || {}).map(([k,v]) => `<span class="freq-item${v===0?' zero':''}">${k}:${v}</span>`).join('');
                     document.getElementById('windowDisplay').textContent = step.window ? `[${step.window[0]},${step.window[1]}]` : '-';
-                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
+                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? (step.result ? 'true ✓' : 'false ✗') : '?';
+                    document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : (step.result === false ? 'var(--viz-error)' : '');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentS1, currentS2));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const s1 = document.getElementById('customS1').value.toLowerCase().replace(/[^a-z]/g, '');
+            const s2 = document.getElementById('customS2').value.toLowerCase().replace(/[^a-z]/g, '');
+            if (s1.length < 1 || s1.length > 10) { alert('s1 請輸入 1-10 個字母'); return; }
+            if (s2.length < 1 || s2.length > 20) { alert('s2 請輸入 1-20 個字母'); return; }
+            init(s1, s2);
+        }
+        function resetVisualization() { init(currentS1, currentS2); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

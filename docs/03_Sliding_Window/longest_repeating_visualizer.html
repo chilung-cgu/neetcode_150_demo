@@ -6,16 +6,21 @@
     <title>Longest Repeating Character Replacement - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .string { display: flex; gap: 4px; justify-content: center; margin: 20px 0; }
-        .char { width: 40px; height: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s; }
+        .string { display: flex; gap: 4px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .char { width: 38px; height: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s; }
         .char .c { font-weight: bold; font-size: 1.2rem; }
         .char .idx { font-size: 0.6rem; color: var(--text-muted); }
         .char.window { background: var(--viz-success); color: #0f172a; }
         .char.maxChar { background: var(--viz-secondary); color: #0f172a; }
-        .counter { display: flex; gap: 10px; justify-content: center; margin: 10px 0; }
+        .counter { display: flex; gap: 10px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
         .count-item { padding: 6px 12px; border-radius: 6px; background: var(--viz-bg-secondary); text-align: center; }
         .count-item .letter { font-weight: bold; color: var(--viz-secondary); }
         .count-item .num { font-size: 0.9rem; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { flex: 1; min-width: 80px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -43,20 +48,29 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(26) = O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">k（可替換）</div><div class="state-value">2</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">k（可替換）</div><div class="state-value" id="kDisplay">2</div></div>
                     <div class="state-item"><div class="state-label">窗口大小</div><div class="state-value" id="sizeDisplay">0</div></div>
                     <div class="state-item"><div class="state-label">最大長度</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>窗口內</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>字串:</label>
+                        <input type="text" id="customStr" placeholder="大寫字母" value="AABABBA">
+                    </div>
+                    <div class="input-row">
+                        <label>k:</label>
+                        <input type="number" id="customK" value="2" min="0" style="max-width: 60px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -76,22 +90,21 @@
             { line: '    int l = 0;', id: 2 },
             { line: '    for (int r = 0; r < s.size(); r++) {', id: 3 },
             { line: '        count[s[r] - \'A\']++;', id: 4 },
-            { line: '        maxCount = max(maxCount, count[s[r] - \'A\']);', id: 5 },
-            { line: '        // 窗口大小 - 最多字元數 > k 時收縮', id: 6 },
+            { line: '        maxCount = max(maxCount, count[s[r]]);', id: 5 },
+            { line: '        // 需替換數 = 窗口大小 - 最多字元數', id: 6 },
             { line: '        while (r - l + 1 - maxCount > k) {', id: 7 },
-            { line: '            count[s[l] - \'A\']--;', id: 8 },
-            { line: '            l++;', id: 9 },
-            { line: '        }', id: 10 },
-            { line: '        maxLen = max(maxLen, r - l + 1);', id: 11 },
-            { line: '    }', id: 12 },
-            { line: '    return maxLen;', id: 13 },
-            { line: '}', id: 14 },
+            { line: '            count[s[l] - \'A\']--; l++;', id: 8 },
+            { line: '        }', id: 9 },
+            { line: '        maxLen = max(maxLen, r - l + 1);', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return maxLen;', id: 12 },
+            { line: '}', id: 13 },
         ];
-        const str = "AABABBA";
-        const k = 2;
-        function generateAlgorithmSteps() {
+        let currentStr = "AABABBA";
+        let currentK = 2;
+        function generateAlgorithmSteps(str, k) {
             const steps = [];
-            steps.push({ l: 0, r: -1, count: {}, maxCount: 0, maxLen: 0, highlightLines: [0,1,2], explanation: { title: '初始化', text: `字串："${str}", k=${k}<br><br>關鍵：窗口大小 - 最多字元數 ≤ k<br>意味著最多替換 k 個字元` } });
+            steps.push({ l: 0, r: -1, count: {}, maxCount: 0, maxLen: 0, highlightLines: [0,1,2], explanation: { title: '初始化', text: `字串："${str}", k=${k}<br><br>關鍵洞察：<br>窗口大小 - 最多字元數 ≤ k<br>意味著最多替換 k 個字元即可全變相同`, formula: `需替換數 = windowSize - maxCount ≤ k` } });
             let l = 0, maxCount = 0, maxLen = 0;
             const count = {};
             for (let r = 0; r < str.length; r++) {
@@ -101,37 +114,44 @@
                 const windowSize = r - l + 1;
                 const needReplace = windowSize - maxCount;
                 if (needReplace > k) {
-                    steps.push({ l, r, count: {...count}, maxCount, maxLen, needShrink: true, highlightLines: [7,8,9], explanation: { title: '需要收縮窗口', text: `窗口大小 ${windowSize} - maxCount ${maxCount} = ${needReplace} > k=${k}<br>收縮左邊界`, formula: `${windowSize} - ${maxCount} = ${needReplace} > ${k}` } });
+                    steps.push({ l, r, count: {...count}, maxCount, maxLen, highlightLines: [7,8], explanation: { title: '需要收縮窗口', text: `窗口="${str.slice(l,r+1)}"<br>大小${windowSize} - maxCount${maxCount} = ${needReplace} > k=${k}`, formula: `${windowSize} - ${maxCount} = ${needReplace} > ${k}` } });
                     count[str[l]]--;
                     l++;
                 }
                 maxLen = Math.max(maxLen, r - l + 1);
-                steps.push({ l, r, count: {...count}, maxCount, maxLen, highlightLines: [3,4,5,11], explanation: { title: `擴展到 r=${r}`, text: `窗口："${str.slice(l, r+1)}"<br>maxCount = ${maxCount}<br>maxLen = ${maxLen}`, formula: `maxLen = max(${maxLen}, ${r-l+1}) = ${maxLen}` } });
+                steps.push({ l, r, count: {...count}, maxCount, maxLen, highlightLines: [3,4,5,10], explanation: { title: `擴展到 [${l},${r}]`, text: `窗口："${str.slice(l, r+1)}"<br>maxCount = ${maxCount}, len = ${r-l+1}`, formula: `maxLen = ${maxLen}` } });
             }
-            steps.push({ l, r: str.length - 1, count, maxCount, maxLen, final: true, highlightLines: [13], explanation: { title: '完成！', text: `最長長度：${maxLen}<br>例如 "AABAB" 替換 2 個 B→A<br><br>時間：O(n)` } });
+            steps.push({ l, r: str.length - 1, count, maxCount, maxLen, final: true, highlightLines: [12], explanation: { title: '🎉 完成！', text: `最長長度：${maxLen}<br><br>可替換 ${k} 個字元使全部相同`, formula: `return ${maxLen}` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(str = currentStr, k = currentK) {
+            currentStr = str; currentK = k;
+            document.getElementById('kDisplay').textContent = k;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    for (let i = 0; i < str.length; i++) {
+                    document.getElementById('stringDisplay').innerHTML = currentStr.split('').map((c, i) => {
                         let cls = 'char';
                         if (i >= step.l && i <= step.r) cls += ' window';
-                        html += `<div class="${cls}"><div class="c">${str[i]}</div><div class="idx">${i}</div></div>`;
-                    }
-                    document.getElementById('stringDisplay').innerHTML = html;
+                        return `<div class="${cls}"><div class="c">${c}</div><div class="idx">${i}</div></div>`;
+                    }).join('');
                     document.getElementById('counterDisplay').innerHTML = Object.entries(step.count || {}).map(([k,v]) => `<div class="count-item"><div class="letter">${k}</div><div class="num">${v}</div></div>`).join('') || '-';
                     document.getElementById('sizeDisplay').textContent = step.r >= step.l ? step.r - step.l + 1 : 0;
                     document.getElementById('maxDisplay').textContent = step.maxLen ?? 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentStr, currentK));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const str = document.getElementById('customStr').value.toUpperCase().replace(/[^A-Z]/g, '');
+            const k = parseInt(document.getElementById('customK').value);
+            if (str.length < 1 || str.length > 15) { alert('請輸入 1-15 個大寫字母'); return; }
+            if (isNaN(k) || k < 0) { alert('k 必須 >= 0'); return; }
+            init(str, k);
+        }
+        function resetVisualization() { init(currentStr, currentK); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

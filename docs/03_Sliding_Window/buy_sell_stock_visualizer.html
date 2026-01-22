@@ -13,6 +13,11 @@
         .bar.buy .bar-fill { background: var(--viz-success); }
         .bar.sell .bar-fill { background: var(--viz-error); }
         .bar.current .bar-fill { background: var(--viz-secondary); }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { flex: 1; min-width: 150px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -20,7 +25,7 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">買賣股票最佳時機（SLIDING WINDOW）</div>
+                <div class="viz-title">買賣股票最佳時機（ONE PASS）</div>
                 <div class="prices" id="pricesDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
@@ -38,19 +43,25 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">最低買入價</div><div class="state-value" id="minDisplay" style="color: var(--viz-success);">?</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
                     <div class="state-item"><div class="state-label">最大利潤</div><div class="state-value" id="profitDisplay" style="color: var(--viz-warning);">0</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>買入點</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-error);"></div>賣出點</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-secondary);"></div>當前</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customPrices" placeholder="輸入價格陣列" value="7,1,5,3,6,4">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -74,49 +85,53 @@
             { line: '    return maxProfit;', id: 6 },
             { line: '}', id: 7 },
         ];
-        const prices = [7, 1, 5, 3, 6, 4];
-        function generateAlgorithmSteps() {
+        let currentPrices = [7, 1, 5, 3, 6, 4];
+        function generateAlgorithmSteps(prices) {
             const steps = [];
-            let minPrice = Infinity, maxProfit = 0, buyIdx = 0;
-            steps.push({ current: -1, minPrice: '∞', maxProfit: 0, highlightLines: [0,1], explanation: { title: '初始化', text: `價格：[${prices.join(', ')}]<br><br>追蹤最低買入價和最大利潤` } });
+            let minPrice = Infinity, maxProfit = 0, buyIdx = 0, bestBuyIdx = 0, bestSellIdx = 0;
+            steps.push({ current: -1, buyIdx: -1, minPrice: '∞', maxProfit: 0, highlightLines: [0,1], explanation: { title: '初始化', text: `價格：[${prices.join(', ')}]<br><br>追蹤最低買入價和最大利潤<br>每天檢查：今天賣出能賺多少？`, formula: `profit = price - minPrice` } });
             for (let i = 0; i < prices.length; i++) {
                 const p = prices[i];
-                const profit = p - minPrice;
                 if (p < minPrice) { minPrice = p; buyIdx = i; }
-                if (profit > maxProfit) maxProfit = profit;
+                const profit = p - minPrice;
+                if (profit > maxProfit) { maxProfit = profit; bestBuyIdx = buyIdx; bestSellIdx = i; }
                 steps.push({
-                    current: i, buyIdx, minPrice, maxProfit,
+                    current: i, buyIdx, minPrice, maxProfit, bestBuyIdx, bestSellIdx,
                     highlightLines: [2,3,4],
-                    explanation: { title: `Day ${i}: 價格 $${p}`, text: `minPrice = min(${i===0?'∞':minPrice}, ${p}) = ${Math.min(minPrice, p)}<br>profit = ${p} - ${minPrice} = ${p - minPrice}<br>maxProfit = max(${maxProfit - (profit > maxProfit ? profit - maxProfit : 0)}, ${p - minPrice}) = ${maxProfit}`, formula: `profit = ${p} - ${minPrice} = ${p - minPrice}` }
+                    explanation: { title: `Day ${i}: 價格 $${p}`, text: `minPrice = min(${minPrice}, ${p}) = ${Math.min(minPrice, p)}<br>profit = ${p} - ${minPrice} = ${profit}<br>maxProfit = max(${maxProfit - (profit > maxProfit ? profit - maxProfit : 0)}, ${profit}) = ${maxProfit}`, formula: `profit = ${p} - ${minPrice} = ${profit}` }
                 });
             }
-            steps.push({ current: -1, buyIdx: 1, sellIdx: 4, minPrice, maxProfit, highlightLines: [6], explanation: { title: '完成！', text: `最佳策略：Day 1 買入 ($1)，Day 4 賣出 ($6)<br>最大利潤：$${maxProfit}<br><br>時間：O(n), 空間：O(1)` } });
+            steps.push({ current: -1, buyIdx: bestBuyIdx, sellIdx: bestSellIdx, minPrice, maxProfit, highlightLines: [6], explanation: { title: '🎉 完成！', text: `最佳策略：Day ${bestBuyIdx} 買入 ($${prices[bestBuyIdx]})，Day ${bestSellIdx} 賣出 ($${prices[bestSellIdx]})<br><br>最大利潤：$${maxProfit}`, formula: `return ${maxProfit}` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(prices = currentPrices) {
+            currentPrices = prices;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const maxP = Math.max(...prices);
-                    let html = '';
-                    for (let i = 0; i < prices.length; i++) {
+                    const maxP = Math.max(...currentPrices, 1);
+                    document.getElementById('pricesDisplay').innerHTML = currentPrices.map((p, i) => {
                         let cls = 'bar';
                         if (i === step.current) cls += ' current';
-                        if (i === step.buyIdx) cls += ' buy';
+                        else if (i === step.buyIdx || i === step.bestBuyIdx) cls += ' buy';
                         if (i === step.sellIdx) cls += ' sell';
-                        const h = (prices[i] / maxP) * 120;
-                        html += `<div class="${cls}"><div class="bar-fill" style="height:${h}px">${prices[i]}</div><div class="bar-label">D${i}</div></div>`;
-                    }
-                    document.getElementById('pricesDisplay').innerHTML = html;
-                    document.getElementById('minDisplay').textContent = step.minPrice === Infinity ? '∞' : `$${step.minPrice}`;
+                        const h = (p / maxP) * 120;
+                        return `<div class="${cls}"><div class="bar-fill" style="height:${h}px">${p}</div><div class="bar-label">D${i}</div></div>`;
+                    }).join('');
+                    document.getElementById('minDisplay').textContent = step.minPrice === '∞' ? '∞' : `$${step.minPrice}`;
                     document.getElementById('profitDisplay').textContent = `$${step.maxProfit}`;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentPrices));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const prices = document.getElementById('customPrices').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 0);
+            if (prices.length < 2 || prices.length > 12) { alert('請輸入 2-12 個非負整數'); return; }
+            init(prices);
+        }
+        function resetVisualization() { init(currentPrices); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>
