@@ -3,16 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Surrounded Regions 被圍繞的區域 - 視覺化</title>
+    <title>Surrounded Regions - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: inline-grid; gap: 2px; margin: 20px auto; }
-        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; font-size: 1.1rem; transition: all 0.3s; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .grid-container { display: inline-grid; gap: 2px; margin: 20px auto; }
+        .cell { 
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border-radius: 4px; font-size: 1.1rem; transition: all 0.3s;
+            border: 2px solid transparent;
+        }
         .cell.O { background: var(--viz-primary); color: white; }
-        .cell.X { background: var(--viz-bg-secondary); color: var(--text-muted); }
-        .cell.safe { background: var(--viz-success); color: #0f172a; }
-        .cell.captured { background: var(--viz-error); color: white; }
-        .cell.checking { border: 3px solid var(--viz-warning); }
+        .cell.X { background: var(--viz-bg-secondary); color: var(--viz-text-muted); }
+        .cell.safe { background: var(--viz-success); color: #0f172a; border-color: var(--viz-success); }
+        .cell.captured { background: var(--viz-error); color: white; animation: capture 0.4s; }
+        .cell.checking { border-color: white; }
+        @keyframes capture { 0% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .legend-row { display: flex; gap: 15px; justify-content: center; margin: 10px 0; font-size: 0.85rem; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-box { width: 20px; height: 20px; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -20,35 +33,46 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">被圍繞的區域（DFS 從邊界開始）</div>
-                <div style="text-align: center;"><div class="grid" id="gridDisplay"></div></div>
+                <div class="viz-title">被圍繞的區域 (Surrounded Regions)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">範例1 (4x4)</button>
+                        <button onclick="setExample(2)">範例2 (5x5)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="legend-row">
+                    <div class="legend-item"><div class="legend-box" style="background:var(--viz-bg-secondary)"></div>X (牆)</div>
+                    <div class="legend-item"><div class="legend-box" style="background:var(--viz-primary)"></div>O (原始)</div>
+                    <div class="legend-item"><div class="legend-box" style="background:var(--viz-success)"></div>安全 (連接邊界)</div>
+                    <div class="legend-item"><div class="legend-box" style="background:var(--viz-error)"></div>被捕獲</div>
+                </div>
+                
+                <div style="text-align: center;"><div class="grid-container" id="gridDisplay"></div></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
-            </div>
+                
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(m×n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(m×n)
                 </div>
-            
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">被捕獲數</div><div class="state-value" id="capturedDisplay">0</div></div>
                 </div>
+            </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
@@ -62,58 +86,177 @@
     <script>
         const codeStructure = [
             { line: 'void solve(vector<vector<char>>& board) {', id: 0 },
-            { line: '    // 從邊界開始 DFS，標記不會被捕獲的 O', id: 1 },
-            { line: '    for (邊界的 O) dfs(board, i, j);', id: 2 },
-            { line: '    // O → X（被捕獲），S → O（安全）', id: 3 },
-            { line: '    for (all cells) {', id: 4 },
-            { line: '        if (cell == \'O\') cell = \'X\';', id: 5 },
-            { line: '        if (cell == \'S\') cell = \'O\';', id: 6 },
-            { line: '    }', id: 7 },
-            { line: '}', id: 8 },
+            { line: '    int m = board.size(), n = board[0].size();', id: 1 },
+            { line: '    // 從邊界的 O 開始 DFS，標記為安全 (S)', id: 2 },
+            { line: '    for (int i = 0; i < m; i++) {', id: 3 },
+            { line: '        dfs(board, i, 0); dfs(board, i, n-1);', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    for (int j = 0; j < n; j++) {', id: 6 },
+            { line: '        dfs(board, 0, j); dfs(board, m-1, j);', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    // O → X (被捕獲), S → O (恢復安全)', id: 9 },
+            { line: '    for (int i = 0; i < m; i++) {', id: 10 },
+            { line: '        for (int j = 0; j < n; j++) {', id: 11 },
+            { line: '            if (board[i][j] == \'O\') board[i][j] = \'X\';', id: 12 },
+            { line: '            if (board[i][j] == \'S\') board[i][j] = \'O\';', id: 13 },
+            { line: '        }', id: 14 },
+            { line: '    }', id: 15 },
+            { line: '}', id: 16 },
         ];
-        const board = [
-            ['X','X','X','X'],
-            ['X','O','O','X'],
-            ['X','X','O','X'],
-            ['X','O','X','X']
-        ];
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: [['X','X','X','X'],['X','O','O','X'],['X','X','O','X'],['X','O','X','X']],
+            2: [['X','X','X','X','X'],['X','O','O','O','X'],['X','X','O','X','X'],['X','O','X','O','X'],['X','O','X','X','X']]
+        };
+        
+        let currentBoard = examples[1];
+
+        function setExample(n) {
+            currentBoard = examples[n].map(r => [...r]);
+            init();
+        }
+
+        function generateAlgorithmSteps(initialBoard) {
             const steps = [];
-            steps.push({ board: board.map(r => [...r]), highlightLines: [0,1], explanation: { title: '初始化', text: '4×4 棋盤<br><br>關鍵洞察：<br>與邊界連通的 O 不會被捕獲<br>從邊界 O 開始 DFS 標記' } });
-            // Mark border O as safe
-            let b = board.map(r => [...r]);
-            b[3][1] = 'S';
-            steps.push({ board: b.map(r => [...r]), safe: [[3,1]], highlightLines: [2], explanation: { title: '標記邊界 O', text: '(3,1) 是邊界的 O<br>標記為安全 (S)' } });
-            // Capture the rest
-            b[1][1] = 'X'; b[1][2] = 'X'; b[2][2] = 'X';
-            steps.push({ board: b.map(r => [...r]), captured: [[1,1],[1,2],[2,2]], highlightLines: [4,5], explanation: { title: '捕獲被圍繞的 O', text: '(1,1), (1,2), (2,2) 不與邊界連通<br>O → X' } });
-            // Restore safe
-            b[3][1] = 'O';
-            steps.push({ board: b.map(r => [...r]), final: true, highlightLines: [6,7], explanation: { title: '🎉 完成！', text: '恢復安全的 O<br>S → O<br><br>時間：O(m×n)' } });
+            const m = initialBoard.length, n = initialBoard[0].length;
+            let board = initialBoard.map(r => [...r]);
+            const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+            
+            // Count initial O's
+            let totalO = 0;
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (board[i][j] === 'O') totalO++;
+                }
+            }
+            
+            steps.push({
+                board: board.map(r => [...r]), safe: [], captured: [],
+                highlightLines: [0, 1, 2],
+                explanation: { 
+                    title: '初始化', 
+                    text: `${m}×${n} 棋盤，共 ${totalO} 個 O<br><br>關鍵洞察：<br>與邊界連通的 O 不會被捕獲<br>從邊界 O 開始 DFS 標記`,
+                    formula: 'border DFS'
+                }
+            });
+
+            // DFS to mark safe cells
+            const safe = [];
+            function dfs(i, j) {
+                if (i < 0 || i >= m || j < 0 || j >= n) return;
+                if (board[i][j] !== 'O') return;
+                board[i][j] = 'S';
+                safe.push([i, j]);
+                for (const [di, dj] of dirs) {
+                    dfs(i + di, j + dj);
+                }
+            }
+
+            // Mark border cells
+            for (let i = 0; i < m; i++) {
+                dfs(i, 0);
+                dfs(i, n - 1);
+            }
+            for (let j = 0; j < n; j++) {
+                dfs(0, j);
+                dfs(m - 1, j);
+            }
+
+            if (safe.length > 0) {
+                steps.push({
+                    board: board.map(r => [...r]), safe: [...safe], captured: [],
+                    highlightLines: [3, 4, 5, 6, 7, 8],
+                    explanation: { 
+                        title: '標記安全區域', 
+                        text: `從邊界 O 開始 DFS<br>找到 ${safe.length} 個連接邊界的 O<br>標記為安全 (S)`,
+                        formula: `safe: ${safe.length}`
+                    }
+                });
+            }
+
+            // Capture surrounded O's
+            const captured = [];
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (board[i][j] === 'O') {
+                        board[i][j] = 'X';
+                        captured.push([i, j]);
+                    }
+                }
+            }
+
+            if (captured.length > 0) {
+                steps.push({
+                    board: board.map(r => [...r]), safe: [...safe], captured: [...captured],
+                    highlightLines: [10, 11, 12],
+                    explanation: { 
+                        title: '捕獲被圍繞的 O', 
+                        text: `${captured.length} 個 O 沒有連接邊界<br>O → X`,
+                        formula: `captured: ${captured.length}`
+                    }
+                });
+            }
+
+            // Restore safe cells
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (board[i][j] === 'S') {
+                        board[i][j] = 'O';
+                    }
+                }
+            }
+
+            steps.push({
+                board: board.map(r => [...r]), safe: [], captured: [], 
+                restored: [...safe], capturedCount: captured.length, final: true,
+                highlightLines: [13, 14, 15, 16],
+                explanation: { 
+                    title: '完成!', 
+                    text: `恢復安全的 O (S → O)<br><br>被捕獲: ${captured.length}<br>安全: ${safe.length}`,
+                    formula: `done`
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
+            const m = currentBoard.length, n = currentBoard[0].length;
+            const gridEl = document.getElementById('gridDisplay');
+            gridEl.style.gridTemplateColumns = `repeat(${n}, 40px)`;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const b = step.board || board;
-                    const grid = document.getElementById('gridDisplay');
-                    grid.style.gridTemplateColumns = `repeat(${b[0].length}, 40px)`;
+                    const board = step.board;
                     let html = '';
-                    for (let r = 0; r < b.length; r++) {
-                        for (let c = 0; c < b[0].length; c++) {
-                            let cls = `cell ${b[r][c]}`;
-                            if (step.safe?.some(s => s[0]===r && s[1]===c)) cls += ' safe';
-                            if (step.captured?.some(s => s[0]===r && s[1]===c)) cls += ' captured';
-                            html += `<div class="${cls}">${b[r][c]}</div>`;
+                    for (let r = 0; r < board.length; r++) {
+                        for (let c = 0; c < board[0].length; c++) {
+                            const val = board[r][c];
+                            let cls = `cell ${val === 'S' ? 'O' : val}`;
+                            
+                            if (step.safe?.some(s => s[0] === r && s[1] === c)) {
+                                cls = 'cell safe';
+                            }
+                            if (step.captured?.some(s => s[0] === r && s[1] === c)) {
+                                cls = 'cell captured';
+                            }
+                            if (step.restored?.some(s => s[0] === r && s[1] === c)) {
+                                cls = 'cell O';
+                            }
+                            
+                            const display = val === 'S' ? 'S' : val;
+                            html += `<div class="${cls}">${display}</div>`;
                         }
                     }
-                    grid.innerHTML = html;
+                    gridEl.innerHTML = html;
+                    document.getElementById('capturedDisplay').textContent = step.capturedCount ?? step.captured?.length ?? 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentBoard));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>
