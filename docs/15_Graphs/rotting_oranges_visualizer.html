@@ -3,14 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rotting Oranges 腐爛的橘子 - 視覺化</title>
+    <title>Rotting Oranges - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: inline-grid; gap: 3px; margin: 20px auto; }
-        .cell { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .grid-container { display: inline-grid; gap: 3px; margin: 20px auto; }
+        .cell { 
+            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
+            font-size: 1.5rem; border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s;
+        }
         .cell.fresh { background: var(--viz-warning); }
         .cell.rotten { background: var(--viz-error); }
-        .cell.just-rotten { animation: rot 0.5s; }
+        .cell.just-rotten { animation: rot 0.5s; border: 2px solid white; }
         @keyframes rot { 0% { transform: scale(1.2); } 100% { transform: scale(1); } }
     </style>
 </head>
@@ -19,36 +26,38 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">腐爛的橘子（多源 BFS）</div>
-                <div style="text-align: center;"><div class="grid" id="gridDisplay"></div></div>
+                <div class="viz-title">腐爛的橘子 (Rotting Oranges)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">範例1 (4分鐘)</button>
+                        <button onclick="setExample(2)">範例2 (不可能)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div style="text-align: center;"><div class="grid-container" id="gridDisplay"></div></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(m×n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(m×n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">分鐘</div><div class="state-value" id="minuteDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">分鐘</div><div class="state-value" id="minuteDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">新鮮橘子</div><div class="state-value" id="freshDisplay">0</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -66,59 +75,132 @@
             { line: 'int orangesRotting(vector<vector<int>>& grid) {', id: 0 },
             { line: '    queue<pair<int,int>> q;', id: 1 },
             { line: '    int fresh = 0;', id: 2 },
-            { line: '    // 將所有腐爛橘子加入隊列', id: 3 },
-            { line: '    for (all cells) if (rotten) q.push({i,j});', id: 4 },
-            { line: '    int minutes = 0;', id: 5 },
-            { line: '    while (!q.empty() && fresh > 0) {', id: 6 },
-            { line: '        int size = q.size();', id: 7 },
-            { line: '        for (int i = 0; i < size; i++) {', id: 8 },
-            { line: '            // 四個方向傳染', id: 9 },
-            { line: '            for (四個方向) if (fresh) { rot(); q.push(); }', id: 10 },
-            { line: '        }', id: 11 },
-            { line: '        minutes++;', id: 12 },
-            { line: '    }', id: 13 },
-            { line: '    return fresh == 0 ? minutes : -1;', id: 14 },
-            { line: '}', id: 15 },
+            { line: '    for (all cells) {', id: 3 },
+            { line: '        if (rotten) q.push({i,j});', id: 4 },
+            { line: '        if (fresh) fresh++;', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    int minutes = 0;', id: 7 },
+            { line: '    while (!q.empty() && fresh > 0) {', id: 8 },
+            { line: '        // 處理當前層所有腐爛橘子', id: 9 },
+            { line: '        // 感染四個方向的新鮮橘子', id: 10 },
+            { line: '        minutes++;', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    return fresh == 0 ? minutes : -1;', id: 13 },
+            { line: '}', id: 14 },
         ];
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: [[2,1,1],[1,1,0],[0,1,1]],
+            2: [[2,1,1],[0,1,1],[1,0,1]]
+        };
+        
+        let currentGrid = examples[1];
+
+        function setExample(n) {
+            currentGrid = examples[n].map(r => [...r]);
+            init();
+        }
+
+        function generateAlgorithmSteps(initialGrid) {
             const steps = [];
-            const g0 = [[2,1,1],[1,1,0],[0,1,1]];
-            steps.push({ grid: g0, minute: 0, highlightLines: [0,1,2,3,4,5], explanation: { title: '初始化', text: '🍊 新鮮橘子：6 個<br>🦠 腐爛橘子：1 個 (0,0)<br><br>多源 BFS：所有腐爛橘子同時開始' } });
-            const g1 = [[2,2,1],[2,1,0],[0,1,1]];
-            steps.push({ grid: g1, minute: 1, newRotten: [[0,1],[1,0]], highlightLines: [6,7,8,9,10,12], explanation: { title: '第 1 分鐘', text: '(0,0) 傳染 → (0,1), (1,0)<br>剩餘新鮮：4 個' } });
-            const g2 = [[2,2,2],[2,2,0],[0,1,1]];
-            steps.push({ grid: g2, minute: 2, newRotten: [[0,2],[1,1]], highlightLines: [6,7,8,9,10,12], explanation: { title: '第 2 分鐘', text: '傳染 → (0,2), (1,1)<br>剩餘新鮮：2 個' } });
-            const g3 = [[2,2,2],[2,2,0],[0,2,1]];
-            steps.push({ grid: g3, minute: 3, newRotten: [[2,1]], highlightLines: [6,7,8,9,10,12], explanation: { title: '第 3 分鐘', text: '傳染 → (2,1)<br>剩餘新鮮：1 個' } });
-            const g4 = [[2,2,2],[2,2,0],[0,2,2]];
-            steps.push({ grid: g4, minute: 4, newRotten: [[2,2]], final: true, highlightLines: [14], explanation: { title: '🎉 完成！', text: '所有橘子都腐爛<br>需要 4 分鐘<br><br>時間：O(m×n)' } });
+            const m = initialGrid.length, n = initialGrid[0].length;
+            let grid = initialGrid.map(r => [...r]);
+            
+            let fresh = 0;
+            const queue = [];
+            
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (grid[i][j] === 2) queue.push([i, j]);
+                    if (grid[i][j] === 1) fresh++;
+                }
+            }
+            
+            steps.push({
+                grid: grid.map(r => [...r]), minute: 0, fresh, newRotten: [],
+                highlightLines: [0, 1, 2, 3, 4, 5, 6, 7],
+                explanation: { title: '初始化', text: `🍊 新鮮橘子: ${fresh}<br>🦠 腐爛橘子: ${queue.length}<br>多源 BFS 同時從所有腐爛橘子開始`, formula: 'setup' }
+            });
+
+            const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+            let minutes = 0;
+
+            while (queue.length > 0 && fresh > 0) {
+                const size = queue.length;
+                const newRotten = [];
+                
+                for (let i = 0; i < size; i++) {
+                    const [r, c] = queue.shift();
+                    
+                    for (const [dr, dc] of dirs) {
+                        const nr = r + dr, nc = c + dc;
+                        if (nr >= 0 && nr < m && nc >= 0 && nc < n && grid[nr][nc] === 1) {
+                            grid[nr][nc] = 2;
+                            fresh--;
+                            queue.push([nr, nc]);
+                            newRotten.push([nr, nc]);
+                        }
+                    }
+                }
+                
+                if (newRotten.length > 0) {
+                    minutes++;
+                    steps.push({
+                        grid: grid.map(r => [...r]), minute: minutes, fresh, newRotten,
+                        highlightLines: [8, 9, 10, 11],
+                        explanation: { 
+                            title: `第 ${minutes} 分鐘`, 
+                            text: `感染 ${newRotten.length} 個橘子<br>剩餘新鮮: ${fresh}`,
+                            formula: `minutes = ${minutes}`
+                        }
+                    });
+                }
+            }
+
+            const result = fresh === 0 ? minutes : -1;
+            steps.push({
+                grid: grid.map(r => [...r]), minute: minutes, fresh, result, final: true,
+                highlightLines: [13],
+                explanation: { 
+                    title: '完成!', 
+                    text: result === -1 ? '有橘子無法被感染' : `所有橘子在 ${result} 分鐘內腐爛`,
+                    formula: `return ${result}`
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
+            const m = currentGrid.length, n = currentGrid[0].length;
+            const gridEl = document.getElementById('gridDisplay');
+            gridEl.style.gridTemplateColumns = `repeat(${n}, 45px)`;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     const g = step.grid;
-                    const grid = document.getElementById('gridDisplay');
-                    grid.style.gridTemplateColumns = `repeat(${g[0].length}, 45px)`;
                     let html = '';
                     for (let r = 0; r < g.length; r++) {
                         for (let c = 0; c < g[0].length; c++) {
                             let cls = 'cell';
                             if (g[r][c] === 1) cls += ' fresh';
                             if (g[r][c] === 2) cls += ' rotten';
-                            if (step.newRotten?.some(n => n[0]===r && n[1]===c)) cls += ' just-rotten';
+                            if (step.newRotten?.some(n => n[0] === r && n[1] === c)) cls += ' just-rotten';
+                            
                             const emoji = g[r][c] === 0 ? '' : (g[r][c] === 1 ? '🍊' : '🦠');
                             html += `<div class="${cls}">${emoji}</div>`;
                         }
                     }
-                    grid.innerHTML = html;
+                    gridEl.innerHTML = html;
                     document.getElementById('minuteDisplay').textContent = step.minute ?? 0;
+                    document.getElementById('freshDisplay').textContent = step.fresh ?? 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentGrid));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

@@ -3,15 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number of Islands Visualization</title>
+    <title>Number of Islands - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: grid; gap: 2px; max-width: 220px; margin: 0 auto; }
-        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; border-radius: 4px; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .grid-container { display: inline-grid; gap: 2px; margin: 20px auto; }
+        .cell { 
+            width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; 
+            font-family: monospace; font-weight: bold; border-radius: 4px; transition: all 0.2s;
+        }
         .cell.water { background: #1e3a5f; color: #64b5f6; }
         .cell.land { background: var(--viz-success); color: #0f172a; }
-        .cell.visited { background: #f59e0b; color: #0f172a; }
-        .cell.current { border: 3px solid var(--viz-secondary); }
+        .cell.visited { background: var(--viz-warning); color: #0f172a; }
+        .cell.current { border: 3px solid white; }
     </style>
 </head>
 <body>
@@ -19,49 +26,44 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">NUMBER OF ISLANDS (DFS)</div>
-                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(5, 40px);"></div>
-                <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">島嶼數量 (Number of Islands)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">範例1 (1島)</button>
+                        <button onclick="setExample(2)">範例2 (3島)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
                 </div>
-                <div class="controls-row-2">
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                
+                <div style="text-align: center;"><div class="grid-container" id="gridDisplay"></div></div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(m×n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(m×n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Islands Found</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">島嶼數量</div><div class="state-value" id="countDisplay">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">DFS ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -69,72 +71,112 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int numIslands(grid) {', id: 0 },
+            { line: 'int numIslands(vector<vector<char>>& grid) {', id: 0 },
             { line: '    int count = 0;', id: 1 },
             { line: '    for (int i = 0; i < m; i++) {', id: 2 },
             { line: '        for (int j = 0; j < n; j++) {', id: 3 },
             { line: '            if (grid[i][j] == \'1\') {', id: 4 },
             { line: '                count++;', id: 5 },
-            { line: '                dfs(grid, i, j); // mark all connected', id: 6 },
+            { line: '                dfs(grid, i, j);', id: 6 },
             { line: '            }', id: 7 },
             { line: '        }', id: 8 },
             { line: '    }', id: 9 },
             { line: '    return count;', id: 10 },
             { line: '}', id: 11 },
         ];
-        const grid = [
-            [1, 1, 1, 1, 0],
-            [1, 1, 0, 1, 0],
-            [1, 1, 0, 0, 0],
-            [0, 0, 0, 0, 0]
-        ];
-        const m = grid.length, n = grid[0].length;
+        
+        const examples = {
+            1: [[1,1,1,1,0],[1,1,0,1,0],[1,1,0,0,0],[0,0,0,0,0]],
+            2: [[1,1,0,0,0],[1,1,0,0,0],[0,0,1,0,0],[0,0,0,1,1]]
+        };
+        
+        let currentGrid = examples[1];
 
-        function generateAlgorithmSteps() {
+        function setExample(n) {
+            currentGrid = examples[n].map(r => [...r]);
+            init();
+        }
+
+        function generateAlgorithmSteps(grid) {
             const steps = [];
+            const m = grid.length, n = grid[0].length;
             const visited = Array(m).fill(null).map(() => Array(n).fill(false));
             let count = 0;
-            steps.push({ visited: visited.map(r => [...r]), count, highlightLines: [0, 1], explanation: { title: 'Start', text: 'Scan grid for land' }});
             
-            function dfs(i, j) {
+            steps.push({
+                visited: visited.map(r => [...r]), count: 0, current: null,
+                highlightLines: [0, 1],
+                explanation: { title: '初始化', text: '用 DFS 遍歷每個陸地<br>找到新陸地時開始探索整個島嶼', formula: 'setup' }
+            });
+
+            function dfs(i, j, cells = []) {
                 if (i < 0 || i >= m || j < 0 || j >= n || grid[i][j] === 0 || visited[i][j]) return;
                 visited[i][j] = true;
-                dfs(i + 1, j); dfs(i - 1, j); dfs(i, j + 1); dfs(i, j - 1);
+                cells.push([i, j]);
+                dfs(i + 1, j, cells);
+                dfs(i - 1, j, cells);
+                dfs(i, j + 1, cells);
+                dfs(i, j - 1, cells);
+                return cells;
             }
-            
+
             for (let i = 0; i < m; i++) {
                 for (let j = 0; j < n; j++) {
                     if (grid[i][j] === 1 && !visited[i][j]) {
                         count++;
-                        steps.push({ visited: visited.map(r => [...r]), count, current: [i, j], highlightLines: [4, 5], explanation: { title: `Found island #${count}`, text: `Starting DFS at [${i},${j}]` }});
-                        dfs(i, j);
-                        steps.push({ visited: visited.map(r => [...r]), count, highlightLines: [6], explanation: { title: `Island #${count} marked`, text: 'All connected land visited' }});
+                        const islandCells = dfs(i, j, []);
+                        
+                        steps.push({
+                            visited: visited.map(r => [...r]), count, current: [i, j],
+                            highlightLines: [4, 5, 6],
+                            explanation: { 
+                                title: `島嶼 #${count}`, 
+                                text: `從 [${i},${j}] 開始 DFS<br>島嶼大小: ${islandCells.length}`,
+                                formula: `count = ${count}`
+                            }
+                        });
                     }
                 }
             }
-            steps.push({ visited: visited.map(r => [...r]), count, highlightLines: [10], explanation: { title: 'Done!', text: `${count} islands found` }});
+
+            steps.push({
+                visited: visited.map(r => [...r]), count, final: true,
+                highlightLines: [10],
+                explanation: { title: '完成!', text: `共找到 ${count} 個島嶼`, formula: `return ${count}` }
+            });
+
             return steps;
         }
 
         let viz;
         function init() {
+            const m = currentGrid.length, n = currentGrid[0].length;
+            const gridEl = document.getElementById('gridDisplay');
+            gridEl.style.gridTemplateColumns = `repeat(${n}, 38px)`;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
                     for (let i = 0; i < m; i++) {
                         for (let j = 0; j < n; j++) {
-                            let cls = grid[i][j] === 0 ? 'water' : (step.visited[i][j] ? 'visited' : 'land');
+                            let cls = 'cell ';
+                            if (currentGrid[i][j] === 0) cls += 'water';
+                            else if (step.visited?.[i]?.[j]) cls += 'visited';
+                            else cls += 'land';
+                            
                             if (step.current && step.current[0] === i && step.current[1] === j) cls += ' current';
-                            html += `<div class="cell ${cls}">${grid[i][j] === 0 ? '~' : '■'}</div>`;
+                            
+                            html += `<div class="${cls}">${currentGrid[i][j] === 0 ? '~' : '■'}</div>`;
                         }
                     }
-                    document.getElementById('gridDisplay').innerHTML = html;
-                    document.getElementById('countDisplay').textContent = step.count;
+                    gridEl.innerHTML = html;
+                    document.getElementById('countDisplay').textContent = step.count ?? 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentGrid));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>
