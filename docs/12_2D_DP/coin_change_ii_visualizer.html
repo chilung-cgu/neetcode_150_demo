@@ -3,16 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coin Change II 零錢兌換 II - 視覺化</title>
+    <title>Coin Change II - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .coins { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
-        .coin { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-warning); color: #0f172a; font-size: 1.1rem; transition: all 0.3s; }
-        .coin.current { border: 3px solid var(--viz-success); }
-        .dp-row { display: flex; gap: 4px; justify-content: center; margin: 10px 0; }
-        .dp-cell { width: 35px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); font-size: 0.9rem; }
-        .dp-cell.updated { background: var(--viz-success); color: #0f172a; }
-        .dp-cell.header { background: var(--viz-primary); color: white; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .coins-container { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+        .coin-bubble { 
+            width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            background: var(--viz-warning); color: #0f172a; font-weight: bold; font-size: 1.1rem;
+            border: 3px solid #b45309; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s;
+        }
+        .coin-bubble.active { transform: scale(1.15); box-shadow: 0 0 15px var(--viz-warning); border-color: white; }
+
+        .dp-scroll { overflow-x: auto; padding-bottom: 10px; margin-top: 20px; }
+        .dp-table { display: flex; gap: 2px; min-width: max-content; margin: 0 auto; }
+        .dp-col { display: flex; flex-direction: column; width: 40px; }
+        .dp-header { 
+            height: 25px; display: flex; align-items: center; justify-content: center; 
+            font-size: 0.75rem; color: var(--viz-text-muted); background: var(--viz-bg-secondary);
+            border-radius: 4px 4px 0 0;
+        }
+        .dp-val {
+            height: 40px; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border: 1px solid var(--viz-border); background: var(--viz-card-bg);
+            border-top: none;
+        }
+        .dp-val.updated { background: var(--viz-success); color: #0f172a; }
+        .dp-val.source { background: rgba(234, 179, 8, 0.2); border-color: var(--viz-warning); }
     </style>
 </head>
 <body>
@@ -20,39 +41,45 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">零錢兌換 II（完全背包）</div>
-                <div class="coins" id="coinsDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">dp[j] = 湊出金額 j 的組合數</div>
-                <div class="dp-row" id="dpDisplay"></div>
+                <div class="viz-title">零錢兌換 II (完全背包 - 組合數)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>硬幣 (coins):</label>
+                        <input type="text" id="coinsInput" value="1, 2, 5" style="width: 100px;">
+                        <label>金額 (amount):</label>
+                        <input type="number" id="amtInput" value="5" style="width: 60px;" max="15">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
+                <div class="coins-container" id="coinsDisplay"></div>
+                
+                <div style="text-align: center; font-size: 0.9rem; margin-top: 10px;">DP: dp[j] = 組合數湊出金額 j</div>
+                <div class="dp-scroll">
+                    <div class="dp-table" id="dpDisplay"></div>
+                </div>
+                
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n·m)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(amount * len(coins))
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(amount)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">目標金額</div><div class="state-value">5</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">組合數</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                    <div class="state-item"><div class="state-label">組合數</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -69,7 +96,7 @@
         const codeStructure = [
             { line: 'int change(int amount, vector<int>& coins) {', id: 0 },
             { line: '    vector<int> dp(amount + 1, 0);', id: 1 },
-            { line: '    dp[0] = 1; // 空組合', id: 2 },
+            { line: '    dp[0] = 1;', id: 2 },
             { line: '    for (int coin : coins) {', id: 3 },
             { line: '        for (int j = coin; j <= amount; j++) {', id: 4 },
             { line: '            dp[j] += dp[j - coin];', id: 5 },
@@ -78,40 +105,102 @@
             { line: '    return dp[amount];', id: 8 },
             { line: '}', id: 9 },
         ];
-        const coins = [1, 2, 5];
-        const amount = 5;
-        function generateAlgorithmSteps() {
+
+        let currentCoins = [1, 2, 5];
+        let currentAmt = 5;
+
+        function runCustomInput() {
+            const coinsStr = document.getElementById('coinsInput').value;
+            const amt = parseInt(document.getElementById('amtInput').value);
+            
+            const arr = coinsStr.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            
+            if (arr.length === 0 || isNaN(amt) || amt > 20) {
+                alert('請輸入有效的硬幣陣列和金額 (Max 20)');
+                return;
+            }
+            currentCoins = arr;
+            currentAmt = amt;
+            init();
+        }
+
+        function generateAlgorithmSteps(coins, amount) {
             const steps = [];
-            let dp = [1, 0, 0, 0, 0, 0];
-            steps.push({ dp: [...dp], currentCoin: -1, highlightLines: [0,1,2], explanation: { title: '初始化', text: `coins = [1, 2, 5]<br>amount = 5<br><br>dp[0] = 1 (空組合)<br>外層遍歷硬幣，避免重複計算` } });
-            // coin = 1
-            dp = [1, 1, 1, 1, 1, 1];
-            steps.push({ dp: [...dp], currentCoin: 0, highlightLines: [3,4,5], explanation: { title: '使用硬幣 1', text: '每個金額都可以用 1 湊出<br>dp = [1,1,1,1,1,1]', formula: 'dp[j] += dp[j-1]' } });
-            // coin = 2
-            dp = [1, 1, 2, 2, 3, 3];
-            steps.push({ dp: [...dp], currentCoin: 1, highlightLines: [3,4,5], explanation: { title: '使用硬幣 2', text: 'dp[2] += dp[0] = 2 (1+1, 2)<br>dp[4] += dp[2] = 3 (1+1+1+1, 1+1+2, 2+2)', formula: 'dp[j] += dp[j-2]' } });
-            // coin = 5
-            dp = [1, 1, 2, 2, 3, 4];
-            steps.push({ dp: [...dp], currentCoin: 2, highlightLines: [3,4,5], explanation: { title: '使用硬幣 5', text: 'dp[5] += dp[0] = 4<br>多了一種：直接用 5', formula: 'dp[5] += dp[0]' } });
-            steps.push({ dp: [...dp], result: 4, final: true, highlightLines: [8], explanation: { title: '🎉 完成！', text: '共 4 種組合：<br>1+1+1+1+1<br>1+1+1+2<br>1+2+2<br>5<br><br>時間：O(amount × coins)' } });
+            const dp = new Array(amount + 1).fill(0);
+            dp[0] = 1;
+            
+            steps.push({
+                coinIdx: -1, dp: [...dp], 
+                highlightLines: [0, 1, 2],
+                explanation: { title: '初始化', text: `Amount: ${amount}, Coins: [${coins.join(', ')}]<br>dp[0]=1 (空組合)`, formula: 'dp[0] = 1' }
+            });
+
+            for (let ci = 0; ci < coins.length; ci++) {
+                const coin = coins[ci];
+                
+                steps.push({
+                    coinIdx: ci, dp: [...dp],
+                    highlightLines: [3],
+                    explanation: { title: `使用硬幣 ${coin}`, text: `從 j=${coin} 開始遍歷`, formula: `coin = ${coin}` }
+                });
+
+                for (let j = coin; j <= amount; j++) {
+                    const prev = dp[j];
+                    dp[j] += dp[j - coin];
+                    
+                    steps.push({
+                        coinIdx: ci, dp: [...dp], updateIdx: j, sourceIdx: j - coin,
+                        highlightLines: [4, 5],
+                        explanation: { 
+                            title: `更新 dp[${j}]`, 
+                            text: `dp[${j}] += dp[${j - coin}]<br>${prev} + ${dp[j - coin]} = ${dp[j]}`,
+                            formula: `dp[${j}] = ${dp[j]}`
+                        }
+                    });
+                }
+            }
+
+            steps.push({
+                coinIdx: -1, dp: [...dp], result: dp[amount], final: true,
+                highlightLines: [8],
+                explanation: { title: '完成', text: `組合數: ${dp[amount]}`, formula: `return ${dp[amount]}` }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('coinsDisplay').innerHTML = coins.map((c, i) => `<div class="coin${i === step.currentCoin ? ' current' : ''}">${c}</div>`).join('');
-                    let html = '';
-                    (step.dp || []).forEach((d, i) => {
-                        html += `<div class="dp-cell${d > 0 ? ' updated' : ''}">${d}</div>`;
-                    });
-                    document.getElementById('dpDisplay').innerHTML = html;
-                    document.getElementById('resultDisplay').textContent = step.result ?? '?';
+                    // Render Coins
+                    const cDiv = document.getElementById('coinsDisplay');
+                    cDiv.innerHTML = currentCoins.map((c, i) => {
+                        let cls = 'coin-bubble';
+                        if (step.coinIdx === i) cls += ' active';
+                        return `<div class="${cls}">${c}</div>`;
+                    }).join('');
+
+                    // Render DP Table
+                    const tDiv = document.getElementById('dpDisplay');
+                    tDiv.innerHTML = step.dp.map((val, i) => {
+                        let cls = 'dp-val';
+                        if (i === step.updateIdx) cls += ' updated';
+                        if (i === step.sourceIdx) cls += ' source';
+                        
+                        return `<div class="dp-col">
+                            <div class="dp-header">${i}</div>
+                            <div class="${cls}">${val}</div>
+                        </div>`;
+                    }).join('');
+
+                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : '-';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentCoins, currentAmt));
         }
+
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

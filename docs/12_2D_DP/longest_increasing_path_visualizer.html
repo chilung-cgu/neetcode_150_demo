@@ -3,13 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Longest Increasing Path Visualization</title>
+    <title>Longest Increasing Path - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: grid; gap: 2px; max-width: 180px; margin: 0 auto; }
-        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; font-size: 1rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input, .input-row textarea { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .grid-container { display: flex; justify-content: center; margin: 20px 0; }
+        .grid { display: inline-grid; gap: 2px; }
+        .cell { 
+            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
+            font-family: monospace; font-weight: bold; background: var(--viz-bg-secondary); border-radius: 4px; 
+            font-size: 1rem; border: 2px solid transparent; transition: all 0.2s;
+        }
         .cell.path { background: var(--viz-success); color: #0f172a; }
-        .cell.current { border: 2px solid var(--viz-secondary); }
+        .cell.current { border-color: var(--viz-warning); box-shadow: 0 0 8px var(--viz-warning); }
     </style>
 </head>
 <body>
@@ -17,49 +27,49 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">LONGEST INCREASING PATH IN MATRIX</div>
-                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(3, 40px);"></div>
-                <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">矩陣中的最長遞增路徑 (LIP)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>矩陣 (逗號分隔行):</label>
+                        <textarea id="matrixInput" rows="3" cols="20">9,9,4
+6,6,8
+2,1,1</textarea>
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
-                <div class="controls-row-2">
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                
+                <div class="grid-container">
+                    <div class="grid" id="gridDisplay"></div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(m·n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(m·n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Path Length</div><div class="state-value" id="lengthDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">最長路徑</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">DFS + MEMOIZATION</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -77,38 +87,118 @@
             { line: '}', id: 7 },
             { line: 'int dfs(matrix, i, j, dp) {', id: 8 },
             { line: '    if (dp[i][j]) return dp[i][j];', id: 9 },
-            { line: '    // Explore 4 directions if larger', id: 10 },
-            { line: '    return dp[i][j] = 1 + max(neighbors);', id: 11 },
-            { line: '}', id: 12 },
+            { line: '    int res = 1;', id: 10 },
+            { line: '    for (dir : {up, down, left, right})', id: 11 },
+            { line: '        if (matrix[ni][nj] > matrix[i][j])', id: 12 },
+            { line: '            res = max(res, 1 + dfs(ni, nj));', id: 13 },
+            { line: '    return dp[i][j] = res;', id: 14 },
+            { line: '}', id: 15 },
         ];
-        const matrix = [[9, 9, 4], [6, 6, 8], [2, 1, 1]];
-        // Longest path: 1 → 2 → 6 → 9 = 4
+        
+        let matrix = [[9, 9, 4], [6, 6, 8], [2, 1, 1]];
 
-        function generateAlgorithmSteps() {
-            const steps = [];
-            const path = [[2, 1], [2, 0], [1, 0], [0, 0]]; // 1 → 2 → 6 → 9
+        function runCustomInput() {
+            const str = document.getElementById('matrixInput').value.trim();
+            const rows = str.split('\n').map(line => line.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x)));
             
-            steps.push({ path: [], highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'DFS from each cell with memoization' }});
-            
-            for (let i = 1; i <= path.length; i++) {
-                const currentPath = path.slice(0, i);
-                const values = currentPath.map(([r, c]) => matrix[r][c]);
-                steps.push({ path: currentPath, current: path[i - 1], highlightLines: [8, 9, 10, 11], explanation: { title: `Step ${i}`, text: `Path: ${values.join(' → ')}` }});
+            if (rows.length === 0 || rows.some(r => r.length !== rows[0].length)) {
+                alert('請輸入有效的矩陣');
+                return;
             }
+            matrix = rows;
+            init();
+        }
+
+        // DFS to find longest increasing path and the actual path
+        function findLongestPath(mat) {
+            const m = mat.length, n = mat[0].length;
+            const dp = Array.from({ length: m }, () => Array(n).fill(0));
+            const parent = Array.from({ length: m }, () => Array(n).fill(null));
+            const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
             
-            steps.push({ path, highlightLines: [6], explanation: { title: 'Done!', text: 'Longest path: 1→2→6→9 = 4' }});
+            function dfs(i, j) {
+                if (dp[i][j]) return dp[i][j];
+                dp[i][j] = 1;
+                for (const [di, dj] of dirs) {
+                    const ni = i + di, nj = j + dj;
+                    if (ni >= 0 && ni < m && nj >= 0 && nj < n && mat[ni][nj] > mat[i][j]) {
+                        const len = 1 + dfs(ni, nj);
+                        if (len > dp[i][j]) {
+                            dp[i][j] = len;
+                            parent[i][j] = [ni, nj];
+                        }
+                    }
+                }
+                return dp[i][j];
+            }
+
+            let maxLen = 0, startCell = [0, 0];
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    const len = dfs(i, j);
+                    if (len > maxLen) {
+                        maxLen = len;
+                        startCell = [i, j];
+                    }
+                }
+            }
+
+            // Reconstruct path
+            const path = [];
+            let cur = startCell;
+            while (cur) {
+                path.push(cur);
+                cur = parent[cur[0]][cur[1]];
+            }
+            return { maxLen, path };
+        }
+
+        function generateAlgorithmSteps(mat) {
+            const steps = [];
+            const { maxLen, path } = findLongestPath(mat);
             
+            steps.push({
+                path: [], current: null,
+                highlightLines: [0, 1, 2],
+                explanation: { title: '初始化', text: 'DFS + Memoization<br>從每個格子開始找最長遞增路徑', formula: 'setup' }
+            });
+
+            // Show path building
+            for (let i = 0; i < path.length; i++) {
+                const currentPath = path.slice(0, i + 1);
+                const values = currentPath.map(([r, c]) => mat[r][c]);
+                
+                steps.push({
+                    path: currentPath, current: path[i],
+                    highlightLines: [8, 9, 10, 11, 12, 13],
+                    explanation: { 
+                        title: `探索路徑 (${i + 1}/${path.length})`, 
+                        text: `當前路徑: ${values.join(' → ')}`,
+                        formula: `Length = ${i + 1}`
+                    }
+                });
+            }
+
+            steps.push({
+                path, result: maxLen, final: true,
+                highlightLines: [6],
+                explanation: { title: '完成', text: `最長遞增路徑: ${path.map(([r, c]) => mat[r][c]).join(' → ')}<br>長度: ${maxLen}`, formula: `return ${maxLen}` }
+            });
+
             return steps;
         }
 
         let viz;
         function init() {
+            const m = matrix.length, n = matrix[0].length;
+            document.getElementById('gridDisplay').style.gridTemplateColumns = `repeat(${n}, 45px)`;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
-                    for (let i = 0; i < 3; i++) {
-                        for (let j = 0; j < 3; j++) {
+                    for (let i = 0; i < matrix.length; i++) {
+                        for (let j = 0; j < matrix[0].length; j++) {
                             let cls = 'cell';
                             if (step.path?.some(p => p[0] === i && p[1] === j)) cls += ' path';
                             if (step.current && step.current[0] === i && step.current[1] === j) cls += ' current';
@@ -116,11 +206,12 @@
                         }
                     }
                     document.getElementById('gridDisplay').innerHTML = html;
-                    document.getElementById('lengthDisplay').textContent = step.path?.length || 0;
+                    document.getElementById('resultDisplay').textContent = step.result ?? (step.path?.length || '-');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(matrix));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

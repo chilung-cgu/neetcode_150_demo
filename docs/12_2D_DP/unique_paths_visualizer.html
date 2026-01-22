@@ -6,18 +6,24 @@
     <title>Unique Paths 不同路徑 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: inline-grid; gap: 2px; margin: 15px auto; background: var(--viz-bg-secondary); padding: 10px; border-radius: 8px; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .grid-container { overflow: auto; padding: 10px; display: flex; justify-content: center; }
+        .grid { display: inline-grid; gap: 2px; background: var(--viz-bg-secondary); padding: 10px; border-radius: 8px; }
         .cell { 
             width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
-            background: var(--viz-primary); color: white; border-radius: 4px;
-            font-weight: bold; font-size: 1.1rem; transition: all 0.3s ease;
+            background: var(--viz-card-bg); color: var(--viz-text); border-radius: 4px;
+            font-weight: bold; font-size: 1rem; transition: all 0.3s ease; border: 2px solid transparent;
         }
-        .cell.current { background: var(--viz-secondary); color: #0f172a; }
-        .cell.filled { background: var(--viz-success); color: #0f172a; }
-        .cell.start { background: linear-gradient(135deg, var(--viz-success), var(--viz-secondary)); }
-        .cell.end { background: linear-gradient(135deg, var(--viz-warning), var(--viz-error)); }
-        .cell.border { background: rgba(100, 116, 139, 0.3); color: var(--text-muted); }
-        .robot { font-size: 1.5rem; }
+        .cell.start { background: linear-gradient(135deg, var(--viz-success), var(--viz-secondary)); color: #0f172a; }
+        .cell.end { background: linear-gradient(135deg, var(--viz-warning), var(--viz-error)); color: #0f172a; }
+        .cell.current { border-color: var(--viz-primary); background: var(--viz-primary); color: white; transform: scale(1.05); }
+        .cell.from-top { border-color: var(--viz-warning); }
+        .cell.from-left { border-color: var(--viz-success); }
+        .cell.filled { background: rgba(34, 197, 94, 0.15); }
     </style>
 </head>
 <body>
@@ -25,22 +31,31 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">不同路徑（UNIQUE PATHS）</div>
-                <div style="text-align: center;">
+                <div class="viz-title">不同路徑 (Unique Paths)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>行 (m):</label>
+                        <input type="number" id="mInput" value="3" min="1" max="7">
+                        <label>列 (n):</label>
+                        <input type="number" id="nInput" value="4" min="1" max="7">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
+                <div class="grid-container">
                     <div class="grid" id="gridDisplay"></div>
                 </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
@@ -48,36 +63,17 @@
                 
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(m·n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(m·n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item">
-                        <div class="state-label">目前位置</div>
-                        <div class="state-value" id="posDisplay">(0, 0)</div>
-                    </div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item">
-                        <div class="state-label">當前格子路徑數</div>
-                        <div class="state-value" id="valueDisplay" style="color: var(--viz-success);">1</div>
-                    </div>
-                    <div class="state-item">
-                        <div class="state-label">答案</div>
-                        <div class="state-value" id="answerDisplay">?</div>
-                    </div>
+                    <div class="state-item"><div class="state-label">答案</div><div class="state-value" id="answerDisplay">-</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">演算法說明</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">動態規劃 (C++)</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -87,51 +83,44 @@
         const codeStructure = [
             { line: 'int uniquePaths(int m, int n) {', id: 0 },
             { line: '    vector<vector<int>> dp(m, vector<int>(n, 1));', id: 1 },
-            { line: '    // 第一行和第一列都是 1（只有一種走法）', id: 2 },
-            { line: '', id: 3 },
-            { line: '    for (int i = 1; i < m; i++) {', id: 4 },
-            { line: '        for (int j = 1; j < n; j++) {', id: 5 },
-            { line: '            // 到達 (i,j) 的路徑 = 從上方 + 從左方', id: 6 },
-            { line: '            dp[i][j] = dp[i-1][j] + dp[i][j-1];', id: 7 },
-            { line: '        }', id: 8 },
-            { line: '    }', id: 9 },
-            { line: '    return dp[m-1][n-1];', id: 10 },
-            { line: '}', id: 11 },
+            { line: '    for (int i = 1; i < m; i++) {', id: 2 },
+            { line: '        for (int j = 1; j < n; j++) {', id: 3 },
+            { line: '            dp[i][j] = dp[i-1][j] + dp[i][j-1];', id: 4 },
+            { line: '        }', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return dp[m-1][n-1];', id: 7 },
+            { line: '}', id: 8 },
         ];
         
-        const m = 3, n = 4; // 3x4 網格
+        let currentM = 3, currentN = 4;
 
-        function generateAlgorithmSteps() {
+        function runCustomInput() {
+            const m = parseInt(document.getElementById('mInput').value);
+            const n = parseInt(document.getElementById('nInput').value);
+            if (m < 1 || m > 7 || n < 1 || n > 7) {
+                alert('行與列請輸入 1-7');
+                return;
+            }
+            currentM = m;
+            currentN = n;
+            init();
+        }
+
+        function generateAlgorithmSteps(m, n) {
             const steps = [];
             const dp = Array.from({ length: m }, () => Array(n).fill(0));
             
-            // 初始化
-            steps.push({
-                dp: dp.map(r => [...r]),
-                pos: null,
-                highlightLines: [0, 1, 2],
-                explanation: { 
-                    title: '初始化 DP 表格', 
-                    text: `網格大小：${m} × ${n}<br><br>機器人從左上角 (0,0) 出發，只能<strong>向右</strong>或<strong>向下</strong>移動。<br><br>問題：到達右下角 (${m-1},${n-1}) 有幾種不同路徑？` 
-                }
-            });
-            
-            // 初始化第一行和第一列為 1
+            // Init first row and column
             for (let i = 0; i < m; i++) dp[i][0] = 1;
             for (let j = 0; j < n; j++) dp[0][j] = 1;
-            
+
             steps.push({
-                dp: dp.map(r => [...r]),
-                pos: null,
-                filledCells: [...Array(m).keys()].map(i => [i, 0]).concat([...Array(n).keys()].map(j => [0, j])),
-                highlightLines: [1, 2],
-                explanation: { 
-                    title: '邊界條件', 
-                    text: `第一行：只能一路向右，只有 1 種走法<br>第一列：只能一路向下，只有 1 種走法<br><br>所以 dp[0][j] = dp[i][0] = 1` 
-                }
+                dp: dp.map(r => [...r]), pos: null,
+                highlightLines: [0, 1],
+                explanation: { title: '初始化', text: `網格 ${m}×${n}<br>第一行/列只有 1 種路徑`, formula: 'dp[0][*] = dp[*][0] = 1' }
             });
-            
-            // 填充 DP 表格
+
+            // Fill DP
             for (let i = 1; i < m; i++) {
                 for (let j = 1; j < n; j++) {
                     const fromTop = dp[i - 1][j];
@@ -139,31 +128,24 @@
                     dp[i][j] = fromTop + fromLeft;
                     
                     steps.push({
-                        dp: dp.map(r => [...r]),
-                        pos: [i, j],
-                        fromTop: [i - 1, j],
-                        fromLeft: [i, j - 1],
-                        highlightLines: [4, 5, 6, 7],
+                        dp: dp.map(r => [...r]), 
+                        pos: [i, j], fromTopPos: [i-1, j], fromLeftPos: [i, j-1],
+                        highlightLines: [2, 3, 4],
                         explanation: { 
                             title: `計算 dp[${i}][${j}]`, 
-                            text: `到達 (${i}, ${j}) 只能從<strong>上方</strong>或<strong>左方</strong>來：<br><br>從上方 (${i - 1}, ${j})：${fromTop} 種路徑<br>從左方 (${i}, ${j - 1})：${fromLeft} 種路徑<br><br>總計：${fromTop} + ${fromLeft} = ${dp[i][j]} 種`,
-                            formula: `dp[${i}][${j}] = dp[${i - 1}][${j}] + dp[${i}][${j - 1}] = ${fromTop} + ${fromLeft} = ${dp[i][j]}`
+                            text: `從上 (${i-1},${j}): ${fromTop}<br>從左 (${i},${j-1}): ${fromLeft}<br>總計: ${dp[i][j]}`,
+                            formula: `dp[${i}][${j}] = ${fromTop} + ${fromLeft} = ${dp[i][j]}`
                         }
                     });
                 }
             }
-            
+
             steps.push({
-                dp: dp.map(r => [...r]),
-                pos: [m - 1, n - 1],
-                answer: dp[m - 1][n - 1],
-                highlightLines: [10],
-                explanation: { 
-                    title: '演算法完成！', 
-                    text: `從 (0,0) 到 (${m - 1},${n - 1}) 共有 <strong>${dp[m - 1][n - 1]}</strong> 種不同路徑。<br><br>時間複雜度：O(m × n)<br>空間複雜度：O(m × n)，可優化至 O(n)` 
-                }
+                dp: dp.map(r => [...r]), pos: [m-1, n-1], answer: dp[m-1][n-1], final: true,
+                highlightLines: [7],
+                explanation: { title: '完成', text: `共有 ${dp[m-1][n-1]} 種不同路徑`, formula: `return ${dp[m-1][n-1]}` }
             });
-            
+
             return steps;
         }
 
@@ -173,6 +155,7 @@
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     const grid = document.getElementById('gridDisplay');
+                    const m = currentM, n = currentN;
                     grid.style.gridTemplateColumns = `repeat(${n}, 50px)`;
                     
                     let html = '';
@@ -186,18 +169,20 @@
                             else if (step.pos?.[0] === i && step.pos?.[1] === j) cls += ' current';
                             else if (val > 0) cls += ' filled';
                             
+                            // Highlight source cells
+                            if (step.fromTopPos && step.fromTopPos[0] === i && step.fromTopPos[1] === j) cls += ' from-top';
+                            if (step.fromLeftPos && step.fromLeftPos[0] === i && step.fromLeftPos[1] === j) cls += ' from-left';
+                            
                             const content = i === 0 && j === 0 ? '🤖' : (val || '-');
                             html += `<div class="${cls}">${content}</div>`;
                         }
                     }
                     grid.innerHTML = html;
                     
-                    document.getElementById('posDisplay').textContent = step.pos ? `(${step.pos[0]}, ${step.pos[1]})` : '-';
-                    document.getElementById('valueDisplay').textContent = step.pos ? (step.dp?.[step.pos[0]]?.[step.pos[1]] ?? '-') : '-';
-                    document.getElementById('answerDisplay').textContent = step.answer ?? '?';
+                    document.getElementById('answerDisplay').textContent = step.answer ?? '-';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentM, currentN));
         }
         
         function resetVisualization() { init(); }

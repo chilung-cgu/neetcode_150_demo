@@ -3,20 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Longest Common Subsequence 最長公共子序列 - 視覺化</title>
+    <title>Longest Common Subsequence - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .strings { display: flex; gap: 30px; justify-content: center; margin: 15px 0; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .strings { display: flex; gap: 30px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
         .string-box { text-align: center; }
-        .string-label { color: var(--text-muted); margin-bottom: 5px; }
+        .string-label { color: var(--viz-text-muted); margin-bottom: 5px; font-size: 0.9rem; }
         .chars { display: flex; gap: 4px; }
-        .char { width: 30px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); }
-        .dp-table { display: inline-grid; gap: 2px; margin: 15px auto; }
+        .char { width: 30px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); font-family: monospace; }
+        .char.match { background: var(--viz-success); color: #0f172a; }
+
+        .dp-scroll { overflow: auto; padding: 10px; display: flex; justify-content: center; }
+        .dp-table { display: inline-grid; gap: 2px; }
         .dp-cell { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); transition: all 0.3s; font-size: 0.9rem; }
-        .dp-cell.header { background: var(--viz-primary); color: white; }
-        .dp-cell.current { background: var(--viz-secondary); color: #0f172a; }
+        .dp-cell.header { background: var(--viz-primary); color: white; font-size: 0.9rem; }
+        .dp-cell.current { background: var(--viz-warning); color: #0f172a; box-shadow: 0 0 10px rgba(234, 179, 8, 0.5); }
         .dp-cell.match { background: var(--viz-success); color: #0f172a; }
-        .dp-cell.path { background: var(--viz-warning); color: #0f172a; }
+        .dp-cell.diag { border: 2px solid var(--viz-warning); }
     </style>
 </head>
 <body>
@@ -24,24 +32,36 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">最長公共子序列（2D DP）</div>
+                <div class="viz-title">最長公共子序列 (LCS)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>text1:</label>
+                        <input type="text" id="t1Input" value="ace" style="width: 100px;" maxlength="8">
+                        <label>text2:</label>
+                        <input type="text" id="t2Input" value="abcde" style="width: 100px;" maxlength="8">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
                 <div class="strings">
                     <div class="string-box"><div class="string-label">text1</div><div class="chars" id="text1Display"></div></div>
                     <div class="string-box"><div class="string-label">text2</div><div class="chars" id="text2Display"></div></div>
                 </div>
-                <div style="text-align: center;"><div class="dp-table" id="dpTable"></div></div>
+                
+                <div class="dp-scroll">
+                    <div class="dp-table" id="dpTable"></div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
@@ -52,12 +72,7 @@
                     <span class="label" style="margin-left: 12px;">Space:</span> O(m·n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">LCS 長度</div><div class="state-value" id="lcsDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">LCS 長度</div><div class="state-value" id="lcsDisplay">-</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -86,49 +101,123 @@
             { line: '    return dp[m][n];', id: 11 },
             { line: '}', id: 12 },
         ];
-        const t1 = "ace", t2 = "abcde";
-        function generateAlgorithmSteps() {
+        
+        let t1 = "ace", t2 = "abcde";
+
+        function runCustomInput() {
+            const s1 = document.getElementById('t1Input').value.trim();
+            const s2 = document.getElementById('t2Input').value.trim();
+            if (!s1 || !s2 || s1.length > 8 || s2.length > 8) {
+                alert('請輸入 1-8 個字元');
+                return;
+            }
+            t1 = s1;
+            t2 = s2;
+            init();
+        }
+
+        function generateAlgorithmSteps(text1, text2) {
             const steps = [];
-            const dp = Array(4).fill(0).map(() => Array(6).fill(0));
-            steps.push({ dp: dp.map(r=>[...r]), highlightLines: [0,1,2], explanation: { title: '初始化', text: `t1 = "${t1}"<br>t2 = "${t2}"<br><br>dp[i][j] = t1[0..i-1] 和 t2[0..j-1] 的 LCS 長度` } });
-            // Simplified simulation
-            dp[1][1] = 1; // a == a
-            steps.push({ dp: dp.map(r=>[...r]), i: 1, j: 1, match: true, highlightLines: [5,6], explanation: { title: 'a == a', text: 'dp[1][1] = dp[0][0] + 1 = 1', formula: 'dp[1][1] = dp[0][0] + 1 = 1' } });
-            dp[1][2] = 1; dp[1][3] = 1; dp[1][4] = 1; dp[1][5] = 1;
-            dp[2][1] = 1; dp[2][2] = 1; dp[2][3] = 2; // c == c
-            steps.push({ dp: dp.map(r=>[...r]), i: 2, j: 3, match: true, highlightLines: [5,6], explanation: { title: 'c == c', text: 'dp[2][3] = dp[1][2] + 1 = 2', formula: 'dp[2][3] = dp[1][2] + 1 = 2' } });
-            dp[2][4] = 2; dp[2][5] = 2;
-            dp[3][1] = 1; dp[3][2] = 1; dp[3][3] = 2; dp[3][4] = 2; dp[3][5] = 3; // e == e
-            steps.push({ dp: dp.map(r=>[...r]), i: 3, j: 5, match: true, highlightLines: [5,6], explanation: { title: 'e == e', text: 'dp[3][5] = dp[2][4] + 1 = 3', formula: 'dp[3][5] = dp[2][4] + 1 = 3' } });
-            steps.push({ dp: dp.map(r=>[...r]), lcs: 3, final: true, highlightLines: [11], explanation: { title: '完成！', text: `LCS 長度 = dp[3][5] = 3<br>LCS = "ace"<br><br>時間：O(m×n)` } });
+            const m = text1.length, n = text2.length;
+            const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+
+            steps.push({
+                dp: dp.map(r => [...r]), i: -1, j: -1,
+                highlightLines: [0, 1, 2],
+                explanation: { title: '初始化', text: `t1="${text1}", t2="${text2}"<br>dp[i][j] = LCS(t1[0..i-1], t2[0..j-1])`, formula: 'setup' }
+            });
+
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    const c1 = text1[i - 1], c2 = text2[j - 1];
+                    const isMatch = c1 === c2;
+                    
+                    if (isMatch) {
+                        dp[i][j] = dp[i - 1][j - 1] + 1;
+                        steps.push({
+                            dp: dp.map(r => [...r]), i, j, match: true, diag: [i-1, j-1],
+                            charMatch: { i1: i-1, i2: j-1 },
+                            highlightLines: [5, 6],
+                            explanation: { 
+                                title: `匹配: '${c1}' == '${c2}'`, 
+                                text: `dp[${i}][${j}] = dp[${i-1}][${j-1}] + 1 = ${dp[i][j]}`,
+                                formula: `dp[${i}][${j}] = ${dp[i-1][j-1]} + 1 = ${dp[i][j]}`
+                            }
+                        });
+                    } else {
+                        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+                        steps.push({
+                            dp: dp.map(r => [...r]), i, j, match: false,
+                            highlightLines: [7, 8],
+                            explanation: { 
+                                title: `不匹配: '${c1}' != '${c2}'`, 
+                                text: `dp[${i}][${j}] = max(dp[${i-1}][${j}], dp[${i}][${j-1}]) = ${dp[i][j]}`,
+                                formula: `max(${dp[i-1][j]}, ${dp[i][j-1]}) = ${dp[i][j]}`
+                            }
+                        });
+                    }
+                }
+            }
+
+            steps.push({
+                dp: dp.map(r => [...r]), lcs: dp[m][n], final: true,
+                highlightLines: [11],
+                explanation: { title: '完成', text: `LCS 長度: ${dp[m][n]}`, formula: `return ${dp[m][n]}` }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('text1Display').innerHTML = t1.split('').map(c => `<div class="char">${c}</div>`).join('');
-                    document.getElementById('text2Display').innerHTML = t2.split('').map(c => `<div class="char">${c}</div>`).join('');
-                    const dp = step.dp || Array(4).fill(0).map(() => Array(6).fill(0));
+                    // Strings
+                    document.getElementById('text1Display').innerHTML = t1.split('').map((c, idx) => {
+                        let cls = 'char';
+                        if (step.charMatch && step.charMatch.i1 === idx) cls += ' match';
+                        return `<div class="${cls}">${c}</div>`;
+                    }).join('');
+                    document.getElementById('text2Display').innerHTML = t2.split('').map((c, idx) => {
+                        let cls = 'char';
+                        if (step.charMatch && step.charMatch.i2 === idx) cls += ' match';
+                        return `<div class="${cls}">${c}</div>`;
+                    }).join('');
+
+                    // DP Table
+                    const m = t1.length, n = t2.length;
                     const grid = document.getElementById('dpTable');
-                    grid.style.gridTemplateColumns = `repeat(${dp[0].length + 1}, 35px)`;
+                    grid.style.gridTemplateColumns = `repeat(${n + 2}, 35px)`;
+                    
                     let html = '<div class="dp-cell header"></div>';
-                    ('_' + t2).split('').forEach(c => html += `<div class="dp-cell header">${c === '_' ? '' : c}</div>`);
-                    ('_' + t1).split('').forEach((c, i) => {
-                        html += `<div class="dp-cell header">${c === '_' ? '' : c}</div>`;
-                        dp[i]?.forEach((v, j) => {
+                    html += '<div class="dp-cell header">""</div>';
+                    for (let j = 0; j < n; j++) html += `<div class="dp-cell header">${t2[j]}</div>`;
+                    
+                    html += '<div class="dp-cell header">""</div>';
+                    for (let j = 0; j <= n; j++) {
+                        let cls = 'dp-cell';
+                        if (step.i === 0 && step.j === j) cls += ' current';
+                        html += `<div class="${cls}">0</div>`;
+                    }
+
+                    for (let i = 1; i <= m; i++) {
+                        html += `<div class="dp-cell header">${t1[i - 1]}</div>`;
+                        for (let j = 0; j <= n; j++) {
                             let cls = 'dp-cell';
                             if (step.i === i && step.j === j) cls += step.match ? ' match' : ' current';
-                            html += `<div class="${cls}">${v}</div>`;
-                        });
-                    });
+                            if (step.diag && step.diag[0] === i && step.diag[1] === j) cls += ' diag';
+                            html += `<div class="${cls}">${step.dp?.[i]?.[j] ?? 0}</div>`;
+                        }
+                    }
                     grid.innerHTML = html;
-                    document.getElementById('lcsDisplay').textContent = step.lcs ?? (step.dp?.[3]?.[5] ?? 0);
+                    
+                    document.getElementById('lcsDisplay').textContent = step.lcs ?? (step.dp?.[m]?.[n] ?? '-');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(t1, t2));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

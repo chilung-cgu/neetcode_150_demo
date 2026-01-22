@@ -3,15 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distinct Subsequences Visualization</title>
+    <title>Distinct Subsequences - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .strings { text-align: center; margin: 10px 0; }
-        .str { display: inline-flex; gap: 2px; margin: 5px 10px; }
-        .char { width: 28px; height: 32px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 3px; }
-        .char.matched { background: var(--viz-success); color: #0f172a; }
-        .ways { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 10px; }
-        .way { padding: 4px 8px; border-radius: 4px; font-family: monospace; background: rgba(255,255,255,0.1); font-size: 0.85rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .strings { text-align: center; margin: 15px 0; }
+        .string-line { margin: 5px 0; }
+        .string-label { color: var(--viz-text-muted); margin-right: 10px; }
+        .str { display: inline-flex; gap: 2px; }
+        .char { width: 28px; height: 32px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-weight: bold; background: var(--viz-bg-secondary); border-radius: 3px; }
+        .char.s { background: var(--viz-primary); color: white; }
+        .char.t { background: var(--viz-warning); color: #0f172a; }
+        .char.matched { border: 2px solid var(--viz-success); box-shadow: 0 0 5px var(--viz-success); }
+
+        .dp-scroll { overflow: auto; padding: 10px; display: flex; justify-content: center; }
+        .dp-table { display: inline-grid; gap: 2px; }
+        .dp-cell { width: 32px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 3px; background: var(--viz-bg-secondary); font-size: 0.8rem; }
+        .dp-cell.header { background: var(--viz-primary); color: white; }
+        .dp-cell.current { background: var(--viz-warning); color: #0f172a; }
+        .dp-cell.match { background: var(--viz-success); color: #0f172a; }
     </style>
 </head>
 <body>
@@ -19,54 +33,51 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">DISTINCT SUBSEQUENCES</div>
-                <div class="strings">
-                    <div>s: <span class="str" id="sDisplay"></span></div>
-                    <div>t: <span class="str" id="tDisplay"></span></div>
+                <div class="viz-title">不同的子序列 (Distinct Subsequences)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>s:</label>
+                        <input type="text" id="sInput" value="rabbbit" style="width: 120px;" maxlength="10">
+                        <label>t:</label>
+                        <input type="text" id="tInput" value="rabbit" style="width: 100px;" maxlength="8">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
-                <div style="text-align: center; color: var(--viz-text-muted);">Ways to form t:</div>
-                <div class="ways" id="waysDisplay"></div>
+                
+                <div class="strings" id="stringsDisplay"></div>
+                
+                <div class="dp-scroll">
+                    <div class="dp-table" id="dpTable"></div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                </div>
-                <div class="controls-row-2">
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(m·n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(m·n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Count</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">方法數</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">2D DP</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -75,36 +86,76 @@
     <script>
         const codeStructure = [
             { line: 'int numDistinct(string s, string t) {', id: 0 },
-            { line: '    vector<vector<long>> dp(m+1, vector<long>(n+1, 0));', id: 1 },
-            { line: '    for (int i = 0; i <= m; i++) dp[i][0] = 1;', id: 2 },
-            { line: '    for (int i = 1; i <= m; i++) {', id: 3 },
-            { line: '        for (int j = 1; j <= n; j++) {', id: 4 },
-            { line: '            dp[i][j] = dp[i-1][j];', id: 5 },
-            { line: '            if (s[i-1] == t[j-1])', id: 6 },
-            { line: '                dp[i][j] += dp[i-1][j-1];', id: 7 },
-            { line: '        }', id: 8 },
-            { line: '    }', id: 9 },
-            { line: '    return dp[m][n];', id: 10 },
-            { line: '}', id: 11 },
+            { line: '    int m = s.size(), n = t.size();', id: 1 },
+            { line: '    vector<vector<long>> dp(m+1, vector<long>(n+1, 0));', id: 2 },
+            { line: '    for (int i = 0; i <= m; i++) dp[i][0] = 1;', id: 3 },
+            { line: '    for (int i = 1; i <= m; i++) {', id: 4 },
+            { line: '        for (int j = 1; j <= n; j++) {', id: 5 },
+            { line: '            dp[i][j] = dp[i-1][j];', id: 6 },
+            { line: '            if (s[i-1] == t[j-1])', id: 7 },
+            { line: '                dp[i][j] += dp[i-1][j-1];', id: 8 },
+            { line: '        }', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    return dp[m][n];', id: 11 },
+            { line: '}', id: 12 },
         ];
-        const s = 'rabbbit', t = 'rabbit';
-        const ways = [
-            [0, 1, 2, 3, 4, 6], // rabb_it
-            [0, 1, 2, 4, 5, 6], // rab_bit
-            [0, 1, 3, 4, 5, 6], // ra_bbit
-        ];
+        
+        let sStr = "rabbbit", tStr = "rabbit";
 
-        function generateAlgorithmSteps() {
-            const steps = [];
-            
-            steps.push({ matched: [], waysFound: [], highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Count subsequences of s that equal t' }});
-            
-            for (let i = 0; i < ways.length; i++) {
-                steps.push({ matched: ways[i], waysFound: ways.slice(0, i + 1), highlightLines: [6, 7], explanation: { title: `Way ${i + 1}`, text: 'Match characters' }});
+        function runCustomInput() {
+            const s = document.getElementById('sInput').value;
+            const t = document.getElementById('tInput').value;
+            if (!s || !t || s.length < t.length) {
+                alert('s 長度必須 >= t 長度');
+                return;
             }
+            sStr = s; tStr = t;
+            init();
+        }
+
+        function generateAlgorithmSteps(s, t) {
+            const steps = [];
+            const m = s.length, n = t.length;
+            const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
             
-            steps.push({ matched: [], waysFound: ways, highlightLines: [10], explanation: { title: 'Done!', text: `${ways.length} distinct subsequences` }});
-            
+            for (let i = 0; i <= m; i++) dp[i][0] = 1;
+
+            steps.push({
+                dp: dp.map(r => [...r]), i: -1, j: -1,
+                highlightLines: [0, 1, 2, 3],
+                explanation: { title: '初始化', text: `s="${s}", t="${t}"<br>dp[i][0]=1 (空字串 t 有 1 種匹配)`, formula: 'setup' }
+            });
+
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    dp[i][j] = dp[i - 1][j]; // Skip s[i-1]
+                    const isMatch = s[i - 1] === t[j - 1];
+                    
+                    if (isMatch) {
+                        dp[i][j] += dp[i - 1][j - 1];
+                    }
+                    
+                    steps.push({
+                        dp: dp.map(r => [...r]), i, j, match: isMatch,
+                        charMatch: isMatch ? { si: i-1, tj: j-1 } : null,
+                        highlightLines: isMatch ? [6, 7, 8] : [6],
+                        explanation: { 
+                            title: `dp[${i}][${j}]`, 
+                            text: isMatch 
+                                ? `'${s[i-1]}' == '${t[j-1]}'<br>dp[${i}][${j}] = dp[${i-1}][${j}] + dp[${i-1}][${j-1}] = ${dp[i][j]}`
+                                : `'${s[i-1]}' != '${t[j-1]}'<br>dp[${i}][${j}] = dp[${i-1}][${j}] = ${dp[i][j]}`,
+                            formula: `dp[${i}][${j}] = ${dp[i][j]}`
+                        }
+                    });
+                }
+            }
+
+            steps.push({
+                dp: dp.map(r => [...r]), result: dp[m][n], final: true,
+                highlightLines: [11],
+                explanation: { title: '完成', text: `方法數: ${dp[m][n]}`, formula: `return ${dp[m][n]}` }
+            });
+
             return steps;
         }
 
@@ -113,20 +164,56 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('sDisplay').innerHTML = [...s].map((c, i) =>
-                        `<span class="char ${step.matched?.includes(i) ? 'matched' : ''}">${c}</span>`
-                    ).join('');
-                    document.getElementById('tDisplay').innerHTML = [...t].map(c =>
-                        `<span class="char">${c}</span>`
-                    ).join('');
-                    document.getElementById('waysDisplay').innerHTML = (step.waysFound || []).map((w, i) =>
-                        `<span class="way">${i + 1}: ${w.map(j => s[j]).join('')}</span>`
-                    ).join('');
-                    document.getElementById('countDisplay').textContent = step.waysFound?.length || 0;
+                    // Strings
+                    let html = '<div class="string-line"><span class="string-label">s:</span><span class="str">';
+                    html += sStr.split('').map((c, idx) => {
+                        let cls = 'char s';
+                        if (step.charMatch && step.charMatch.si === idx) cls += ' matched';
+                        return `<span class="${cls}">${c}</span>`;
+                    }).join('');
+                    html += '</span></div>';
+                    
+                    html += '<div class="string-line"><span class="string-label">t:</span><span class="str">';
+                    html += tStr.split('').map((c, idx) => {
+                        let cls = 'char t';
+                        if (step.charMatch && step.charMatch.tj === idx) cls += ' matched';
+                        return `<span class="${cls}">${c}</span>`;
+                    }).join('');
+                    html += '</span></div>';
+                    document.getElementById('stringsDisplay').innerHTML = html;
+
+                    // DP Table
+                    const m = sStr.length, n = tStr.length;
+                    const grid = document.getElementById('dpTable');
+                    grid.style.gridTemplateColumns = `repeat(${n + 2}, 32px)`;
+                    
+                    let tableHtml = '<div class="dp-cell header"></div>';
+                    tableHtml += '<div class="dp-cell header">""</div>';
+                    for (let j = 0; j < n; j++) tableHtml += `<div class="dp-cell header">${tStr[j]}</div>`;
+                    
+                    tableHtml += '<div class="dp-cell header">""</div>';
+                    for (let j = 0; j <= n; j++) {
+                        let cls = 'dp-cell';
+                        if (step.i === 0 && step.j === j) cls += ' current';
+                        tableHtml += `<div class="${cls}">${step.dp?.[0]?.[j] ?? 0}</div>`;
+                    }
+
+                    for (let i = 1; i <= m; i++) {
+                        tableHtml += `<div class="dp-cell header">${sStr[i - 1]}</div>`;
+                        for (let j = 0; j <= n; j++) {
+                            let cls = 'dp-cell';
+                            if (step.i === i && step.j === j) cls += step.match ? ' match' : ' current';
+                            tableHtml += `<div class="${cls}">${step.dp?.[i]?.[j] ?? 0}</div>`;
+                        }
+                    }
+                    grid.innerHTML = tableHtml;
+                    
+                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : '-';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(sStr, tStr));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>
