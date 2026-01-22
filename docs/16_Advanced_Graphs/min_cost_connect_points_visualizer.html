@@ -6,13 +6,43 @@
     <title>Min Cost to Connect All Points - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .graph { position: relative; height: 250px; margin: 20px 0; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .point { position: absolute; width: 30px; height: 30px; border-radius: 50%; background: var(--viz-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; }
-        .point.connected { background: var(--viz-success); color: #0f172a; }
-        .edge { position: absolute; background: var(--viz-warning); height: 3px; transform-origin: left center; }
-        .edge.mst { background: var(--viz-success); height: 4px; }
-        .heap { display: flex; gap: 6px; justify-content: center; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; flex-wrap: wrap; }
-        .heap-item { background: var(--viz-warning); color: #0f172a; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .canvas-container { 
+            position: relative; width: 100%; height: 280px; margin: 20px 0; 
+            background: var(--viz-bg-secondary); border-radius: 8px; overflow: hidden;
+        }
+        .canvas-container canvas { width: 100%; height: 100%; }
+
+        .point-label { 
+            position: absolute; width: 32px; height: 32px; border-radius: 50%; 
+            background: var(--viz-primary); color: white; display: flex; 
+            align-items: center; justify-content: center; font-weight: bold; 
+            font-size: 0.85rem; transition: all 0.3s; transform: translate(-50%, -50%);
+            border: 2px solid transparent;
+        }
+        .point-label.connected { background: var(--viz-success); color: #0f172a; }
+        .point-label.current { border-color: white; transform: translate(-50%, -50%) scale(1.2); }
+
+        .heap-container { 
+            display: flex; gap: 6px; justify-content: center; margin: 10px 0; 
+            padding: 12px; background: var(--viz-bg-secondary); border-radius: 8px; flex-wrap: wrap;
+            min-height: 40px; align-items: center;
+        }
+        .heap-label { color: var(--viz-text-muted); font-size: 0.85rem; margin-right: 10px; }
+        .heap-item { 
+            background: var(--viz-warning); color: #0f172a; padding: 5px 10px; 
+            border-radius: 4px; font-size: 0.8rem; font-family: monospace;
+        }
+        .heap-item.top { background: var(--viz-error); color: white; font-weight: bold; }
+
+        .mst-edges-container {
+            display: flex; gap: 8px; justify-content: center; margin: 10px 0; 
+            padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; flex-wrap: wrap;
+        }
+        .mst-edge { padding: 5px 10px; border-radius: 4px; background: var(--viz-success); color: #0f172a; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -20,45 +50,56 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">連接所有點的最小成本（PRIM'S MST）</div>
-                <div class="graph" id="graphDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">Min Heap（距離, 點）</div>
-                <div class="heap" id="heapDisplay"></div>
+                <div class="viz-title">連接所有點的最小成本 (Min Cost Connect Points)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">範例1 (5點)</button>
+                        <button onclick="setExample(2)">範例2 (4點正方形)</button>
+                        <button onclick="setExample(3)">範例3 (3點三角形)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="canvas-container" id="canvasContainer">
+                    <canvas id="graphCanvas"></canvas>
+                </div>
+
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">MST 邊</div>
+                <div class="mst-edges-container" id="mstEdgesDisplay"></div>
+                
+                <div class="heap-container">
+                    <span class="heap-label">Min Heap:</span>
+                    <div id="heapDisplay" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(n² log n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(n²)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">總成本</div><div class="state-value" id="costDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">已連接點數</div><div class="state-value" id="connectedDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">總成本</div><div class="state-value" id="costDisplay">0</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">Prim's Algorithm (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -69,56 +110,230 @@
             { line: 'int minCostConnectPoints(vector<vector<int>>& points) {', id: 0 },
             { line: '    int n = points.size(), cost = 0;', id: 1 },
             { line: '    vector<bool> visited(n, false);', id: 2 },
-            { line: '    priority_queue<pair<int,int>, vector<...>, greater<>> pq;', id: 3 },
+            { line: '    priority_queue<pair<int,int>, vec, greater<>> pq;', id: 3 },
             { line: '    pq.push({0, 0}); // {距離, 點}', id: 4 },
-            { line: '    while (!pq.empty()) {', id: 5 },
-            { line: '        auto [d, u] = pq.top(); pq.pop();', id: 6 },
-            { line: '        if (visited[u]) continue;', id: 7 },
-            { line: '        visited[u] = true; cost += d;', id: 8 },
-            { line: '        for (int v = 0; v < n; v++) {', id: 9 },
-            { line: '            if (!visited[v]) {', id: 10 },
-            { line: '                int dist = |x1-x2| + |y1-y2|;', id: 11 },
-            { line: '                pq.push({dist, v});', id: 12 },
-            { line: '            }', id: 13 },
-            { line: '        }', id: 14 },
-            { line: '    }', id: 15 },
-            { line: '    return cost;', id: 16 },
-            { line: '}', id: 17 },
+            { line: '    int connected = 0;', id: 5 },
+            { line: '    while (connected < n) {', id: 6 },
+            { line: '        auto [d, u] = pq.top(); pq.pop();', id: 7 },
+            { line: '        if (visited[u]) continue;', id: 8 },
+            { line: '        visited[u] = true;', id: 9 },
+            { line: '        cost += d; connected++;', id: 10 },
+            { line: '        for (int v = 0; v < n; v++) {', id: 11 },
+            { line: '            if (!visited[v]) {', id: 12 },
+            { line: '                int dist = abs(x1-x2) + abs(y1-y2);', id: 13 },
+            { line: '                pq.push({dist, v});', id: 14 },
+            { line: '            }', id: 15 },
+            { line: '        }', id: 16 },
+            { line: '    }', id: 17 },
+            { line: '    return cost;', id: 18 },
+            { line: '}', id: 19 },
         ];
-        const points = [[0,0],[2,2],[3,10],[5,2],[7,0]];
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: [[0,0],[2,2],[3,10],[5,2],[7,0]],
+            2: [[0,0],[0,4],[4,4],[4,0]],
+            3: [[0,0],[4,0],[2,3]]
+        };
+        
+        let currentPoints = examples[1];
+
+        function setExample(n) {
+            currentPoints = examples[n];
+            init();
+        }
+
+        function manhattanDist(p1, p2) {
+            return Math.abs(p1[0] - p2[0]) + Math.abs(p1[1] - p2[1]);
+        }
+
+        function generateAlgorithmSteps(points) {
             const steps = [];
-            steps.push({ visited: [], edges: [], cost: 0, heap: [[0,0]], highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: `5 個點：${JSON.stringify(points)}<br><br>Prim's Algorithm (MST)<br>從點 0 開始，每次選最短邊` } });
-            steps.push({ visited: [0], edges: [], cost: 0, heap: [[4,1],[13,2],[7,3],[7,4]], highlightLines: [5,6,7,8,9,10,11,12], explanation: { title: '連接點 0', text: '加入點 0<br>將所有鄰居加入 heap' } });
-            steps.push({ visited: [0,1], edges: [[0,1]], cost: 4, heap: [[4,3],[7,4],[13,2]], highlightLines: [6,7,8], explanation: { title: '連接點 1', text: '選 (4, 1)<br>cost += 4 = 4', formula: '|0-2| + |0-2| = 4' } });
-            steps.push({ visited: [0,1,3], edges: [[0,1],[1,3]], cost: 4+3, heap: [[7,4],[11,2]], highlightLines: [6,7,8], explanation: { title: '連接點 3', text: '選 (3, 3)（從點1）<br>cost += 3 = 7', formula: '|2-5| + |2-2| = 3' } });
-            steps.push({ visited: [0,1,3,4], edges: [[0,1],[1,3],[3,4]], cost: 4+3+4, heap: [[11,2]], highlightLines: [6,7,8], explanation: { title: '連接點 4', text: '選 (4, 4)（從點3）<br>cost += 4 = 11', formula: '|5-7| + |2-0| = 4' } });
-            steps.push({ visited: [0,1,3,4,2], edges: [[0,1],[1,3],[3,4],[3,2]], cost: 4+3+4+10, final: true, highlightLines: [16], explanation: { title: '🎉 完成！', text: '總成本 = 4+3+4+10 = 21<br><br>時間：O(n² log n)' } });
+            const n = points.length;
+            const visited = Array(n).fill(false);
+            let cost = 0;
+            let connected = 0;
+            
+            // Min heap: [distance, to, from]
+            let heap = [[0, 0, -1]];
+            const mstEdges = [];
+            
+            steps.push({
+                visited: [...visited], cost: 0, connected: 0,
+                heap: heap.map(h => ({dist: h[0], to: h[1]})),
+                mstEdges: [], currentPoint: null,
+                highlightLines: [0, 1, 2, 3, 4, 5],
+                explanation: { 
+                    title: '初始化', 
+                    text: `${n} 個點<br>Prim's Algorithm 建構 MST<br>從點 0 開始，每次選最短邊`,
+                    formula: 'setup'
+                }
+            });
+
+            while (connected < n && heap.length > 0) {
+                // Sort heap to simulate priority queue
+                heap.sort((a, b) => a[0] - b[0]);
+                const [d, u, from] = heap.shift();
+                
+                if (visited[u]) continue;
+                
+                visited[u] = true;
+                cost += d;
+                connected++;
+                
+                if (from !== -1) {
+                    mstEdges.push([from, u, d]);
+                }
+                
+                // Add all edges from u to unvisited nodes
+                const newEdges = [];
+                for (let v = 0; v < n; v++) {
+                    if (!visited[v]) {
+                        const dist = manhattanDist(points[u], points[v]);
+                        heap.push([dist, v, u]);
+                        newEdges.push({from: u, to: v, dist});
+                    }
+                }
+                
+                steps.push({
+                    visited: [...visited], cost, connected,
+                    heap: heap.slice(0, 8).map(h => ({dist: h[0], to: h[1]})),
+                    mstEdges: mstEdges.map(e => ({from: e[0], to: e[1], cost: e[2]})),
+                    currentPoint: u, lastEdgeCost: d,
+                    highlightLines: d === 0 ? [7, 8, 9, 10] : [7, 8, 9, 10, 11, 12, 13, 14],
+                    explanation: { 
+                        title: `連接點 ${u}`, 
+                        text: from === -1 
+                            ? `起始點，cost = 0`
+                            : `從點 ${from} 連接<br>邊成本 = ${d}<br>累計成本 = ${cost}`,
+                        formula: from === -1 ? 'start' : `cost += ${d} = ${cost}`
+                    }
+                });
+            }
+
+            steps.push({
+                visited: [...visited], cost, connected,
+                heap: [], mstEdges: mstEdges.map(e => ({from: e[0], to: e[1], cost: e[2]})),
+                currentPoint: null, final: true,
+                highlightLines: [18],
+                explanation: { 
+                    title: '完成!', 
+                    text: `MST 總成本 = ${cost}<br>共 ${mstEdges.length} 條邊`,
+                    formula: `return ${cost}`
+                }
+            });
+
             return steps;
         }
+
+        function drawGraph(step) {
+            const container = document.getElementById('canvasContainer');
+            const canvas = document.getElementById('graphCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            // Calculate scale and offset
+            const padding = 50;
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            for (const p of currentPoints) {
+                minX = Math.min(minX, p[0]);
+                maxX = Math.max(maxX, p[0]);
+                minY = Math.min(minY, p[1]);
+                maxY = Math.max(maxY, p[1]);
+            }
+            
+            const rangeX = maxX - minX || 1;
+            const rangeY = maxY - minY || 1;
+            const scaleX = (canvas.width - padding * 2) / rangeX;
+            const scaleY = (canvas.height - padding * 2) / rangeY;
+            const scale = Math.min(scaleX, scaleY);
+            
+            const offsetX = padding + (canvas.width - padding * 2 - rangeX * scale) / 2;
+            const offsetY = padding + (canvas.height - padding * 2 - rangeY * scale) / 2;
+            
+            function toCanvas(p) {
+                return [
+                    offsetX + (p[0] - minX) * scale,
+                    canvas.height - offsetY - (p[1] - minY) * scale
+                ];
+            }
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw MST edges
+            ctx.lineWidth = 3;
+            for (const edge of (step.mstEdges || [])) {
+                const p1 = toCanvas(currentPoints[edge.from]);
+                const p2 = toCanvas(currentPoints[edge.to]);
+                
+                ctx.strokeStyle = '#22c55e';
+                ctx.beginPath();
+                ctx.moveTo(p1[0], p1[1]);
+                ctx.lineTo(p2[0], p2[1]);
+                ctx.stroke();
+                
+                // Draw edge cost label
+                const midX = (p1[0] + p2[0]) / 2;
+                const midY = (p1[1] + p2[1]) / 2;
+                ctx.fillStyle = '#22c55e';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.fillText(edge.cost, midX + 5, midY - 5);
+            }
+            
+            // Remove old point labels
+            container.querySelectorAll('.point-label').forEach(el => el.remove());
+            
+            // Add point labels
+            currentPoints.forEach((p, i) => {
+                const [cx, cy] = toCanvas(p);
+                const label = document.createElement('div');
+                label.className = 'point-label';
+                if (step.visited?.[i]) label.className += ' connected';
+                if (step.currentPoint === i) label.className += ' current';
+                label.style.left = cx + 'px';
+                label.style.top = cy + 'px';
+                label.textContent = i;
+                container.appendChild(label);
+            });
+        }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const container = document.getElementById('graphDisplay');
-                    let html = '';
-                    // Draw points
-                    points.forEach((p, i) => {
-                        const x = 30 + p[0] * 25;
-                        const y = 200 - p[1] * 18;
-                        const cls = step.visited?.includes(i) ? 'point connected' : 'point';
-                        html += `<div class="${cls}" style="left:${x}px;top:${y}px">${i}</div>`;
-                    });
-                    container.innerHTML = html;
-                    document.getElementById('heapDisplay').innerHTML = (step.heap || []).map(h => `<span class="heap-item">(${h[0]},${h[1]})</span>`).join('') || '空';
+                    drawGraph(step);
+                    
+                    // MST Edges
+                    const mstEdges = step.mstEdges || [];
+                    document.getElementById('mstEdgesDisplay').innerHTML = 
+                        mstEdges.length > 0 
+                            ? mstEdges.map(e => `<span class="mst-edge">${e.from}↔${e.to} (${e.cost})</span>`).join('')
+                            : '<span style="color: var(--viz-text-muted)">無</span>';
+                    
+                    // Heap
+                    const heap = step.heap || [];
+                    document.getElementById('heapDisplay').innerHTML = 
+                        heap.length > 0 
+                            ? heap.map((h, i) => `<span class="heap-item ${i === 0 ? 'top' : ''}">(${h.dist},${h.to})</span>`).join('')
+                            : '<span style="color: var(--viz-text-muted)">空</span>';
+                    
+                    document.getElementById('connectedDisplay').textContent = step.connected ?? 0;
                     document.getElementById('costDisplay').textContent = step.cost ?? 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentPoints));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
+        window.addEventListener('resize', () => {
+            if (viz && viz.currentStep) {
+                drawGraph(viz.steps[viz.currentStep]);
+            }
+        });
     </script>
 </body>
 </html>

@@ -3,15 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Delay Time 網絡延遲時間 - 視覺化</title>
+    <title>Network Delay Time - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .nodes { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .node { width: 50px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .graph-container { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .node { 
+            width: 55px; height: 55px; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; font-weight: bold; 
+            border-radius: 50%; background: var(--viz-primary); color: white; transition: all 0.3s;
+        }
         .node .id { font-size: 1rem; }
         .node .dist { font-size: 0.7rem; opacity: 0.8; }
+        .node.start { border: 3px solid var(--viz-success); }
         .node.visited { background: var(--viz-success); color: #0f172a; }
-        .node.current { background: var(--viz-warning); color: #0f172a; }
+        .node.current { background: var(--viz-warning); color: #0f172a; transform: scale(1.1); }
+
+        .edges-container { 
+            display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; 
+            margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px;
+        }
+        .edge { padding: 5px 10px; border-radius: 4px; font-size: 0.85rem; background: var(--viz-bg-primary); }
+
+        .pq-container {
+            display: flex; gap: 6px; justify-content: center; margin: 10px 0; 
+            padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; flex-wrap: wrap;
+        }
+        .pq-item { padding: 5px 10px; border-radius: 4px; background: var(--viz-warning); color: #0f172a; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -19,44 +40,51 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">網絡延遲時間（DIJKSTRA）</div>
-                <div class="nodes" id="nodesDisplay"></div>
+                <div class="viz-title">網絡延遲時間 (Network Delay Time)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">範例1 (4節點)</button>
+                        <button onclick="setExample(2)">範例2 (不連通)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="graph-container" id="graphDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">邊 (u, v, w)</div>
+                <div class="edges-container" id="edgesDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">Priority Queue (dist, node)</div>
+                <div class="pq-container" id="pqDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(E log V)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(V+E)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">起點</div><div class="state-value">2</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">最大延遲</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">?</div></div>
+                    <div class="state-item"><div class="state-label">起點</div><div class="state-value" id="startDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">最大延遲</div><div class="state-value" id="maxDisplay">-</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">Dijkstra (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -64,9 +92,9 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int networkDelayTime(vector<vector<int>>& times, int n, int k) {', id: 0 },
+            { line: 'int networkDelayTime(times, n, k) {', id: 0 },
             { line: '    vector<int> dist(n + 1, INT_MAX);', id: 1 },
-            { line: '    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;', id: 2 },
+            { line: '    priority_queue<pair<int,int>, vec, greater<>> pq;', id: 2 },
             { line: '    dist[k] = 0; pq.push({0, k});', id: 3 },
             { line: '    while (!pq.empty()) {', id: 4 },
             { line: '        auto [d, u] = pq.top(); pq.pop();', id: 5 },
@@ -82,33 +110,125 @@
             { line: '    return maxDist == INT_MAX ? -1 : maxDist;', id: 15 },
             { line: '}', id: 16 },
         ];
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: { n: 4, k: 2, times: [[2,1,1],[2,3,1],[3,4,1]] },
+            2: { n: 3, k: 1, times: [[1,2,1]] }
+        };
+        
+        let currentExample = examples[1];
+
+        function setExample(n) {
+            currentExample = examples[n];
+            init();
+        }
+
+        function generateAlgorithmSteps(n, k, times) {
             const steps = [];
-            steps.push({ dists: {1:'∞',2:0,3:'∞',4:'∞'}, visited: [], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: 'n=4, k=2 (起點)<br>dist[2]=0, 其他=∞<br><br>Dijkstra: 貪心選最短' } });
-            steps.push({ dists: {1:1,2:0,3:1,4:'∞'}, visited: [2], current: 2, highlightLines: [4,5,7,8,9,10], explanation: { title: '處理節點 2', text: 'dist[1] = 0+1 = 1<br>dist[3] = 0+1 = 1' } });
-            steps.push({ dists: {1:1,2:0,3:1,4:2}, visited: [2,1], current: 1, highlightLines: [4,5,7,8,9,10], explanation: { title: '處理節點 1', text: 'dist[4] = 1+1 = 2' } });
-            steps.push({ dists: {1:1,2:0,3:1,4:2}, visited: [2,1,3,4], max: 2, final: true, highlightLines: [14,15], explanation: { title: '🎉 完成！', text: '最大延遲 = 2<br><br>時間：O(E log V)' } });
+            const INF = Infinity;
+            const dist = Array(n + 1).fill(INF);
+            dist[k] = 0;
+            
+            // Build graph
+            const graph = {};
+            for (let i = 1; i <= n; i++) graph[i] = [];
+            for (const [u, v, w] of times) {
+                graph[u].push([v, w]);
+            }
+            
+            steps.push({
+                dist: Object.fromEntries(Array.from({length: n}, (_, i) => [i + 1, i + 1 === k ? 0 : '∞'])),
+                visited: [], pq: [[0, k]], n, k,
+                highlightLines: [0, 1, 2, 3],
+                explanation: { 
+                    title: '初始化', 
+                    text: `n=${n}, k=${k} (起點)<br>dist[${k}]=0, 其他=∞<br><br>Dijkstra: 貪心選最短`,
+                    formula: 'setup'
+                }
+            });
+
+            const visited = [];
+            const pq = [[0, k]];
+
+            while (pq.length > 0) {
+                pq.sort((a, b) => a[0] - b[0]);
+                const [d, u] = pq.shift();
+                
+                if (d > dist[u]) continue;
+                visited.push(u);
+                
+                for (const [v, w] of graph[u]) {
+                    if (dist[u] + w < dist[v]) {
+                        dist[v] = dist[u] + w;
+                        pq.push([dist[v], v]);
+                    }
+                }
+                
+                steps.push({
+                    dist: Object.fromEntries(Array.from({length: n}, (_, i) => [i + 1, dist[i + 1] === INF ? '∞' : dist[i + 1]])),
+                    visited: [...visited], current: u, pq: [...pq], n, k,
+                    highlightLines: [5, 6, 7, 8, 9, 10],
+                    explanation: { 
+                        title: `處理節點 ${u}`, 
+                        text: `dist=${d}，更新鄰居<br>${graph[u].map(([v, w]) => `${v}: min(${dist[v] === INF ? '∞' : dist[v]}, ${d}+${w})`).join('<br>') || '無鄰居'}`,
+                        formula: `visited += ${u}`
+                    }
+                });
+            }
+
+            const maxDist = Math.max(...dist.slice(1));
+            const result = maxDist === INF ? -1 : maxDist;
+            
+            steps.push({
+                dist: Object.fromEntries(Array.from({length: n}, (_, i) => [i + 1, dist[i + 1] === INF ? '∞' : dist[i + 1]])),
+                visited, pq: [], n, k, max: result, final: true,
+                highlightLines: [14, 15],
+                explanation: { 
+                    title: '完成!', 
+                    text: result === -1 ? '有節點無法到達' : `所有節點可達<br>最大延遲 = ${result}`,
+                    formula: `return ${result}`
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
+            const { n, k, times } = currentExample;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const dists = step.dists || {};
+                    // Nodes
                     let html = '';
-                    for (let i = 1; i <= 4; i++) {
+                    for (let i = 1; i <= step.n; i++) {
                         let cls = 'node';
+                        if (i === step.k) cls += ' start';
                         if (step.visited?.includes(i)) cls += ' visited';
                         if (i === step.current) cls += ' current';
-                        html += `<div class="${cls}"><div class="id">${i}</div><div class="dist">${dists[i] ?? '∞'}</div></div>`;
+                        html += `<div class="${cls}"><div class="id">${i}</div><div class="dist">${step.dist?.[i] ?? '∞'}</div></div>`;
                     }
-                    document.getElementById('nodesDisplay').innerHTML = html;
-                    document.getElementById('maxDisplay').textContent = step.max ?? '?';
+                    document.getElementById('graphDisplay').innerHTML = html;
+                    
+                    // Edges
+                    document.getElementById('edgesDisplay').innerHTML = 
+                        times.map(([u, v, w]) => `<span class="edge">${u}→${v}:${w}</span>`).join('');
+                    
+                    // PQ
+                    document.getElementById('pqDisplay').innerHTML = 
+                        (step.pq || []).length > 0 
+                            ? step.pq.map(([d, u]) => `<span class="pq-item">(${d},${u})</span>`).join('')
+                            : '<span style="color: var(--viz-text-muted)">空</span>';
+                    
+                    document.getElementById('startDisplay').textContent = step.k ?? '-';
+                    document.getElementById('maxDisplay').textContent = step.max ?? '-';
+                    document.getElementById('maxDisplay').style.color = step.max === -1 ? 'var(--viz-error)' : 'var(--viz-success)';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(n, k, times));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

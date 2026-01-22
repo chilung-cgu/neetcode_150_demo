@@ -3,14 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alien Dictionary 外星字典 - 視覺化</title>
+    <title>Alien Dictionary - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .words { display: flex; flex-direction: column; gap: 8px; align-items: center; margin: 20px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .word { font-family: monospace; font-size: 1.2rem; font-weight: bold; }
-        .edges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
-        .edge { padding: 8px 15px; background: var(--viz-primary); color: white; border-radius: 6px; }
-        .result { text-align: center; font-size: 1.5rem; font-weight: bold; margin: 15px 0; color: var(--viz-success); letter-spacing: 5px; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .words-container { 
+            display: flex; flex-direction: column; gap: 8px; align-items: center; 
+            margin: 20px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px;
+        }
+        .word { font-family: monospace; font-size: 1.2rem; font-weight: bold; transition: all 0.3s; }
+        .word.highlight { color: var(--viz-warning); }
+        .word .char { display: inline-block; padding: 2px 4px; }
+        .word .char.diff { background: var(--viz-warning); color: #0f172a; border-radius: 3px; }
+
+        .comparison-display {
+            text-align: center; margin: 10px 0; padding: 12px;
+            background: var(--viz-bg-secondary); border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .edges-container { 
+            display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; 
+            margin: 10px 0; min-height: 40px; align-items: center;
+        }
+        .edge-item { 
+            padding: 8px 15px; background: var(--viz-primary); color: white; 
+            border-radius: 6px; font-family: monospace; font-size: 1rem;
+        }
+        .edge-item.new { animation: pulse 0.5s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+        .graph-container {
+            display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 15px 0;
+        }
+        .letter-node {
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; background: var(--viz-primary); color: white; font-weight: bold;
+            font-size: 1.1rem; transition: all 0.3s;
+        }
+        .letter-node.processed { background: var(--viz-success); color: #0f172a; }
+
+        .result-container { 
+            text-align: center; margin: 15px 0; padding: 15px;
+            background: var(--viz-bg-secondary); border-radius: 8px;
+        }
+        .result-value { font-size: 1.8rem; font-weight: bold; color: var(--viz-success); letter-spacing: 8px; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -18,44 +58,55 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">外星字典（拓撲排序）</div>
-                <div class="words" id="wordsDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">推導出的順序關係</div>
-                <div class="edges" id="edgesDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">字母順序</div>
-                <div class="result" id="resultDisplay">?</div>
+                <div class="viz-title">外星字典 (Alien Dictionary)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">範例1 (標準)</button>
+                        <button onclick="setExample(2)">範例2 (簡單)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">單詞列表（按外星語順序排列）</div>
+                <div class="words-container" id="wordsDisplay"></div>
+                
+                <div class="comparison-display" id="comparisonDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">推導出的順序關係</div>
+                <div class="edges-container" id="edgesDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 15px; font-size: 0.85rem;">字母節點（拓撲排序）</div>
+                <div class="graph-container" id="graphDisplay"></div>
+                
+                <div class="result-container">
+                    <div style="color: var(--viz-text-muted); font-size: 0.85rem; margin-bottom: 5px;">外星語字母順序</div>
+                    <div class="result-value" id="resultDisplay">?</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
-            </div>
+                
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(C) C=總字元數
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1) 最多26字母
                 </div>
-            
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
-                </div>
+            </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">拓撲排序 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -64,45 +115,227 @@
     <script>
         const codeStructure = [
             { line: 'string alienOrder(vector<string>& words) {', id: 0 },
-            { line: '    // 1. 建圖：比較相鄰單詞', id: 1 },
-            { line: '    for (int i = 0; i < words.size() - 1; i++) {', id: 2 },
-            { line: '        找第一個不同字母 → 加邊', id: 3 },
-            { line: '    }', id: 4 },
-            { line: '    // 2. 拓撲排序 (BFS)', id: 5 },
-            { line: '    queue<char> q;', id: 6 },
-            { line: '    for (入度為 0 的字母) q.push(c);', id: 7 },
-            { line: '    string result;', id: 8 },
-            { line: '    while (!q.empty()) {', id: 9 },
-            { line: '        char c = q.front(); q.pop();', id: 10 },
-            { line: '        result += c;', id: 11 },
-            { line: '        更新鄰居入度', id: 12 },
-            { line: '    }', id: 13 },
-            { line: '    return result;', id: 14 },
-            { line: '}', id: 15 },
+            { line: '    // 1. 收集所有字母，建圖', id: 1 },
+            { line: '    unordered_map<char, set<char>> graph;', id: 2 },
+            { line: '    unordered_map<char, int> inDegree;', id: 3 },
+            { line: '    for (string& w : words) for (char c : w) inDegree[c] = 0;', id: 4 },
+            { line: '    // 2. 比較相鄰單詞，推導順序', id: 5 },
+            { line: '    for (int i = 0; i < words.size() - 1; i++) {', id: 6 },
+            { line: '        找第一個不同字母 c1, c2', id: 7 },
+            { line: '        if (!graph[c1].count(c2)) {', id: 8 },
+            { line: '            graph[c1].insert(c2); inDegree[c2]++;', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    // 3. 拓撲排序 (BFS)', id: 12 },
+            { line: '    queue<char> q;', id: 13 },
+            { line: '    for (auto& [c, deg] : inDegree) if (deg == 0) q.push(c);', id: 14 },
+            { line: '    string result;', id: 15 },
+            { line: '    while (!q.empty()) { /* 標準拓撲排序 */ }', id: 16 },
+            { line: '    return result.size() == inDegree.size() ? result : "";', id: 17 },
+            { line: '}', id: 18 },
         ];
-        const words = ["wrt", "wrf", "er", "ett", "rftt"];
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: ['wrt', 'wrf', 'er', 'ett', 'rftt'],
+            2: ['z', 'x', 'z']  // Invalid - cycle detected
+        };
+        
+        let currentWords = examples[1];
+
+        function setExample(n) {
+            currentWords = examples[n];
+            init();
+        }
+
+        function generateAlgorithmSteps(words) {
             const steps = [];
-            steps.push({ edges: [], result: '', highlightLines: [0,1,2,3,4], explanation: { title: '初始化', text: '外星語言單詞：<br>wrt, wrf, er, ett, rftt<br><br>比較相鄰單詞推導順序' } });
-            steps.push({ edges: ['t→f'], result: '', highlightLines: [2,3], explanation: { title: 'wrt vs wrf', text: 't 在 f 之前<br>加邊 t → f' } });
-            steps.push({ edges: ['t→f','w→e'], result: '', highlightLines: [2,3], explanation: { title: 'wrf vs er', text: 'w 在 e 之前<br>加邊 w → e' } });
-            steps.push({ edges: ['t→f','w→e','r→t'], result: '', highlightLines: [2,3], explanation: { title: 'er vs ett', text: 'r 在 t 之前<br>加邊 r → t' } });
-            steps.push({ edges: ['t→f','w→e','r→t','e→r'], result: '', highlightLines: [2,3], explanation: { title: 'ett vs rftt', text: 'e 在 r 之前<br>加邊 e → r' } });
-            steps.push({ edges: ['t→f','w→e','r→t','e→r'], result: 'wertf', final: true, highlightLines: [5,6,7,8,9,10,11,14], explanation: { title: '🎉 完成！', text: '拓撲排序結果：wertf<br><br>時間：O(C) C=字符總數' } });
+            
+            // Collect all unique characters
+            const allChars = new Set();
+            for (const word of words) {
+                for (const c of word) allChars.add(c);
+            }
+            const chars = [...allChars].sort();
+            
+            steps.push({
+                words, chars, edges: [], processed: [], result: '',
+                highlightLines: [0, 1, 2, 3, 4],
+                explanation: { 
+                    title: '初始化', 
+                    text: `單詞: ${words.join(', ')}<br>字母: ${chars.join(', ')}<br><br>比較相鄰單詞推導順序`,
+                    formula: 'setup'
+                }
+            });
+
+            // Build graph by comparing adjacent words
+            const edges = [];
+            const graph = {};
+            const inDegree = {};
+            for (const c of chars) {
+                graph[c] = [];
+                inDegree[c] = 0;
+            }
+
+            for (let i = 0; i < words.length - 1; i++) {
+                const w1 = words[i], w2 = words[i + 1];
+                let found = false;
+                let diffIndex = -1;
+                
+                for (let j = 0; j < Math.min(w1.length, w2.length); j++) {
+                    if (w1[j] !== w2[j]) {
+                        const c1 = w1[j], c2 = w2[j];
+                        if (!graph[c1].includes(c2)) {
+                            graph[c1].push(c2);
+                            inDegree[c2]++;
+                            edges.push([c1, c2]);
+                        }
+                        found = true;
+                        diffIndex = j;
+                        
+                        steps.push({
+                            words, chars, edges: [...edges], processed: [],
+                            comparing: [i, i + 1], diffIndex,
+                            highlightLines: [6, 7, 8, 9],
+                            explanation: { 
+                                title: `比較 "${w1}" vs "${w2}"`, 
+                                text: `第 ${j} 位不同: ${c1} ≠ ${c2}<br>推導: ${c1} 在 ${c2} 之前`,
+                                formula: `${c1} → ${c2}`
+                            }
+                        });
+                        break;
+                    }
+                }
+                
+                // Invalid case: w1 is prefix of w2 but longer
+                if (!found && w1.length > w2.length) {
+                    steps.push({
+                        words, chars, edges, processed: [], result: '', invalid: true,
+                        highlightLines: [17],
+                        explanation: { 
+                            title: '無效輸入!', 
+                            text: `"${w1}" 比 "${w2}" 長但是前綴<br>這在任何字典順序中都不可能`,
+                            formula: 'return ""'
+                        }
+                    });
+                    return steps;
+                }
+            }
+
+            // Topological sort
+            const queue = [];
+            for (const c of chars) {
+                if (inDegree[c] === 0) queue.push(c);
+            }
+            
+            const result = [];
+            const processed = [];
+
+            steps.push({
+                words, chars, edges, processed: [], result: '',
+                highlightLines: [12, 13, 14, 15],
+                explanation: { 
+                    title: '開始拓撲排序', 
+                    text: `入度為 0 的字母: ${queue.join(', ')}<br>這些可以先輸出`,
+                    formula: 'BFS'
+                }
+            });
+
+            while (queue.length > 0) {
+                const c = queue.shift();
+                result.push(c);
+                processed.push(c);
+                
+                for (const next of graph[c]) {
+                    inDegree[next]--;
+                    if (inDegree[next] === 0) {
+                        queue.push(next);
+                    }
+                }
+                
+                steps.push({
+                    words, chars, edges, processed: [...processed], 
+                    result: result.join(''), currentChar: c,
+                    highlightLines: [16],
+                    explanation: { 
+                        title: `輸出 '${c}'`, 
+                        text: `加入結果: ${result.join('')}`,
+                        formula: `result += '${c}'`
+                    }
+                });
+            }
+
+            // Check if all characters are processed (detect cycle)
+            const finalResult = result.length === chars.length ? result.join('') : '';
+            steps.push({
+                words, chars, edges, processed, 
+                result: finalResult, final: true,
+                highlightLines: [17],
+                explanation: { 
+                    title: finalResult ? '完成!' : '檢測到環!', 
+                    text: finalResult 
+                        ? `外星語字母順序: ${finalResult}`
+                        : '存在循環依賴，無有效順序',
+                    formula: finalResult ? `return "${finalResult}"` : 'return ""'
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('wordsDisplay').innerHTML = words.map(w => `<div class="word">${w}</div>`).join('');
-                    document.getElementById('edgesDisplay').innerHTML = (step.edges || []).map(e => `<span class="edge">${e}</span>`).join('') || '無';
+                    // Words
+                    const words = step.words || currentWords;
+                    document.getElementById('wordsDisplay').innerHTML = words.map((w, i) => {
+                        let cls = 'word';
+                        if (step.comparing && (step.comparing[0] === i || step.comparing[1] === i)) {
+                            cls += ' highlight';
+                        }
+                        let html = '';
+                        for (let j = 0; j < w.length; j++) {
+                            const charCls = step.diffIndex === j && step.comparing && 
+                                (step.comparing[0] === i || step.comparing[1] === i) ? 'char diff' : 'char';
+                            html += `<span class="${charCls}">${w[j]}</span>`;
+                        }
+                        return `<div class="${cls}">${html}</div>`;
+                    }).join('');
+                    
+                    // Comparison
+                    if (step.comparing) {
+                        document.getElementById('comparisonDisplay').innerHTML = 
+                            `正在比較: <strong>${words[step.comparing[0]]}</strong> vs <strong>${words[step.comparing[1]]}</strong>`;
+                    } else {
+                        document.getElementById('comparisonDisplay').innerHTML = '';
+                    }
+                    
+                    // Edges
+                    const edges = step.edges || [];
+                    document.getElementById('edgesDisplay').innerHTML = 
+                        edges.length > 0 
+                            ? edges.map(e => `<span class="edge-item">${e[0]} → ${e[1]}</span>`).join('')
+                            : '<span style="color: var(--viz-text-muted)">無</span>';
+                    
+                    // Graph nodes
+                    const chars = step.chars || [];
+                    const processed = step.processed || [];
+                    document.getElementById('graphDisplay').innerHTML = 
+                        chars.map(c => {
+                            const cls = processed.includes(c) ? 'letter-node processed' : 'letter-node';
+                            return `<div class="${cls}">${c}</div>`;
+                        }).join('');
+                    
+                    // Result
                     document.getElementById('resultDisplay').textContent = step.result || '?';
+                    document.getElementById('resultDisplay').style.color = 
+                        step.invalid ? 'var(--viz-error)' : 'var(--viz-success)';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentWords));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

@@ -3,13 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reconstruct Itinerary Visualization</title>
+    <title>Reconstruct Itinerary - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .path { display: flex; gap: 6px; justify-content: center; margin: 15px 0; flex-wrap: wrap; align-items: center; }
-        .city { padding: 10px 14px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
-        .city.current { background: var(--viz-success); color: #0f172a; }
-        .arrow { color: var(--viz-text-muted); }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .path-container { 
+            display: flex; gap: 6px; justify-content: center; margin: 20px 0; 
+            flex-wrap: wrap; align-items: center; min-height: 50px;
+        }
+        .city { 
+            padding: 12px 18px; border-radius: 8px; font-family: monospace; font-weight: bold;
+            background: var(--viz-primary); color: white; transition: all 0.3s;
+        }
+        .city.current { background: var(--viz-warning); color: #0f172a; transform: scale(1.05); }
+        .city.final { background: var(--viz-success); color: #0f172a; }
+        .arrow { color: var(--viz-text-muted); font-size: 1.2rem; }
+
+        .tickets-container { 
+            display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; 
+            margin: 15px 0; padding: 12px; background: var(--viz-bg-secondary); border-radius: 8px;
+        }
+        .ticket { padding: 5px 10px; border-radius: 4px; font-size: 0.85rem; background: var(--viz-bg-primary); }
+        .ticket.used { opacity: 0.4; text-decoration: line-through; }
+
+        .stack-container {
+            display: flex; gap: 6px; justify-content: center; margin: 10px 0; 
+            padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px;
+        }
+        .stack-item { padding: 6px 12px; border-radius: 4px; background: var(--viz-warning); color: #0f172a; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -17,38 +41,48 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">RECONSTRUCT ITINERARY (EULERIAN PATH)</div>
-                <div class="path" id="pathDisplay"></div>
+                <div class="viz-title">重建行程 (Reconstruct Itinerary)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">範例1 (簡單)</button>
+                        <button onclick="setExample(2)">範例2 (複雜)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">機票</div>
+                <div class="tickets-container" id="ticketsDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">Stack</div>
+                <div class="stack-container" id="stackDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">結果行程</div>
+                <div class="path-container" id="pathDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
-            <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O(E log E)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(V+E)
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">HIERHOLZER'S ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">Hierholzer's Algorithm (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -57,27 +91,112 @@
     <script>
         const codeStructure = [
             { line: 'vector<string> findItinerary(tickets) {', id: 0 },
-            { line: '    // Build adjacency list (sorted)', id: 1 },
-            { line: '    map<string, priority_queue<string, vec, greater<>>> graph;', id: 2 },
-            { line: '    for (auto& t : tickets) graph[t[0]].push(t[1]);', id: 3 },
-            { line: '    vector<string> result;', id: 4 },
-            { line: '    stack<string> stk; stk.push("JFK");', id: 5 },
-            { line: '    while (!stk.empty()) {', id: 6 },
-            { line: '        string curr = stk.top();', id: 7 },
-            { line: '        if (graph[curr].empty()) { result.push_back(curr); stk.pop(); }', id: 8 },
-            { line: '        else { stk.push(graph[curr].top()); graph[curr].pop(); }', id: 9 },
-            { line: '    }', id: 10 },
-            { line: '    reverse(result.begin(), result.end());', id: 11 },
-            { line: '    return result;', id: 12 },
-            { line: '}', id: 13 },
+            { line: '    map<string, priority_queue<string, vec, greater<>>> graph;', id: 1 },
+            { line: '    for (auto& t : tickets) graph[t[0]].push(t[1]);', id: 2 },
+            { line: '    vector<string> result;', id: 3 },
+            { line: '    stack<string> stk; stk.push("JFK");', id: 4 },
+            { line: '    while (!stk.empty()) {', id: 5 },
+            { line: '        string curr = stk.top();', id: 6 },
+            { line: '        if (graph[curr].empty()) {', id: 7 },
+            { line: '            result.push_back(curr);', id: 8 },
+            { line: '            stk.pop();', id: 9 },
+            { line: '        } else {', id: 10 },
+            { line: '            stk.push(graph[curr].top());', id: 11 },
+            { line: '            graph[curr].pop();', id: 12 },
+            { line: '        }', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '    reverse(result.begin(), result.end());', id: 15 },
+            { line: '    return result;', id: 16 },
+            { line: '}', id: 17 },
         ];
-        const itinerary = ["JFK", "MUC", "LHR", "SFO", "SJC"];
+        
+        const examples = {
+            1: [['MUC','LHR'],['JFK','MUC'],['SFO','SJC'],['LHR','SFO']],
+            2: [['JFK','SFO'],['JFK','ATL'],['SFO','ATL'],['ATL','JFK'],['ATL','SFO']]
+        };
+        
+        let currentTickets = examples[1];
 
-        function generateAlgorithmSteps() {
+        function setExample(n) {
+            currentTickets = examples[n];
+            init();
+        }
+
+        function generateAlgorithmSteps(tickets) {
             const steps = [];
-            for (let i = 0; i <= itinerary.length; i++) {
-                steps.push({ path: itinerary.slice(0, i), current: i - 1, highlightLines: i === 0 ? [0, 1, 2, 3, 4, 5] : [7, 8, 9], explanation: { title: i === 0 ? 'Start from JFK' : `Visit ${itinerary[i-1]}`, text: i === itinerary.length ? 'Complete itinerary!' : 'Follow lexicographically smallest' }});
+            
+            // Build graph
+            const graph = {};
+            for (const [from, to] of tickets) {
+                if (!graph[from]) graph[from] = [];
+                graph[from].push(to);
             }
+            // Sort destinations lexicographically
+            for (const key in graph) {
+                graph[key].sort();
+            }
+            
+            const usedTickets = [];
+            
+            steps.push({
+                stack: ['JFK'], result: [], usedTickets: [],
+                highlightLines: [0, 1, 2, 3, 4],
+                explanation: { 
+                    title: '初始化', 
+                    text: `機票: ${tickets.map(t => t[0]+'→'+t[1]).join(', ')}<br><br>Hierholzer 演算法找歐拉路徑<br>從 JFK 開始`,
+                    formula: 'setup'
+                }
+            });
+
+            // Simulate the algorithm
+            const stack = ['JFK'];
+            const result = [];
+            const graphCopy = JSON.parse(JSON.stringify(graph));
+
+            while (stack.length > 0) {
+                const curr = stack[stack.length - 1];
+                
+                if (!graphCopy[curr] || graphCopy[curr].length === 0) {
+                    result.push(curr);
+                    stack.pop();
+                    
+                    steps.push({
+                        stack: [...stack], result: [...result], usedTickets: [...usedTickets],
+                        highlightLines: [7, 8, 9],
+                        explanation: { 
+                            title: `${curr} 無出邊`, 
+                            text: `加入結果，彈出 stack`,
+                            formula: `result += ${curr}`
+                        }
+                    });
+                } else {
+                    const next = graphCopy[curr].shift();
+                    stack.push(next);
+                    usedTickets.push([curr, next]);
+                    
+                    steps.push({
+                        stack: [...stack], result: [...result], usedTickets: [...usedTickets],
+                        highlightLines: [10, 11, 12],
+                        explanation: { 
+                            title: `${curr} → ${next}`, 
+                            text: `使用機票，push ${next}`,
+                            formula: `stack += ${next}`
+                        }
+                    });
+                }
+            }
+
+            const finalPath = [...result].reverse();
+            steps.push({
+                stack: [], result: finalPath, usedTickets, final: true, reversed: true,
+                highlightLines: [15, 16],
+                explanation: { 
+                    title: '完成!', 
+                    text: `反轉結果<br>行程: ${finalPath.join(' → ')}`,
+                    formula: 'done'
+                }
+            });
+
             return steps;
         }
 
@@ -86,16 +205,33 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    step.path.forEach((city, i) => {
-                        if (i > 0) html += '<span class="arrow">→</span>';
-                        html += `<span class="city ${i === step.current ? 'current' : ''}">${city}</span>`;
-                    });
-                    document.getElementById('pathDisplay').innerHTML = html || '<em style="color:var(--viz-text-muted)">-</em>';
+                    // Tickets
+                    document.getElementById('ticketsDisplay').innerHTML = 
+                        currentTickets.map(t => {
+                            const used = step.usedTickets?.some(u => u[0] === t[0] && u[1] === t[1]);
+                            return `<span class="ticket ${used ? 'used' : ''}">${t[0]}→${t[1]}</span>`;
+                        }).join('');
+                    
+                    // Stack
+                    document.getElementById('stackDisplay').innerHTML = 
+                        (step.stack || []).length > 0 
+                            ? step.stack.map(s => `<span class="stack-item">${s}</span>`).join('')
+                            : '<span style="color: var(--viz-text-muted)">空</span>';
+                    
+                    // Result
+                    const result = step.result || [];
+                    if (result.length > 0) {
+                        document.getElementById('pathDisplay').innerHTML = result.map((city, i) => 
+                            `${i > 0 ? '<span class="arrow">→</span>' : ''}<span class="city ${step.final ? 'final' : (i === result.length - 1 ? 'current' : '')}">${city}</span>`
+                        ).join('');
+                    } else {
+                        document.getElementById('pathDisplay').innerHTML = '<span style="color: var(--viz-text-muted)">等待...</span>';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentTickets));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

@@ -3,16 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cheapest Flights 最便宜機票 - 視覺化</title>
+    <title>Cheapest Flights Within K Stops - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .cities { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .city { width: 60px; padding: 15px 10px; text-align: center; border-radius: 8px; background: var(--viz-primary); color: white; }
-        .city .name { font-weight: bold; font-size: 1.1rem; }
-        .city .cost { font-size: 0.8rem; opacity: 0.8; }
-        .city.start { background: var(--viz-success); color: #0f172a; }
-        .city.end { background: var(--viz-warning); color: #0f172a; }
-        .city.visited { border: 3px solid var(--viz-success); }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .graph-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .city-node { 
+            width: 70px; padding: 15px 10px; text-align: center; border-radius: 10px; 
+            background: var(--viz-primary); color: white; transition: all 0.3s;
+        }
+        .city-node .name { font-weight: bold; font-size: 1.2rem; }
+        .city-node .cost { font-size: 0.85rem; opacity: 0.9; margin-top: 5px; }
+        .city-node.start { background: var(--viz-success); color: #0f172a; }
+        .city-node.end { background: var(--viz-warning); color: #0f172a; }
+        .city-node.updated { animation: pulse 0.4s; border: 2px solid white; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+        .flights-container { 
+            display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; 
+            margin: 15px 0; padding: 12px; background: var(--viz-bg-secondary); border-radius: 8px;
+        }
+        .flight-item { 
+            padding: 6px 12px; border-radius: 4px; font-size: 0.85rem;
+            background: var(--viz-bg-primary);
+        }
+        .flight-item.processing { background: var(--viz-warning); color: #0f172a; }
+
+        .round-display {
+            display: flex; align-items: center; justify-content: center; gap: 20px;
+            margin: 15px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px;
+        }
+        .round-label { font-size: 0.9rem; }
+        .round-value { font-size: 1.5rem; font-weight: bold; color: var(--viz-primary); }
+
+        .dist-table {
+            display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+            margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px;
+        }
+        .dist-item { 
+            padding: 8px 12px; border-radius: 6px; background: var(--viz-bg-primary); text-align: center;
+        }
+        .dist-item .city { font-weight: bold; }
+        .dist-item .value { font-size: 0.85rem; color: var(--viz-text-muted); }
+        .dist-item.updated { background: var(--viz-warning); color: #0f172a; }
+        .dist-item.updated .value { color: #0f172a; }
     </style>
 </head>
 <body>
@@ -20,46 +57,63 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">K 站中轉最便宜機票（BELLMAN-FORD 變體）</div>
-                <div class="cities" id="citiesDisplay"></div>
+                <div class="viz-title">K 站中轉最便宜機票 (Cheapest Flights)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <button onclick="setExample(1)">範例1 (k=1)</button>
+                        <button onclick="setExample(2)">範例2 (k=2)</button>
+                        <button onclick="resetVisualization()">↻ 重置</button>
+                    </div>
+                </div>
+                
+                <div class="graph-container" id="graphDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">航班 (起點, 終點, 價格)</div>
+                <div class="flights-container" id="flightsDisplay"></div>
+                
+                <div class="round-display">
+                    <div>
+                        <span class="round-label">當前輪數:</span>
+                        <span class="round-value" id="roundDisplay">0</span>
+                    </div>
+                    <div>
+                        <span class="round-label">最多中轉:</span>
+                        <span class="round-value" id="kDisplay">-</span>
+                    </div>
+                </div>
+
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">距離表</div>
+                <div class="dist-table" id="distDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">1x</option>
+                            <option value="800">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
+                    <span class="label">Time:</span> O(k × E)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">起點</div><div class="state-value">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">終點</div><div class="state-value">2</div></div>
-                    <div class="state-item"><div class="state-label">最多中轉</div><div class="state-value">1</div></div>
-                    <div class="state-item"><div class="state-label">最低價格</div><div class="state-value" id="priceDisplay" style="color: var(--viz-success);">?</div></div>
+                    <div class="state-item"><div class="state-label">起點</div><div class="state-value" id="srcDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">終點</div><div class="state-value" id="dstDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">最低價格</div><div class="state-value" id="priceDisplay">-</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">Bellman-Ford 變體 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -67,48 +121,147 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int findCheapestPrice(int n, vector<vector<int>>& flights,', id: 0 },
-            { line: '                      int src, int dst, int k) {', id: 1 },
-            { line: '    vector<int> dist(n, INT_MAX);', id: 2 },
-            { line: '    dist[src] = 0;', id: 3 },
-            { line: '    for (int i = 0; i <= k; i++) { // k+1 輪', id: 4 },
-            { line: '        vector<int> temp = dist;', id: 5 },
-            { line: '        for (auto& f : flights) {', id: 6 },
-            { line: '            if (dist[f[0]] != INT_MAX) {', id: 7 },
-            { line: '                temp[f[1]] = min(temp[f[1]], dist[f[0]] + f[2]);', id: 8 },
-            { line: '            }', id: 9 },
-            { line: '        }', id: 10 },
-            { line: '        dist = temp;', id: 11 },
-            { line: '    }', id: 12 },
-            { line: '    return dist[dst] == INT_MAX ? -1 : dist[dst];', id: 13 },
-            { line: '}', id: 14 },
+            { line: 'int findCheapestPrice(int n, flights, src, dst, k) {', id: 0 },
+            { line: '    vector<int> dist(n, INT_MAX);', id: 1 },
+            { line: '    dist[src] = 0;', id: 2 },
+            { line: '    for (int i = 0; i <= k; i++) {  // k+1 輪', id: 3 },
+            { line: '        vector<int> temp = dist;  // 防止同輪更新影響', id: 4 },
+            { line: '        for (auto& [u, v, price] : flights) {', id: 5 },
+            { line: '            if (dist[u] != INT_MAX) {', id: 6 },
+            { line: '                temp[v] = min(temp[v], dist[u] + price);', id: 7 },
+            { line: '            }', id: 8 },
+            { line: '        }', id: 9 },
+            { line: '        dist = temp;', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return dist[dst] == INT_MAX ? -1 : dist[dst];', id: 12 },
+            { line: '}', id: 13 },
         ];
-        function generateAlgorithmSteps() {
+        
+        const examples = {
+            1: { n: 4, flights: [[0,1,100],[1,2,100],[2,3,100],[0,3,500]], src: 0, dst: 3, k: 1 },
+            2: { n: 4, flights: [[0,1,100],[1,2,100],[2,3,100],[0,3,500]], src: 0, dst: 3, k: 2 }
+        };
+        
+        let currentExample = examples[1];
+
+        function setExample(exNum) {
+            currentExample = examples[exNum];
+            init();
+        }
+
+        function generateAlgorithmSteps(n, flights, src, dst, k) {
             const steps = [];
-            steps.push({ costs: {0:0,1:'∞',2:'∞'}, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: '3 城市, 起點=0, 終點=2<br>最多 1 次中轉<br><br>Bellman-Ford 限制輪數' } });
-            steps.push({ costs: {0:0,1:100,2:500}, round: 1, highlightLines: [4,5,6,7,8], explanation: { title: '第 1 輪', text: '0→1: 100<br>0→2: 500<br><br>直飛 500，經 1 中轉？' } });
-            steps.push({ costs: {0:0,1:100,2:200}, round: 2, highlightLines: [4,5,6,7,8], explanation: { title: '第 2 輪', text: '1→2: 100+100=200<br><br>經過 1 中轉更便宜！' } });
-            steps.push({ costs: {0:0,1:100,2:200}, price: 200, final: true, highlightLines: [13], explanation: { title: '🎉 完成！', text: '最便宜 = 200<br>路線：0→1→2<br><br>時間：O(k × E)' } });
+            const INF = Infinity;
+            let dist = Array(n).fill(INF);
+            dist[src] = 0;
+            
+            steps.push({
+                dist: dist.map(d => d === INF ? '∞' : d),
+                round: 0, updated: [], n, src, dst, k,
+                highlightLines: [0, 1, 2],
+                explanation: { 
+                    title: '初始化', 
+                    text: `${n} 個城市, src=${src}, dst=${dst}<br>最多 ${k} 次中轉 (${k+1} 輪迭代)<br><br>Bellman-Ford: 每輪放鬆所有邊`,
+                    formula: 'setup'
+                }
+            });
+
+            for (let round = 0; round <= k; round++) {
+                const temp = [...dist];
+                const updated = [];
+                
+                for (const [u, v, price] of flights) {
+                    if (dist[u] !== INF && dist[u] + price < temp[v]) {
+                        temp[v] = dist[u] + price;
+                        updated.push(v);
+                    }
+                }
+                
+                dist = temp;
+                
+                steps.push({
+                    dist: dist.map(d => d === INF ? '∞' : d),
+                    round: round + 1, updated, n, src, dst, k,
+                    highlightLines: [3, 4, 5, 6, 7, 10],
+                    explanation: { 
+                        title: `第 ${round + 1} 輪`, 
+                        text: updated.length > 0 
+                            ? `更新城市: ${[...new Set(updated)].join(', ')}<br>到終點 ${dst} 的最低價: ${dist[dst] === INF ? '∞' : dist[dst]}`
+                            : '沒有更新',
+                        formula: `round ${round + 1}/${k + 1}`
+                    }
+                });
+            }
+
+            const result = dist[dst] === INF ? -1 : dist[dst];
+            steps.push({
+                dist: dist.map(d => d === INF ? '∞' : d),
+                round: k + 1, updated: [], n, src, dst, k,
+                result, final: true,
+                highlightLines: [12],
+                explanation: { 
+                    title: '完成!', 
+                    text: result === -1 
+                        ? `無法在 ${k} 次中轉內到達 ${dst}`
+                        : `最便宜價格: $${result}`,
+                    formula: `return ${result}`
+                }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
+            const { n, flights, src, dst, k } = currentExample;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const costs = step.costs || {};
-                    const cities = ['0 起點', '1', '2 終點'];
-                    document.getElementById('citiesDisplay').innerHTML = cities.map((c, i) => {
-                        let cls = 'city';
-                        if (i === 0) cls += ' start';
-                        if (i === 2) cls += ' end';
-                        return `<div class="${cls}"><div class="name">${c}</div><div class="cost">$${costs[i] ?? '∞'}</div></div>`;
+                    const cities = Array.from({length: step.n}, (_, i) => {
+                        let name = String.fromCharCode(65 + i); // A, B, C, ...
+                        if (i === step.src) name += ' (起)';
+                        if (i === step.dst) name += ' (終)';
+                        return { id: i, name, cost: step.dist?.[i] ?? '∞' };
+                    });
+                    
+                    // Cities
+                    document.getElementById('graphDisplay').innerHTML = cities.map(c => {
+                        let cls = 'city-node';
+                        if (c.id === step.src) cls += ' start';
+                        if (c.id === step.dst) cls += ' end';
+                        if (step.updated?.includes(c.id)) cls += ' updated';
+                        return `<div class="${cls}"><div class="name">${c.name}</div><div class="cost">$${c.cost}</div></div>`;
                     }).join('');
-                    document.getElementById('priceDisplay').textContent = step.price ? `$${step.price}` : '?';
+                    
+                    // Flights
+                    document.getElementById('flightsDisplay').innerHTML = 
+                        flights.map(f => `<span class="flight-item">${f[0]}→${f[1]}: $${f[2]}</span>`).join('');
+                    
+                    // Dist table
+                    document.getElementById('distDisplay').innerHTML = 
+                        (step.dist || []).map((d, i) => {
+                            const cls = step.updated?.includes(i) ? 'dist-item updated' : 'dist-item';
+                            return `<div class="${cls}"><div class="city">${i}</div><div class="value">$${d}</div></div>`;
+                        }).join('');
+                    
+                    document.getElementById('roundDisplay').textContent = step.round ?? 0;
+                    document.getElementById('kDisplay').textContent = step.k ?? '-';
+                    document.getElementById('srcDisplay').textContent = step.src ?? '-';
+                    document.getElementById('dstDisplay').textContent = step.dst ?? '-';
+                    
+                    if (step.result !== undefined) {
+                        document.getElementById('priceDisplay').textContent = step.result === -1 ? '無法到達' : `$${step.result}`;
+                        document.getElementById('priceDisplay').style.color = step.result === -1 ? 'var(--viz-error)' : 'var(--viz-success)';
+                    } else {
+                        document.getElementById('priceDisplay').textContent = '-';
+                        document.getElementById('priceDisplay').style.color = 'inherit';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(n, flights, src, dst, k));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>
