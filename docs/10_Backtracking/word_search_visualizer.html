@@ -3,18 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Search 單詞搜索 - 視覺化</title>
+    <title>Word Search - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: inline-grid; gap: 3px; margin: 20px auto; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .cell { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; font-size: 1.2rem; transition: all 0.3s; }
-        .cell.visited { background: var(--viz-success); color: #0f172a; }
-        .cell.current { background: var(--viz-warning); color: #0f172a; animation: pulse 0.3s; }
-        .cell.backtrack { background: var(--viz-error); opacity: 0.5; }
-        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-        .word { text-align: center; font-size: 1.5rem; font-weight: bold; margin: 10px 0; letter-spacing: 5px; }
-        .word .char { display: inline-block; padding: 5px 10px; margin: 2px; border-radius: 4px; background: var(--viz-bg-secondary); }
-        .word .char.found { background: var(--viz-success); color: #0f172a; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; height: 60px; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; height: 40px; }
+
+        .viz-container { text-align: center; margin-top: 10px; }
+        .grid-container { 
+            display: inline-grid; gap: 4px; padding: 10px; 
+            background: var(--viz-bg-secondary); border-radius: 8px; 
+            margin-bottom: 15px;
+        }
+        .cell { 
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border-radius: 4px; background: var(--viz-primary); color: white; 
+            font-size: 1.1rem; transition: background 0.2s, transform 0.2s;
+        }
+        .cell.visiting { background: var(--viz-warning); color: #0f172a; transform: scale(1.1); box-shadow: 0 0 8px var(--viz-warning); }
+        .cell.path-node { background: var(--viz-success); color: #0f172a; border: 2px solid white; }
+        .cell.backtrack { background: var(--viz-error); opacity: 0.6; }
+        
+        .target-word { font-size: 1.5rem; letter-spacing: 5px; font-weight: bold; margin: 10px 0; }
+        .target-char.matched { color: var(--viz-success); text-shadow: 0 0 5px var(--viz-success); }
     </style>
 </head>
 <body>
@@ -22,37 +36,49 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">單詞搜索（DFS + 回溯）</div>
-                <div class="word" id="wordDisplay"></div>
-                <div style="text-align: center;"><div class="grid" id="gridDisplay"></div></div>
+                <div class="viz-title">單詞搜索 (Word Search) - DFS</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <div>
+                            <label style="display:block;">網格 (每行一列, 逗號分隔):</label>
+                            <textarea id="boardInput">A,B,C,E
+S,F,C,S
+A,D,E,E</textarea>
+                        </div>
+                        <div>
+                            <label style="display:block;">目標單詞:</label>
+                            <input type="text" id="wordInput" value="ABCCED" style="width: 100px;">
+                        </div>
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
+                <div class="viz-container">
+                    <div class="target-word" id="wordDisplay"></div>
+                    <div class="grid-container" id="gridDisplay"></div>
+                </div>
+                
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(N*3^L)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(L)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resultDisplay">?</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -67,62 +93,210 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'bool exist(vector<vector<char>>& board, string word) {', id: 0 },
-            { line: '    for (int i = 0; i < m; i++)', id: 1 },
-            { line: '        for (int j = 0; j < n; j++)', id: 2 },
-            { line: '            if (dfs(board, word, i, j, 0)) return true;', id: 3 },
+            { line: 'bool exist(board, word) {', id: 0 },
+            { line: '    for (int i=0; i<rows; ++i)', id: 1 },
+            { line: '        for (int j=0; j<cols; ++j)', id: 2 },
+            { line: '            if (dfs(i, j, 0)) return true;', id: 3 },
             { line: '    return false;', id: 4 },
             { line: '}', id: 5 },
-            { line: 'bool dfs(board, word, i, j, k) {', id: 6 },
+            { line: 'bool dfs(r, c, k) {', id: 6 },
             { line: '    if (k == word.size()) return true;', id: 7 },
-            { line: '    if (越界 || 已訪問 || board[i][j] != word[k]) return false;', id: 8 },
-            { line: '    board[i][j] = \'#\'; // 標記已訪問', id: 9 },
-            { line: '    bool found = dfs(上) || dfs(下) || dfs(左) || dfs(右);', id: 10 },
-            { line: '    board[i][j] = word[k]; // 回溯', id: 11 },
-            { line: '    return found;', id: 12 },
-            { line: '}', id: 13 },
+            { line: '    if (OutOfBounds || board[r][c] != word[k]) return false;', id: 8 },
+            { line: '    char tmp = board[r][c];', id: 9 },
+            { line: '    board[r][c] = \'#\'; // Mark visited', id: 10 },
+            { line: '    bool res = dfs(r+1, c, k+1) || ... ;', id: 11 },
+            { line: '    board[r][c] = tmp; // Restore', id: 12 },
+            { line: '    return res;', id: 13 },
+            { line: '}', id: 14 },
         ];
-        const board = [['A','B','C','E'],['S','F','C','S'],['A','D','E','E']];
-        const word = "ABCCED";
-        function generateAlgorithmSteps() {
-            const steps = [];
-            steps.push({ visited: [], current: null, foundChars: 0, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `board: 3×4<br>word: "${word}"<br><br>從每個格子開始 DFS<br>四個方向搜索` } });
-            const path = [[0,0],[0,1],[0,2],[1,2],[2,2],[2,1]]; // A-B-C-C-E-D
-            for (let i = 0; i < path.length; i++) {
-                steps.push({ visited: path.slice(0, i), current: path[i], foundChars: i+1, highlightLines: [6,7,8,9,10], explanation: { title: `找到 '${word[i]}'`, text: `位置 (${path[i][0]}, ${path[i][1]})<br>已匹配：${word.slice(0, i+1)}` } });
+
+        let currentBoard = [['A','B','C','E'],['S','F','C','S'],['A','D','E','E']];
+        let currentWord = "ABCCED";
+
+        function parseBoard(str) {
+            return str.trim().split('\n').map(row => row.split(',').map(c => c.trim()).filter(c=>c));
+        }
+
+        function runCustomInput() {
+            const bStr = document.getElementById('boardInput').value;
+            const wStr = document.getElementById('wordInput').value.trim();
+            const b = parseBoard(bStr);
+            if (b.length === 0 || b[0].length === 0 || !wStr) {
+                alert('輸入無效');
+                return;
             }
-            steps.push({ visited: path, current: null, foundChars: 6, result: true, final: true, highlightLines: [7], explanation: { title: '🎉 找到單詞！', text: `路徑：A→B→C→C→E→D<br><br>時間：O(m×n×4^L)` } });
+            currentBoard = b;
+            currentWord = wStr;
+            init();
+        }
+
+        function generateAlgorithmSteps(board, word) {
+            const steps = [];
+            const m = board.length;
+            const n = board[0].length;
+            let path = []; // stores {r, c}
+            
+            steps.push({
+                path: [], visiting: null, k: 0, result: null,
+                explanation: { title: '開始', text: `Board: ${m}x${n}, Word: "${word}"`, formula: 'init' }
+            });
+
+            function dfs(r, c, k) {
+                // Visiting
+                steps.push({
+                    path: [...path], visiting: {r, c}, k: k, result: null,
+                    highlightLines: [6, 8],
+                    explanation: { title: `檢查 (${r}, ${c})`, text: `字元: '${board[r][c]}', 目標: word[${k}] ('${word[k]}')`, formula: `check board[${r}][${c}]` }
+                });
+
+                if (board[r][c] !== word[k]) {
+                    // Mismatch visual handled implicitly by logical flow (backtrack or return false step)
+                    return false;
+                }
+
+                path.push({r, c});
+                const temp = board[r][c];
+                board[r][c] = '#'; // visited
+                
+                // Match Found Step
+                steps.push({
+                    path: [...path], visiting: {r, c}, k: k+1, result: null,
+                    highlightLines: [9, 10],
+                    explanation: { title: `匹配 '${temp}'`, text: `匹配成功！標記為已訪問 (#)<br>繼續尋找 word[${k+1}]`, formula: 'matched & next' }
+                });
+
+                if (k === word.length - 1) {
+                    steps.push({
+                        path: [...path], visiting: null, k: k+1, result: true,
+                        highlightLines: [7],
+                        explanation: { title: '找到!', text: '已匹配整個單詞，返回 true', formula: 'return true' }
+                    });
+                     // Restore just to be clean, though deep copy or simulation logic might vary
+                    board[r][c] = temp; 
+                    path.pop();
+                    return true;
+                }
+
+                const dirs = [[0,1], [0,-1], [1,0], [-1,0]];
+                for (let [dr, dc] of dirs) {
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < m && nc >= 0 && nc < n && board[nr][nc] !== '#') {
+                        if (dfs(nr, nc, k + 1)) {
+                             // Restore
+                            board[r][c] = temp;
+                            return true; // Propagate success
+                        }
+                    }
+                }
+
+                // Backtrack
+                board[r][c] = temp;
+                path.pop();
+                steps.push({
+                    path: [...path], visiting: {r, c}, k: k, result: null,
+                    highlightLines: [12],
+                    explanation: { title: '回溯', text: `從 (${r}, ${c}) 無法找到後續路徑<br>恢復 '${temp}'，退回上一步`, formula: 'backtrack' }
+                });
+
+                return false;
+            }
+
+            let found = false;
+            // Limit visualization: simple scan until first cell match start or limit steps
+            // We'll wrap the main loop but try to minimize excessive steps for non-start cells
+            outer: for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (board[i][j] === word[0]) {
+                        // Start DFS
+                        if (dfs(i, j, 0)) {
+                            found = true;
+                            break outer;
+                        }
+                    } else {
+                         // Visualize skip briefly? Maybe too noisy. Just highlight loop.
+                    }
+                }
+            }
+
+            if (!found) {
+                steps.push({
+                    path: [], visiting: null, k: 0, result: false,
+                    final: true,
+                    highlightLines: [4],
+                    explanation: { title: '結束', text: '遍歷所有可能起點，未找到單詞', formula: 'return false' }
+                });
+            } else {
+                 steps.push({
+                    path: steps[steps.length-1].path, visiting: null, k: word.length, result: true,
+                    final: true,
+                    highlightLines: [3],
+                    explanation: { title: '成功', text: '單詞存在於網格中', formula: 'Done' }
+                });
+            }
+
             return steps;
         }
+
         let viz;
         function init() {
+            // Setup Grid
+            const container = document.getElementById('gridDisplay');
+            container.style.gridTemplateColumns = `repeat(${currentBoard[0].length}, 40px)`;
+            
+            // Re-render handled by onStepChange mostly, but initial grid needed?
+            // onStepChange will do full render.
+            
+            // We need a deep copy for simulation because DFS mutates
+            const simBoard = currentBoard.map(row => [...row]);
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    // Word display
-                    let wordHtml = '';
-                    for (let i = 0; i < word.length; i++) {
-                        wordHtml += `<span class="char${i < step.foundChars ? ' found' : ''}">${word[i]}</span>`;
-                    }
-                    document.getElementById('wordDisplay').innerHTML = wordHtml;
-                    // Grid display
-                    const grid = document.getElementById('gridDisplay');
-                    grid.style.gridTemplateColumns = `repeat(${board[0].length}, 45px)`;
-                    let html = '';
-                    for (let r = 0; r < board.length; r++) {
-                        for (let c = 0; c < board[0].length; c++) {
+                    // Update Grid
+                    container.innerHTML = '';
+                    for(let r=0; r<currentBoard.length; r++) {
+                        for(let c=0; c<currentBoard[0].length; c++) {
+                            const val = currentBoard[r][c];
                             let cls = 'cell';
-                            if (step.current && step.current[0] === r && step.current[1] === c) cls += ' current';
-                            else if (step.visited?.some(v => v[0] === r && v[1] === c)) cls += ' visited';
-                            html += `<div class="${cls}">${board[r][c]}</div>`;
+                            
+                            // Check path inclusion
+                            const inPath = step.path.some(p => p.r === r && p.c === c);
+                            if (inPath) cls += ' path-node';
+                            
+                            // Check visiting
+                            if (step.visiting && step.visiting.r === r && step.visiting.c === c) {
+                                cls += ' visiting';
+                            }
+                            
+                            const div = document.createElement('div');
+                            div.className = cls;
+                            div.textContent = val;
+                            container.appendChild(div);
                         }
                     }
-                    grid.innerHTML = html;
-                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
+
+                    // Update Word Highlight
+                    let wHtml = '';
+                    for(let i=0; i<currentWord.length; i++) {
+                        let cls = 'target-char';
+                        // if we are at step k, chars 0..k-1 are matched
+                        // step.k is index of char we are trying to match or successfully matched
+                        // If result is true, all matched
+                        // This logic depends on exactly when k increments in steps
+                        if (i < step.k) cls += ' matched'; 
+                        wHtml += `<span class="${cls}">${currentWord[i]}</span>`;
+                    }
+                    document.getElementById('wordDisplay').innerHTML = wHtml;
+                    
+                    document.getElementById('resultDisplay').textContent = step.result === null ? 'Searching...' : step.result;
+                    if (step.result === true) document.getElementById('resultDisplay').style.color = 'var(--viz-success)';
+                    else if (step.result === false) document.getElementById('resultDisplay').style.color = 'var(--viz-error)';
+                    else document.getElementById('resultDisplay').style.color = 'var(--viz-text)';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(simBoard, currentWord));
         }
+
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

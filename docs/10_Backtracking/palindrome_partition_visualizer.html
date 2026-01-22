@@ -3,15 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Palindrome Partitioning Visualization</title>
+    <title>Palindrome Partitioning - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .str-display { display: flex; justify-content: center; gap: 2px; margin: 10px 0; }
-        .char { width: 30px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; }
-        .char.current { background: var(--viz-secondary); color: #0f172a; }
-        .partition { display: inline-block; margin: 0 4px; padding: 4px 8px; background: var(--viz-success); color: #0f172a; border-radius: 4px; font-family: monospace; }
-        .results { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; max-height: 80px; overflow-y: auto; }
-        .result { padding: 4px 8px; border-radius: 4px; font-family: monospace; background: var(--viz-success); color: #0f172a; font-size: 0.85rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .str-container { display: flex; gap: 2px; justify-content: center; margin: 20px 0; }
+        .char-box { 
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; 
+            background: var(--viz-primary); color: white; border-radius: 4px; font-family: monospace; font-size: 1.1rem;
+            position: relative; transition: all 0.3s;
+        }
+        .char-box.checked { border: 2px solid var(--viz-warning); }
+        .char-box.palindrome { background: var(--viz-success); color: #0f172a; }
+        
+        .current-partition { display: flex; gap: 10px; justify-content: center; min-height: 40px; margin-bottom: 20px; }
+        .part-item { padding: 6px 12px; background: var(--viz-secondary); color: #0f172a; border-radius: 4px; font-weight: bold; }
+        
+        .results-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-height: 200px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 8px; }
+        .result-item { padding: 4px 10px; background: var(--viz-success); color: #0f172a; border-radius: 4px; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -19,42 +32,50 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">PALINDROME PARTITIONING: "aab"</div>
-                <div class="str-display" id="strDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Current Partition:</div>
-                <div style="text-align: center;" id="currentDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">All Partitions:</div>
-                <div class="results" id="resultsDisplay"></div>
+                <div class="viz-title">分割回文串 (Backtracking)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>字串 (s):</label>
+                        <input type="text" id="strInput" value="aab" style="width: 120px;" maxlength="10">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
+                <div class="str-container" id="strDisplay"></div>
+                
+                <div style="text-align: center; color: var(--text-muted); margin-bottom: 5px;">當前路徑</div>
+                <div class="current-partition" id="pathDisplay"></div>
+                
+                <div class="results-grid" id="resultsDisplay"></div>
+                
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-            <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O(N * 2^N)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(N)
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">解數</div><div class="state-value" id="countDisplay">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BACKTRACKING</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -63,30 +84,106 @@
     <script>
         const codeStructure = [
             { line: 'void backtrack(s, start, path, result) {', id: 0 },
-            { line: '    if (start == s.size()) { result.push_back(path); return; }', id: 1 },
-            { line: '    for (int end = start; end < s.size(); end++) {', id: 2 },
-            { line: '        if (isPalindrome(s, start, end)) {', id: 3 },
-            { line: '            path.push_back(s.substr(start, end-start+1));', id: 4 },
-            { line: '            backtrack(s, end + 1, path, result);', id: 5 },
-            { line: '            path.pop_back();', id: 6 },
-            { line: '        }', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '}', id: 9 },
+            { line: '    if (start == s.size()) {', id: 1 },
+            { line: '        result.push_back(path); return;', id: 2 },
+            { line: '    }', id: 3 },
+            { line: '    for (int end = start; end < s.size(); end++) {', id: 4 },
+            { line: '        if (isPalindrome(s, start, end)) {', id: 5 },
+            { line: '            path.push_back(s.substr(start, end-start+1));', id: 6 },
+            { line: '            backtrack(s, end + 1, path, result);', id: 7 },
+            { line: '            path.pop_back();', id: 8 },
+            { line: '        }', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '}', id: 11 },
         ];
-        const str = 'aab';
 
-        function generateAlgorithmSteps() {
+        let currentStr = "aab";
+
+        function runCustomInput() {
+            const s = document.getElementById('strInput').value.trim();
+            if (!s || s.length > 8) {
+                alert('請輸入 1-8 個字元');
+                return;
+            }
+            currentStr = s;
+            init();
+        }
+
+        function isPalindrome(s, start, end) {
+            let l = start, r = end;
+            while (l < r) {
+                if (s[l] !== s[r]) return false;
+                l++; r--;
+            }
+            return true;
+        }
+
+        function generateAlgorithmSteps(s) {
             const steps = [];
-            const results = [['a', 'a', 'b'], ['aa', 'b']];
+            const result = [];
             
-            steps.push({ current: [], range: [], results: [], highlightLines: [0], explanation: { title: 'Start', text: 'Partition "aab" into palindromes' }});
-            steps.push({ current: ['a'], range: [0, 0], results: [], highlightLines: [3, 4], explanation: { title: '"a" is palindrome', text: 'Add to path' }});
-            steps.push({ current: ['a', 'a'], range: [1, 1], results: [], highlightLines: [3, 4], explanation: { title: '"a" is palindrome', text: 'Add to path' }});
-            steps.push({ current: ['a', 'a', 'b'], range: [2, 2], results: [['a', 'a', 'b']], highlightLines: [1], explanation: { title: '✓ Found!', text: '["a", "a", "b"]' }});
-            steps.push({ current: ['aa'], range: [0, 1], results: [['a', 'a', 'b']], highlightLines: [3, 4], explanation: { title: '"aa" is palindrome', text: 'Try longer substring' }});
-            steps.push({ current: ['aa', 'b'], range: [2, 2], results: results, highlightLines: [1], explanation: { title: '✓ Found!', text: '["aa", "b"]' }});
-            steps.push({ current: [], range: [], results: results, highlightLines: [9], explanation: { title: 'Done!', text: '2 partitions found' }});
+            steps.push({
+                path: [], startIdx: 0, result: [], checkRange: null, 
+                highlightLines: [0],
+                explanation: { title: '初始化', text: `Input: "${s}"<br>開始回溯`, formula: 'backtrack(0)' }
+            });
+
+            function backtrack(start, path) {
+                if (start === s.length) {
+                    result.push([...path]);
+                    steps.push({
+                        path: [...path], startIdx: start, result: [...result], checkRange: null,
+                        newFound: true,
+                        highlightLines: [1, 2, 3],
+                        explanation: { title: '找到分割', text: `已處理完所有字元<br>分割方案: [${path.join(', ')}]`, formula: 'Found' }
+                    });
+                    return;
+                }
+
+                for (let end = start; end < s.length; end++) {
+                    const substr = s.substring(start, end + 1);
+                    const isPal = isPalindrome(s, start, end);
+                    
+                    steps.push({
+                        path: [...path], startIdx: start, result: [...result], 
+                        checkRange: [start, end], 
+                        isPal: isPal,
+                        highlightLines: [5],
+                        explanation: { 
+                            title: `檢查回文: "${substr}"`, 
+                            text: `範圍 [${start}, ${end}]<br>${isPal ? '✅ 是回文' : '❌ 不是回文'}`, 
+                            formula: `isPalindrome(${start}, ${end})` 
+                        }
+                    });
+
+                    if (isPal) {
+                        path.push(substr);
+                        steps.push({
+                            path: [...path], startIdx: start, result: [...result], checkRange: [start, end],
+                            highlightLines: [6, 7],
+                            explanation: { title: `選擇 "${substr}"`, text: `加入路徑<br>遞迴處理剩餘部分`, formula: `backtrack(${end+1})` }
+                        });
+                        
+                        backtrack(end + 1, path);
+                        
+                        path.pop();
+                        steps.push({
+                            path: [...path], startIdx: start, result: [...result], 
+                            highlightLines: [8],
+                            explanation: { title: '回溯', text: `移除 "${substr}"<br>嘗試更長的前綴`, formula: 'pop()' }
+                        });
+                    }
+                }
+            }
+
+            backtrack(0, []);
             
+            steps.push({
+                path: [], startIdx: 0, result: [...result], checkRange: null,
+                final: true,
+                explanation: { title: '完成', text: `共找到 ${result.length} 種分割方案`, formula: 'Done' }
+            });
+
             return steps;
         }
 
@@ -95,21 +192,30 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let currentIdx = 0;
-                    document.getElementById('strDisplay').innerHTML = [...str].map((c, i) => {
-                        const inRange = step.range.length && i >= step.range[0] && i <= step.range[1];
-                        return `<span class="char ${inRange ? 'current' : ''}">${c}</span>`;
+                    document.getElementById('strDisplay').innerHTML = [...currentStr].map((c, i) => {
+                        let cls = 'char-box';
+                        if (step.checkRange && i >= step.checkRange[0] && i <= step.checkRange[1]) {
+                             cls += ' checked';
+                             if (step.isPal) cls += ' palindrome'; // Highlight success
+                        }
+                        return `<div class="${cls}">${c}</div>`;
                     }).join('');
-                    document.getElementById('currentDisplay').innerHTML = step.current.map(p =>
-                        `<span class="partition">${p}</span>`
-                    ).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
-                    document.getElementById('resultsDisplay').innerHTML = step.results.map(r =>
-                        `<span class="result">[${r.map(p => `"${p}"`).join(', ')}]</span>`
+
+                    document.getElementById('pathDisplay').innerHTML = (step.path || []).map(p => 
+                        `<div class="part-item">${p}</div>`
                     ).join('');
+
+                    document.getElementById('resultsDisplay').innerHTML = (step.result || []).map((r, i) => {
+                         const isNew = step.newFound && i === step.result.length - 1;
+                         return `<span class="result-item${isNew?' new':''} ">[${r.map(x=>`"${x}"`).join(', ')}]</span>`;
+                    }).join('');
+                    
+                    document.getElementById('countDisplay').textContent = step.result ? step.result.length : 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentStr));
         }
+
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

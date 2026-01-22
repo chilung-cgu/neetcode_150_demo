@@ -6,15 +6,38 @@
     <title>Subsets 子集 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .nums { display: flex; gap: 8px; justify-content: center; margin: 15px 0; }
-        .num { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; }
-        .num.included { background: var(--viz-success); color: #0f172a; }
-        .num.current { border: 3px solid var(--viz-secondary); }
-        .subsets { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; min-height: 50px; }
-        .subset { background: var(--viz-success); color: #0f172a; padding: 6px 12px; border-radius: 6px; font-weight: bold; }
-        .subset.new { animation: slideIn 0.3s; }
-        @keyframes slideIn { from { transform: scale(0); } to { transform: scale(1); } }
-        .tree { text-align: center; margin: 15px 0; font-family: monospace; font-size: 0.85rem; color: var(--text-muted); }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .tree-container { margin: 15px 0; overflow-x: auto; text-align: center; }
+        .tree-node { 
+            display: inline-block; padding: 8px 12px; margin: 5px; border-radius: 6px; 
+            background: var(--viz-bg-secondary); border: 2px solid var(--viz-border); 
+            transition: all 0.3s;
+        }
+        .tree-node.active { border-color: var(--viz-primary); background: rgba(59, 130, 246, 0.1); }
+        .tree-node.result { border-color: var(--viz-success); background: rgba(34, 197, 94, 0.1); }
+        
+        .nums-display { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; }
+        .num-item { 
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; 
+            border-radius: 50%; background: var(--viz-bg-secondary); font-weight: bold;
+            transition: all 0.3s;
+        }
+        .num-item.included { background: var(--viz-success); color: #0f172a; transform: scale(1.1); }
+        .num-item.excluded { background: var(--viz-error); opacity: 0.5; }
+        .num-item.pending { border: 2px dashed var(--viz-primary); }
+        
+        .results-grid { 
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; 
+            margin-top: 20px; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 8px;
+        }
+        .subset-badge { 
+            padding: 4px 8px; background: var(--viz-success); color: #0f172a; 
+            border-radius: 4px; font-size: 0.9rem; font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -22,39 +45,50 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">子集（BACKTRACKING）</div>
-                <div class="nums" id="numsDisplay"></div>
-                <div class="tree" id="treeDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">已找到的子集</div>
-                <div class="subsets" id="subsetsDisplay"></div>
+                <div class="viz-title">子集 (Backtracking/DFS)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>陣列 (nums):</label>
+                        <input type="text" id="numsInput" value="1, 2, 3" style="width: 150px;" placeholder="1, 2, 3">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
+                <div class="nums-display" id="numsDisplay"></div>
+                
+                <div style="text-align: center; margin: 10px 0;">
+                    <div style="color:var(--text-muted); font-size:0.9rem;">當前決策</div>
+                    <div id="decisionDisplay" style="font-size:1.2rem; font-weight:bold; height: 30px;">-</div>
+                </div>
+                
+                 <div style="text-align: center; margin: 10px 0;">
+                    <div style="color:var(--text-muted); font-size:0.9rem;">當前子集 (Path)</div>
+                    <div id="pathDisplay" style="font-size:1.2rem; height: 30px;">[]</div>
+                </div>
+
+                <div class="results-grid" id="resultsDisplay"></div>
+                
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
+                    <span class="label">Time:</span> O(n * 2^n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">子集數</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">總子集數</div><div class="state-value" id="totalCount">0</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -72,66 +106,148 @@
             { line: 'vector<vector<int>> subsets(vector<int>& nums) {', id: 0 },
             { line: '    vector<vector<int>> result;', id: 1 },
             { line: '    vector<int> subset;', id: 2 },
-            { line: '    backtrack(nums, 0, subset, result);', id: 3 },
+            { line: '    dfs(0, nums, subset, result);', id: 3 },
             { line: '    return result;', id: 4 },
             { line: '}', id: 5 },
-            { line: 'void backtrack(vector<int>& nums, int start,', id: 6 },
-            { line: '               vector<int>& subset, vector<...>& result) {', id: 7 },
-            { line: '    result.push_back(subset);', id: 8 },
-            { line: '    for (int i = start; i < nums.size(); i++) {', id: 9 },
-            { line: '        subset.push_back(nums[i]);', id: 10 },
-            { line: '        backtrack(nums, i + 1, subset, result);', id: 11 },
-            { line: '        subset.pop_back(); // 回溯', id: 12 },
-            { line: '    }', id: 13 },
-            { line: '}', id: 14 },
+            { line: 'void dfs(int i, vector<int>& nums,', id: 6 },
+            { line: '         vector<int>& subset, vector<...>& res) {', id: 7 },
+            { line: '    if (i >= nums.size()) {', id: 8 },
+            { line: '        res.push_back(subset);', id: 9 },
+            { line: '        return;', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    // 決策 1: 包含 nums[i]', id: 12 },
+            { line: '    subset.push_back(nums[i]);', id: 13 },
+            { line: '    dfs(i + 1, nums, subset, res);', id: 14 },
+            { line: '    // 決策 2: 不包含 nums[i]', id: 15 },
+            { line: '    subset.pop_back();', id: 16 },
+            { line: '    dfs(i + 1, nums, subset, res);', id: 17 },
+            { line: '}', id: 18 },
         ];
-        const nums = [1, 2, 3];
-        function generateAlgorithmSteps() {
+
+        let currentNums = [1, 2, 3];
+
+        function parseNums(str) {
+            return str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+        }
+
+        function generateAlgorithmSteps(nums) {
             const steps = [];
-            const subsets = [];
-            steps.push({ current: null, subset: [], subsets: [], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `nums = [${nums.join(', ')}]<br><br>每個元素：選或不選<br>總共 2^n = 8 個子集` } });
-            // Simulate backtracking
-            subsets.push([]);
-            steps.push({ subset: [], subsets: [[]], newSubset: true, highlightLines: [8], explanation: { title: '加入空集', text: '[] 是有效子集' } });
-            subsets.push([1]);
-            steps.push({ current: 0, subset: [1], subsets: [[], [1]], newSubset: true, highlightLines: [10,8], explanation: { title: '選擇 1', text: '加入 [1]' } });
-            subsets.push([1,2]);
-            steps.push({ current: 1, subset: [1,2], subsets: [[],[1],[1,2]], newSubset: true, highlightLines: [10,11,8], explanation: { title: '選擇 1,2', text: '加入 [1,2]' } });
-            subsets.push([1,2,3]);
-            steps.push({ current: 2, subset: [1,2,3], subsets: [[],[1],[1,2],[1,2,3]], newSubset: true, highlightLines: [10,11,8], explanation: { title: '選擇 1,2,3', text: '加入 [1,2,3]' } });
-            subsets.push([1,3]);
-            steps.push({ current: 2, subset: [1,3], subsets: [[],[1],[1,2],[1,2,3],[1,3]], highlightLines: [12,10,8], explanation: { title: '回溯後選 3', text: '回溯 2，選 3<br>加入 [1,3]' } });
-            subsets.push([2]);
-            steps.push({ current: 1, subset: [2], subsets: [[],[1],[1,2],[1,2,3],[1,3],[2]], highlightLines: [12,10,8], explanation: { title: '回溯後選 2', text: '加入 [2]' } });
-            subsets.push([2,3]);
-            steps.push({ current: 2, subset: [2,3], subsets: [[],[1],[1,2],[1,2,3],[1,3],[2],[2,3]], highlightLines: [10,8], explanation: { title: '選擇 2,3', text: '加入 [2,3]' } });
-            subsets.push([3]);
-            steps.push({ current: 2, subset: [3], subsets: [[],[1],[1,2],[1,2,3],[1,3],[2],[2,3],[3]], final: true, highlightLines: [4], explanation: { title: '完成！', text: `共 8 個子集<br><br>時間：O(n × 2^n)` } });
+            const result = [];
+            
+            steps.push({
+                idx: 0, path: [], result: [], 
+                status: 'init',
+                highlightLines: [0, 1, 2, 3],
+                explanation: { title: '開始', text: `輸入: [${nums.join(', ')}]<br>初始狀態：i = 0, subset = []`, formula: 'dfs(0)' }
+            });
+
+            function dfs(i, currentPath) {
+                if (i >= nums.length) {
+                    result.push([...currentPath]);
+                    steps.push({
+                        idx: i, path: [...currentPath], result: [...result],
+                        status: 'leaf',
+                        highlightLines: [8, 9, 10],
+                        explanation: { title: '到達葉節點', text: `索引 i=${i} 超出範圍<br>收集當前子集: [${currentPath.join(', ')}]`, formula: 'result.push(subset)' }
+                    });
+                    return;
+                }
+
+                const num = nums[i];
+
+                // Include
+                currentPath.push(num);
+                steps.push({
+                    idx: i, path: [...currentPath], result: [...result],
+                    status: 'include',
+                    highlightLines: [12, 13, 14],
+                    explanation: { title: `包含 ${num}`, text: `決策：選擇加入 ${num}<br>遞迴 dfs(${i+1})`, formula: `subset.push(${num})` }
+                });
+                
+                dfs(i + 1, currentPath);
+
+                // Exclude (Backtrack)
+                currentPath.pop();
+                steps.push({
+                    idx: i, path: [...currentPath], result: [...result],
+                    status: 'exclude',
+                    highlightLines: [16, 17],
+                    explanation: { title: `不包含 ${num}`, text: `回溯：移除 ${num}<br>決策：跳過 ${num}<br>遞迴 dfs(${i+1})`, formula: `subset.pop()` }
+                });
+                
+                dfs(i + 1, currentPath);
+            }
+
+            dfs(0, []);
+            
+            steps.push({
+                idx: null, path: [], result: [...result],
+                status: 'done',
+                highlightLines: [4],
+                explanation: { title: '完成', text: `共找到 ${result.length} 個子集<br>Time Complexity: O(n * 2^n)`, formula: 'return result' }
+            });
+
             return steps;
         }
+
+        function runCustomInput() {
+            const str = document.getElementById('numsInput').value;
+            const arr = parseNums(str);
+            if (arr.length === 0 || arr.length > 5) { // Limit size for visualization
+                alert('請輸入 1-5 個數字 (為了視覺化效果)');
+                return;
+            }
+            currentNums = arr;
+            init();
+        }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    nums.forEach((n, i) => {
-                        let cls = 'num';
-                        if (step.subset?.includes(n)) cls += ' included';
-                        if (i === step.current) cls += ' current';
-                        html += `<div class="${cls}">${n}</div>`;
-                    });
-                    document.getElementById('numsDisplay').innerHTML = html;
-                    document.getElementById('treeDisplay').textContent = `當前路徑: [${(step.subset || []).join(', ')}]`;
-                    document.getElementById('subsetsDisplay').innerHTML = (step.subsets || []).map((s, i) => {
-                        const isNew = step.newSubset && i === step.subsets.length - 1;
-                        return `<span class="subset${isNew ? ' new' : ''}">[${s.join(',')}]</span>`;
-                    }).join('') || '空';
-                    document.getElementById('countDisplay').textContent = step.subsets?.length ?? 0;
+                    // Update Nums with Include/Exclude status
+                    document.getElementById('numsDisplay').innerHTML = currentNums.map((n, idx) => {
+                         let cls = 'num-item';
+                         if (step.idx === idx) cls += ' pending';
+                         // Check if n is in current path
+                         // Note: This logic assumes unique numbers for simple coloring, but general logic is robust
+                         // Or we strictly use the step.idx concept
+                         
+                         // Visual logic: 
+                         // If we are deep in recursion (idx > current index), status is unknown
+                         // If we are at step.idx, we are deciding
+                         // If we are past, we look at path
+                         
+                         if (idx < step.idx) {
+                             // This element was already decided
+                             // Since we don't track full history per element easily in this step object without bloat, 
+                             // we check if it is in step.path. 
+                             // Limitation: handling duplicates correctly requires index-based tracking, but for visual this is okay.
+                             if (step.path.includes(n)) cls += ' included';
+                             else cls += ' excluded';
+                         } else if (idx === step.idx) {
+                             if (step.status === 'include') cls += ' included';
+                             else if (step.status === 'exclude') cls += ' excluded';
+                             else cls += ' pending';
+                         }
+                         
+                         return `<div class="${cls}">${n}</div>`;
+                    }).join('');
+
+                    document.getElementById('decisionDisplay').textContent = step.explanation.title;
+                    document.getElementById('pathDisplay').textContent = `[${step.path ? step.path.join(', ') : ''}]`;
+                    
+                    document.getElementById('resultsDisplay').innerHTML = (step.result || []).map(sub => 
+                        `<span class="subset-badge">[${sub.join(', ')}]</span>`
+                    ).join('');
+                    
+                    document.getElementById('totalCount').textContent = step.result ? step.result.length : 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNums));
         }
+
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

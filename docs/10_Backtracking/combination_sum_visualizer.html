@@ -6,23 +6,29 @@
     <title>Combination Sum 組合總和 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .tree-container { margin: 15px 0; overflow-x: auto; }
-        .tree { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-        .tree-level { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
-        .tree-node { 
-            padding: 8px 12px; border-radius: 8px; background: var(--viz-bg-secondary); 
-            border: 2px solid var(--viz-primary); color: var(--text-primary);
-            font-size: 0.85rem; text-align: center; transition: all 0.3s ease;
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .candidates-display { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
+        .candidate-box { 
+            padding: 8px 16px; background: var(--viz-bg-secondary); border: 2px solid transparent; 
+            border-radius: 6px; font-weight: bold; transition: all 0.3s;
         }
-        .tree-node.current { border-color: var(--viz-secondary); background: var(--viz-secondary); color: #0f172a; }
-        .tree-node.valid { border-color: var(--viz-success); background: var(--viz-success); color: #0f172a; }
-        .tree-node.pruned { opacity: 0.3; border-color: var(--viz-error); }
-        .candidates { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
-        .candidate { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; font-weight: bold; }
-        .candidate.used { background: var(--viz-success); color: #0f172a; }
-        .path-display { text-align: center; margin: 10px 0; font-size: 1.1rem; color: var(--viz-secondary); }
-        .results { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
-        .result-item { background: var(--viz-success); color: #0f172a; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; }
+        .candidate-box.active { border-color: var(--viz-primary); background: rgba(59, 130, 246, 0.2); }
+        .candidate-box.blocked { opacity: 0.3; }
+
+        .path-container { 
+            display: flex; align-items: center; justify-content: center; gap: 10px; 
+            font-size: 1.2rem; margin: 20px 0; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;
+        }
+        .sum-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .sum-badge.valid { background: var(--viz-success); color: #0f172a; }
+        .sum-badge.invalid { background: var(--viz-error); color: white; }
+        
+        .results-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+        .result-item { padding: 6px 12px; background: var(--viz-success); color: #0f172a; border-radius: 6px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -30,62 +36,52 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">組合總和（COMBINATION SUM）</div>
-                <div class="candidates" id="candidatesDisplay"></div>
-                <div class="path-display" id="pathDisplay">目前路徑：[]</div>
-                <div class="tree-container">
-                    <div class="tree" id="treeDisplay"></div>
+                <div class="viz-title">組合總和 (可重複使用)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>候選數 (candidates):</label>
+                        <input type="text" id="candidatesInput" value="2, 3, 6, 7" style="width: 150px;">
+                        <label>目標 (target):</label>
+                        <input type="number" id="targetInput" value="7" style="width: 60px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
-                <div class="results" id="resultsDisplay"></div>
+                
+                <div class="candidates-display" id="candidatesDisplay"></div>
+                
+                <div class="path-container">
+                    <span style="color:var(--text-muted)">Current Path:</span>
+                    <span id="pathDisplay" style="font-weight:bold">[]</span>
+                    <span>Sum: <span id="sumDisplay">0</span> / <span id="targetDisplayStatic">7</span></span>
+                </div>
+                
+                <div class="results-grid" id="resultsDisplay"></div>
+                
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item">
-                        <div class="state-label">目標值</div>
-                        <div class="state-value" id="targetDisplay">7</div>
-                    </div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item">
-                        <div class="state-label">剩餘</div>
-                        <div class="state-value" id="remainDisplay">7</div>
-                    </div>
-                    <div class="state-item">
-                        <div class="state-label">找到組合</div>
-                        <div class="state-value" id="foundDisplay" style="color: var(--viz-success);">0</div>
-                    </div>
+                    <span class="label">Time:</span> O(N^(T/M))
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(T/M)
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">演算法說明</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">回溯法 (C++)</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -93,149 +89,140 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'void backtrack(vector<int>& candidates, int target,', id: 0 },
-            { line: '               int start, vector<int>& path,', id: 1 },
-            { line: '               vector<vector<int>>& result) {', id: 2 },
-            { line: '    if (target == 0) {', id: 3 },
-            { line: '        result.push_back(path);', id: 4 },
-            { line: '        return;', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    for (int i = start; i < candidates.size(); i++) {', id: 7 },
-            { line: '        if (candidates[i] > target) break; // 剪枝', id: 8 },
-            { line: '        path.push_back(candidates[i]);', id: 9 },
-            { line: '        backtrack(candidates, target - candidates[i],', id: 10 },
-            { line: '                  i, path, result);', id: 11 },
-            { line: '        path.pop_back(); // 回溯', id: 12 },
-            { line: '    }', id: 13 },
-            { line: '}', id: 14 },
+            { line: 'void backtrack(candidates, target, start, path, res) {', id: 0 },
+            { line: '    if (target == 0) {', id: 1 },
+            { line: '        res.push_back(path); return;', id: 2 },
+            { line: '    }', id: 3 },
+            { line: '    for (int i = start; i < candidates.size(); i++) {', id: 4 },
+            { line: '        if (candidates[i] > target) break; // Pruning', id: 5 },
+            { line: '        path.push_back(candidates[i]);', id: 6 },
+            { line: '        backtrack(candidates, target - candidates[i], i, path, res);', id: 7 },
+            { line: '        path.pop_back(); // Backtrack', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '}', id: 10 },
         ];
-        
-        const candidates = [2, 3, 6, 7];
-        const target = 7;
 
-        function generateAlgorithmSteps() {
+        let currentCandidates = [2, 3, 6, 7];
+        let currentTarget = 7;
+
+        function runCustomInput() {
+            const cStr = document.getElementById('candidatesInput').value;
+            const tVal = parseInt(document.getElementById('targetInput').value);
+            const cArr = cStr.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x)).sort((a,b)=>a-b);
+            
+            if (cArr.length === 0 || isNaN(tVal) || tVal <= 0) {
+                alert('輸入無效');
+                return;
+            }
+            currentCandidates = cArr;
+            currentTarget = tVal;
+            init();
+        }
+
+        function generateAlgorithmSteps(candidates, target) {
             const steps = [];
-            const results = [];
+            const result = [];
             
             steps.push({
-                path: [],
-                remain: target,
-                results: [],
-                tree: [],
-                highlightLines: [0, 1, 2],
-                explanation: { 
-                    title: '初始化回溯搜尋', 
-                    text: `候選數字：[${candidates.join(', ')}]<br>目標值：${target}<br><br>使用回溯法探索所有可能的組合。<br>每個數字可以<strong>重複使用</strong>。` 
-                }
+                path: [], target: target, currentSum: 0, startIdx: 0, result: [],
+                highlightLines: [0],
+                explanation: { title: '初始化', text: `Candidates: [${candidates.join(', ')}]<br>Target: ${target}`, formula: 'backtrack(0, target)' }
             });
-            
-            function backtrack(start, remain, path, depth) {
+
+            function backtrack(startIdx, remain, path) {
+                const currentSum = target - remain;
+
                 if (remain === 0) {
-                    results.push([...path]);
+                    result.push([...path]);
                     steps.push({
-                        path: [...path],
-                        remain: 0,
-                        results: results.map(r => [...r]),
-                        usedIdx: path.map((_, i) => candidates.indexOf(path[i])),
-                        highlightLines: [3, 4, 5],
-                        explanation: { 
-                            title: '🎉 找到有效組合！', 
-                            text: `路徑 [${path.join(', ')}] 的總和 = ${target}<br><br>加入結果集合。`,
-                            formula: `${path.join(' + ')} = ${target}`
-                        }
+                        path: [...path], target: target, currentSum: currentSum, startIdx: startIdx, result: [...result],
+                        highlightLines: [1, 2, 3],
+                        explanation: { title: '找到組合！', text: `總和 ${currentSum} == Target<br>路徑: [${path.join(', ')}]`, formula: 'sum == target' }
                     });
                     return;
                 }
-                
-                for (let i = start; i < candidates.length; i++) {
+
+                for (let i = startIdx; i < candidates.length; i++) {
                     const num = candidates[i];
                     
+                    // Visualization only step
+                    steps.push({
+                        path: [...path], target: target, currentSum: currentSum, startIdx: startIdx, result: [...result],
+                        tryIdx: i,
+                        highlightLines: [4],
+                        explanation: { title: `嘗試 candidates[${i}] = ${num}`, text: `當前總和: ${currentSum}<br>嘗試加入 ${num}`, formula: `try ${num}` }
+                    });
+
                     if (num > remain) {
-                        steps.push({
-                            path: [...path],
-                            remain,
-                            results: results.map(r => [...r]),
-                            pruneIdx: i,
-                            highlightLines: [7, 8],
-                            explanation: { 
-                                title: '✂️ 剪枝', 
-                                text: `candidates[${i}] = ${num} > 剩餘 ${remain}<br><br>由於陣列已排序，後面的數字更大，直接跳出迴圈。`,
-                                formula: `${num} > ${remain} → break`
-                            }
+                         steps.push({
+                            path: [...path], target: target, currentSum: currentSum, startIdx: startIdx, result: [...result],
+                            tryIdx: i,
+                            highlightLines: [5],
+                            explanation: { title: '剪枝 (Pruning)', text: `${num} > 剩餘 ${remain}，無法達成目標。<br>因為陣列已排序，後續皆略過。`, formula: `${num} > ${remain}` }
                         });
                         break;
                     }
-                    
+
                     path.push(num);
                     steps.push({
-                        path: [...path],
-                        remain: remain - num,
-                        results: results.map(r => [...r]),
-                        currentIdx: i,
-                        highlightLines: [9, 10, 11],
-                        explanation: { 
-                            title: `選擇 ${num}`, 
-                            text: `將 ${num} 加入路徑：[${path.join(', ')}]<br>剩餘目標：${remain} - ${num} = ${remain - num}<br><br>下次從 index ${i} 開始（允許重複選取）`,
-                            formula: `target = ${remain} - ${num} = ${remain - num}`
-                        }
+                        path: [...path], target: target, currentSum: currentSum + num, startIdx: i, result: [...result],
+                        tryIdx: i,
+                        highlightLines: [6, 7],
+                        explanation: { title: `選擇 ${num}`, text: `加入 path，剩餘目標: ${remain - num}<br>允許重複選擇 (index ${i})`, formula: `remain - ${num}` }
                     });
                     
-                    backtrack(i, remain - num, path, depth + 1);
-                    
+                    backtrack(i, remain - num, path);
+
                     path.pop();
                     steps.push({
-                        path: [...path],
-                        remain,
-                        results: results.map(r => [...r]),
-                        highlightLines: [12],
-                        explanation: { 
-                            title: '↩️ 回溯', 
-                            text: `移除 ${num}，恢復路徑為：[${path.join(', ') || '空'}]<br><br>嘗試下一個候選數字。` 
-                        }
+                        path: [...path], target: target, currentSum: currentSum, startIdx: startIdx, result: [...result],
+                        highlightLines: [8],
+                        explanation: { title: '回溯', text: `移除 ${num}，嘗試下一個數字`, formula: 'pop_back()' }
                     });
                 }
             }
-            
-            backtrack(0, target, [], 0);
+
+            backtrack(0, target, []);
             
             steps.push({
-                path: [],
-                remain: target,
-                results: results.map(r => [...r]),
-                highlightLines: [14],
-                explanation: { 
-                    title: '搜尋完成！', 
-                    text: `共找到 ${results.length} 個有效組合：<br><br>${results.map(r => `[${r.join(', ')}]`).join('<br>')}<br><br>時間複雜度：O(N^(T/M))，N=候選數，T=目標，M=最小候選` 
-                }
+                path: [], target: target, currentSum: 0, startIdx: 0, result: [...result],
+                final: true,
+                explanation: { title: '完成', text: `共找到 ${result.length} 組解`, formula: 'Done' }
             });
-            
+
             return steps;
         }
 
         let viz;
         function init() {
+            document.getElementById('targetDisplayStatic').textContent = currentTarget;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('candidatesDisplay').innerHTML = candidates.map((c, i) => {
-                        let cls = 'candidate';
-                        if (step.currentIdx === i) cls += ' used';
-                        if (step.pruneIdx === i) cls += ' pruned';
+                    document.getElementById('candidatesDisplay').innerHTML = currentCandidates.map((c, i) => {
+                        let cls = 'candidate-box';
+                        if (step.tryIdx === i) cls += ' active';
+                        if (i < step.startIdx) cls += ' blocked'; 
                         return `<div class="${cls}">${c}</div>`;
                     }).join('');
+
+                    document.getElementById('pathDisplay').textContent = `[${step.path ? step.path.join(', ') : ''}]`;
+                    document.getElementById('sumDisplay').textContent = step.currentSum;
                     
-                    document.getElementById('pathDisplay').textContent = `目前路徑：[${step.path?.join(', ') || ''}]`;
-                    document.getElementById('remainDisplay').textContent = step.remain ?? target;
-                    document.getElementById('foundDisplay').textContent = step.results?.length ?? 0;
-                    
-                    document.getElementById('resultsDisplay').innerHTML = (step.results || []).map(r => 
-                        `<span class="result-item">[${r.join(', ')}]</span>`
+                    const sumBadge = document.getElementById('sumDisplay').parentElement;
+                    if (step.currentSum === currentTarget) sumBadge.className = 'sum-badge valid';
+                    else if (step.currentSum > currentTarget) sumBadge.className = 'sum-badge invalid';
+                    else sumBadge.className = 'sum-badge';
+
+                    document.getElementById('resultsDisplay').innerHTML = (step.result || []).map(r => 
+                        `<div class="result-item">[${r.join(', ')}]</div>`
                     ).join('');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentCandidates, currentTarget));
         }
-        
+
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

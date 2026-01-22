@@ -3,15 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Combination Sum II Visualization</title>
+    <title>Combination Sum II - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .candidates { display: flex; gap: 4px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
-        .cand { padding: 6px 12px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.9rem; }
-        .cand.used { background: var(--viz-secondary); color: #0f172a; }
-        .cand.skip { opacity: 0.3; text-decoration: line-through; }
-        .results { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
-        .result { padding: 4px 8px; border-radius: 4px; font-family: monospace; background: var(--viz-success); color: #0f172a; font-size: 0.85rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .candidates-display { display: flex; gap: 6px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+        .cand-box { 
+            padding: 6px 10px; background: var(--viz-bg-secondary); border: 2px solid var(--viz-border); 
+            border-radius: 4px; font-weight: bold; transition: all 0.3s; min-width: 30px; text-align: center;
+        }
+        .cand-box.used { background: var(--viz-success); color: #0f172a; border-color: transparent; }
+        .cand-box.skipped { opacity: 0.3; text-decoration: line-through; border-color: var(--viz-error); }
+        .cand-box.current { border-color: var(--viz-primary); transform: scale(1.1); }
+        
+        .path-info { margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; text-align: center; }
+        .results-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+        .result-item { padding: 4px 8px; background: var(--viz-success); color: #0f172a; border-radius: 4px; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -19,54 +30,55 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">COMBINATION SUM II (target=8)</div>
-                <div style="text-align: center; color: var(--viz-text-muted);">Candidates (sorted):</div>
-                <div class="candidates" id="candidatesDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Current Path:</div>
-                <div class="candidates" id="pathDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Found Combinations:</div>
-                <div class="results" id="resultsDisplay"></div>
-                <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">組合總和 II (不可重複使用)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>候選 (candidates):</label>
+                        <input type="text" id="numsInput" value="10, 1, 2, 7, 6, 1, 5" style="width: 180px;">
+                        <label>Target:</label>
+                        <input type="number" id="targetInput" value="8" style="width: 60px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
-                <div class="controls-row-2">
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                
+                <div class="candidates-display" id="candidatesDisplay"></div>
+                
+                <div class="path-info">
+                    <div>Current Path: <span id="pathDisplay" style="font-weight:bold">[]</span></div>
+                    <div style="margin-top:5px;">Check: <span id="calcDisplay">-</span></div>
+                </div>
+                
+                <div class="results-grid" id="resultsDisplay"></div>
+                
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
+                    <span class="label">Time:</span> O(2^n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Sum</div><div class="state-value" id="sumDisplay">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">排序後</div><div class="state-value" id="sortedDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">結果數</div><div class="state-value" id="countDisplay">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">BACKTRACKING</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -78,51 +90,139 @@
             { line: '    if (target == 0) { result.push_back(path); return; }', id: 1 },
             { line: '    for (int i = start; i < candidates.size(); i++) {', id: 2 },
             { line: '        if (i > start && candidates[i] == candidates[i-1]) continue;', id: 3 },
-            { line: '        if (candidates[i] > target) break;', id: 4 },
+            { line: '        if (candidates[i] > target) break; // Pruning', id: 4 },
             { line: '        path.push_back(candidates[i]);', id: 5 },
             { line: '        backtrack(candidates, target-candidates[i], i+1, path, result);', id: 6 },
             { line: '        path.pop_back();', id: 7 },
             { line: '    }', id: 8 },
             { line: '}', id: 9 },
         ];
-        const candidates = [1, 1, 2, 5, 6, 7, 10]; // sorted
-        const target = 8;
 
-        function generateAlgorithmSteps() {
+        let currentCandidates = [10, 1, 2, 7, 6, 1, 5];
+        let currentTarget = 8;
+
+        function runCustomInput() {
+            const str = document.getElementById('numsInput').value;
+            const tVal = parseInt(document.getElementById('targetInput').value);
+            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            if (arr.length === 0 || isNaN(tVal) || tVal <= 0) {
+                alert('輸入無效');
+                return;
+            }
+            currentCandidates = arr;
+            currentTarget = tVal;
+            init();
+        }
+
+        function generateAlgorithmSteps(inputCands, target) {
             const steps = [];
-            const results = [[1, 1, 6], [1, 2, 5], [1, 7], [2, 6]];
-            let idx = 0;
+            const result = [];
+            const cands = [...inputCands].sort((a,b) => a-b);
             
-            steps.push({ path: [], sum: 0, results: [], highlightLines: [0], explanation: { title: 'Start', text: 'Each number used at most once' }});
-            steps.push({ path: [1, 1, 6], sum: 8, results: [[1, 1, 6]], highlightLines: [1], explanation: { title: '✓ Found!', text: '[1, 1, 6] = 8' }});
-            steps.push({ path: [1, 2, 5], sum: 8, results: [[1, 1, 6], [1, 2, 5]], highlightLines: [1], explanation: { title: '✓ Found!', text: '[1, 2, 5] = 8' }});
-            steps.push({ path: [1, 7], sum: 8, results: [[1, 1, 6], [1, 2, 5], [1, 7]], highlightLines: [1], explanation: { title: '✓ Found!', text: '[1, 7] = 8' }});
-            steps.push({ path: [], sum: 0, skip: 1, results: [[1, 1, 6], [1, 2, 5], [1, 7]], highlightLines: [3], explanation: { title: 'Skip duplicate 1', text: 'i > start && nums[1] == nums[0]' }});
-            steps.push({ path: [2, 6], sum: 8, results: results, highlightLines: [1], explanation: { title: '✓ Found!', text: '[2, 6] = 8' }});
-            steps.push({ path: [], sum: 0, results: results, highlightLines: [9], explanation: { title: 'Done!', text: '4 unique combinations' }});
+            steps.push({
+                path: [], target: target, sum: 0, startIdx: 0, result: [],
+                highlightLines: [0],
+                explanation: { title: '初始化', text: `Target: ${target}<br>排序後: [${cands.join(', ')}]`, formula: 'sort(candidates)' }
+            });
+
+            function backtrack(start, remain, path) {
+                const currentSum = target - remain;
+
+                if (remain === 0) {
+                    result.push([...path]);
+                    steps.push({
+                        path: [...path], target: target, sum: currentSum, startIdx: start, result: [...result],
+                        newFound: true,
+                        highlightLines: [1],
+                        explanation: { title: '🎉 找到解', text: `總和 ${currentSum} == Target<br>加入結果`, formula: 'sum == target' }
+                    });
+                    return;
+                }
+
+                for (let i = start; i < cands.length; i++) {
+                    const num = cands[i];
+                    
+                    if (i > start && cands[i] === cands[i-1]) {
+                        steps.push({
+                            path: [...path], target: target, sum: currentSum, startIdx: start, result: [...result],
+                            checkIdx: i, skipped: true,
+                            highlightLines: [3],
+                            explanation: { title: '跳過重複', text: `Index ${i} (${num}) == Index ${i-1}<br>避免產生重複組合`, formula: 'continue' }
+                        });
+                        continue;
+                    }
+                    
+                    if (num > remain) {
+                        steps.push({
+                            path: [...path], target: target, sum: currentSum, startIdx: start, result: [...result],
+                            checkIdx: i,
+                            highlightLines: [4],
+                            explanation: { title: '剪枝 (Pruning)', text: `${num} > 剩餘 ${remain}<br>因已排序，後續皆過大`, formula: 'break' }
+                        });
+                        break;
+                    }
+
+                    // Choose
+                    path.push(num);
+                    steps.push({
+                        path: [...path], target: target, sum: currentSum + num, startIdx: start, result: [...result],
+                        checkIdx: i,
+                        highlightLines: [5, 6],
+                        explanation: { title: `選擇 ${num}`, text: `加入 path，剩餘 ${remain - num}<br>下次從 i+1 開始 (不可重複用)`, formula: `remain - ${num}` }
+                    });
+                    
+                    backtrack(i + 1, remain - num, path);
+                    
+                    // Backtrack
+                    path.pop();
+                    steps.push({
+                        path: [...path], target: target, sum: currentSum, startIdx: start, result: [...result],
+                        highlightLines: [7],
+                        explanation: { title: '回溯', text: `移除 ${num}`, formula: 'pop()' }
+                    });
+                }
+            }
+
+            backtrack(0, target, []);
             
+            steps.push({
+                path: [], target: target, sum: 0, startIdx: 0, result: [...result],
+                final: true,
+                explanation: { title: '完成', text: `共找到 ${result.length} 組解`, formula: 'Done' }
+            });
+
             return steps;
         }
 
         let viz;
         function init() {
+            const sorted = [...currentCandidates].sort((a,b)=>a-b);
+            document.getElementById('sortedDisplay').textContent = `[${sorted.join(', ')}]`;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('candidatesDisplay').innerHTML = candidates.map((c, i) =>
-                        `<span class="cand ${step.path.includes(c) ? 'used' : ''} ${step.skip === i ? 'skip' : ''}">${c}</span>`
-                    ).join('');
-                    document.getElementById('pathDisplay').innerHTML = step.path.map(c =>
-                        `<span class="cand used">${c}</span>`
-                    ).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
-                    document.getElementById('resultsDisplay').innerHTML = step.results.map(r =>
-                        `<span class="result">[${r.join(',')}]</span>`
-                    ).join('');
-                    document.getElementById('sumDisplay').textContent = step.sum;
+                    document.getElementById('candidatesDisplay').innerHTML = sorted.map((c, i) => {
+                        let cls = 'cand-box';
+                        if (step.checkIdx === i) cls += ' current';
+                        if (step.skipped && step.checkIdx === i) cls += ' skipped';
+                        return `<div class="${cls}">${c}</div>`;
+                    }).join('');
+
+                    document.getElementById('pathDisplay').textContent = `[${step.path ? step.path.join(', ') : ''}]`;
+                    document.getElementById('calcDisplay').textContent = step.path ? `${step.sum} + ? = ${step.target}` : '-';
+
+                    document.getElementById('resultsDisplay').innerHTML = (step.result || []).map((r, i) => {
+                         const isNew = step.newFound && i === step.result.length - 1;
+                         return `<span class="result-item${isNew?' new':''} ">[${r.join(', ')}]</span>`;
+                    }).join('');
+                    
+                    document.getElementById('countDisplay').textContent = step.result ? step.result.length : 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentCandidates, currentTarget));
         }
+
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

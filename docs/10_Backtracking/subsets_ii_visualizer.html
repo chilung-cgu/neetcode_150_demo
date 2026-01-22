@@ -3,15 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subsets II Visualization</title>
+    <title>Subsets II (Dupes) - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .nums-display { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
-        .num { padding: 8px 14px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
-        .num.skip { opacity: 0.3; text-decoration: line-through; }
-        .num.current { background: var(--viz-secondary); color: #0f172a; }
-        .results { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
-        .result { padding: 4px 8px; border-radius: 4px; font-family: monospace; background: var(--viz-success); color: #0f172a; font-size: 0.85rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .nums-display { display: flex; gap: 8px; justify-content: center; margin: 15px 0; }
+        .num-item { 
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; 
+            border-radius: 6px; background: var(--viz-bg-secondary); border: 2px solid var(--viz-border);
+            font-weight: bold; transition: all 0.3s;
+        }
+        .num-item.included { background: var(--viz-success); color: #0f172a; border-color: transparent; }
+        .num-item.skipped { opacity: 0.3; text-decoration: line-through; border-color: var(--viz-error); }
+        .num-item.current { border-color: var(--viz-primary); box-shadow: 0 0 10px var(--viz-primary); }
+        
+        .results-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; max-height: 200px; overflow-y: auto; }
+        .subset-badge { padding: 4px 8px; background: var(--viz-success); color: #0f172a; border-radius: 4px; font-family: monospace; }
+        .subset-badge.new { animation: pulse 0.5s; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -19,43 +32,53 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SUBSETS II (with duplicates)</div>
-                <div style="text-align: center; color: var(--viz-text-muted);">Sorted Array:</div>
+                <div class="viz-title">子集 II (處理重複元素)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>陣列 (含重複):</label>
+                        <input type="text" id="numsInput" value="1, 2, 2" style="width: 150px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
                 <div class="nums-display" id="numsDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Current Subset:</div>
-                <div class="nums-display" id="currentDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">All Subsets:</div>
-                <div class="results" id="resultsDisplay"></div>
+                
+                <div style="text-align: center; margin: 10px 0;">
+                    <span style="color:var(--text-muted)">當前路徑:</span>
+                    <span id="currentPath" style="font-weight:bold; font-size:1.1rem; margin-left: 5px;">[]</span>
+                </div>
+                
+                <div class="results-grid" id="resultsDisplay"></div>
+                
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-            <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O(n * 2^n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                </div>
+                <div class="state-grid">
+                    <div class="state-item"><div class="state-label">排序後</div><div class="state-value" id="sortedDisplay">-</div></div>
+                    <div class="state-item"><div class="state-label">不重複子集</div><div class="state-value" id="countDisplay">0</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">SKIP DUPLICATES</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -66,7 +89,7 @@
             { line: 'void backtrack(nums, start, path, result) {', id: 0 },
             { line: '    result.push_back(path);', id: 1 },
             { line: '    for (int i = start; i < nums.size(); i++) {', id: 2 },
-            { line: '        // Skip duplicates', id: 3 },
+            { line: '        // 跳過重複元素', id: 3 },
             { line: '        if (i > start && nums[i] == nums[i-1]) continue;', id: 4 },
             { line: '        path.push_back(nums[i]);', id: 5 },
             { line: '        backtrack(nums, i + 1, path, result);', id: 6 },
@@ -74,42 +97,122 @@
             { line: '    }', id: 8 },
             { line: '}', id: 9 },
         ];
-        const nums = [1, 2, 2]; // sorted
 
-        function generateAlgorithmSteps() {
+        let currentNums = [1, 2, 2];
+
+        function runCustomInput() {
+            const str = document.getElementById('numsInput').value;
+            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            if (arr.length === 0 || arr.length > 6) {
+                alert('請輸入 1-6 個數字');
+                return;
+            }
+            currentNums = arr;
+            init();
+        }
+
+        function generateAlgorithmSteps(inputNums) {
             const steps = [];
-            const results = [[], [1], [1, 2], [1, 2, 2], [2], [2, 2]];
+            const result = [];
+            const nums = [...inputNums].sort((a,b) => a-b); // Must sort
             
-            steps.push({ current: [], results: [[]], idx: -1, highlightLines: [0, 1], explanation: { title: 'Start', text: 'Add empty subset []' }});
-            steps.push({ current: [1], results: [[], [1]], idx: 0, highlightLines: [5, 6], explanation: { title: 'Add 1', text: 'Subset: [1]' }});
-            steps.push({ current: [1, 2], results: [[], [1], [1, 2]], idx: 1, highlightLines: [5, 6], explanation: { title: 'Add 2', text: 'Subset: [1, 2]' }});
-            steps.push({ current: [1, 2, 2], results: [[], [1], [1, 2], [1, 2, 2]], idx: 2, highlightLines: [5, 6], explanation: { title: 'Add second 2', text: 'Subset: [1, 2, 2]' }});
-            steps.push({ current: [2], results: [[], [1], [1, 2], [1, 2, 2], [2]], idx: 1, highlightLines: [5, 6], explanation: { title: 'Reset, add 2', text: 'Subset: [2]' }});
-            steps.push({ current: [2, 2], results: [[], [1], [1, 2], [1, 2, 2], [2], [2, 2]], idx: 2, highlightLines: [5, 6], explanation: { title: 'Add second 2', text: 'Subset: [2, 2]' }});
-            steps.push({ current: [], results: results, idx: -1, skip: true, highlightLines: [4], explanation: { title: 'Skip duplicate start', text: 'i > start && nums[2] == nums[1]' }});
-            steps.push({ current: [], results: results, idx: -1, highlightLines: [9], explanation: { title: 'Done!', text: `${results.length} unique subsets` }});
+            steps.push({
+                path: [], result: [], startIdx: 0, 
+                highlightLines: [0],
+                explanation: { title: '初始化', text: `輸入排序後: [${nums.join(', ')}]<br>開始 Backtrack`, formula: 'sort(nums)' }
+            });
+
+            function backtrack(start, path) {
+                result.push([...path]);
+                steps.push({
+                    path: [...path], result: [...result], startIdx: start,
+                    newFound: true,
+                    highlightLines: [1],
+                    explanation: { title: '收集子集', text: `加入 path: [${path.join(', ')}]`, formula: 'result.push(path)' }
+                });
+
+                for (let i = start; i < nums.length; i++) {
+                    const num = nums[i];
+
+                    if (i > start && nums[i] === nums[i-1]) {
+                        steps.push({
+                            path: [...path], result: [...result], startIdx: start,
+                            checkIdx: i, skipped: true,
+                            highlightLines: [3, 4],
+                            explanation: { 
+                                title: '跳過重複', 
+                                text: `Index ${i} (${num}) == Index ${i-1} (${nums[i-1]})<br>且 i > start (${i} > ${start})，跳過以免產生重複子集`, 
+                                formula: 'continue' 
+                            }
+                        });
+                        continue;
+                    }
+
+                    path.push(num);
+                    steps.push({
+                        path: [...path], result: [...result], startIdx: start,
+                        checkIdx: i,
+                        highlightLines: [5, 6],
+                        explanation: { title: `選擇 ${num}`, text: `加入 ${num} 到 path<br>遞迴 backtrack(i+1)`, formula: `path.push(${num})` }
+                    });
+                    
+                    backtrack(i + 1, path);
+
+                    path.pop();
+                    steps.push({
+                        path: [...path], result: [...result], startIdx: start,
+                        highlightLines: [7],
+                        explanation: { title: '回溯', text: `移除 ${num}`, formula: 'path.pop()' }
+                    });
+                }
+            }
+
+            backtrack(0, []);
             
+            steps.push({
+                path: [], result: [...result], startIdx: 0,
+                final: true,
+                explanation: { title: '完成', text: `共找到 ${result.length} 個唯一子集`, formula: 'Done' }
+            });
+
             return steps;
         }
 
         let viz;
         function init() {
+            // Sort for display
+            const sorted = [...currentNums].sort((a,b)=>a-b);
+            document.getElementById('sortedDisplay').textContent = `[${sorted.join(', ')}]`;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('numsDisplay').innerHTML = nums.map((n, i) =>
-                        `<span class="num ${i === step.idx ? 'current' : ''} ${step.skip && i === 2 ? 'skip' : ''}">${n}</span>`
-                    ).join('');
-                    document.getElementById('currentDisplay').innerHTML = step.current.map(n =>
-                        `<span class="num current">${n}</span>`
-                    ).join('') || '<em style="color:var(--viz-text-muted)">Empty</em>';
-                    document.getElementById('resultsDisplay').innerHTML = step.results.map(r =>
-                        `<span class="result">[${r.join(',')}]</span>`
-                    ).join('');
+                    document.getElementById('numsDisplay').innerHTML = sorted.map((n, i) => {
+                         let cls = 'num-item';
+                         if (step.checkIdx === i) cls += ' current';
+                         if (step.skipped && step.checkIdx === i) cls += ' skipped';
+                         // Visualizing recursion depth is tricky for "included" state without full context in step
+                         // But we can approximate. A number is "included" if it's conceptually "before" start in a way...
+                         // Actually simpler: if we are exploring `i`, then elements in `path` are used.
+                         // But `path` doesn't store indices.
+                         // However, for this problem, values could be same.
+                         // Let's just highlight current checking index and skip.
+                         return `<div class="${cls}">${n}</div>`;
+                    }).join('');
+                    
+                    document.getElementById('currentPath').textContent = `[${step.path ? step.path.join(', ') : ''}]`;
+                    
+                    document.getElementById('resultsDisplay').innerHTML = (step.result || []).map((r, i) => {
+                        const isNew = step.newFound && i === step.result.length - 1;
+                        return `<span class="subset-badge${isNew ? ' new' : ''}">[${r.join(', ')}]</span>`;
+                    }).join('');
+                    
+                    document.getElementById('countDisplay').textContent = step.result ? step.result.length : 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNums));
         }
+
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>
