@@ -15,8 +15,13 @@
         .element.right { background: var(--viz-warning); color: #0f172a; }
         .element.found { animation: pulse 0.5s; }
         @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-        .results { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 10px 0; }
+        .results { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 10px 0; min-height: 30px; }
         .triplet { background: var(--viz-success); color: #0f172a; padding: 6px 12px; border-radius: 6px; font-weight: bold; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { flex: 1; min-width: 150px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -27,7 +32,7 @@
                 <div class="viz-title">三數之和（TWO POINTERS）</div>
                 <div class="array" id="arrayDisplay"></div>
                 <div style="text-align: center; color: var(--text-muted); margin: 5px 0;">找到的三元組</div>
-                <div class="results" id="resultsDisplay"></div>
+                <div class="results" id="resultsDisplay">-</div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
@@ -44,19 +49,25 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n²)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1) — 不計輸出
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">i / L / R</div><div class="state-value" id="ptrDisplay">-</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
                     <div class="state-item"><div class="state-label">當前和</div><div class="state-value" id="sumDisplay">-</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-error);"></div>固定 i</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>左指標 L</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-warning);"></div>右指標 R</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customNums" placeholder="輸入陣列" value="-1,0,1,2,-1,-4">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -80,53 +91,72 @@
             { line: '        while (l < r) {', id: 6 },
             { line: '            int sum = nums[i] + nums[l] + nums[r];', id: 7 },
             { line: '            if (sum == 0) {', id: 8 },
-            { line: '                result.push_back({nums[i], nums[l], nums[r]});', id: 9 },
-            { line: '                while (l < r && nums[l] == nums[l+1]) l++;', id: 10 },
+            { line: '                result.push_back({nums[i],nums[l],nums[r]});', id: 9 },
+            { line: '                while (l < r && nums[l]==nums[l+1]) l++;', id: 10 },
             { line: '                l++; r--;', id: 11 },
             { line: '            } else if (sum < 0) l++;', id: 12 },
             { line: '            else r--;', id: 13 },
-            { line: '        }', id: 14 },
-            { line: '    }', id: 15 },
-            { line: '    return result;', id: 16 },
-            { line: '}', id: 17 },
+            { line: '    }  }', id: 14 },
+            { line: '    return result;', id: 15 },
+            { line: '}', id: 16 },
         ];
-        const nums = [-1, 0, 1, 2, -1, -4];
-        const sorted = [-4, -1, -1, 0, 1, 2];
-        function generateAlgorithmSteps() {
+        let currentNums = [-1, 0, 1, 2, -1, -4];
+        function generateAlgorithmSteps(nums) {
+            const sorted = [...nums].sort((a, b) => a - b);
             const steps = [];
-            steps.push({ i: null, l: null, r: null, results: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: `原陣列：[${nums.join(', ')}]<br>排序後：[${sorted.join(', ')}]<br><br>固定一個數 i，用雙指標找另外兩個` } });
-            steps.push({ i: 0, l: 1, r: 5, sum: -4-1+2, results: [], highlightLines: [3,5,6,7], explanation: { title: 'i=0, 固定 -4', text: 'l=1, r=5<br>sum = -4 + (-1) + 2 = -3 < 0<br>l++', formula: '-4 + (-1) + 2 = -3' } });
-            steps.push({ i: 1, l: 2, r: 5, sum: -1-1+2, results: [], highlightLines: [3,5,6,7], explanation: { title: 'i=1, 固定 -1', text: 'l=2, r=5<br>sum = -1 + (-1) + 2 = 0 ✓', formula: '-1 + (-1) + 2 = 0' } });
-            steps.push({ i: 1, l: 2, r: 5, sum: 0, results: [[-1,-1,2]], found: true, highlightLines: [8,9,10,11], explanation: { title: '🎉 找到三元組！', text: '[-1, -1, 2]<br>跳過重複，l++, r--' } });
-            steps.push({ i: 1, l: 3, r: 4, sum: -1+0+1, results: [[-1,-1,2]], highlightLines: [6,7,8], explanation: { title: '繼續搜尋', text: 'l=3, r=4<br>sum = -1 + 0 + 1 = 0 ✓', formula: '-1 + 0 + 1 = 0' } });
-            steps.push({ i: 1, l: 3, r: 4, sum: 0, results: [[-1,-1,2],[-1,0,1]], found: true, highlightLines: [8,9], explanation: { title: '🎉 找到三元組！', text: '[-1, 0, 1]' } });
-            steps.push({ i: null, l: null, r: null, results: [[-1,-1,2],[-1,0,1]], final: true, highlightLines: [16], explanation: { title: '搜尋完成！', text: `找到 2 個三元組：<br>[-1, -1, 2]<br>[-1, 0, 1]<br><br>時間：O(n²)` } });
+            const results = [];
+            steps.push({ sorted, i: null, l: null, r: null, results: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: `原陣列：[${nums.join(', ')}]<br>排序後：[${sorted.join(', ')}]<br><br>固定一個數 i，用雙指標找另外兩個使 sum=0`, formula: `nums[i] + nums[l] + nums[r] = 0` } });
+            for (let i = 0; i < sorted.length - 2; i++) {
+                if (i > 0 && sorted[i] === sorted[i-1]) continue;
+                let l = i + 1, r = sorted.length - 1;
+                while (l < r) {
+                    const sum = sorted[i] + sorted[l] + sorted[r];
+                    if (sum === 0) {
+                        results.push([sorted[i], sorted[l], sorted[r]]);
+                        steps.push({ sorted, i, l, r, sum: 0, results: [...results], found: true, highlightLines: [8,9,10,11], explanation: { title: '🎉 找到三元組！', text: `[${sorted[i]}, ${sorted[l]}, ${sorted[r]}]<br>${sorted[i]} + ${sorted[l]} + ${sorted[r]} = 0`, formula: `${sorted[i]} + ${sorted[l]} + ${sorted[r]} = 0 ✓` } });
+                        while (l < r && sorted[l] === sorted[l+1]) l++;
+                        l++; r--;
+                    } else if (sum < 0) {
+                        steps.push({ sorted, i, l, r, sum, results: [...results], highlightLines: [7,12], explanation: { title: `sum < 0, 左移`, text: `${sorted[i]} + ${sorted[l]} + ${sorted[r]} = ${sum}<br>${sum} < 0 → l++`, formula: `${sum} < 0 → l++` } });
+                        l++;
+                    } else {
+                        steps.push({ sorted, i, l, r, sum, results: [...results], highlightLines: [7,13], explanation: { title: `sum > 0, 右移`, text: `${sorted[i]} + ${sorted[l]} + ${sorted[r]} = ${sum}<br>${sum} > 0 → r--`, formula: `${sum} > 0 → r--` } });
+                        r--;
+                    }
+                }
+            }
+            steps.push({ sorted, i: null, l: null, r: null, results, final: true, highlightLines: [15], explanation: { title: '搜尋完成！', text: `找到 ${results.length} 個三元組`, formula: `O(n²) = O(n) × O(n)` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(nums = currentNums) {
+            currentNums = nums;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    for (let j = 0; j < sorted.length; j++) {
+                    const sorted = step.sorted || [...currentNums].sort((a,b) => a - b);
+                    document.getElementById('arrayDisplay').innerHTML = sorted.map((n, j) => {
                         let cls = 'element';
                         if (j === step.i) cls += ' i';
                         if (j === step.l) cls += ' left';
                         if (j === step.r) cls += ' right';
                         if (step.found && (j === step.i || j === step.l || j === step.r)) cls += ' found';
-                        html += `<div class="${cls}"><div class="val">${sorted[j]}</div><div class="idx">[${j}]</div></div>`;
-                    }
-                    document.getElementById('arrayDisplay').innerHTML = html;
-                    document.getElementById('resultsDisplay').innerHTML = (step.results || []).map(t => `<span class="triplet">[${t.join(', ')}]</span>`).join('');
+                        return `<div class="${cls}"><div class="val">${n}</div><div class="idx">[${j}]</div></div>`;
+                    }).join('');
+                    document.getElementById('resultsDisplay').innerHTML = (step.results || []).map(t => `<span class="triplet">[${t.join(', ')}]</span>`).join('') || '-';
                     document.getElementById('ptrDisplay').textContent = step.i !== null ? `${step.i} / ${step.l} / ${step.r}` : '-';
                     document.getElementById('sumDisplay').textContent = step.sum !== undefined ? step.sum : '-';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNums));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const nums = document.getElementById('customNums').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            if (nums.length < 3 || nums.length > 12) { alert('請輸入 3-12 個數字'); return; }
+            init(nums);
+        }
+        function resetVisualization() { init(currentNums); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

@@ -7,11 +7,17 @@
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .string { display: flex; gap: 4px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
-        .char { width: 35px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-bg-secondary); color: var(--text-primary); transition: all 0.3s; font-size: 1.1rem; }
-        .char.left { border: 3px solid var(--viz-success); }
-        .char.right { border: 3px solid var(--viz-error); }
+        .char { width: 30px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-bg-secondary); color: var(--text-primary); transition: all 0.3s; font-size: 1rem; }
+        .char.left { border: 3px solid var(--viz-success); background: rgba(16, 185, 129, 0.2); }
+        .char.right { border: 3px solid var(--viz-error); background: rgba(239, 68, 68, 0.2); }
         .char.match { background: var(--viz-success); color: #0f172a; }
         .char.skip { opacity: 0.3; }
+        .char.mismatch { background: var(--viz-error); color: white; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { flex: 1; min-width: 200px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -37,20 +43,25 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">左指標</div><div class="state-value" id="leftDisplay">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
                     <div class="state-item"><div class="state-label">右指標</div><div class="state-value" id="rightDisplay">?</div></div>
                     <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>左指標 / 匹配</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-error);"></div>右指標</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customStr" placeholder="輸入字串" value="A man, a plan, a canal: Panama">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -77,44 +88,66 @@
             { line: '    return true;', id: 9 },
             { line: '}', id: 10 },
         ];
-        const str = "A man, a plan, a canal: Panama";
-        function generateAlgorithmSteps() {
+        let currentStr = "A man, a plan, a canal: Panama";
+        function generateAlgorithmSteps(str) {
             const steps = [];
             const chars = str.split('');
-            steps.push({ l: 0, r: chars.length - 1, matched: [], highlightLines: [0,1], explanation: { title: '初始化', text: `字串："${str}"<br><br>使用雙指標從兩端向中間比較<br>忽略非字母數字字元` } });
-            // Simulate: A vs a, m vs m, a vs n... (simplified)
-            steps.push({ l: 0, r: 29, matched: [0, 29], highlightLines: [2,3,4,5], explanation: { title: '比較 A 和 a', text: 'tolower(A) = a = tolower(a) ✓<br>匹配！繼續', formula: 'A == a (忽略大小寫)' } });
-            steps.push({ l: 2, r: 27, matched: [0,29,2,27], highlightLines: [7,2,3,4,5], explanation: { title: '比較 m 和 m', text: 'm = m ✓<br>跳過空格和標點' } });
-            steps.push({ l: 3, r: 26, matched: [0,29,2,27,3,26], highlightLines: [7,2,3,4,5], explanation: { title: '比較 a 和 a', text: 'a = a ✓' } });
-            steps.push({ l: 4, r: 25, matched: [0,29,2,27,3,26,4,25], highlightLines: [7,2,3,4,5], explanation: { title: '比較 n 和 n', text: 'n = n ✓<br>...(繼續比較至中間)' } });
-            steps.push({ l: 15, r: 14, result: true, highlightLines: [9], explanation: { title: '🎉 是回文！', text: '所有對應字元都匹配<br><br>l >= r，迴圈結束<br>回傳 true' } });
+            const n = chars.length;
+            let l = 0, r = n - 1;
+            const matched = [];
+            steps.push({ l: 0, r: n - 1, matched: [], highlightLines: [0,1], explanation: { title: '初始化', text: `字串："${str}"<br>長度：${n}<br><br>使用雙指標從兩端向中間比較<br>忽略非字母數字字元`, formula: `l = 0, r = ${n - 1}` } });
+            while (l < r) {
+                // 跳過非字母數字
+                while (l < r && !/[a-zA-Z0-9]/.test(chars[l])) l++;
+                while (l < r && !/[a-zA-Z0-9]/.test(chars[r])) r--;
+                if (l >= r) break;
+                const lChar = chars[l].toLowerCase();
+                const rChar = chars[r].toLowerCase();
+                if (lChar !== rChar) {
+                    steps.push({ l, r, matched: [...matched], mismatch: true, highlightLines: [5,6], explanation: { title: `❌ 不匹配！`, text: `s[${l}] = '${chars[l]}' (${lChar})<br>s[${r}] = '${chars[r]}' (${rChar})<br><br>${lChar} ≠ ${rChar}<br>不是回文！`, formula: `'${lChar}' ≠ '${rChar}' → return false` }, result: false });
+                    return steps;
+                }
+                matched.push(l, r);
+                steps.push({ l, r, matched: [...matched], highlightLines: [3,4,5,7], explanation: { title: `比較 '${chars[l]}' 和 '${chars[r]}'`, text: `tolower('${chars[l]}') = '${lChar}'<br>tolower('${chars[r]}') = '${rChar}'<br><br>${lChar} = ${rChar} ✓ 匹配！`, formula: `'${lChar}' = '${rChar}' → l++, r--` } });
+                l++; r--;
+            }
+            steps.push({ l, r, matched: [...matched], result: true, highlightLines: [9], explanation: { title: '🎉 是回文！', text: `所有對應字元都匹配<br><br>l ≥ r，迴圈結束<br>回傳 true`, formula: `l ≥ r → return true` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(str = currentStr) {
+            currentStr = str;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const chars = str.split('');
-                    let html = '';
-                    for (let i = 0; i < chars.length; i++) {
+                    document.getElementById('stringDisplay').innerHTML = currentStr.split('').map((c, i) => {
                         let cls = 'char';
-                        if (!/[a-zA-Z0-9]/.test(chars[i])) cls += ' skip';
+                        if (!/[a-zA-Z0-9]/.test(c)) cls += ' skip';
                         if (i === step.l) cls += ' left';
                         if (i === step.r) cls += ' right';
                         if (step.matched?.includes(i)) cls += ' match';
-                        html += `<div class="${cls}">${chars[i]}</div>`;
-                    }
-                    document.getElementById('stringDisplay').innerHTML = html;
+                        if (step.mismatch && (i === step.l || i === step.r)) cls += ' mismatch';
+                        return `<div class="${cls}">${c}</div>`;
+                    }).join('');
                     document.getElementById('leftDisplay').textContent = step.l;
                     document.getElementById('rightDisplay').textContent = step.r;
-                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
+                    if (step.result !== undefined) {
+                        document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : 'false ✗';
+                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '?';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentStr));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const str = document.getElementById('customStr').value;
+            if (str.length === 0 || str.length > 50) { alert('請輸入 1-50 個字元'); return; }
+            init(str);
+        }
+        function resetVisualization() { init(currentStr); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

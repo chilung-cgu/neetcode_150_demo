@@ -6,14 +6,20 @@
     <title>Two Sum II 兩數之和 II - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .array { display: flex; gap: 6px; justify-content: center; margin: 20px 0; }
+        .array { display: flex; gap: 6px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
         .element { width: 45px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
         .element .val { font-weight: bold; font-size: 1.1rem; }
         .element .idx { font-size: 0.65rem; opacity: 0.7; }
         .element.left { border: 3px solid var(--viz-success); }
         .element.right { border: 3px solid var(--viz-error); }
-        .element.found { background: var(--viz-success); color: #0f172a; }
-        .sum-display { text-align: center; font-size: 1.2rem; margin: 10px 0; color: var(--viz-secondary); }
+        .element.found { background: var(--viz-success); color: #0f172a; animation: pulse 0.5s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .sum-display { text-align: center; font-size: 1.2rem; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { flex: 1; min-width: 80px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -40,20 +46,30 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">目標值</div><div class="state-value">9</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">L / R</div><div class="state-value" id="lrDisplay">0 / 5</div></div>
+                    <div class="state-item"><div class="state-label">目標值</div><div class="state-value" id="targetDisplay">9</div></div>
+                    <div class="state-item"><div class="state-label">L / R</div><div class="state-value" id="lrDisplay">0 / ?</div></div>
                     <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>左指標</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-error);"></div>右指標</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試（陣列需已排序）</div>
+                    <div class="input-row">
+                        <label>陣列:</label>
+                        <input type="text" id="customNums" placeholder="已排序陣列" value="2,3,4,5,8,11">
+                    </div>
+                    <div class="input-row">
+                        <label>目標:</label>
+                        <input type="number" id="customTarget" value="9" style="max-width: 80px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -73,49 +89,70 @@
             { line: '    while (l < r) {', id: 2 },
             { line: '        int sum = nums[l] + nums[r];', id: 3 },
             { line: '        if (sum == target) return {l+1, r+1};', id: 4 },
-            { line: '        else if (sum < target) l++;', id: 5 },
-            { line: '        else r--;', id: 6 },
+            { line: '        else if (sum < target) l++;  // 需要更大', id: 5 },
+            { line: '        else r--;  // 需要更小', id: 6 },
             { line: '    }', id: 7 },
             { line: '    return {};', id: 8 },
             { line: '}', id: 9 },
         ];
-        const nums = [2, 3, 4, 5, 8, 11];
-        const target = 9;
-        function generateAlgorithmSteps() {
+        let currentNums = [2, 3, 4, 5, 8, 11];
+        let currentTarget = 9;
+        function generateAlgorithmSteps(nums, target) {
             const steps = [];
-            steps.push({ l: 0, r: 5, sum: 13, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `陣列（已排序）：[${nums.join(', ')}]<br>目標：${target}<br><br>雙指標：l=0, r=5<br>sum = 2 + 11 = 13` } });
-            steps.push({ l: 0, r: 5, sum: 13, highlightLines: [6], explanation: { title: 'sum > target', text: '13 > 9<br>需要更小的和<br>r-- 移動右指標', formula: '2 + 11 = 13 > 9 → r--' } });
-            steps.push({ l: 0, r: 4, sum: 10, highlightLines: [2,3], explanation: { title: '重新計算', text: 'l=0, r=4<br>sum = 2 + 8 = 10' } });
-            steps.push({ l: 0, r: 4, sum: 10, highlightLines: [6], explanation: { title: 'sum > target', text: '10 > 9<br>r--', formula: '2 + 8 = 10 > 9 → r--' } });
-            steps.push({ l: 0, r: 3, sum: 7, highlightLines: [2,3], explanation: { title: '重新計算', text: 'l=0, r=3<br>sum = 2 + 5 = 7' } });
-            steps.push({ l: 0, r: 3, sum: 7, highlightLines: [5], explanation: { title: 'sum < target', text: '7 < 9<br>需要更大的和<br>l++ 移動左指標', formula: '2 + 5 = 7 < 9 → l++' } });
-            steps.push({ l: 1, r: 3, sum: 8, highlightLines: [2,3,5], explanation: { title: '繼續', text: 'l=1, r=3<br>sum = 3 + 5 = 8 < 9<br>l++', formula: '3 + 5 = 8 < 9 → l++' } });
-            steps.push({ l: 2, r: 3, sum: 9, found: true, highlightLines: [4], explanation: { title: '🎉 找到答案！', text: '4 + 5 = 9 = target<br><br>回傳 [3, 4]（1-indexed）<br>時間：O(n)', formula: '4 + 5 = 9 == target' } });
+            let l = 0, r = nums.length - 1;
+            steps.push({ l, r, sum: nums[l] + nums[r], highlightLines: [0,1], explanation: { title: '初始化', text: `陣列（已排序）：[${nums.join(', ')}]<br>目標：${target}<br><br>雙指標策略：<br>sum 太大 → 右指標左移<br>sum 太小 → 左指標右移`, formula: `l = 0, r = ${nums.length - 1}` } });
+            while (l < r) {
+                const sum = nums[l] + nums[r];
+                if (sum === target) {
+                    steps.push({ l, r, sum, found: true, highlightLines: [3,4], explanation: { title: '🎉 找到答案！', text: `${nums[l]} + ${nums[r]} = ${sum} = target<br><br>回傳 [${l+1}, ${r+1}]（1-indexed）`, formula: `${nums[l]} + ${nums[r]} = ${target} ✓` } });
+                    break;
+                } else if (sum < target) {
+                    steps.push({ l, r, sum, highlightLines: [3,5], explanation: { title: `sum < target`, text: `${nums[l]} + ${nums[r]} = ${sum}<br>${sum} < ${target}<br><br>需要更大的和 → l++`, formula: `${sum} < ${target} → l++` } });
+                    l++;
+                } else {
+                    steps.push({ l, r, sum, highlightLines: [3,6], explanation: { title: `sum > target`, text: `${nums[l]} + ${nums[r]} = ${sum}<br>${sum} > ${target}<br><br>需要更小的和 → r--`, formula: `${sum} > ${target} → r--` } });
+                    r--;
+                }
+            }
             return steps;
         }
         let viz;
-        function init() {
+        function init(nums = currentNums, target = currentTarget) {
+            currentNums = nums; currentTarget = target;
+            document.getElementById('targetDisplay').textContent = target;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    for (let i = 0; i < nums.length; i++) {
+                    document.getElementById('arrayDisplay').innerHTML = currentNums.map((n, i) => {
                         let cls = 'element';
                         if (i === step.l) cls += ' left';
                         if (i === step.r) cls += ' right';
                         if (step.found && (i === step.l || i === step.r)) cls += ' found';
-                        html += `<div class="${cls}"><div class="val">${nums[i]}</div><div class="idx">[${i}]</div></div>`;
-                    }
-                    document.getElementById('arrayDisplay').innerHTML = html;
-                    document.getElementById('sumDisplay').textContent = `${nums[step.l]} + ${nums[step.r]} = ${step.sum}`;
+                        return `<div class="${cls}"><div class="val">${n}</div><div class="idx">[${i}]</div></div>`;
+                    }).join('');
+                    document.getElementById('sumDisplay').innerHTML = `<span style="color: var(--viz-success)">nums[${step.l}]</span> + <span style="color: var(--viz-error)">nums[${step.r}]</span> = ${currentNums[step.l]} + ${currentNums[step.r]} = <strong>${step.sum}</strong>`;
                     document.getElementById('lrDisplay').textContent = `${step.l} / ${step.r}`;
-                    document.getElementById('resultDisplay').textContent = step.found ? '[3, 4]' : '?';
+                    if (step.found) {
+                        document.getElementById('resultDisplay').textContent = `[${step.l+1}, ${step.r+1}]`;
+                        document.getElementById('resultDisplay').style.color = 'var(--viz-success)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '?';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNums, currentTarget));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const nums = document.getElementById('customNums').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            const target = parseInt(document.getElementById('customTarget').value);
+            if (nums.length < 2 || nums.length > 12) { alert('請輸入 2-12 個數字'); return; }
+            if (isNaN(target)) { alert('請輸入有效的目標值'); return; }
+            // 確保已排序
+            nums.sort((a, b) => a - b);
+            init(nums, target);
+        }
+        function resetVisualization() { init(currentNums, currentTarget); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

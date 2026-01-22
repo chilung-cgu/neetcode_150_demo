@@ -7,12 +7,17 @@
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .bars { display: flex; gap: 2px; justify-content: center; align-items: flex-end; margin: 20px 0; height: 160px; }
-        .bar { width: 35px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; }
-        .bar-block { width: 100%; background: var(--viz-primary); }
+        .bar { width: 30px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; }
+        .bar-block { width: 100%; background: var(--viz-primary); display: flex; align-items: flex-start; justify-content: center; color: white; font-size: 0.7rem; }
         .bar-water { width: 100%; background: rgba(59, 130, 246, 0.6); }
         .bar.left .bar-block { background: var(--viz-success); }
         .bar.right .bar-block { background: var(--viz-warning); }
         .bar-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { flex: 1; min-width: 150px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -38,20 +43,26 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">leftMax</div><div class="state-value" id="leftMaxDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
                     <div class="state-item"><div class="state-label">rightMax</div><div class="state-value" id="rightMaxDisplay" style="color: var(--viz-warning);">0</div></div>
                     <div class="state-item"><div class="state-label">總水量</div><div class="state-value" id="totalDisplay" style="color: #3b82f6;">0</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>左指標</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-warning);"></div>右指標</div>
+                    <div class="legend-item"><div class="legend-color" style="background: rgba(59, 130, 246, 0.6);"></div>雨水</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customHeights" placeholder="輸入高度陣列" value="0,1,0,2,1,0,1,3,2,1,2,1">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -83,59 +94,61 @@
             { line: '    return water;', id: 14 },
             { line: '}', id: 15 },
         ];
-        const heights = [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1];
-        function generateAlgorithmSteps() {
+        let currentHeights = [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1];
+        function generateAlgorithmSteps(heights) {
             const steps = [];
-            steps.push({ l: 0, r: 11, leftMax: 0, rightMax: 0, water: 0, waterAt: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: `高度：[${heights.join(', ')}]<br><br>雙指標從兩端向中間移動<br>每個位置可接的水 = min(leftMax, rightMax) - height` } });
             let l = 0, r = heights.length - 1, leftMax = 0, rightMax = 0, water = 0;
             const waterAt = Array(heights.length).fill(0);
-            let stepCount = 0;
-            while (l < r && stepCount < 8) {
+            steps.push({ l, r, leftMax, rightMax, water: 0, waterAt: [...waterAt], highlightLines: [0,1,2], explanation: { title: '初始化', text: `高度：[${heights.join(', ')}]<br>n = ${heights.length}<br><br>雙指標從兩端向中間移動<br>每個位置可接的水 = min(leftMax, rightMax) - height`, formula: `water[i] = min(leftMax, rightMax) - height[i]` } });
+            while (l < r) {
                 if (heights[l] < heights[r]) {
                     leftMax = Math.max(leftMax, heights[l]);
                     const add = leftMax - heights[l];
                     waterAt[l] = add;
                     water += add;
-                    steps.push({ l, r, leftMax, rightMax, water, waterAt: [...waterAt], highlightLines: [4,5,6,7], explanation: { title: `處理位置 ${l}`, text: `height[${l}]=${heights[l]} < height[${r}]=${heights[r]}<br>leftMax = ${leftMax}<br>water += ${leftMax} - ${heights[l]} = ${add}`, formula: `water += ${leftMax} - ${heights[l]} = ${add}` } });
+                    steps.push({ l, r, leftMax, rightMax, water, waterAt: [...waterAt], highlightLines: [4,5,6,7], explanation: { title: `處理左側 [${l}]`, text: `h[${l}]=${heights[l]} < h[${r}]=${heights[r]}<br>leftMax = max(${leftMax === heights[l] ? heights[l] : leftMax - heights[l] + ',' + heights[l]}) = ${leftMax}<br>water += ${leftMax} - ${heights[l]} = ${add}`, formula: `water += ${leftMax} - ${heights[l]} = ${add}` } });
                     l++;
                 } else {
                     rightMax = Math.max(rightMax, heights[r]);
                     const add = rightMax - heights[r];
                     waterAt[r] = add;
                     water += add;
-                    steps.push({ l, r, leftMax, rightMax, water, waterAt: [...waterAt], highlightLines: [8,9,10,11], explanation: { title: `處理位置 ${r}`, text: `height[${l}]=${heights[l]} ≥ height[${r}]=${heights[r]}<br>rightMax = ${rightMax}<br>water += ${rightMax} - ${heights[r]} = ${add}`, formula: `water += ${rightMax} - ${heights[r]} = ${add}` } });
+                    steps.push({ l, r, leftMax, rightMax, water, waterAt: [...waterAt], highlightLines: [8,9,10,11], explanation: { title: `處理右側 [${r}]`, text: `h[${l}]=${heights[l]} ≥ h[${r}]=${heights[r]}<br>rightMax = ${rightMax}<br>water += ${rightMax} - ${heights[r]} = ${add}`, formula: `water += ${rightMax} - ${heights[r]} = ${add}` } });
                     r--;
                 }
-                stepCount++;
             }
-            steps.push({ l, r, leftMax, rightMax, water: 6, waterAt: [0,0,1,0,1,2,1,0,0,1,0,0], final: true, highlightLines: [14], explanation: { title: '完成！', text: `總共可接 6 單位的雨水<br><br>時間：O(n), 空間：O(1)` } });
+            steps.push({ l, r, leftMax, rightMax, water, waterAt: [...waterAt], final: true, highlightLines: [14], explanation: { title: '🎉 完成！', text: `總共可接 ${water} 單位的雨水<br><br>時間：O(n), 空間：O(1)`, formula: `return ${water}` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(heights = currentHeights) {
+            currentHeights = heights;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const maxH = Math.max(...heights) + 2;
-                    let html = '';
-                    for (let i = 0; i < heights.length; i++) {
+                    const maxH = Math.max(...currentHeights, 1) + 2;
+                    document.getElementById('barsDisplay').innerHTML = currentHeights.map((h, i) => {
                         let cls = 'bar';
                         if (i === step.l) cls += ' left';
                         if (i === step.r) cls += ' right';
-                        const bh = (heights[i] / maxH) * 140;
+                        const bh = (h / maxH) * 140;
                         const wh = ((step.waterAt?.[i] || 0) / maxH) * 140;
-                        html += `<div class="${cls}"><div class="bar-water" style="height:${wh}px"></div><div class="bar-block" style="height:${bh}px"></div><div class="bar-label">${heights[i]}</div></div>`;
-                    }
-                    document.getElementById('barsDisplay').innerHTML = html;
+                        return `<div class="${cls}"><div class="bar-water" style="height:${wh}px"></div><div class="bar-block" style="height:${bh}px">${h}</div><div class="bar-label">${i}</div></div>`;
+                    }).join('');
                     document.getElementById('leftMaxDisplay').textContent = step.leftMax ?? 0;
                     document.getElementById('rightMaxDisplay').textContent = step.rightMax ?? 0;
                     document.getElementById('totalDisplay').textContent = step.water ?? 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentHeights));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const heights = document.getElementById('customHeights').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 0);
+            if (heights.length < 3 || heights.length > 15) { alert('請輸入 3-15 個非負整數'); return; }
+            init(heights);
+        }
+        function resetVisualization() { init(currentHeights); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

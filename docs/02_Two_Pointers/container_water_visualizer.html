@@ -6,14 +6,17 @@
     <title>Container With Most Water 盛最多水的容器 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .container { display: flex; gap: 4px; justify-content: center; align-items: flex-end; margin: 20px 0; height: 160px; }
+        .container { display: flex; gap: 4px; justify-content: center; align-items: flex-end; margin: 20px 0; height: 160px; position: relative; }
         .bar { width: 30px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
-        .bar-fill { width: 100%; background: var(--viz-primary); border-radius: 4px 4px 0 0; transition: all 0.3s; }
+        .bar-fill { width: 100%; background: var(--viz-primary); border-radius: 4px 4px 0 0; transition: all 0.3s; display: flex; align-items: flex-start; justify-content: center; color: white; font-size: 0.75rem; font-weight: bold; padding-top: 2px; }
         .bar-fill.left { background: var(--viz-success); }
         .bar-fill.right { background: var(--viz-warning); }
-        .bar-fill.water { background: rgba(59, 130, 246, 0.5); }
         .bar-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
-        .water-overlay { position: absolute; background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { flex: 1; min-width: 150px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -39,20 +42,25 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">L / R</div><div class="state-value" id="ptrDisplay">0 / 8</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">L / R</div><div class="state-value" id="ptrDisplay">0 / ?</div></div>
                     <div class="state-item"><div class="state-label">當前面積</div><div class="state-value" id="areaDisplay">-</div></div>
                     <div class="state-item"><div class="state-label">最大面積</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">0</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-success);"></div>左指標</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-warning);"></div>右指標</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customHeights" placeholder="輸入高度陣列" value="1,8,6,2,5,4,8,3,7">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -80,51 +88,56 @@
             { line: '    return maxArea;', id: 10 },
             { line: '}', id: 11 },
         ];
-        const heights = [1, 8, 6, 2, 5, 4, 8, 3, 7];
-        function generateAlgorithmSteps() {
+        let currentHeights = [1, 8, 6, 2, 5, 4, 8, 3, 7];
+        function generateAlgorithmSteps(heights) {
             const steps = [];
             let l = 0, r = heights.length - 1, maxArea = 0;
-            steps.push({ l: 0, r: 8, maxArea: 0, highlightLines: [0,1,2], explanation: { title: '初始化', text: `高度：[${heights.join(', ')}]<br><br>雙指標從兩端開始<br>每次移動較矮的那一邊` } });
+            steps.push({ l, r, maxArea: 0, highlightLines: [0,1,2], explanation: { title: '初始化', text: `高度：[${heights.join(', ')}]<br>n = ${heights.length}<br><br>雙指標策略：每次移動較矮的那一邊`, formula: `area = min(h[l], h[r]) × (r - l)` } });
             while (l < r) {
                 const h = Math.min(heights[l], heights[r]);
                 const area = h * (r - l);
-                maxArea = Math.max(maxArea, area);
-                steps.push({ l, r, h, area, maxArea, highlightLines: [3,4,5,6], explanation: { title: `計算面積`, text: `L=${l}, R=${r}<br>h = min(${heights[l]}, ${heights[r]}) = ${h}<br>area = ${h} × ${r-l} = ${area}<br>maxArea = ${maxArea}`, formula: `area = min(${heights[l]}, ${heights[r]}) × (${r}-${l}) = ${area}` } });
+                const newMax = Math.max(maxArea, area);
+                steps.push({ l, r, h, area, maxArea: newMax, highlightLines: [3,4,5,6], explanation: { title: `計算面積`, text: `L=${l} (高${heights[l]}), R=${r} (高${heights[r]})<br>h = min(${heights[l]}, ${heights[r]}) = ${h}<br>寬 = ${r} - ${l} = ${r - l}<br>area = ${h} × ${r - l} = ${area}`, formula: `area = ${h} × ${r - l} = ${area}${area > maxArea ? ' (新最大!)' : ''}` } });
+                maxArea = newMax;
                 if (heights[l] < heights[r]) {
-                    steps.push({ l, r, maxArea, move: 'l', highlightLines: [7], explanation: { title: '移動左指標', text: `height[L]=${heights[l]} < height[R]=${heights[r]}<br>L++` } });
+                    steps.push({ l, r, maxArea, move: 'l', highlightLines: [7], explanation: { title: '移動左指標', text: `h[L]=${heights[l]} < h[R]=${heights[r]}<br>移動較矮的那一邊 → l++`, formula: `${heights[l]} < ${heights[r]} → l++` } });
                     l++;
                 } else {
-                    steps.push({ l, r, maxArea, move: 'r', highlightLines: [8], explanation: { title: '移動右指標', text: `height[L]=${heights[l]} ≥ height[R]=${heights[r]}<br>R--` } });
+                    steps.push({ l, r, maxArea, move: 'r', highlightLines: [8], explanation: { title: '移動右指標', text: `h[L]=${heights[l]} ≥ h[R]=${heights[r]}<br>移動較矮的那一邊 → r--`, formula: `${heights[l]} ≥ ${heights[r]} → r--` } });
                     r--;
                 }
             }
-            steps.push({ l, r, maxArea, final: true, highlightLines: [10], explanation: { title: '完成！', text: `最大面積：${maxArea}<br><br>最佳組合：index 1 和 8<br>area = min(8,7) × 7 = 49` } });
+            steps.push({ l, r, maxArea, final: true, highlightLines: [10], explanation: { title: '🎉 完成！', text: `最大面積：${maxArea}<br><br>O(n) 時間複雜度`, formula: `return ${maxArea}` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(heights = currentHeights) {
+            currentHeights = heights;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const maxH = Math.max(...heights);
-                    let html = '';
-                    for (let i = 0; i < heights.length; i++) {
+                    const maxH = Math.max(...currentHeights);
+                    document.getElementById('containerDisplay').innerHTML = currentHeights.map((h, i) => {
                         let cls = 'bar-fill';
                         if (i === step.l) cls += ' left';
                         if (i === step.r) cls += ' right';
-                        const h = (heights[i] / maxH) * 140;
-                        html += `<div class="bar"><div class="${cls}" style="height:${h}px">${heights[i]}</div><div class="bar-label">${i}</div></div>`;
-                    }
-                    document.getElementById('containerDisplay').innerHTML = html;
+                        const height = (h / maxH) * 140;
+                        return `<div class="bar"><div class="${cls}" style="height:${height}px">${h}</div><div class="bar-label">${i}</div></div>`;
+                    }).join('');
                     document.getElementById('ptrDisplay').textContent = `${step.l} / ${step.r}`;
                     document.getElementById('areaDisplay').textContent = step.area ?? '-';
                     document.getElementById('maxDisplay').textContent = step.maxArea ?? 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentHeights));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const heights = document.getElementById('customHeights').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
+            if (heights.length < 2 || heights.length > 15) { alert('請輸入 2-15 個正整數'); return; }
+            init(heights);
+        }
+        function resetVisualization() { init(currentHeights); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>
