@@ -17,6 +17,12 @@
         .arrow { color: var(--text-muted); }
         .cycle-arrow { color: var(--viz-error); font-weight: bold; }
         @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -25,6 +31,16 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">環形鏈表檢測（FLOYD'S ALGORITHM）</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customNodes" placeholder="節點值" value="3,2,0,-4" style="width: 120px;">
+                        <label>環起點索引:</label>
+                        <input type="number" id="customCyclePos" value="1" min="-1" style="width: 60px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">環起點: -1 = 無環, 0~n-1 = 環回到該索引</div>
+                </div>
                 <div class="list" id="listDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
@@ -49,13 +65,13 @@
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">Slow</div><div class="state-value" id="slowDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
                     <div class="state-item"><div class="state-label">Fast</div><div class="state-value" id="fastDisplay" style="color: var(--viz-error);">0</div></div>
                     <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay">?</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
+                    <div class="legend-item"><div class="legend-color current"></div>Slow (烏龜)</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>Fast (兔子)</div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -81,20 +97,125 @@
             { line: '    return false;', id: 8 },
             { line: '}', id: 9 },
         ];
-        const nodes = [3, 2, 0, -4];
-        const cyclePos = 1; // cycle back to index 1
-        function generateAlgorithmSteps() {
+        
+        let currentNodes = [3, 2, 0, -4];
+        let currentCyclePos = 1;
+
+        function generateAlgorithmSteps(nodes, cyclePos) {
             const steps = [];
-            steps.push({ slow: 0, fast: 0, highlightLines: [0,1,2], explanation: { title: '初始化', text: '3 → 2 → 0 → -4 ⟲ (回到 2)<br><br>Floyd 龜兔賽跑：<br>slow 走 1 步，fast 走 2 步<br>如果有環，必定相遇' } });
-            // Simulate: slow and fast movement
-            steps.push({ slow: 1, fast: 2, highlightLines: [3,4,5], explanation: { title: '第 1 輪', text: 'slow: 0→1 (節點 2)<br>fast: 0→2 (節點 0)', formula: 'slow = slow->next, fast = fast->next->next' } });
-            steps.push({ slow: 2, fast: 0, highlightLines: [3,4,5], explanation: { title: '第 2 輪', text: 'slow: 1→2 (節點 0)<br>fast: 2→3→1 (節點 2)<br>fast 繞了一圈！' } });
-            steps.push({ slow: 3, fast: 2, highlightLines: [3,4,5], explanation: { title: '第 3 輪', text: 'slow: 2→3 (節點 -4)<br>fast: 1→2→3 (節點 0)' } });
-            steps.push({ slow: 1, fast: 1, meet: true, highlightLines: [6], explanation: { title: '🎉 相遇！', text: 'slow 和 fast 都在索引 1（節點 2）<br><br>有環！回傳 true<br><br>時間 O(n)，空間 O(1)' } });
+            const n = nodes.length;
+            const hasCycle = cyclePos >= 0 && cyclePos < n;
+            
+            const cycleText = hasCycle ? `⟲ (回到索引 ${cyclePos}: ${nodes[cyclePos]})` : '→ null';
+            
+            steps.push({ 
+                slow: 0, 
+                fast: 0, 
+                highlightLines: [0,1,2], 
+                explanation: { 
+                    title: '初始化', 
+                    text: `${nodes.join(' → ')} ${cycleText}<br><br>Floyd 龜兔賽跑：<br>slow 走 1 步，fast 走 2 步<br>如果有環，必定相遇`,
+                    formula: 'slow = head, fast = head'
+                } 
+            });
+            
+            if (!hasCycle) {
+                // No cycle case
+                let slow = 0, fast = 0;
+                let round = 0;
+                while (fast < n - 1 && fast + 1 < n) {
+                    slow += 1;
+                    fast += 2;
+                    round++;
+                    steps.push({
+                        slow: Math.min(slow, n - 1),
+                        fast: Math.min(fast, n - 1),
+                        highlightLines: [3, 4, 5],
+                        explanation: {
+                            title: `第 ${round} 輪`,
+                            text: `slow: 索引 ${slow} (${nodes[Math.min(slow, n-1)]})<br>fast: 索引 ${fast} (${fast < n ? nodes[fast] : 'null'})`,
+                            formula: `slow += 1, fast += 2`
+                        }
+                    });
+                }
+                steps.push({
+                    slow: slow,
+                    fast: n,
+                    done: true,
+                    result: false,
+                    highlightLines: [7, 8],
+                    explanation: {
+                        title: '❌ 無環',
+                        text: `fast 到達 null<br><br>結論：無環，回傳 false`,
+                        formula: 'fast == null → return false'
+                    }
+                });
+            } else {
+                // Has cycle - simulate the algorithm
+                let slow = 0, fast = 0;
+                let round = 0;
+                const maxIterations = n * 3; // Safety limit
+                
+                for (let iter = 0; iter < maxIterations; iter++) {
+                    // Move slow 1 step
+                    if (slow === n - 1) {
+                        slow = cyclePos; // Enter cycle
+                    } else {
+                        slow++;
+                    }
+                    
+                    // Move fast 2 steps
+                    for (let j = 0; j < 2; j++) {
+                        if (fast === n - 1) {
+                            fast = cyclePos;
+                        } else {
+                            fast++;
+                        }
+                    }
+                    
+                    round++;
+                    
+                    const met = slow === fast;
+                    steps.push({
+                        slow: slow,
+                        fast: fast,
+                        meet: met,
+                        highlightLines: met ? [6] : [3, 4, 5],
+                        explanation: {
+                            title: met ? '🎉 相遇！' : `第 ${round} 輪`,
+                            text: met 
+                                ? `slow 和 fast 都在索引 ${slow} (${nodes[slow]})<br><br>有環！回傳 true<br><br>Time O(n), Space O(1)`
+                                : `slow: 索引 ${slow} (${nodes[slow]})<br>fast: 索引 ${fast} (${nodes[fast]})`,
+                            formula: met ? 'slow == fast → return true' : `slow += 1, fast += 2`
+                        }
+                    });
+                    
+                    if (met) break;
+                }
+            }
+            
             return steps;
         }
+
+        function runCustomInput() {
+            const nodesInput = document.getElementById('customNodes').value;
+            const cyclePos = parseInt(document.getElementById('customCyclePos').value);
+            const nodes = nodesInput.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            
+            if (nodes.length < 1) {
+                alert('請輸入至少 1 個節點');
+                return;
+            }
+            
+            currentNodes = nodes;
+            currentCyclePos = cyclePos;
+            init(nodes, cyclePos);
+        }
+
         let viz;
-        function init() {
+        function init(nodes = currentNodes, cyclePos = currentCyclePos) {
+            const hasCycle = cyclePos >= 0 && cyclePos < nodes.length;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
@@ -108,14 +229,18 @@
                         if (i < nodes.length - 1) html += '<span class="arrow">→</span>';
                         html += '</div>';
                     }
-                    html += '<span class="cycle-arrow">⟲ 回到 [1]</span>';
+                    if (hasCycle) {
+                        html += `<span class="cycle-arrow">⟲ 回到 [${cyclePos}]</span>`;
+                    } else {
+                        html += '<span class="arrow">→ null</span>';
+                    }
                     document.getElementById('listDisplay').innerHTML = html;
                     document.getElementById('slowDisplay').textContent = step.slow;
                     document.getElementById('fastDisplay').textContent = step.fast;
-                    document.getElementById('resultDisplay').textContent = step.meet ? 'true (有環)' : '?';
+                    document.getElementById('resultDisplay').textContent = step.meet ? 'true (有環)' : (step.result === false ? 'false (無環)' : '?');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(nodes, cyclePos));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

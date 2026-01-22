@@ -11,6 +11,15 @@
         .num.slow { background: var(--viz-primary); color: white; }
         .num.fast { background: var(--viz-secondary); color: #0f172a; }
         .num.both { background: var(--viz-success); color: #0f172a; }
+        .num.duplicate { background: var(--viz-error); color: white; animation: pulse 0.5s; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
+        .cycle-display { text-align: center; margin: 10px 0; font-family: monospace; color: var(--viz-text-muted); }
     </style>
 </head>
 <body>
@@ -19,14 +28,21 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">FIND DUPLICATE - FLOYD'S CYCLE</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customNums" placeholder="陣列 (含重複)" value="1,3,4,2,2" style="width: 180px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">陣列長度 n+1，值範圍 1~n，恰有一個重複</div>
+                </div>
                 <div class="array-display" id="arrayDisplay"></div>
+                <div class="cycle-display" id="cycleDisplay"></div>
                 <div class="controls">
                     <button class="viz-btn" id="prevBtn">← Prev</button>
                     <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">Next →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                </div>
-                <div class="controls-row-2">
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
@@ -38,20 +54,19 @@
                         </select>
                     </div>
                 </div>
-
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">Slow</div><div class="state-value" id="slowDisplay" style="color: var(--viz-primary);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
                     <div class="state-item"><div class="state-label">Fast</div><div class="state-value" id="fastDisplay" style="color: var(--viz-secondary);">0</div></div>
+                    <div class="state-item"><div class="state-label">重複值</div><div class="state-value" id="duplicateDisplay">?</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>Slow</div>
+                    <div class="legend-item"><div class="legend-color current"></div>Fast</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>相遇</div>
                 </div>
             </div>
             <div class="viz-card">
@@ -86,76 +101,132 @@
             { line: '    return slow; // duplicate', id: 14 },
             { line: '}', id: 15 },
         ];
-        // nums = [1,3,4,2,2], duplicate is 2
-        // Index:  0 1 2 3 4
-        // Value:  1 3 4 2 2
-        // Creates cycle: 0→1→3→2→4→2→4→2...
-        const nums = [1, 3, 4, 2, 2];
 
-        function generateAlgorithmSteps() {
+        let currentNums = [1, 3, 4, 2, 2];
+
+        function generateAlgorithmSteps(nums) {
             const steps = [];
-            steps.push({ slow: 0, fast: 0, phase: 'init', highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'Array as linked list: i → nums[i]' }});
-            
+            const n = nums.length;
+
+            // Build cycle representation
+            const cycleStr = nums.map((v, i) => `${i}→${v}`).join(', ');
+
+            steps.push({
+                slow: 0, fast: 0, phase: 'init',
+                highlightLines: [0, 1, 2],
+                explanation: {
+                    title: '初始化',
+                    text: `陣列視為鏈表: index → nums[index]<br><br>${cycleStr}<br><br>重複值會形成環！`,
+                    formula: 'slow = fast = nums[0]'
+                }
+            });
+
             // Phase 1: Find intersection
             let slow = nums[0], fast = nums[0];
-            steps.push({ slow, fast, phase: 1, highlightLines: [4, 5, 6], explanation: { title: 'Phase 1: Start', text: `slow=${slow}, fast=${fast}` }});
-            
-            for (let i = 0; i < 5 && slow !== fast; i++) {
+            let round = 0;
+            const maxIter = n * 2;
+
+            do {
                 slow = nums[slow];
                 fast = nums[nums[fast]];
-                steps.push({ slow, fast, phase: 1, highlightLines: [5, 6, 7], explanation: { title: `Phase 1: Move`, text: slow === fast ? 'Intersection found!' : `slow=${slow}, fast=${fast}` }});
+                round++;
+
+                const met = slow === fast;
+                steps.push({
+                    slow, fast, phase: 1, meet: met,
+                    highlightLines: met ? [7] : [4, 5, 6],
+                    explanation: {
+                        title: met ? 'Phase 1: 相遇！' : `Phase 1: 第 ${round} 輪`,
+                        text: `slow = nums[${steps[steps.length-1]?.slow || nums[0]}] = ${slow}<br>fast = nums[nums[...]] = ${fast}${met ? '<br><br>找到交點！' : ''}`,
+                        formula: met ? `交點 = ${slow}` : `slow += 1步, fast += 2步`
+                    }
+                });
+
+                if (met || round > maxIter) break;
+            } while (true);
+
+            // Phase 2: Find cycle start (duplicate)
+            const intersection = slow;
+            slow = nums[0];
+            steps.push({
+                slow, fast: intersection, phase: 2,
+                highlightLines: [8, 9],
+                explanation: {
+                    title: 'Phase 2: 重置 slow',
+                    text: `slow 回到起點: nums[0] = ${slow}<br>fast 留在交點: ${intersection}`,
+                    formula: 'slow = nums[0]'
+                }
+            });
+
+            round = 0;
+            while (slow !== fast && round < maxIter) {
+                slow = nums[slow];
+                fast = nums[fast];
+                round++;
+
+                steps.push({
+                    slow, fast, phase: 2, meet: slow === fast,
+                    highlightLines: slow === fast ? [14] : [10, 11, 12],
+                    explanation: {
+                        title: slow === fast ? '🎉 找到重複值！' : `Phase 2: 第 ${round} 輪`,
+                        text: `slow = nums[...] = ${slow}<br>fast = nums[...] = ${fast}${slow === fast ? `<br><br>重複值 = ${slow}` : ''}`,
+                        formula: slow === fast ? `return ${slow}` : `slow += 1步, fast += 1步`
+                    }
+                });
+
                 if (slow === fast) break;
             }
-            // Manual fix for demo
-            slow = nums[0]; // 1
-            fast = nums[nums[0]]; // nums[1] = 3
-            slow = nums[slow]; // nums[1] = 3
-            fast = nums[nums[fast]]; // nums[nums[3]] = nums[2] = 4
-            slow = nums[slow]; // nums[3] = 2
-            fast = nums[nums[fast]]; // nums[nums[4]] = nums[2] = 4
-            slow = nums[slow]; // nums[2] = 4
-            fast = nums[nums[fast]]; // nums[nums[4]] = nums[2] = 4
-            // They meet at 4
-            steps.push({ slow: 4, fast: 4, phase: 1, highlightLines: [7], explanation: { title: 'Phase 1: Meet!', text: 'Intersection at index 4' }});
-            
-            // Phase 2
-            slow = nums[0]; // 1
-            fast = 4;
-            steps.push({ slow: 1, fast: 4, phase: 2, highlightLines: [8, 9], explanation: { title: 'Phase 2: Reset slow', text: 'slow=nums[0]=1' }});
-            
-            slow = nums[1]; // 3
-            fast = nums[4]; // 2
-            steps.push({ slow: 3, fast: 2, phase: 2, highlightLines: [10, 11, 12], explanation: { title: 'Phase 2: Move', text: 'slow=3, fast=2' }});
-            
-            slow = nums[3]; // 2
-            fast = nums[2]; // 4
-            steps.push({ slow: 2, fast: 4, phase: 2, highlightLines: [10, 11, 12], explanation: { title: 'Phase 2: Move', text: 'slow=2, fast=4' }});
-            
-            slow = nums[2]; // 4
-            fast = nums[4]; // 2
-            // Actually they should meet at 2
-            steps.push({ slow: 2, fast: 2, phase: 'found', highlightLines: [14], explanation: { title: '✓ Duplicate Found!', text: 'Value 2 is the duplicate' }});
-            
-            return steps;
+
+            return { steps, duplicate: slow };
+        }
+
+        function runCustomInput() {
+            const input = document.getElementById('customNums').value;
+            const nums = input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+
+            if (nums.length < 2) {
+                alert('請輸入至少 2 個數字');
+                return;
+            }
+
+            // Validate: values should be in range [1, n-1]
+            const n = nums.length - 1;
+            const valid = nums.every(v => v >= 1 && v <= n);
+            if (!valid) {
+                alert(`值必須在 1 到 ${n} 之間`);
+                return;
+            }
+
+            currentNums = nums;
+            init(nums);
         }
 
         let viz;
-        function init() {
+        function init(nums = currentNums) {
+            const { steps, duplicate } = generateAlgorithmSteps(nums);
+
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     document.getElementById('arrayDisplay').innerHTML = nums.map((n, i) => {
                         let cls = 'num';
-                        if (i === step.slow && i === step.fast) cls += ' both';
+                        if (step.meet && n === step.slow) cls += ' both';
                         else if (i === step.slow) cls += ' slow';
                         else if (i === step.fast) cls += ' fast';
+                        if (step.phase === 2 && step.meet && n === step.slow) cls = 'num duplicate';
                         return `<span class="${cls}">[${i}]=${n}</span>`;
                     }).join('');
+
+                    // Cycle visualization
+                    const cycleHtml = nums.map((v, i) => `${i}→${v}`).join(' | ');
+                    document.getElementById('cycleDisplay').innerHTML = `鏈表: ${cycleHtml}`;
+
                     document.getElementById('slowDisplay').textContent = step.slow;
                     document.getElementById('fastDisplay').textContent = step.fast;
+                    document.getElementById('duplicateDisplay').textContent = (step.phase === 2 && step.meet) ? step.slow : '?';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(steps);
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

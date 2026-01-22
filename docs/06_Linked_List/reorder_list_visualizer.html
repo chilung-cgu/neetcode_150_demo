@@ -10,7 +10,16 @@
         .node { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
         .node.highlight { background: var(--viz-secondary); color: #0f172a; }
         .node.done { background: var(--viz-success); color: #0f172a; }
+        .node.slow { border: 3px solid var(--viz-success); }
+        .node.fast { border: 3px solid var(--viz-error); }
         .arrow { color: var(--viz-text-muted); font-size: 1.2rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row button:hover { opacity: 0.9; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -19,6 +28,14 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">REORDER LIST: L0→Ln→L1→Ln-1→...</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customList" placeholder="節點值 (逗號分隔)" value="1,2,3,4,5" style="width: 200px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">例如: 1,2,3,4,5 或 1,2,3,4</div>
+                </div>
                 <div class="list-display" id="listDisplay"></div>
                 <div class="controls">
                     <button class="viz-btn" id="prevBtn">← Prev</button>
@@ -36,10 +53,14 @@
                         </select>
                     </div>
                 </div>
-            <div class="legend">
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
+                </div>
+                <div class="legend">
                     <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                    <div class="legend-item"><div class="legend-color current"></div>Slow 指標</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>Fast 指標</div>
                 </div>
             </div>
             <div class="viz-card">
@@ -60,66 +81,155 @@
             { line: 'void reorderList(ListNode* head) {', id: 0 },
             { line: '    // Step 1: Find middle using slow/fast', id: 1 },
             { line: '    ListNode *slow = head, *fast = head;', id: 2 },
-            { line: '    while (fast && fast->next) { ... }', id: 3 },
-            { line: '    // Step 2: Reverse second half', id: 4 },
-            { line: '    ListNode* second = reverse(slow->next);', id: 5 },
-            { line: '    slow->next = nullptr;', id: 6 },
-            { line: '    // Step 3: Merge alternately', id: 7 },
-            { line: '    ListNode* first = head;', id: 8 },
-            { line: '    while (second) {', id: 9 },
-            { line: '        tmp1 = first->next; tmp2 = second->next;', id: 10 },
-            { line: '        first->next = second;', id: 11 },
-            { line: '        second->next = tmp1;', id: 12 },
-            { line: '        first = tmp1; second = tmp2;', id: 13 },
-            { line: '    }', id: 14 },
-            { line: '}', id: 15 },
+            { line: '    while (fast && fast->next) {', id: 3 },
+            { line: '        slow = slow->next;', id: 4 },
+            { line: '        fast = fast->next->next;', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    // Step 2: Reverse second half', id: 7 },
+            { line: '    ListNode* second = reverse(slow->next);', id: 8 },
+            { line: '    slow->next = nullptr;', id: 9 },
+            { line: '    // Step 3: Merge alternately', id: 10 },
+            { line: '    ListNode* first = head;', id: 11 },
+            { line: '    while (second) {', id: 12 },
+            { line: '        tmp1 = first->next; tmp2 = second->next;', id: 13 },
+            { line: '        first->next = second;', id: 14 },
+            { line: '        second->next = tmp1;', id: 15 },
+            { line: '        first = tmp1; second = tmp2;', id: 16 },
+            { line: '    }', id: 17 },
+            { line: '}', id: 18 },
         ];
-        const original = [1, 2, 3, 4, 5];
 
-        function generateAlgorithmSteps() {
+        let currentList = [1, 2, 3, 4, 5];
+
+        function generateAlgorithmSteps(list) {
             const steps = [];
-            steps.push({ list: [...original], phase: 'init', highlightLines: [0, 1], explanation: { title: 'Original List', text: '1→2→3→4→5' }});
+            const n = list.length;
             
-            // Step 1: Find middle
-            steps.push({ list: [...original], midIdx: 2, phase: 'findMid', highlightLines: [2, 3], explanation: { title: 'Step 1: Find Middle', text: 'slow/fast pointers → middle at node 3' }});
+            steps.push({ 
+                list: [...list], 
+                phase: 'init', 
+                highlightLines: [0, 1, 2], 
+                explanation: { 
+                    title: '初始化', 
+                    text: `原始鏈表: ${list.join('→')}<br><br>演算法分三步：<br>1. 找中點<br>2. 反轉後半部<br>3. 交替合併`,
+                    formula: '目標: L₀→Lₙ→L₁→Lₙ₋₁→L₂→Lₙ₋₂→...'
+                }
+            });
             
-            // Step 2: Reverse second half
-            const firstHalf = [1, 2, 3];
-            const secondHalf = [5, 4]; // reversed
-            steps.push({ firstHalf, secondHalf, phase: 'reverse', highlightLines: [4, 5, 6], explanation: { title: 'Step 2: Reverse Second Half', text: 'First: 1→2→3, Second: 5→4 (reversed)' }});
+            // Step 1: Find middle using slow/fast pointers
+            let slow = 0, fast = 0;
+            const midSteps = [];
+            while (fast < n - 1 && fast + 1 < n) {
+                slow++;
+                fast += 2;
+                midSteps.push({ slow, fast: Math.min(fast, n - 1) });
+            }
+            
+            for (let i = 0; i < midSteps.length; i++) {
+                const { slow: s, fast: f } = midSteps[i];
+                steps.push({
+                    list: [...list],
+                    slowIdx: s,
+                    fastIdx: Math.min(f, n - 1),
+                    phase: 'findMid',
+                    highlightLines: [3, 4, 5],
+                    explanation: {
+                        title: `找中點 - 第 ${i + 1} 輪`,
+                        text: `slow: ${list[s]} (索引 ${s})<br>fast: ${list[Math.min(f, n-1)]} (索引 ${Math.min(f, n-1)})`,
+                        formula: `slow += 1, fast += 2`
+                    }
+                });
+            }
+            
+            const midIdx = slow;
+            const firstHalf = list.slice(0, midIdx + 1);
+            const secondHalf = list.slice(midIdx + 1).reverse();
+            
+            steps.push({
+                firstHalf: [...firstHalf],
+                secondHalf: [...secondHalf],
+                phase: 'split',
+                highlightLines: [7, 8, 9],
+                explanation: {
+                    title: '分割並反轉後半部',
+                    text: `前半部: ${firstHalf.join('→')}<br>後半部 (反轉後): ${secondHalf.join('→')}`,
+                    formula: `mid = ${midIdx}, 後半部從 ${midIdx + 1} 開始反轉`
+                }
+            });
             
             // Step 3: Merge alternately
-            const merging = [];
+            const result = [];
             let f = 0, s = 0;
-            const fh = [1, 2, 3], sh = [5, 4];
-            while (f < fh.length || s < sh.length) {
-                if (f < fh.length) merging.push(fh[f++]);
-                if (s < sh.length) merging.push(sh[s++]);
+            while (f < firstHalf.length || s < secondHalf.length) {
+                if (f < firstHalf.length) {
+                    result.push(firstHalf[f]);
+                    f++;
+                }
+                if (s < secondHalf.length) {
+                    result.push(secondHalf[s]);
+                    s++;
+                }
+                
+                steps.push({
+                    list: [...result],
+                    phase: 'merge',
+                    highlightLines: [12, 13, 14, 15, 16],
+                    explanation: {
+                        title: `交替合併`,
+                        text: `目前結果: ${result.join('→')}<br>first 指標: ${f < firstHalf.length ? firstHalf[f] : 'null'}<br>second 指標: ${s < secondHalf.length ? secondHalf[s] : 'null'}`,
+                        formula: `first->next = second, second->next = tmp1`
+                    }
+                });
             }
-            steps.push({ list: [1, 5], phase: 'merge1', highlightLines: [10, 11, 12], explanation: { title: 'Merge: 1→5', text: 'First element from each half' }});
-            steps.push({ list: [1, 5, 2, 4], phase: 'merge2', highlightLines: [10, 11, 12], explanation: { title: 'Merge: 1→5→2→4', text: 'Continue interleaving' }});
-            steps.push({ list: [1, 5, 2, 4, 3], phase: 'done', highlightLines: [15], explanation: { title: 'Done!', text: 'Final: 1→5→2→4→3' }});
+            
+            steps.push({
+                list: [...result],
+                phase: 'done',
+                highlightLines: [18],
+                explanation: {
+                    title: '✅ 完成！',
+                    text: `最終結果: ${result.join('→')}<br><br>原始: ${list.join('→')}<br>重排: ${result.join('→')}`,
+                    formula: `L₀→Lₙ₋₁→L₁→Lₙ₋₂→...`
+                }
+            });
             
             return steps;
         }
 
+        function runCustomInput() {
+            const input = document.getElementById('customList').value;
+            const list = input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            if (list.length < 2) {
+                alert('請輸入至少 2 個節點');
+                return;
+            }
+            currentList = list;
+            init(list);
+        }
+
         let viz;
-        function init() {
+        function init(list = currentList) {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
                     if (step.firstHalf && step.secondHalf) {
                         html = '<div style="margin-bottom:10px"><strong>First:</strong> ' + step.firstHalf.map(n => `<span class="node">${n}</span>`).join('<span class="arrow">→</span>') + '</div>';
-                        html += '<div><strong>Second:</strong> ' + step.secondHalf.map(n => `<span class="node highlight">${n}</span>`).join('<span class="arrow">→</span>') + '</div>';
+                        html += '<div><strong>Second (reversed):</strong> ' + step.secondHalf.map(n => `<span class="node highlight">${n}</span>`).join('<span class="arrow">→</span>') + '</div>';
                     } else {
-                        const list = step.list || [];
-                        html = list.map((n, i) => `<span class="node ${step.phase === 'done' ? 'done' : ''}">${n}</span>`).join('<span class="arrow">→</span>');
+                        const listData = step.list || [];
+                        html = listData.map((n, i) => {
+                            let cls = 'node';
+                            if (step.phase === 'done') cls += ' done';
+                            if (i === step.slowIdx) cls += ' slow';
+                            if (i === step.fastIdx) cls += ' fast';
+                            return `<span class="${cls}">${n}</span>`;
+                        }).join('<span class="arrow">→</span>');
                     }
                     document.getElementById('listDisplay').innerHTML = html || '<em>Empty</em>';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(list));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

@@ -3,14 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balanced Binary Tree Visualization</title>
+    <title>Balanced Binary Tree 平衡二元樹 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .tree-level { display: flex; justify-content: center; gap: 15px; margin: 8px 0; }
-        .tree-node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
+        .tree-node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; position: relative; }
         .tree-node.balanced { background: var(--viz-success); color: #0f172a; }
         .tree-node.unbalanced { background: var(--viz-error); }
         .tree-node.current { border: 3px solid var(--viz-secondary); }
+        .tree-node.null { background: transparent; border: 2px dashed var(--text-muted); color: var(--text-muted); font-size: 0.7rem; }
+        .tree-node .height { position: absolute; top: -18px; font-size: 0.65rem; color: var(--viz-warning); }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -18,15 +26,21 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">BALANCED BINARY TREE</div>
+                <div class="viz-title">平衡二元樹檢測</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customTree" placeholder="層序遍歷" value="3,9,20,null,null,15,7" style="width: 220px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">試試不平衡: 1,2,2,3,3,null,null,4,4</div>
+                </div>
                 <div id="treeDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← Prev</button>
                     <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">Next →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                </div>
-                <div class="controls-row-2">
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
@@ -39,22 +53,21 @@
                     </div>
                 </div>
 
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(h)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Is Balanced?</div><div class="state-value" id="resultDisplay">-</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
+                    <div class="state-item"><div class="state-label">Is Balanced?</div><div class="state-value" id="resultDisplay">?</div></div>
                 </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>待檢查</div>
+                    <div class="legend-item"><div class="legend-color current"></div>目前節點</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>平衡</div>
                 </div>
             </div>
             <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
+                <div class="viz-title">演算法說明</div>
                 <div class="explanation" id="explanation"></div>
             </div>
         </div>
@@ -80,41 +93,164 @@
             { line: '    return 1 + max(left, right);', id: 9 },
             { line: '}', id: 10 },
         ];
-        const levels = [[3], [9, 20], ['', '', 15, 7]];
 
-        function generateAlgorithmSteps() {
+        let currentTree = [3, 9, 20, null, null, 15, 7];
+
+        function parseTree(input) {
+            return input.split(',').map(x => {
+                const trimmed = x.trim();
+                return trimmed === 'null' || trimmed === '' ? null : parseInt(trimmed);
+            });
+        }
+
+        function generateAlgorithmSteps(tree) {
             const steps = [];
-            steps.push({ checked: [], current: null, highlightLines: [0, 1], explanation: { title: 'Start', text: 'Check if height-balanced' }});
-            steps.push({ checked: [], current: [1, 0], highlightLines: [5], explanation: { title: 'Check node 9', text: 'left=0, right=0, height=1 ✓' }});
-            steps.push({ checked: [[1, 0]], current: [2, 2], highlightLines: [5], explanation: { title: 'Check node 15', text: 'leaf node, height=1 ✓' }});
-            steps.push({ checked: [[1, 0], [2, 2]], current: [2, 3], highlightLines: [6], explanation: { title: 'Check node 7', text: 'leaf node, height=1 ✓' }});
-            steps.push({ checked: [[1, 0], [2, 2], [2, 3]], current: [1, 1], highlightLines: [8], explanation: { title: 'Check node 20', text: 'left=1, right=1, |diff|=0 ≤ 1 ✓' }});
-            steps.push({ checked: [[1, 0], [2, 2], [2, 3], [1, 1]], current: [0, 0], highlightLines: [8], explanation: { title: 'Check root (3)', text: 'left(9)=1, right(20)=2, |diff|=1 ≤ 1 ✓' }});
-            steps.push({ checked: 'all', result: true, highlightLines: [1], explanation: { title: 'Done!', text: 'Tree is balanced ✓' }});
+            const heights = new Map();
+            const checked = new Set();
+            let isBalanced = true;
+            let unbalancedNode = -1;
+
+            steps.push({
+                tree: [...tree],
+                currentIdx: null,
+                checked: [],
+                heights: new Map(),
+                result: null,
+                highlightLines: [0, 1],
+                explanation: {
+                    title: '初始化',
+                    text: `樹: [${tree.filter(x => x !== null).join(', ')}]<br><br>平衡樹定義：每個節點的左右子樹高度差 ≤ 1<br>使用 DFS 後序遍歷計算高度`,
+                    formula: '|height(left) - height(right)| ≤ 1'
+                }
+            });
+
+            // DFS post-order
+            function dfs(idx) {
+                if (idx >= tree.length || tree[idx] === null) {
+                    return 0;
+                }
+
+                const leftIdx = 2 * idx + 1;
+                const rightIdx = 2 * idx + 2;
+
+                const leftHeight = dfs(leftIdx);
+                const rightHeight = dfs(rightIdx);
+
+                if (leftHeight === -1 || rightHeight === -1) {
+                    return -1;
+                }
+
+                const diff = Math.abs(leftHeight - rightHeight);
+                const height = 1 + Math.max(leftHeight, rightHeight);
+
+                if (diff > 1) {
+                    isBalanced = false;
+                    unbalancedNode = idx;
+                    
+                    steps.push({
+                        tree: [...tree],
+                        currentIdx: idx,
+                        checked: [...checked],
+                        heights: new Map(heights),
+                        unbalanced: idx,
+                        result: false,
+                        highlightLines: [8],
+                        explanation: {
+                            title: `❌ 節點 ${tree[idx]} 不平衡`,
+                            text: `left_height = ${leftHeight}<br>right_height = ${rightHeight}<br>diff = |${leftHeight} - ${rightHeight}| = ${diff} > 1`,
+                            formula: `|${leftHeight} - ${rightHeight}| = ${diff} > 1 → return -1`
+                        }
+                    });
+                    
+                    return -1;
+                }
+
+                heights.set(idx, height);
+                checked.add(idx);
+
+                steps.push({
+                    tree: [...tree],
+                    currentIdx: idx,
+                    checked: [...checked],
+                    heights: new Map(heights),
+                    result: null,
+                    highlightLines: [8, 9],
+                    explanation: {
+                        title: `檢查節點 ${tree[idx]}`,
+                        text: `left_height = ${leftHeight}<br>right_height = ${rightHeight}<br>diff = |${leftHeight} - ${rightHeight}| = ${diff} ≤ 1 ✓<br>height = 1 + max(${leftHeight}, ${rightHeight}) = ${height}`,
+                        formula: `|${leftHeight} - ${rightHeight}| = ${diff} ≤ 1 ✓`
+                    }
+                });
+
+                return height;
+            }
+
+            const result = dfs(0);
+
+            steps.push({
+                tree: [...tree],
+                currentIdx: null,
+                checked: [...checked],
+                heights: new Map(heights),
+                result: result !== -1,
+                final: true,
+                highlightLines: [1],
+                explanation: {
+                    title: result !== -1 ? '🎉 是平衡樹！' : '❌ 不是平衡樹',
+                    text: result !== -1 
+                        ? `所有節點的左右子樹高度差都 ≤ 1<br><br>return true`
+                        : `節點 ${tree[unbalancedNode]} 的左右子樹高度差 > 1<br><br>return false`,
+                    formula: result !== -1 ? 'return true' : 'return false'
+                }
+            });
+
             return steps;
         }
 
+        function runCustomInput() {
+            const input = document.getElementById('customTree').value;
+            currentTree = parseTree(input);
+            if (currentTree.length === 0 || currentTree[0] === null) {
+                alert('請輸入有效的樹');
+                return;
+            }
+            init(currentTree);
+        }
+
         let viz;
-        function init() {
+        function init(tree = currentTree) {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
-                    levels.forEach((level, li) => {
-                        html += '<div class="tree-level">' + level.map((v, i) => {
-                            if (!v) return '<div style="width:40px"></div>';
+                    let idx = 0, levelSize = 1;
+                    while (idx < step.tree.length) {
+                        html += '<div class="tree-level">';
+                        for (let i = 0; i < levelSize && idx < step.tree.length; i++, idx++) {
+                            const val = step.tree[idx];
                             let cls = 'tree-node';
-                            if (step.checked === 'all' || step.checked?.some(c => c[0] === li && c[1] === i)) cls += ' balanced';
-                            if (step.current && step.current[0] === li && step.current[1] === i) cls += ' current';
-                            return `<div class="${cls}">${v}</div>`;
-                        }).join('') + '</div>';
-                    });
+                            if (val === null) {
+                                cls += ' null';
+                                html += `<div class="${cls}">∅</div>`;
+                            } else {
+                                if (step.unbalanced === idx) cls += ' unbalanced';
+                                else if (step.checked?.includes(idx)) cls += ' balanced';
+                                if (step.currentIdx === idx) cls += ' current';
+                                const h = step.heights?.get(idx);
+                                html += `<div class="${cls}">${h !== undefined ? `<span class="height">h=${h}</span>` : ''}${val}</div>`;
+                            }
+                        }
+                        html += '</div>';
+                        levelSize *= 2;
+                    }
                     document.getElementById('treeDisplay').innerHTML = html;
-                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? (step.result ? '✓ Yes' : '✗ No') : '-';
-                    document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
+                    document.getElementById('resultDisplay').textContent = 
+                        step.result === true ? '✓ Yes' : (step.result === false ? '✗ No' : '?');
+                    document.getElementById('resultDisplay').style.color = 
+                        step.result === true ? 'var(--viz-success)' : (step.result === false ? 'var(--viz-error)' : 'var(--viz-text)');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(tree));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

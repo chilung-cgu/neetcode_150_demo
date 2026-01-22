@@ -10,8 +10,18 @@
         .node { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; font-size: 1.1rem; }
         .node.group1 { background: var(--viz-success); color: #0f172a; }
         .node.group2 { background: var(--viz-secondary); color: #0f172a; }
+        .node.group3 { background: #a855f7; color: white; }
+        .node.current { border: 3px solid var(--viz-warning); }
         .node.remaining { background: var(--viz-bg-secondary); color: var(--text-muted); }
         .arrow { color: var(--text-muted); font-size: 1.2rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
+        .group-indicator { text-align: center; margin: 10px 0; font-family: monospace; }
+        .group-indicator span { padding: 4px 8px; border-radius: 4px; margin: 0 4px; }
     </style>
 </head>
 <body>
@@ -20,6 +30,17 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">K 個一組翻轉鏈表</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customList" placeholder="節點值" value="1,2,3,4,5" style="width: 150px;">
+                        <label>k =</label>
+                        <input type="number" id="customK" value="2" min="1" style="width: 60px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">每 k 個節點翻轉一次，不足 k 個的保持原樣</div>
+                </div>
+                <div class="group-indicator" id="groupIndicator"></div>
                 <div class="list" id="listDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
@@ -43,12 +64,13 @@
                     <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">K</div><div class="state-value">2</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
+                    <div class="state-item"><div class="state-label">K</div><div class="state-value" id="kDisplay">2</div></div>
+                    <div class="state-item"><div class="state-label">群組數</div><div class="state-value" id="groupCount">0</div></div>
                 </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color in-stack"></div>Group 1</div>
+                    <div class="legend-item"><div class="legend-color current"></div>Group 2</div>
+                    <div class="legend-item"><div class="legend-color normal"></div>剩餘</div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -77,34 +99,174 @@
             { line: '    return newHead;', id: 11 },
             { line: '}', id: 12 },
         ];
-        function generateAlgorithmSteps() {
+
+        let currentList = [1, 2, 3, 4, 5];
+        let currentK = 2;
+
+        function generateAlgorithmSteps(list, k) {
             const steps = [];
-            steps.push({ list: [1,2,3,4,5], groups: [], highlightLines: [0,1,2,3,4,5,6], explanation: { title: '初始化', text: '鏈表：1→2→3→4→5<br>k = 2<br><br>每 k 個節點翻轉一次' } });
-            steps.push({ list: [2,1,3,4,5], groups: [[0,1]], highlightLines: [7,8], explanation: { title: '翻轉第 1 組', text: '[1,2] → [2,1]' } });
-            steps.push({ list: [2,1,4,3,5], groups: [[0,1],[2,3]], highlightLines: [9,10], explanation: { title: '翻轉第 2 組', text: '[3,4] → [4,3]' } });
-            steps.push({ list: [2,1,4,3,5], groups: [[0,1],[2,3]], remaining: [4], final: true, highlightLines: [4,11], explanation: { title: '🎉 完成！', text: '剩餘 [5] 不足 k 個，保持原樣<br>結果：2→1→4→3→5<br><br>時間：O(n)' } });
-            return steps;
+            const n = list.length;
+            const numGroups = Math.floor(n / k);
+            const remaining = n % k;
+
+            steps.push({
+                list: [...list],
+                groups: [],
+                currentGroup: -1,
+                highlightLines: [0, 1, 2],
+                explanation: {
+                    title: '初始化',
+                    text: `鏈表: ${list.join('→')}<br>k = ${k}<br><br>共 ${numGroups} 個完整群組${remaining > 0 ? `，剩餘 ${remaining} 個節點` : ''}`,
+                    formula: `groups = ⌊${n}/${k}⌋ = ${numGroups}`
+                }
+            });
+
+            // Build the result progressively
+            let result = [...list];
+            const groupRanges = [];
+
+            for (let g = 0; g < numGroups; g++) {
+                const start = g * k;
+                const end = start + k;
+                
+                // Check if we have k nodes
+                steps.push({
+                    list: [...result],
+                    groups: [...groupRanges],
+                    currentGroup: g,
+                    checkRange: [start, end - 1],
+                    highlightLines: [3, 4, 5, 6],
+                    explanation: {
+                        title: `檢查第 ${g + 1} 組`,
+                        text: `範圍: 索引 ${start} ~ ${end - 1}<br>節點: [${list.slice(start, end).join(', ')}]<br><br>✓ 有 ${k} 個節點`,
+                        formula: `count = ${k} ≥ k ✓`
+                    }
+                });
+
+                // Reverse this group
+                const groupNodes = result.slice(start, end);
+                const reversed = groupNodes.reverse();
+                result = [...result.slice(0, start), ...reversed, ...result.slice(end)];
+                groupRanges.push([start, end - 1]);
+
+                steps.push({
+                    list: [...result],
+                    groups: [...groupRanges],
+                    currentGroup: g,
+                    highlightLines: [7, 8],
+                    explanation: {
+                        title: `翻轉第 ${g + 1} 組`,
+                        text: `[${groupNodes.reverse().join(', ')}] → [${reversed.join(', ')}]`,
+                        formula: `reverse(${start}, ${end - 1})`
+                    }
+                });
+            }
+
+            // Handle remaining nodes if any
+            if (remaining > 0) {
+                const start = numGroups * k;
+                steps.push({
+                    list: [...result],
+                    groups: [...groupRanges],
+                    remaining: [start, n - 1],
+                    highlightLines: [3, 4],
+                    explanation: {
+                        title: '檢查剩餘節點',
+                        text: `剩餘 ${remaining} 個節點: [${result.slice(start).join(', ')}]<br><br>不足 k = ${k} 個，保持原樣`,
+                        formula: `count = ${remaining} < k → 不翻轉`
+                    }
+                });
+            }
+
+            steps.push({
+                list: [...result],
+                groups: [...groupRanges],
+                remaining: remaining > 0 ? [numGroups * k, n - 1] : null,
+                final: true,
+                highlightLines: [11],
+                explanation: {
+                    title: '🎉 完成！',
+                    text: `原始: ${list.join('→')}<br>結果: ${result.join('→')}<br><br>翻轉了 ${numGroups} 組`,
+                    formula: `Time: O(n), Space: O(1)`
+                }
+            });
+
+            return { steps, numGroups };
         }
+
+        function runCustomInput() {
+            const input = document.getElementById('customList').value;
+            const k = parseInt(document.getElementById('customK').value);
+            const list = input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+
+            if (list.length < 1) {
+                alert('請輸入至少 1 個節點');
+                return;
+            }
+            if (k < 1) {
+                alert('k 必須至少為 1');
+                return;
+            }
+
+            currentList = list;
+            currentK = k;
+            init(list, k);
+        }
+
         let viz;
-        function init() {
+        function init(list = currentList, k = currentK) {
+            document.getElementById('kDisplay').textContent = k;
+            const { steps, numGroups } = generateAlgorithmSteps(list, k);
+            document.getElementById('groupCount').textContent = numGroups;
+
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const list = step.list || [1,2,3,4,5];
                     const groups = step.groups || [];
+                    const remaining = step.remaining;
+                    const colors = ['group1', 'group2', 'group3'];
+
                     let html = '';
-                    list.forEach((n, i) => {
+                    step.list.forEach((n, i) => {
                         let cls = 'node';
-                        if (groups[0]?.includes(i)) cls += ' group1';
-                        else if (groups[1]?.includes(i)) cls += ' group2';
-                        else if (step.remaining?.includes(i)) cls += ' remaining';
+                        
+                        // Check which group this index belongs to
+                        let groupIdx = -1;
+                        for (let g = 0; g < groups.length; g++) {
+                            if (i >= groups[g][0] && i <= groups[g][1]) {
+                                groupIdx = g;
+                                break;
+                            }
+                        }
+                        
+                        if (groupIdx >= 0) {
+                            cls += ' ' + colors[groupIdx % colors.length];
+                        } else if (remaining && i >= remaining[0] && i <= remaining[1]) {
+                            cls += ' remaining';
+                        }
+                        
+                        // Highlight current check range
+                        if (step.checkRange && i >= step.checkRange[0] && i <= step.checkRange[1]) {
+                            cls += ' current';
+                        }
+
                         html += `<span class="${cls}">${n}</span>`;
-                        if (i < list.length - 1) html += '<span class="arrow">→</span>';
+                        if (i < step.list.length - 1) html += '<span class="arrow">→</span>';
                     });
                     document.getElementById('listDisplay').innerHTML = html;
+
+                    // Group indicator
+                    let indicatorHtml = '';
+                    for (let g = 0; g < groups.length; g++) {
+                        indicatorHtml += `<span style="background: var(--viz-${g === 0 ? 'success' : 'secondary'}); color: #0f172a;">Group ${g + 1}</span>`;
+                    }
+                    if (remaining) {
+                        indicatorHtml += '<span style="background: var(--viz-bg-secondary);">剩餘</span>';
+                    }
+                    document.getElementById('groupIndicator').innerHTML = indicatorHtml;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(steps);
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

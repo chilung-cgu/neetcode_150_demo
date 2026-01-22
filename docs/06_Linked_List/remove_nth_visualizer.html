@@ -6,13 +6,20 @@
     <title>Remove Nth Node From End Visualization</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .list-display { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 15px 0; }
+        .list-display { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 15px 0; flex-wrap: wrap; }
         .node { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; position: relative; }
         .node.slow { border: 3px solid var(--viz-success); }
         .node.fast { border: 3px solid var(--viz-secondary); }
         .node.remove { background: var(--viz-error); text-decoration: line-through; }
         .arrow { color: var(--viz-text-muted); }
-        .pointer-label { position: absolute; top: -20px; font-size: 0.7rem; color: var(--viz-text-muted); }
+        .pointer-label { position: absolute; top: -20px; font-size: 0.7rem; color: var(--viz-text-muted); left: 50%; transform: translateX(-50%); }
+        .dummy-node { background: var(--viz-text-muted); opacity: 0.6; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -20,15 +27,23 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">REMOVE NTH NODE FROM END (n=2)</div>
+                <div class="viz-title">REMOVE NTH NODE FROM END</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customList" placeholder="節點值" value="1,2,3,4,5" style="width: 150px;">
+                        <label>n =</label>
+                        <input type="number" id="customN" value="2" min="1" style="width: 60px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">n = 倒數第 n 個節點</div>
+                </div>
                 <div class="list-display" id="listDisplay"></div>
                 <div class="controls">
                     <button class="viz-btn" id="prevBtn">← Prev</button>
                     <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">Next →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                </div>
-                <div class="controls-row-2">
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
@@ -40,19 +55,18 @@
                         </select>
                     </div>
                 </div>
-
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">Gap</div><div class="state-value" id="gapDisplay">n = 2</div></div>
+                    <div class="state-item"><div class="state-label">Target</div><div class="state-value" id="targetDisplay">?</div></div>
+                </div>
                 <div class="legend">
                     <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="legend-item"><div class="legend-color current"></div>Slow</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>Fast</div>
                 </div>
             </div>
             <div class="viz-card">
@@ -74,58 +88,145 @@
             { line: '    ListNode dummy(0, head);', id: 1 },
             { line: '    ListNode *slow = &dummy, *fast = &dummy;', id: 2 },
             { line: '    // Move fast n+1 steps ahead', id: 3 },
-            { line: '    for (int i = 0; i <= n; i++) fast = fast->next;', id: 4 },
-            { line: '    // Move both until fast reaches end', id: 5 },
-            { line: '    while (fast) {', id: 6 },
-            { line: '        slow = slow->next;', id: 7 },
-            { line: '        fast = fast->next;', id: 8 },
-            { line: '    }', id: 9 },
-            { line: '    // slow->next is the node to remove', id: 10 },
-            { line: '    slow->next = slow->next->next;', id: 11 },
-            { line: '    return dummy.next;', id: 12 },
-            { line: '}', id: 13 },
+            { line: '    for (int i = 0; i <= n; i++)', id: 4 },
+            { line: '        fast = fast->next;', id: 5 },
+            { line: '    // Move both until fast reaches end', id: 6 },
+            { line: '    while (fast) {', id: 7 },
+            { line: '        slow = slow->next;', id: 8 },
+            { line: '        fast = fast->next;', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    // slow->next is the node to remove', id: 11 },
+            { line: '    slow->next = slow->next->next;', id: 12 },
+            { line: '    return dummy.next;', id: 13 },
+            { line: '}', id: 14 },
         ];
-        const list = [1, 2, 3, 4, 5];
-        const n = 2;
 
-        function generateAlgorithmSteps() {
+        let currentList = [1, 2, 3, 4, 5];
+        let currentN = 2;
+
+        function generateAlgorithmSteps(list, n) {
             const steps = [];
-            steps.push({ list: [...list], slow: -1, fast: -1, highlightLines: [0, 1, 2], explanation: { title: 'Init', text: 'dummy→1→2→3→4→5, n=2' }});
+            const len = list.length;
             
-            // Move fast n+1 steps
-            steps.push({ list: [...list], slow: -1, fast: 2, highlightLines: [3, 4], explanation: { title: 'Advance fast by n+1=3', text: 'fast at node 3' }});
+            // 確保 n 合法
+            if (n > len) n = len;
+            if (n < 1) n = 1;
             
-            // Move both
-            steps.push({ list: [...list], slow: 0, fast: 3, highlightLines: [6, 7, 8], explanation: { title: 'Move both', text: 'slow→1, fast→4' }});
-            steps.push({ list: [...list], slow: 1, fast: 4, highlightLines: [6, 7, 8], explanation: { title: 'Move both', text: 'slow→2, fast→5' }});
-            steps.push({ list: [...list], slow: 2, fast: 5, highlightLines: [6, 7, 8], explanation: { title: 'fast reaches end', text: 'slow→3, fast→null' }});
+            const targetIdx = len - n; // 0-indexed position to remove
             
-            // Remove
-            steps.push({ list: [...list], slow: 2, remove: 3, highlightLines: [10, 11], explanation: { title: 'Remove slow.next (4)', text: 'Node 4 is 2nd from end' }});
+            steps.push({ 
+                list: [...list], 
+                slow: -1, 
+                fast: -1, 
+                highlightLines: [0, 1, 2], 
+                explanation: { 
+                    title: '初始化', 
+                    text: `鏈表: dummy→${list.join('→')}<br>n = ${n} (移除倒數第 ${n} 個)<br><br>使用 dummy 節點簡化邊界情況`,
+                    formula: `倒數第 ${n} 個 = 正數第 ${len - n + 1} 個 (索引 ${targetIdx})`
+                }
+            });
+            
+            // Move fast n+1 steps ahead
+            for (let i = 0; i <= n; i++) {
+                steps.push({
+                    list: [...list],
+                    slow: -1,
+                    fast: i - 1, // -1 means at dummy
+                    highlightLines: [3, 4, 5],
+                    explanation: {
+                        title: `Fast 前進 - 第 ${i + 1}/${n + 1} 步`,
+                        text: `fast 移動到${i === 0 ? ' dummy 的下一個' : ` 索引 ${i - 1}`}`,
+                        formula: `gap = ${i + 1} (目標: n + 1 = ${n + 1})`
+                    }
+                });
+            }
+            
+            // Move both until fast reaches null
+            let slow = -1, fast = n;
+            while (fast < len) {
+                slow++;
+                fast++;
+                steps.push({
+                    list: [...list],
+                    slow: slow,
+                    fast: fast < len ? fast : null,
+                    highlightLines: [6, 7, 8, 9],
+                    explanation: {
+                        title: '同時移動 slow 和 fast',
+                        text: `slow: ${slow === -1 ? 'dummy' : list[slow]} (索引 ${slow})<br>fast: ${fast < len ? list[fast] : 'null'} (索引 ${fast})`,
+                        formula: `gap 保持 = ${n + 1}`
+                    }
+                });
+            }
+            
+            // Show the node to remove
+            steps.push({
+                list: [...list],
+                slow: slow,
+                remove: targetIdx,
+                highlightLines: [11, 12],
+                explanation: {
+                    title: `移除 slow.next`,
+                    text: `slow 在索引 ${slow}<br>slow.next = ${list[targetIdx]} (倒數第 ${n} 個)<br><br>執行: slow.next = slow.next.next`,
+                    formula: `刪除節點 ${list[targetIdx]}`
+                }
+            });
             
             // Result
-            steps.push({ list: [1, 2, 3, 5], highlightLines: [12], explanation: { title: 'Done!', text: 'Result: 1→2→3→5' }});
+            const result = list.filter((_, i) => i !== targetIdx);
+            steps.push({
+                list: result,
+                highlightLines: [13, 14],
+                explanation: {
+                    title: '✅ 完成！',
+                    text: `原始: ${list.join('→')}<br>移除: ${list[targetIdx]}<br>結果: ${result.join('→')}`,
+                    formula: `Time: O(n), Space: O(1)`
+                }
+            });
             
             return steps;
         }
 
+        function runCustomInput() {
+            const input = document.getElementById('customList').value;
+            const n = parseInt(document.getElementById('customN').value);
+            const list = input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            
+            if (list.length < 1) {
+                alert('請輸入至少 1 個節點');
+                return;
+            }
+            if (n < 1 || n > list.length) {
+                alert(`n 必須在 1 到 ${list.length} 之間`);
+                return;
+            }
+            
+            currentList = list;
+            currentN = n;
+            document.getElementById('gapDisplay').textContent = `n = ${n}`;
+            init(list, n);
+        }
+
         let viz;
-        function init() {
+        function init(list = currentList, n = currentN) {
+            document.getElementById('gapDisplay').textContent = `n = ${n}`;
+            document.getElementById('targetDisplay').textContent = `倒數第 ${n} 個`;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const display = step.list.map((n, i) => {
+                    const display = step.list.map((val, i) => {
                         let cls = 'node';
                         let label = '';
                         if (i === step.slow) { cls += ' slow'; label = '<span class="pointer-label">slow</span>'; }
                         if (i === step.fast) { cls += ' fast'; label += '<span class="pointer-label">fast</span>'; }
                         if (i === step.remove) cls += ' remove';
-                        return `<span class="${cls}">${label}${n}</span>`;
+                        return `<span class="${cls}">${label}${val}</span>`;
                     }).join('<span class="arrow">→</span>');
                     document.getElementById('listDisplay').innerHTML = display;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(list, n));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

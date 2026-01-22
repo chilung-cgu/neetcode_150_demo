@@ -3,16 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Serialize and Deserialize Binary Tree Visualization</title>
+    <title>Serialize and Deserialize Binary Tree - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .tree-level { display: flex; justify-content: center; gap: 10px; margin: 6px 0; }
-        .tree-node { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.85rem; }
+        .tree-node { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; font-size: 0.85rem; }
         .tree-node.current { background: var(--viz-secondary); color: #0f172a; }
-        .tree-node.null { background: transparent; border: 2px dashed var(--viz-text-muted); color: var(--viz-text-muted); }
-        .serial-display { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+        .tree-node.null { background: transparent; border: 2px dashed var(--viz-text-muted); color: var(--viz-text-muted); font-size: 0.7rem; }
+        .serial-display { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
         .serial-item { padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 0.8rem; background: rgba(255,255,255,0.1); }
         .serial-item.added { background: var(--viz-success); color: #0f172a; }
+        .serial-item.current { background: var(--viz-warning); color: #0f172a; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
+        .mode-toggle { display: flex; gap: 10px; margin-bottom: 10px; }
+        .mode-btn { padding: 6px 12px; border-radius: 4px; border: 1px solid var(--viz-border); background: transparent; color: var(--viz-text); cursor: pointer; }
+        .mode-btn.active { background: var(--viz-primary); color: white; border-color: var(--viz-primary); }
     </style>
 </head>
 <body>
@@ -20,9 +30,21 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">SERIALIZE & DESERIALIZE BINARY TREE</div>
+                <div class="viz-title">序列化與反序列化二叉樹</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="mode-toggle">
+                        <button class="mode-btn active" id="serializeBtn" onclick="setMode('serialize')">序列化</button>
+                        <button class="mode-btn" id="deserializeBtn" onclick="setMode('deserialize')">反序列化</button>
+                    </div>
+                    <div class="input-row">
+                        <input type="text" id="customInput" value="1,2,3,null,null,4,5" style="width: 200px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">BFS 層序遍歷格式</div>
+                </div>
                 <div id="treeDisplay"></div>
-                <div style="margin-top: 15px; text-align: center; color: var(--viz-text-muted);">Serialized (Level-Order):</div>
+                <div style="margin-top: 15px; text-align: center; color: var(--viz-text-muted);">Serialized:</div>
                 <div class="serial-display" id="serialDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← Prev</button>
@@ -40,14 +62,18 @@
                         </select>
                     </div>
                 </div>
-            <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>待處理</div>
+                    <div class="legend-item"><div class="legend-color current"></div>目前節點</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>已處理</div>
                 </div>
             </div>
             <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
+                <div class="viz-title">演算法說明</div>
                 <div class="explanation" id="explanation"></div>
             </div>
         </div>
@@ -75,40 +101,110 @@
             { line: '    return result;', id: 11 },
             { line: '}', id: 12 },
         ];
-        // Tree:     1
-        //          / \
-        //         2   3
-        //            / \
-        //           4   5
-        const levels = [[1], [2, 3], ['', '', 4, 5]];
-        const serial = ['1', '2', '3', 'null', 'null', '4', '5'];
 
-        function generateAlgorithmSteps() {
+        let currentTree = [1, 2, 3, null, null, 4, 5];
+        let currentMode = 'serialize';
+
+        function parseTree(input) {
+            return input.split(',').map(x => {
+                const trimmed = x.trim();
+                return trimmed === 'null' || trimmed === '' ? null : parseInt(trimmed);
+            });
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('serializeBtn').classList.toggle('active', mode === 'serialize');
+            document.getElementById('deserializeBtn').classList.toggle('active', mode === 'deserialize');
+        }
+
+        function generateAlgorithmSteps(tree) {
             const steps = [];
-            steps.push({ serialized: [], currentSerial: -1, highlightLines: [0, 1, 2], explanation: { title: 'Start BFS', text: 'Level-order traversal' }});
-            for (let i = 0; i < serial.length; i++) {
-                steps.push({ serialized: serial.slice(0, i + 1), currentSerial: i, highlightLines: serial[i] === 'null' ? [9] : [6, 7, 8], explanation: { title: `Add "${serial[i]}"`, text: `Queue processes level by level` }});
+            const serial = [];
+
+            steps.push({
+                tree: [...tree],
+                serialized: [],
+                currentIdx: -1,
+                highlightLines: [0, 1, 2],
+                explanation: {
+                    title: '開始 BFS 序列化',
+                    text: `樹: [${tree.map(x => x === null ? 'null' : x).join(', ')}]<br><br>使用層序遍歷 (BFS)<br>null 也要記錄以保留結構`,
+                    formula: 'queue.push(root)'
+                }
+            });
+
+            for (let i = 0; i < tree.length; i++) {
+                const val = tree[i];
+                serial.push(val === null ? 'null' : String(val));
+
+                steps.push({
+                    tree: [...tree],
+                    serialized: [...serial],
+                    currentIdx: i,
+                    highlightLines: val === null ? [9] : [5, 6, 7, 8],
+                    explanation: {
+                        title: `處理節點 ${val === null ? 'null' : val}`,
+                        text: `加入 "${val === null ? 'null' : val}" 到結果<br>${val !== null ? '將左右子節點加入 Queue' : ''}`,
+                        formula: `result += "${val === null ? 'null' : val}"`
+                    }
+                });
             }
-            steps.push({ serialized: serial, done: true, highlightLines: [11], explanation: { title: 'Done!', text: `Serialized: "${serial.join(',')}"` }});
+
+            steps.push({
+                tree: [...tree],
+                serialized: [...serial],
+                currentIdx: -1,
+                final: true,
+                highlightLines: [11],
+                explanation: {
+                    title: '🎉 完成！',
+                    text: `序列化結果: "${serial.join(',')}"<br><br>Time: O(n), Space: O(n)`,
+                    formula: `return "${serial.join(',')}"`
+                }
+            });
+
             return steps;
         }
 
+        function runCustomInput() {
+            const input = document.getElementById('customInput').value;
+            currentTree = parseTree(input);
+            init(currentTree);
+        }
+
         let viz;
-        function init() {
+        function init(tree = currentTree) {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
+                    // Tree display
                     let html = '';
-                    levels.forEach((level) => {
-                        html += '<div class="tree-level">' + level.map(v => v ? `<div class="tree-node">${v}</div>` : '<div class="tree-node null">∅</div>').join('') + '</div>';
-                    });
+                    let idx = 0, levelSize = 1;
+                    while (idx < step.tree.length) {
+                        html += '<div class="tree-level">';
+                        for (let i = 0; i < levelSize && idx < step.tree.length; i++, idx++) {
+                            const val = step.tree[idx];
+                            let cls = 'tree-node';
+                            if (val === null) cls += ' null';
+                            if (idx === step.currentIdx) cls += ' current';
+                            html += `<div class="${cls}">${val === null ? '∅' : val}</div>`;
+                        }
+                        html += '</div>';
+                        levelSize *= 2;
+                    }
                     document.getElementById('treeDisplay').innerHTML = html;
-                    document.getElementById('serialDisplay').innerHTML = step.serialized.map((s, i) =>
-                        `<span class="serial-item ${i === step.currentSerial ? 'added' : ''}">${s}</span>`
-                    ).join('') || '-';
+
+                    // Serialized display
+                    document.getElementById('serialDisplay').innerHTML = step.serialized.map((s, i) => {
+                        let cls = 'serial-item';
+                        if (i === step.serialized.length - 1 && !step.final) cls += ' current';
+                        else if (step.final) cls += ' added';
+                        return `<span class="${cls}">${s}</span>`;
+                    }).join('') || '<span style="color: var(--text-muted)">-</span>';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(tree));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

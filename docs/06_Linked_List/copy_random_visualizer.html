@@ -6,11 +6,19 @@
     <title>Copy List with Random Pointer Visualization</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .node-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0; }
-        .node { padding: 8px 12px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; text-align: center; min-width: 50px; }
+        .node-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+        .node { padding: 8px 12px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; text-align: center; min-width: 50px; position: relative; }
         .node.copy { background: var(--viz-success); color: #0f172a; }
+        .node.current { border: 3px solid var(--viz-secondary); }
         .node .random { font-size: 0.7rem; color: rgba(255,255,255,0.7); }
         .arrow { color: var(--viz-text-muted); }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
+        .hashmap-display { background: var(--viz-card-bg); border-radius: 6px; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -19,7 +27,17 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">COPY LIST WITH RANDOM POINTER</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customValues" placeholder="節點值" value="7,13,11,10,1" style="width: 120px;">
+                        <input type="text" id="customRandoms" placeholder="random 指向" value="-1,0,4,2,0" style="width: 120px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">random: -1=null, 0~n-1=指向索引</div>
+                </div>
                 <div id="listDisplay"></div>
+                <div class="hashmap-display" id="hashmapDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← Prev</button>
                     <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
@@ -36,10 +54,13 @@
                         </select>
                     </div>
                 </div>
-            <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>原始節點</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>複製節點</div>
                 </div>
             </div>
             <div class="viz-card">
@@ -75,45 +96,127 @@
             { line: '    return oldToNew[head];', id: 15 },
             { line: '}', id: 16 },
         ];
-        const nodes = [{val: 7, random: null}, {val: 13, random: 0}, {val: 11, random: 4}, {val: 10, random: 2}, {val: 1, random: 0}];
 
-        function generateAlgorithmSteps() {
+        let currentNodes = [{val: 7, random: null}, {val: 13, random: 0}, {val: 11, random: 4}, {val: 10, random: 2}, {val: 1, random: 0}];
+
+        function generateAlgorithmSteps(nodes) {
             const steps = [];
-            steps.push({ phase: 'init', created: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: 'HashMap: oldNode → newNode' }});
-            
+            const n = nodes.length;
+
+            steps.push({
+                phase: 'init', created: 0, currentIdx: -1,
+                highlightLines: [0, 1],
+                explanation: {
+                    title: '初始化',
+                    text: `建立 HashMap: old → new<br><br>原始鏈表有 ${n} 個節點<br>每個節點有 val, next, random 三個屬性`,
+                    formula: 'oldToNew = {}'
+                }
+            });
+
             // Pass 1: Create nodes
-            for (let i = 0; i <= nodes.length; i++) {
-                steps.push({ phase: 'pass1', created: i, highlightLines: [4, 5, 6], explanation: { title: `Pass 1: Create node ${i < nodes.length ? nodes[i].val : 'done'}`, text: i < nodes.length ? `Map[old${i}] = new Node(${nodes[i].val})` : 'All nodes created' }});
+            for (let i = 0; i < n; i++) {
+                steps.push({
+                    phase: 'pass1', created: i + 1, currentIdx: i,
+                    highlightLines: [4, 5, 6],
+                    explanation: {
+                        title: `Pass 1: 建立節點 ${i}`,
+                        text: `old[${i}] = ${nodes[i].val}<br>new[${i}] = ${nodes[i].val}'<br><br>HashMap: old${i} → new${i}`,
+                        formula: `oldToNew[old${i}] = new Node(${nodes[i].val})`
+                    }
+                });
             }
-            
-            // Pass 2: Connect
-            steps.push({ phase: 'pass2', connected: true, highlightLines: [8, 9, 10, 11, 12], explanation: { title: 'Pass 2: Connect pointers', text: 'Set next and random using HashMap lookup' }});
-            
-            steps.push({ phase: 'done', highlightLines: [15], explanation: { title: 'Done!', text: 'Deep copy complete with all random pointers preserved' }});
-            
+
+            steps.push({
+                phase: 'pass1done', created: n, currentIdx: -1,
+                highlightLines: [7, 8, 9],
+                explanation: {
+                    title: 'Pass 1 完成',
+                    text: `已建立所有 ${n} 個複製節點<br><br>接下來連接 next 和 random 指標`,
+                    formula: `HashMap 大小 = ${n}`
+                }
+            });
+
+            // Pass 2: Connect pointers
+            for (let i = 0; i < n; i++) {
+                const nextIdx = i < n - 1 ? i + 1 : 'null';
+                const randomIdx = nodes[i].random !== null ? nodes[i].random : 'null';
+                steps.push({
+                    phase: 'pass2', connected: i + 1, currentIdx: i,
+                    highlightLines: [10, 11, 12, 13],
+                    explanation: {
+                        title: `Pass 2: 連接節點 ${i}`,
+                        text: `new[${i}].next = new[${nextIdx}]<br>new[${i}].random = new[${randomIdx}]`,
+                        formula: `next → ${nextIdx}, random → ${randomIdx}`
+                    }
+                });
+            }
+
+            steps.push({
+                phase: 'done', connected: n, currentIdx: -1,
+                highlightLines: [15],
+                explanation: {
+                    title: '✅ 完成！',
+                    text: `深度複製完成<br>所有 next 和 random 指標已正確設定<br><br>Time: O(n), Space: O(n)`,
+                    formula: 'return oldToNew[head]'
+                }
+            });
+
             return steps;
         }
 
+        function runCustomInput() {
+            const values = document.getElementById('customValues').value.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            const randoms = document.getElementById('customRandoms').value.split(',').map(x => parseInt(x.trim()));
+
+            if (values.length < 1) {
+                alert('請輸入至少 1 個節點');
+                return;
+            }
+
+            currentNodes = values.map((val, i) => ({
+                val,
+                random: randoms[i] >= 0 && randoms[i] < values.length ? randoms[i] : null
+            }));
+            init(currentNodes);
+        }
+
         let viz;
-        function init() {
+        function init(nodes = currentNodes) {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '<div style="margin-bottom: 10px; color: var(--viz-text-muted);">Original:</div><div class="node-row">';
-                    html += nodes.map((n, i) => `<span class="node">${n.val}<div class="random">↗${n.random !== null ? nodes[n.random].val : 'null'}</div></span>`).join('<span class="arrow">→</span>');
+                    html += nodes.map((n, i) => {
+                        const isCurrent = i === step.currentIdx;
+                        return `<span class="node ${isCurrent ? 'current' : ''}">${n.val}<div class="random">↗${n.random !== null ? nodes[n.random].val : 'null'}</div></span>`;
+                    }).join('<span class="arrow">→</span>');
                     html += '</div>';
-                    
-                    if (step.phase !== 'init') {
+
+                    const copyCount = step.phase === 'done' || step.phase === 'pass2' ? nodes.length : (step.created || 0);
+                    if (copyCount > 0) {
                         html += '<div style="margin: 10px 0; color: var(--viz-text-muted);">Copy:</div><div class="node-row">';
-                        const copyCount = step.phase === 'done' || step.connected ? nodes.length : Math.min(step.created, nodes.length);
-                        html += nodes.slice(0, copyCount).map((n, i) => `<span class="node copy">${n.val}'<div class="random">↗${step.connected && n.random !== null ? nodes[n.random].val + "'" : '?'}</div></span>`).join('<span class="arrow">→</span>');
+                        html += nodes.slice(0, copyCount).map((n, i) => {
+                            const showRandom = step.phase === 'pass2' && i < step.connected || step.phase === 'done';
+                            const isCurrent = step.phase === 'pass2' && i === step.currentIdx;
+                            return `<span class="node copy ${isCurrent ? 'current' : ''}">${n.val}'<div class="random">↗${showRandom && n.random !== null ? nodes[n.random].val + "'" : '?'}</div></span>`;
+                        }).join('<span class="arrow">→</span>');
                         html += '</div>';
                     }
-                    
+
                     document.getElementById('listDisplay').innerHTML = html;
+
+                    // HashMap display
+                    let mapHtml = '<strong>HashMap:</strong> ';
+                    const mapCount = step.created || (step.phase === 'pass2' || step.phase === 'done' ? nodes.length : 0);
+                    if (mapCount === 0) {
+                        mapHtml += '{}';
+                    } else {
+                        mapHtml += nodes.slice(0, mapCount).map((n, i) => `old${i}→new${i}`).join(', ');
+                    }
+                    document.getElementById('hashmapDisplay').innerHTML = mapHtml;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(nodes));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

@@ -6,16 +6,22 @@
     <title>Same Tree 相同的樹 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .trees { display: flex; gap: 40px; justify-content: center; margin: 20px 0; }
+        .trees { display: flex; gap: 40px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
         .tree { text-align: center; }
-        .tree-label { color: var(--text-muted); margin-bottom: 10px; }
+        .tree-label { color: var(--text-muted); margin-bottom: 10px; font-weight: bold; }
         .tree-nodes { display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .level { display: flex; gap: 10px; justify-content: center; }
         .node { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; }
         .node.match { background: var(--viz-success); color: #0f172a; }
         .node.mismatch { background: var(--viz-error); }
         .node.current { border: 3px solid var(--viz-warning); }
-        .node.null { background: transparent; border: 2px dashed var(--text-muted); color: var(--text-muted); }
+        .node.null { background: transparent; border: 2px dashed var(--text-muted); color: var(--text-muted); font-size: 0.7rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -24,6 +30,19 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">相同的樹（遞迴比較）</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>Tree p:</label>
+                        <input type="text" id="customTreeP" placeholder="層序遍歷" value="1,2,3" style="width: 120px;">
+                    </div>
+                    <div class="input-row">
+                        <label>Tree q:</label>
+                        <input type="text" id="customTreeQ" placeholder="層序遍歷" value="1,2,3" style="width: 120px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">試試: p=1,2,3 q=1,2,4 (不同)</div>
+                </div>
                 <div class="trees" id="treesDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
@@ -48,11 +67,11 @@
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
                 </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>待比較</div>
+                    <div class="legend-item"><div class="legend-color current"></div>目前比較</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>匹配</div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -75,34 +94,192 @@
             { line: '           isSameTree(p->right, q->right);', id: 5 },
             { line: '}', id: 6 },
         ];
-        function generateAlgorithmSteps() {
+
+        let currentTreeP = [1, 2, 3];
+        let currentTreeQ = [1, 2, 3];
+
+        function parseTree(input) {
+            return input.split(',').map(x => {
+                const trimmed = x.trim();
+                return trimmed === 'null' || trimmed === '' ? null : parseInt(trimmed);
+            });
+        }
+
+        function generateAlgorithmSteps(treeP, treeQ) {
             const steps = [];
-            steps.push({ matched: [], current: null, highlightLines: [0], explanation: { title: '初始化', text: '比較兩棵樹是否相同<br><br>遞迴檢查：<br>1. 都為空 → true<br>2. 一空一非空 → false<br>3. 值不同 → false<br>4. 遞迴比較子樹' } });
-            steps.push({ matched: [0], current: 0, highlightLines: [3,4,5], explanation: { title: '比較根節點', text: 'p.val = q.val = 1 ✓<br>遞迴比較左右子樹' } });
-            steps.push({ matched: [0,1], current: 1, highlightLines: [3,4,5], explanation: { title: '比較左子節點', text: 'p.left.val = q.left.val = 2 ✓' } });
-            steps.push({ matched: [0,1,2], current: 2, highlightLines: [3,4,5], explanation: { title: '比較右子節點', text: 'p.right.val = q.right.val = 3 ✓' } });
-            steps.push({ matched: [0,1,2], result: true, final: true, highlightLines: [4,5], explanation: { title: '🎉 相同！', text: '所有節點都匹配<br><br>時間：O(n)' } });
+            const matched = [];
+            const mismatched = [];
+            let result = null;
+
+            steps.push({
+                treeP: [...treeP],
+                treeQ: [...treeQ],
+                currentIdx: null,
+                matched: [],
+                mismatched: [],
+                result: null,
+                highlightLines: [0],
+                explanation: {
+                    title: '初始化',
+                    text: `Tree p: [${treeP.filter(x => x !== null).join(', ')}]<br>Tree q: [${treeQ.filter(x => x !== null).join(', ')}]<br><br>遞迴比較每個節點`,
+                    formula: 'isSameTree(p, q)'
+                }
+            });
+
+            // BFS comparison
+            const maxLen = Math.max(treeP.length, treeQ.length);
+            
+            function compare(idx) {
+                if (idx >= maxLen) return true;
+                
+                const pVal = idx < treeP.length ? treeP[idx] : null;
+                const qVal = idx < treeQ.length ? treeQ[idx] : null;
+
+                // Both null
+                if (pVal === null && qVal === null) {
+                    return true;
+                }
+
+                // One null, one not
+                if (pVal === null || qVal === null) {
+                    mismatched.push(idx);
+                    steps.push({
+                        treeP: [...treeP],
+                        treeQ: [...treeQ],
+                        currentIdx: idx,
+                        matched: [...matched],
+                        mismatched: [...mismatched],
+                        result: false,
+                        highlightLines: [2],
+                        explanation: {
+                            title: `節點 ${idx} 不匹配`,
+                            text: `p[${idx}] = ${pVal ?? 'null'}<br>q[${idx}] = ${qVal ?? 'null'}<br><br>一個為空一個非空 → false`,
+                            formula: `!p || !q → return false`
+                        }
+                    });
+                    return false;
+                }
+
+                // Values differ
+                if (pVal !== qVal) {
+                    mismatched.push(idx);
+                    steps.push({
+                        treeP: [...treeP],
+                        treeQ: [...treeQ],
+                        currentIdx: idx,
+                        matched: [...matched],
+                        mismatched: [...mismatched],
+                        result: false,
+                        highlightLines: [3],
+                        explanation: {
+                            title: `節點 ${idx} 值不同`,
+                            text: `p[${idx}] = ${pVal}<br>q[${idx}] = ${qVal}<br><br>${pVal} ≠ ${qVal} → false`,
+                            formula: `${pVal} != ${qVal} → return false`
+                        }
+                    });
+                    return false;
+                }
+
+                // Match
+                matched.push(idx);
+                steps.push({
+                    treeP: [...treeP],
+                    treeQ: [...treeQ],
+                    currentIdx: idx,
+                    matched: [...matched],
+                    mismatched: [...mismatched],
+                    result: null,
+                    highlightLines: [3, 4, 5],
+                    explanation: {
+                        title: `節點 ${idx} 匹配`,
+                        text: `p[${idx}] = q[${idx}] = ${pVal} ✓<br><br>繼續比較子節點`,
+                        formula: `${pVal} == ${qVal} ✓`
+                    }
+                });
+
+                // Check children
+                const leftResult = compare(2 * idx + 1);
+                if (!leftResult) return false;
+                
+                const rightResult = compare(2 * idx + 2);
+                return rightResult;
+            }
+
+            result = compare(0);
+
+            steps.push({
+                treeP: [...treeP],
+                treeQ: [...treeQ],
+                currentIdx: null,
+                matched: [...matched],
+                mismatched: [...mismatched],
+                result: result,
+                final: true,
+                highlightLines: result ? [4, 5] : [2, 3],
+                explanation: {
+                    title: result ? '🎉 相同！' : '❌ 不同',
+                    text: result 
+                        ? `所有 ${matched.length} 個節點都匹配<br><br>return true`
+                        : `發現不匹配的節點<br><br>return false`,
+                    formula: result ? 'return true' : 'return false'
+                }
+            });
+
             return steps;
         }
+
+        function runCustomInput() {
+            const inputP = document.getElementById('customTreeP').value;
+            const inputQ = document.getElementById('customTreeQ').value;
+            const treeP = parseTree(inputP);
+            const treeQ = parseTree(inputQ);
+            
+            currentTreeP = treeP;
+            currentTreeQ = treeQ;
+            init(treeP, treeQ);
+        }
+
         let viz;
-        function init() {
+        function init(treeP = currentTreeP, treeQ = currentTreeQ) {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const tree1 = [1, 2, 3];
-                    const tree2 = [1, 2, 3];
-                    let html = '';
-                    [['p', tree1], ['q', tree2]].forEach(([label, tree]) => {
-                        html += `<div class="tree"><div class="tree-label">${label}</div><div class="tree-nodes">`;
-                        html += `<div class="level"><div class="node${step.matched?.includes(0)?' match':''}${step.current===0?' current':''}">${tree[0]}</div></div>`;
-                        html += `<div class="level"><div class="node${step.matched?.includes(1)?' match':''}${step.current===1?' current':''}">${tree[1]}</div><div class="node${step.matched?.includes(2)?' match':''}${step.current===2?' current':''}">${tree[2]}</div></div>`;
-                        html += `</div></div>`;
-                    });
-                    document.getElementById('treesDisplay').innerHTML = html;
-                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
+                    function renderTree(tree, label) {
+                        let html = `<div class="tree"><div class="tree-label">${label}</div><div class="tree-nodes">`;
+                        let idx = 0;
+                        let levelSize = 1;
+                        while (idx < tree.length) {
+                            html += '<div class="level">';
+                            for (let i = 0; i < levelSize && idx < tree.length; i++, idx++) {
+                                const val = tree[idx];
+                                let cls = 'node';
+                                if (val === null) {
+                                    cls += ' null';
+                                    html += `<div class="${cls}">∅</div>`;
+                                } else {
+                                    if (step.matched?.includes(idx)) cls += ' match';
+                                    if (step.mismatched?.includes(idx)) cls += ' mismatch';
+                                    if (step.currentIdx === idx) cls += ' current';
+                                    html += `<div class="${cls}">${val}</div>`;
+                                }
+                            }
+                            html += '</div>';
+                            levelSize *= 2;
+                        }
+                        html += '</div></div>';
+                        return html;
+                    }
+                    
+                    document.getElementById('treesDisplay').innerHTML = 
+                        renderTree(step.treeP, 'Tree p') + renderTree(step.treeQ, 'Tree q');
+                    
+                    document.getElementById('resultDisplay').textContent = 
+                        step.result === true ? 'true ✓' : (step.result === false ? 'false ✗' : '?');
+                    document.getElementById('resultDisplay').style.color = 
+                        step.result === true ? 'var(--viz-success)' : (step.result === false ? 'var(--viz-error)' : 'var(--viz-text)');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(treeP, treeQ));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

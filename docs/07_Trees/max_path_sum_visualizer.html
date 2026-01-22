@@ -8,9 +8,17 @@
     <style>
         .tree { text-align: center; margin: 20px 0; }
         .level { display: flex; justify-content: center; gap: 15px; margin: 10px 0; }
-        .node { width: 45px; height: 45px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; }
+        .node { width: 45px; height: 45px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; position: relative; }
         .node.path { background: var(--viz-success); color: #0f172a; }
         .node.current { border: 3px solid var(--viz-warning); }
+        .node.null { background: transparent; border: 2px dashed var(--text-muted); color: var(--text-muted); font-size: 0.7rem; }
+        .node .gain { position: absolute; top: -18px; font-size: 0.6rem; color: var(--viz-warning); }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -19,6 +27,14 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">二叉樹最大路徑和（後序遍歷）</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customTree" placeholder="層序遍歷" value="-10,9,20,null,null,15,7" style="width: 200px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">路徑：任意連續節點序列（可包含負數）</div>
+                </div>
                 <div class="tree" id="treeDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
@@ -43,11 +59,11 @@
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">最大路徑和</div><div class="state-value" id="maxDisplay" style="color: var(--viz-success);">?</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
                 </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>待訪問</div>
+                    <div class="legend-item"><div class="legend-color current"></div>目前節點</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>最大路徑</div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -75,31 +91,134 @@
             { line: '    return node->val + max(left, right);', id: 10 },
             { line: '}', id: 11 },
         ];
-        function generateAlgorithmSteps() {
+
+        let currentTree = [-10, 9, 20, null, null, 15, 7];
+
+        function parseTree(input) {
+            return input.split(',').map(x => {
+                const trimmed = x.trim();
+                return trimmed === 'null' || trimmed === '' ? null : parseInt(trimmed);
+            });
+        }
+
+        function generateAlgorithmSteps(tree) {
             const steps = [];
-            steps.push({ path: [], max: '-∞', highlightLines: [0,1,2], explanation: { title: '初始化', text: '路徑：任意連續節點序列<br><br>後序遍歷：<br>每個節點計算經過它的最大路徑和<br>返回單邊最大貢獻' } });
-            steps.push({ path: [9], current: 9, max: 9, highlightLines: [5,6,7,8,9,10], explanation: { title: '節點 9', text: '左右都是 null<br>經過 9 的路徑和 = 9<br>返回 9' } });
-            steps.push({ path: [9,15], current: 15, max: 15, highlightLines: [5,6,7,8,9,10], explanation: { title: '節點 15', text: '經過 15 的路徑和 = 15<br>返回 15' } });
-            steps.push({ path: [9,15,7], current: 7, max: 15, highlightLines: [5,6,7,8,9,10], explanation: { title: '節點 7', text: '經過 7 的路徑和 = 7<br>返回 7' } });
-            steps.push({ path: [9,15,7,20], current: 20, max: 42, highlightLines: [9], explanation: { title: '節點 20', text: '左=15, 右=7<br>經過 20：15+20+7=42<br>maxSum = 42' } });
-            steps.push({ path: [-10,9,20,15,7], current: -10, max: 42, highlightLines: [9], explanation: { title: '節點 -10', text: '左=9, 右=35<br>經過 -10：9+(-10)+35=34<br>maxSum 仍是 42' } });
-            steps.push({ path: [15,20,7], max: 42, final: true, highlightLines: [3], explanation: { title: '🎉 完成！', text: '最大路徑和 = 42<br>路徑：15→20→7<br><br>時間：O(n)' } });
+            const gains = new Map();
+            const visited = new Set();
+            let maxSum = -Infinity;
+            let maxPath = [];
+
+            steps.push({
+                tree: [...tree],
+                currentIdx: null,
+                visited: [],
+                gains: new Map(),
+                maxSum: '-∞',
+                highlightLines: [0, 1, 2],
+                explanation: {
+                    title: '初始化',
+                    text: `樹: [${tree.filter(x => x !== null).join(', ')}]<br><br>後序遍歷：<br>每個節點計算經過它的最大路徑和<br>返回單邊最大貢獻（給父節點使用）`,
+                    formula: 'maxSum = node + max(0, left) + max(0, right)'
+                }
+            });
+
+            function dfs(idx) {
+                if (idx >= tree.length || tree[idx] === null) return 0;
+
+                const leftIdx = 2 * idx + 1;
+                const rightIdx = 2 * idx + 2;
+
+                const leftGain = Math.max(0, dfs(leftIdx));
+                const rightGain = Math.max(0, dfs(rightIdx));
+
+                const val = tree[idx];
+                const pathSum = val + leftGain + rightGain;
+                const gain = val + Math.max(leftGain, rightGain);
+
+                if (pathSum > maxSum) {
+                    maxSum = pathSum;
+                }
+
+                gains.set(idx, gain);
+                visited.add(idx);
+
+                steps.push({
+                    tree: [...tree],
+                    currentIdx: idx,
+                    visited: [...visited],
+                    gains: new Map(gains),
+                    maxSum: maxSum,
+                    highlightLines: [7, 8, 9, 10],
+                    explanation: {
+                        title: `節點 ${val}`,
+                        text: `左貢獻 = max(0, ${leftGain}) = ${leftGain}<br>右貢獻 = max(0, ${rightGain}) = ${rightGain}<br>經過此節點路徑和 = ${val} + ${leftGain} + ${rightGain} = ${pathSum}<br>返回貢獻 = ${val} + max(${leftGain}, ${rightGain}) = ${gain}`,
+                        formula: `path = ${val} + ${leftGain} + ${rightGain} = ${pathSum}`
+                    }
+                });
+
+                return gain;
+            }
+
+            dfs(0);
+
+            steps.push({
+                tree: [...tree],
+                currentIdx: null,
+                visited: [...visited],
+                gains: new Map(gains),
+                maxSum: maxSum,
+                final: true,
+                highlightLines: [3],
+                explanation: {
+                    title: '🎉 完成！',
+                    text: `最大路徑和 = ${maxSum}<br><br>Time: O(n), Space: O(h)`,
+                    formula: `return ${maxSum}`
+                }
+            });
+
             return steps;
         }
+
+        function runCustomInput() {
+            const input = document.getElementById('customTree').value;
+            currentTree = parseTree(input);
+            if (currentTree.length === 0 || currentTree[0] === null) {
+                alert('請輸入有效的樹');
+                return;
+            }
+            init(currentTree);
+        }
+
         let viz;
-        function init() {
+        function init(tree = currentTree) {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const maxPath = [15,20,7];
-                    let html = '<div class="level"><div class="node'+(step.current===-10?' current':'')+(step.final?' path':'')+'">-10</div></div>';
-                    html += '<div class="level"><div class="node'+(step.current===9?' current':'')+(step.final?' path':'')+'">9</div><div class="node'+(step.current===20?' current':'')+(step.final||maxPath.includes(20)?' path':'')+'">20</div></div>';
-                    html += '<div class="level"><div class="node'+(step.current===15?' current':'')+(step.final||maxPath.includes(15)?' path':'')+'">15</div><div class="node'+(step.current===7?' current':'')+(step.final||maxPath.includes(7)?' path':'')+'">7</div></div>';
+                    let html = '';
+                    let idx = 0, levelSize = 1;
+                    while (idx < step.tree.length) {
+                        html += '<div class="level">';
+                        for (let i = 0; i < levelSize && idx < step.tree.length; i++, idx++) {
+                            const val = step.tree[idx];
+                            let cls = 'node';
+                            if (val === null) {
+                                cls += ' null';
+                                html += `<div class="${cls}">∅</div>`;
+                            } else {
+                                if (step.visited?.includes(idx)) cls += ' path';
+                                if (step.currentIdx === idx) cls += ' current';
+                                const g = step.gains?.get(idx);
+                                html += `<div class="${cls}">${g !== undefined ? `<span class="gain">+${g}</span>` : ''}${val}</div>`;
+                            }
+                        }
+                        html += '</div>';
+                        levelSize *= 2;
+                    }
                     document.getElementById('treeDisplay').innerHTML = html;
-                    document.getElementById('maxDisplay').textContent = step.max ?? '?';
+                    document.getElementById('maxDisplay').textContent = step.maxSum ?? '?';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(tree));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

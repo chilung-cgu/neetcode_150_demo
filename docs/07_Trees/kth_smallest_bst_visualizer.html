@@ -12,9 +12,17 @@
         .node.visited { background: var(--viz-success); color: #0f172a; }
         .node.current { background: var(--viz-warning); color: #0f172a; }
         .node.answer { background: var(--viz-secondary); color: #0f172a; border: 3px solid var(--viz-success); }
-        .inorder { display: flex; gap: 6px; justify-content: center; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .inorder-item { padding: 6px 12px; border-radius: 4px; font-weight: bold; }
+        .node.null { background: transparent; border: 2px dashed var(--text-muted); color: var(--text-muted); font-size: 0.7rem; }
+        .inorder { display: flex; gap: 6px; justify-content: center; margin: 15px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px; flex-wrap: wrap; }
+        .inorder-item { padding: 6px 12px; border-radius: 4px; font-weight: bold; background: var(--viz-bg-secondary); }
         .inorder-item.visited { background: var(--viz-success); color: #0f172a; }
+        .inorder-item.answer { background: var(--viz-secondary); color: #0f172a; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -23,6 +31,16 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">BST 第 K 小元素（中序遍歷）</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customTree" placeholder="BST 層序" value="3,1,4,null,2" style="width: 140px;">
+                        <label>k =</label>
+                        <input type="number" id="customK" value="1" min="1" style="width: 60px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">BST 中序遍歷 = 升序排列</div>
+                </div>
                 <div class="tree" id="treeDisplay"></div>
                 <div style="text-align: center; color: var(--text-muted);">中序遍歷順序</div>
                 <div class="inorder" id="inorderDisplay"></div>
@@ -44,17 +62,17 @@
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(h+k)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(h)
+                    <span class="label">Time:</span> O(H+k)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(H)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">K</div><div class="state-value">3</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">K</div><div class="state-value" id="kDisplay">1</div></div>
                     <div class="state-item"><div class="state-label">第 K 小</div><div class="state-value" id="kthDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>待訪問</div>
+                    <div class="legend-item"><div class="legend-color current"></div>目前節點</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>已訪問</div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -83,40 +101,168 @@
             { line: '    return -1;', id: 11 },
             { line: '}', id: 12 },
         ];
-        const inorder = [1, 2, 3, 4, 5];
-        function generateAlgorithmSteps() {
+
+        let currentTree = [3, 1, 4, null, 2];
+        let currentK = 1;
+
+        function parseTree(input) {
+            return input.split(',').map(x => {
+                const trimmed = x.trim();
+                return trimmed === 'null' || trimmed === '' ? null : parseInt(trimmed);
+            });
+        }
+
+        function getInorder(tree) {
+            const result = [];
+            function dfs(idx) {
+                if (idx >= tree.length || tree[idx] === null) return;
+                dfs(2 * idx + 1);
+                result.push({ val: tree[idx], idx });
+                dfs(2 * idx + 2);
+            }
+            dfs(0);
+            return result;
+        }
+
+        function generateAlgorithmSteps(tree, k) {
             const steps = [];
-            steps.push({ visited: [], highlightLines: [0,1,2], explanation: { title: '初始化', text: 'BST 中序遍歷 = 升序排列<br>k = 3<br><br>迭代中序遍歷' } });
-            steps.push({ visited: [1], current: 1, count: 1, highlightLines: [7,8], explanation: { title: '訪問 1', text: '第 1 小 = 1<br>k = 2' } });
-            steps.push({ visited: [1,2], current: 2, count: 2, highlightLines: [7,8], explanation: { title: '訪問 2', text: '第 2 小 = 2<br>k = 1' } });
-            steps.push({ visited: [1,2,3], current: 3, count: 3, answer: 3, highlightLines: [8], explanation: { title: '訪問 3', text: '第 3 小 = 3<br>k = 0，找到！' } });
-            steps.push({ visited: [1,2,3], answer: 3, final: true, highlightLines: [8], explanation: { title: '🎉 完成！', text: '第 3 小元素 = 3<br><br>時間：O(H + k)' } });
+            const inorder = getInorder(tree);
+            const visited = [];
+            let answer = null;
+
+            steps.push({
+                tree: [...tree],
+                k: k,
+                visited: [],
+                inorder: inorder.map(n => n.val),
+                currentIdx: null,
+                answer: null,
+                highlightLines: [0, 1, 2],
+                explanation: {
+                    title: '初始化',
+                    text: `樹: [${tree.filter(x => x !== null).join(', ')}]<br>k = ${k}<br><br>BST 中序遍歷 = 升序排列<br>中序: [${inorder.map(n => n.val).join(', ')}]`,
+                    formula: 'inorder(BST) = sorted'
+                }
+            });
+
+            for (let i = 0; i < inorder.length; i++) {
+                const node = inorder[i];
+                visited.push(node.idx);
+
+                if (i + 1 === k) {
+                    answer = node.val;
+                    steps.push({
+                        tree: [...tree],
+                        k: k,
+                        visited: [...visited],
+                        visitedVals: visited.map(idx => tree[idx]),
+                        inorder: inorder.map(n => n.val),
+                        currentIdx: node.idx,
+                        answer: answer,
+                        highlightLines: [8],
+                        explanation: {
+                            title: `🎉 找到第 ${k} 小！`,
+                            text: `第 ${i + 1} 個 = ${node.val}<br>k = 0，找到答案！`,
+                            formula: `k-- = 0 → return ${node.val}`
+                        }
+                    });
+                    break;
+                }
+
+                steps.push({
+                    tree: [...tree],
+                    k: k,
+                    visited: [...visited],
+                    visitedVals: visited.map(idx => tree[idx]),
+                    inorder: inorder.map(n => n.val),
+                    currentIdx: node.idx,
+                    count: i + 1,
+                    answer: null,
+                    highlightLines: [7, 8, 9],
+                    explanation: {
+                        title: `訪問 ${node.val}`,
+                        text: `第 ${i + 1} 小 = ${node.val}<br>k = ${k - (i + 1)}，繼續...`,
+                        formula: `count = ${i + 1}, k = ${k - (i + 1)}`
+                    }
+                });
+            }
+
+            if (answer !== null) {
+                steps.push({
+                    tree: [...tree],
+                    k: k,
+                    visited: [...visited],
+                    visitedVals: visited.map(idx => tree[idx]),
+                    inorder: inorder.map(n => n.val),
+                    answer: answer,
+                    final: true,
+                    highlightLines: [8],
+                    explanation: {
+                        title: '🎉 完成！',
+                        text: `第 ${k} 小元素 = ${answer}<br><br>Time: O(H + k), Space: O(H)`,
+                        formula: `return ${answer}`
+                    }
+                });
+            }
+
             return steps;
         }
+
+        function runCustomInput() {
+            const input = document.getElementById('customTree').value;
+            const k = parseInt(document.getElementById('customK').value);
+            currentTree = parseTree(input);
+            currentK = k;
+            if (currentTree.length === 0 || currentTree[0] === null) {
+                alert('請輸入有效的樹');
+                return;
+            }
+            init(currentTree, k);
+        }
+
         let viz;
-        function init() {
+        function init(tree = currentTree, k = currentK) {
+            document.getElementById('kDisplay').textContent = k;
+            const inorder = getInorder(tree);
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const nodes = [[3], [1, 4], [2, 5]];
+                    // Render tree
                     let html = '';
-                    nodes.forEach(level => {
+                    let idx = 0, levelSize = 1;
+                    while (idx < step.tree.length) {
                         html += '<div class="level">';
-                        level.forEach(n => {
+                        for (let i = 0; i < levelSize && idx < step.tree.length; i++, idx++) {
+                            const val = step.tree[idx];
                             let cls = 'node';
-                            if (step.visited?.includes(n)) cls += ' visited';
-                            if (n === step.current) cls += ' current';
-                            if (n === step.answer) cls += ' answer';
-                            html += `<div class="${cls}">${n}</div>`;
-                        });
+                            if (val === null) {
+                                cls += ' null';
+                                html += `<div class="${cls}">∅</div>`;
+                            } else {
+                                if (step.visited?.includes(idx)) cls += ' visited';
+                                if (idx === step.currentIdx) cls += ' current';
+                                if (val === step.answer) cls += ' answer';
+                                html += `<div class="${cls}">${val}</div>`;
+                            }
+                        }
                         html += '</div>';
-                    });
+                        levelSize *= 2;
+                    }
                     document.getElementById('treeDisplay').innerHTML = html;
-                    document.getElementById('inorderDisplay').innerHTML = inorder.map(n => `<span class="inorder-item${step.visited?.includes(n)?' visited':''}">${n}</span>`).join('');
+                    
+                    // Render inorder
+                    document.getElementById('inorderDisplay').innerHTML = step.inorder.map((n, i) => {
+                        let cls = 'inorder-item';
+                        if (step.visitedVals?.includes(n)) cls += ' visited';
+                        if (n === step.answer) cls += ' answer';
+                        return `<span class="${cls}">${n}</span>`;
+                    }).join('');
+                    
                     document.getElementById('kthDisplay').textContent = step.answer ?? '?';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(tree, k));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

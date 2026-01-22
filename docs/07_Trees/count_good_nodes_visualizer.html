@@ -3,13 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Count Good Nodes Visualization</title>
+    <title>Count Good Nodes 計算好節點 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .tree-level { display: flex; justify-content: center; gap: 12px; margin: 6px 0; }
-        .tree-node { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; }
+        .tree-node { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: monospace; font-weight: bold; background: var(--viz-primary); color: white; }
         .tree-node.good { background: var(--viz-success); color: #0f172a; }
+        .tree-node.bad { background: var(--viz-error); }
         .tree-node.current { border: 3px solid var(--viz-secondary); }
+        .tree-node.null { background: transparent; border: 2px dashed var(--text-muted); color: var(--text-muted); font-size: 0.7rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -17,15 +25,21 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">COUNT GOOD NODES IN BINARY TREE</div>
+                <div class="viz-title">計算好節點（DFS with Max）</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customTree" placeholder="層序遍歷" value="3,1,4,3,null,1,5" style="width: 200px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">好節點：從根到該節點路徑上沒有比它大的值</div>
+                </div>
                 <div id="treeDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← Prev</button>
                     <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">Next →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                </div>
-                <div class="controls-row-2">
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
@@ -38,23 +52,22 @@
                     </div>
                 </div>
 
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(h)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Max So Far</div><div class="state-value" id="maxDisplay">-∞</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
+                    <div class="state-item"><div class="state-label">路徑最大值</div><div class="state-value" id="maxDisplay">-∞</div></div>
+                    <div class="state-item"><div class="state-label">好節點數</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
                 </div>
-                    <div class="state-item"><div class="state-label">Good Nodes</div><div class="state-value" id="countDisplay" style="color: var(--viz-success);">0</div></div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>待訪問</div>
+                    <div class="legend-item"><div class="legend-color current"></div>目前節點</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>好節點</div>
                 </div>
             </div>
             <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
+                <div class="viz-title">演算法說明</div>
                 <div class="explanation" id="explanation"></div>
             </div>
         </div>
@@ -80,47 +93,131 @@
             { line: '    return good;', id: 9 },
             { line: '}', id: 10 },
         ];
-        // Tree:     3
-        //          / \
-        //         1   4
-        //        /   / \
-        //       3   1   5
-        const levels = [[3], [1, 4], [3, '', 1, 5]];
 
-        function generateAlgorithmSteps() {
+        let currentTree = [3, 1, 4, 3, null, 1, 5];
+
+        function parseTree(input) {
+            return input.split(',').map(x => {
+                const trimmed = x.trim();
+                return trimmed === 'null' || trimmed === '' ? null : parseInt(trimmed);
+            });
+        }
+
+        function generateAlgorithmSteps(tree) {
             const steps = [];
-            steps.push({ good: [], count: 0, max: -Infinity, highlightLines: [0, 1], explanation: { title: 'Start', text: 'Good node: val ≥ max on path from root' }});
-            steps.push({ current: [0, 0], good: [[0, 0]], count: 1, max: 3, highlightLines: [5, 6], explanation: { title: 'Node 3 (root)', text: '3 ≥ -∞ → Good! max=3' }});
-            steps.push({ current: [1, 0], good: [[0, 0]], count: 1, max: 3, highlightLines: [5], explanation: { title: 'Node 1', text: '1 < 3 → Not good' }});
-            steps.push({ current: [2, 0], good: [[0, 0], [2, 0]], count: 2, max: 3, highlightLines: [5, 6], explanation: { title: 'Node 3 (leaf)', text: '3 ≥ 3 → Good! max=3' }});
-            steps.push({ current: [1, 1], good: [[0, 0], [2, 0], [1, 1]], count: 3, max: 4, highlightLines: [5, 6], explanation: { title: 'Node 4', text: '4 ≥ 3 → Good! max=4' }});
-            steps.push({ current: [2, 2], good: [[0, 0], [2, 0], [1, 1]], count: 3, max: 4, highlightLines: [5], explanation: { title: 'Node 1', text: '1 < 4 → Not good' }});
-            steps.push({ current: [2, 3], good: [[0, 0], [2, 0], [1, 1], [2, 3]], count: 4, max: 5, highlightLines: [5, 6], explanation: { title: 'Node 5', text: '5 ≥ 4 → Good! max=5' }});
-            steps.push({ good: [[0, 0], [2, 0], [1, 1], [2, 3]], count: 4, highlightLines: [9], explanation: { title: 'Done!', text: '4 good nodes: 3, 3, 4, 5' }});
+            const goodNodes = new Set();
+            const badNodes = new Set();
+            let count = 0;
+
+            steps.push({
+                tree: [...tree],
+                currentIdx: null,
+                good: [],
+                bad: [],
+                count: 0,
+                max: -Infinity,
+                highlightLines: [0, 1],
+                explanation: {
+                    title: '初始化',
+                    text: `樹: [${tree.filter(x => x !== null).join(', ')}]<br><br>好節點定義：從根到該節點的路徑上，沒有比該節點值更大的節點`,
+                    formula: 'good if node.val ≥ maxOnPath'
+                }
+            });
+
+            function dfs(idx, maxVal) {
+                if (idx >= tree.length || tree[idx] === null) return;
+
+                const val = tree[idx];
+                const isGood = val >= maxVal;
+                
+                if (isGood) {
+                    goodNodes.add(idx);
+                    count++;
+                } else {
+                    badNodes.add(idx);
+                }
+
+                steps.push({
+                    tree: [...tree],
+                    currentIdx: idx,
+                    good: [...goodNodes],
+                    bad: [...badNodes],
+                    count: count,
+                    max: Math.max(maxVal, val),
+                    highlightLines: [5, 6],
+                    explanation: {
+                        title: `訪問節點 ${val}`,
+                        text: `路徑最大值 = ${maxVal === -Infinity ? '-∞' : maxVal}<br>${val} ${isGood ? '≥' : '<'} ${maxVal === -Infinity ? '-∞' : maxVal} → ${isGood ? '✓ Good!' : '✗ Not good'}<br><br>好節點數: ${count}`,
+                        formula: `${val} ${isGood ? '≥' : '<'} ${maxVal === -Infinity ? '-∞' : maxVal} → ${isGood ? 'good++' : 'skip'}`
+                    }
+                });
+
+                const newMax = Math.max(maxVal, val);
+                dfs(2 * idx + 1, newMax);
+                dfs(2 * idx + 2, newMax);
+            }
+
+            dfs(0, -Infinity);
+
+            steps.push({
+                tree: [...tree],
+                currentIdx: null,
+                good: [...goodNodes],
+                bad: [...badNodes],
+                count: count,
+                final: true,
+                highlightLines: [9],
+                explanation: {
+                    title: '🎉 完成！',
+                    text: `好節點數: ${count}<br>好節點: [${[...goodNodes].map(i => tree[i]).join(', ')}]<br><br>Time: O(n), Space: O(h)`,
+                    formula: `return ${count}`
+                }
+            });
+
             return steps;
         }
 
+        function runCustomInput() {
+            const input = document.getElementById('customTree').value;
+            currentTree = parseTree(input);
+            if (currentTree.length === 0 || currentTree[0] === null) {
+                alert('請輸入有效的樹');
+                return;
+            }
+            init(currentTree);
+        }
+
         let viz;
-        function init() {
+        function init(tree = currentTree) {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
-                    levels.forEach((level, li) => {
-                        html += '<div class="tree-level">' + level.map((v, i) => {
-                            if (!v) return '<div style="width:36px"></div>';
+                    let idx = 0, levelSize = 1;
+                    while (idx < step.tree.length) {
+                        html += '<div class="tree-level">';
+                        for (let i = 0; i < levelSize && idx < step.tree.length; i++, idx++) {
+                            const val = step.tree[idx];
                             let cls = 'tree-node';
-                            if (step.good?.some(g => g[0] === li && g[1] === i)) cls += ' good';
-                            if (step.current && step.current[0] === li && step.current[1] === i) cls += ' current';
-                            return `<div class="${cls}">${v}</div>`;
-                        }).join('') + '</div>';
-                    });
+                            if (val === null) {
+                                cls += ' null';
+                                html += `<div class="${cls}">∅</div>`;
+                            } else {
+                                if (step.good?.includes(idx)) cls += ' good';
+                                else if (step.bad?.includes(idx)) cls += ' bad';
+                                if (step.currentIdx === idx) cls += ' current';
+                                html += `<div class="${cls}">${val}</div>`;
+                            }
+                        }
+                        html += '</div>';
+                        levelSize *= 2;
+                    }
                     document.getElementById('treeDisplay').innerHTML = html;
                     document.getElementById('maxDisplay').textContent = step.max === -Infinity ? '-∞' : step.max;
                     document.getElementById('countDisplay').textContent = step.count;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(tree));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);

@@ -11,8 +11,16 @@
         .node { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; transition: all 0.3s; position: relative; }
         .node.current { background: var(--viz-secondary); color: #0f172a; }
         .node.visited { background: var(--viz-success); color: #0f172a; }
-        .node .depth { position: absolute; top: -18px; font-size: 0.7rem; color: var(--viz-warning); }
-        .depth-label { font-size: 0.8rem; color: var(--text-muted); width: 50px; }
+        .node.null { background: transparent; border: 2px dashed var(--text-muted); color: var(--text-muted); font-size: 0.7rem; }
+        .node .depth-label { position: absolute; top: -18px; font-size: 0.65rem; color: var(--viz-warning); }
+        .depth-label-left { font-size: 0.8rem; color: var(--text-muted); width: 60px; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
+        .call-stack { background: var(--viz-bg-secondary); border-radius: 6px; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -21,7 +29,16 @@
         <div class="canvas-area">
             <div class="viz-card">
                 <div class="viz-title">二元樹最大深度（DFS）</div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <input type="text" id="customTree" placeholder="層序遍歷" value="3,9,20,null,null,15,7" style="width: 220px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div class="input-hint">例如: 3,9,20,null,null,15,7</div>
+                </div>
                 <div class="tree" id="treeDisplay"></div>
+                <div class="call-stack" id="callStack"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
@@ -45,11 +62,11 @@
                 </div>
                 <div class="state-grid">
                     <div class="state-item"><div class="state-label">最大深度</div><div class="state-value" id="depthDisplay" style="color: var(--viz-success);">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
                 </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color normal"></div>待訪問</div>
+                    <div class="legend-item"><div class="legend-color current"></div>目前節點</div>
+                    <div class="legend-item"><div class="legend-color in-stack"></div>已計算</div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -71,44 +88,160 @@
             { line: '    return 1 + max(left, right);', id: 4 },
             { line: '}', id: 5 },
         ];
-        function generateAlgorithmSteps() {
+
+        let currentTree = [3, 9, 20, null, null, 15, 7];
+
+        function parseTree(input) {
+            return input.split(',').map(x => {
+                const trimmed = x.trim();
+                return trimmed === 'null' || trimmed === '' ? null : parseInt(trimmed);
+            });
+        }
+
+        function generateAlgorithmSteps(tree) {
             const steps = [];
-            steps.push({ current: null, visited: [], maxDepth: 0, highlightLines: [0], explanation: { title: '初始化', text: '樹結構：<br>    3<br>   / \\<br>  9   20<br>     /  \\<br>    15   7<br><br>DFS 遞迴計算深度' } });
-            steps.push({ current: '3', visited: [], maxDepth: 0, highlightLines: [2], explanation: { title: '訪問根節點 3', text: '遞迴：先計算左子樹深度' } });
-            steps.push({ current: '9', visited: ['9'], maxDepth: 1, highlightLines: [1,2,3,4], explanation: { title: '訪問節點 9', text: '節點 9 是葉子<br>left=0, right=0<br>depth = 1 + max(0,0) = 1', formula: '1 + max(0, 0) = 1' } });
-            steps.push({ current: '20', visited: ['9'], maxDepth: 1, highlightLines: [3,2], explanation: { title: '訪問節點 20', text: '計算右子樹...' } });
-            steps.push({ current: '15', visited: ['9','15'], maxDepth: 1, highlightLines: [2,4], explanation: { title: '訪問節點 15', text: '葉子節點 → depth = 1' } });
-            steps.push({ current: '7', visited: ['9','15','7'], maxDepth: 1, highlightLines: [3,4], explanation: { title: '訪問節點 7', text: '葉子節點 → depth = 1' } });
-            steps.push({ current: '20', visited: ['9','15','7','20'], maxDepth: 2, highlightLines: [4], explanation: { title: '節點 20 計算完成', text: 'left=1, right=1<br>depth = 1 + max(1,1) = 2', formula: '1 + max(1, 1) = 2' } });
-            steps.push({ current: '3', visited: ['9','15','7','20','3'], maxDepth: 3, final: true, highlightLines: [4], explanation: { title: '🎉 計算完成！', text: '節點 3：<br>left=1, right=2<br>depth = 1 + max(1,2) = 3<br><br>最大深度 = 3', formula: '1 + max(1, 2) = 3' } });
+            const nodeDepths = new Map();
+            const visited = new Set();
+            let maxDepth = 0;
+
+            // Build tree structure
+            function getVal(idx) {
+                return idx < tree.length ? tree[idx] : null;
+            }
+
+            steps.push({
+                tree: [...tree],
+                currentIdx: null,
+                visited: [],
+                maxDepth: 0,
+                stack: [],
+                highlightLines: [0],
+                explanation: {
+                    title: '初始化',
+                    text: `樹: [${tree.filter(x => x !== null).join(', ')}]<br><br>DFS 後序遍歷計算深度<br>depth = 1 + max(left, right)`,
+                    formula: 'maxDepth(root)'
+                }
+            });
+
+            // DFS post-order
+            function dfs(idx, depth) {
+                if (idx >= tree.length || tree[idx] === null) {
+                    return 0;
+                }
+
+                const leftIdx = 2 * idx + 1;
+                const rightIdx = 2 * idx + 2;
+
+                // Visit current node
+                steps.push({
+                    tree: [...tree],
+                    currentIdx: idx,
+                    visited: [...visited],
+                    maxDepth,
+                    stack: [`maxDepth(${tree[idx]})`],
+                    highlightLines: [0, 2],
+                    explanation: {
+                        title: `訪問節點 ${tree[idx]}`,
+                        text: `深度 ${depth}<br>遞迴計算子樹深度...`,
+                        formula: `maxDepth(${tree[idx]})`
+                    }
+                });
+
+                const leftDepth = dfs(leftIdx, depth + 1);
+                const rightDepth = dfs(rightIdx, depth + 1);
+                const nodeDepth = 1 + Math.max(leftDepth, rightDepth);
+
+                visited.add(idx);
+                nodeDepths.set(idx, nodeDepth);
+                maxDepth = Math.max(maxDepth, nodeDepth);
+
+                steps.push({
+                    tree: [...tree],
+                    currentIdx: idx,
+                    visited: [...visited],
+                    nodeDepths: new Map(nodeDepths),
+                    maxDepth,
+                    highlightLines: [4],
+                    explanation: {
+                        title: `節點 ${tree[idx]} 深度計算完成`,
+                        text: `left = ${leftDepth}, right = ${rightDepth}<br>depth = 1 + max(${leftDepth}, ${rightDepth}) = ${nodeDepth}`,
+                        formula: `1 + max(${leftDepth}, ${rightDepth}) = ${nodeDepth}`
+                    }
+                });
+
+                return nodeDepth;
+            }
+
+            const result = dfs(0, 1);
+
+            steps.push({
+                tree: [...tree],
+                currentIdx: null,
+                visited: [...visited],
+                nodeDepths: new Map(nodeDepths),
+                maxDepth: result,
+                final: true,
+                highlightLines: [4],
+                explanation: {
+                    title: '🎉 計算完成！',
+                    text: `最大深度 = ${result}<br><br>Time: O(n)<br>Space: O(h)`,
+                    formula: `return ${result}`
+                }
+            });
+
             return steps;
         }
+
+        function runCustomInput() {
+            const input = document.getElementById('customTree').value;
+            const tree = parseTree(input);
+            if (tree.length === 0 || tree[0] === null) {
+                alert('請輸入有效的樹');
+                return;
+            }
+            currentTree = tree;
+            init(tree);
+        }
+
         let viz;
-        function init() {
+        function init(tree = currentTree) {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const nodes = [['3'], ['9', '20'], ['', '', '15', '7']];
+                    // Render tree
                     let html = '';
-                    nodes.forEach((level, li) => {
-                        html += `<div class="level"><span class="depth-label">Level ${li+1}</span>`;
-                        level.forEach((n) => {
-                            if (n) {
-                                let cls = 'node';
-                                if (step.current === n) cls += ' current';
-                                if (step.visited?.includes(n)) cls += ' visited';
-                                html += `<div class="${cls}">${n}</div>`;
+                    let idx = 0;
+                    let levelSize = 1;
+                    let level = 1;
+                    
+                    while (idx < step.tree.length) {
+                        html += `<div class="level"><span class="depth-label-left">Level ${level}</span>`;
+                        for (let i = 0; i < levelSize && idx < step.tree.length; i++, idx++) {
+                            const val = step.tree[idx];
+                            let cls = 'node';
+                            if (val === null) {
+                                cls += ' null';
+                                html += `<div class="${cls}">∅</div>`;
                             } else {
-                                html += '<div style="width:40px"></div>';
+                                if (step.visited?.includes(idx)) cls += ' visited';
+                                if (step.currentIdx === idx) cls += ' current';
+                                const depthLabel = step.nodeDepths?.get(idx);
+                                html += `<div class="${cls}">${depthLabel ? `<span class="depth-label">d=${depthLabel}</span>` : ''}${val}</div>`;
                             }
-                        });
+                        }
                         html += '</div>';
-                    });
+                        levelSize *= 2;
+                        level++;
+                    }
                     document.getElementById('treeDisplay').innerHTML = html;
                     document.getElementById('depthDisplay').textContent = step.maxDepth ?? 0;
+                    
+                    // Call stack
+                    const stackHtml = step.stack?.length ? `<strong>Stack:</strong> ${step.stack.join(' → ')}` : '';
+                    document.getElementById('callStack').innerHTML = stackHtml;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(tree));
         }
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
