@@ -3,18 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coin Change 零錢兌換 - 視覺化</title>
+    <title>Coin Change - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .coins { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
-        .coin { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; background: var(--viz-warning); color: #0f172a; transition: all 0.3s; }
-        .coin.used { background: var(--viz-success); transform: scale(1.1); }
-        .dp-table { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin: 15px 0; }
-        .dp-cell { width: 40px; height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 4px; background: var(--viz-bg-secondary); font-size: 0.75rem; transition: all 0.3s; }
-        .dp-cell .idx { color: var(--text-muted); font-size: 0.6rem; }
-        .dp-cell .val { font-weight: bold; color: var(--text-primary); }
-        .dp-cell.current { background: var(--viz-secondary); }
-        .dp-cell.updated { background: var(--viz-success); }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .coins-container { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
+        .coin-bubble { 
+            width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            background: var(--viz-warning); color: #0f172a; font-weight: bold; font-size: 1.2rem;
+            border: 2px solid #b45309; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s;
+        }
+        .coin-bubble.active { transform: scale(1.15); box-shadow: 0 0 15px var(--viz-warning); border-color: white; }
+
+        .dp-scroll { overflow-x: auto; padding-bottom: 10px; margin-top: 20px; }
+        .dp-table { display: flex; gap: 2px; min-width: max-content; margin: 0 auto; }
+        .dp-col { display: flex; flex-direction: column; width: 45px; margin-right: 2px; }
+        .dp-header { 
+            height: 30px; display: flex; align-items: center; justify-content: center; 
+            font-size: 0.8rem; color: var(--viz-text-muted); background: var(--viz-bg-secondary);
+            border-radius: 4px 4px 0 0;
+        }
+        .dp-val {
+            height: 45px; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border: 1px solid var(--viz-border); background: var(--viz-card-bg);
+            border-top: none;
+        }
+        .dp-val.inf { color: var(--viz-error); font-size: 1.5rem; }
+        .dp-val.active { background: var(--viz-primary); color: white; }
+        .dp-val.source { background: rgba(234, 179, 8, 0.2); border-color: var(--viz-warning); }
     </style>
 </head>
 <body>
@@ -22,45 +42,52 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">零錢兌換（COIN CHANGE）</div>
-                <div class="coins" id="coinsDisplay"></div>
-                <div class="dp-table" id="dpTable"></div>
+                <div class="viz-title">零錢兌換 (Coin Change)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>硬幣 (coins):</label>
+                        <input type="text" id="coinsInput" value="1, 2, 5" style="width: 100px;">
+                        <label>金額 (amount):</label>
+                        <input type="number" id="amtInput" value="11" style="width: 60px;" max="20">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
+                <div class="coins-container" id="coinsDisplay"></div>
+                
+                <div style="text-align: center; font-size: 0.9rem; margin-top: 10px;">DP: dp[i] = min coins to make amount i</div>
+                <div class="dp-scroll">
+                    <div class="dp-table" id="dpDisplay"></div>
+                </div>
+                
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n·m)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label">Time:</span> O(amount * len(coins))
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(amount)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">目標金額</div><div class="state-value" id="targetDisplay">11</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">最少硬幣</div><div class="state-value" id="answerDisplay" style="color: var(--viz-success);">?</div></div>
+                    <div class="state-item"><div class="state-label">最少硬幣數</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">DP (C++)</div>
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -72,56 +99,131 @@
             { line: '    vector<int> dp(amount + 1, amount + 1);', id: 1 },
             { line: '    dp[0] = 0;', id: 2 },
             { line: '    for (int i = 1; i <= amount; i++) {', id: 3 },
-            { line: '        for (int coin : coins) {', id: 4 },
-            { line: '            if (coin <= i)', id: 5 },
-            { line: '                dp[i] = min(dp[i], dp[i-coin] + 1);', id: 6 },
-            { line: '        }', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '    return dp[amount] > amount ? -1 : dp[amount];', id: 9 },
-            { line: '}', id: 10 },
+            { line: '        for (int c : coins) {', id: 4 },
+            { line: '            if (i - c >= 0) {', id: 5 },
+            { line: '                dp[i] = min(dp[i], 1 + dp[i - c]);', id: 6 },
+            { line: '            }', id: 7 },
+            { line: '        }', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return dp[amount] > amount ? -1 : dp[amount];', id: 10 },
+            { line: '}', id: 11 },
         ];
-        const coins = [1, 2, 5];
-        const amount = 11;
-        function generateAlgorithmSteps() {
+
+        let currentCoins = [1, 2, 5];
+        let currentAmt = 11;
+
+        function runCustomInput() {
+            const coinsStr = document.getElementById('coinsInput').value;
+            const amt = parseInt(document.getElementById('amtInput').value);
+            
+            const arr = coinsStr.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            
+            if (arr.length === 0 || isNaN(amt) || amt > 25) { // Limit amt for display
+                alert('請輸入有效的硬幣陣列和金額 (Max 25)');
+                return;
+            }
+            currentCoins = arr;
+            currentAmt = amt;
+            init();
+        }
+
+        function generateAlgorithmSteps(coins, amount) {
             const steps = [];
-            const dp = Array(amount + 1).fill(amount + 1);
+            const INF = amount + 1;
+            const dp = new Array(amount + 1).fill(INF);
+            
+            steps.push({
+                idx: -1, dp: [...dp], 
+                highlightLines: [0, 1, 2],
+                explanation: { title: '初始化', text: `Amount: ${amount}, Coins: [${coins.join(', ')}]<br>dp[0]=0, 其他=MAX`, formula: 'setup' }
+            });
+
             dp[0] = 0;
-            steps.push({ dp: [...dp], coins, current: null, highlightLines: [0,1,2], explanation: { title: '初始化', text: `硬幣：[${coins.join(', ')}]<br>目標：${amount}<br><br>dp[0]=0，其他設為 ∞` } });
+
             for (let i = 1; i <= amount; i++) {
-                for (const coin of coins) {
-                    if (coin <= i && dp[i - coin] + 1 < dp[i]) {
-                        const old = dp[i];
-                        dp[i] = dp[i - coin] + 1;
-                        steps.push({ dp: [...dp], coins, current: i, usedCoin: coin, highlightLines: [4,5,6], explanation: { title: `dp[${i}] 使用硬幣 ${coin}`, text: `dp[${i}] = min(${old === amount+1 ? '∞' : old}, dp[${i-coin}]+1)<br>= min(${old === amount+1 ? '∞' : old}, ${dp[i-coin]}+1) = ${dp[i]}`, formula: `dp[${i}] = dp[${i-coin}] + 1 = ${dp[i]}` } });
+                for (let c of coins) {
+                    if (i - c >= 0) {
+                        const prev = dp[i - c];
+                        const proposal = prev + 1;
+                        steps.push({
+                            idx: i, dp: [...dp], coin: c,
+                            proposal: proposal,
+                            highlightLines: [4, 5, 6],
+                            explanation: { 
+                                title: `計算 dp[${i}]`, 
+                                text: `嘗試硬幣 ${c}:<br>使用前剩餘 ${i-c} (dp[${i-c}]=${prev === INF ? '∞' : prev})<br>新方案: ${prev === INF ? '∞' : prev + 1}`, 
+                                formula: `min(dp[${i}], dp[${i-c}] + 1)` 
+                            }
+                        });
+                        
+                        // Update
+                        if (proposal < dp[i]) {
+                             dp[i] = proposal;
+                        }
+                    } else {
+                         // Too big
+                         /* steps.push({
+                            idx: i, dp: [...dp], coin: c,
+                            highlightLines: [4, 5],
+                            explanation: { title: `跳過硬幣 ${c}`, text: `金額 ${i} 小於硬幣 ${c}`, formula: 'skip' }
+                         }); // Optional: skip reducing visual noise */
                     }
                 }
+                steps.push({
+                    idx: i, dp: [...dp], finalStep: true,
+                    highlightLines: [3],
+                    explanation: { title: `dp[${i}] 確定`, text: `最少硬幣數: ${dp[i] === INF ? '無解' : dp[i]}`, formula: `dp[${i}] = ${dp[i] === INF ? '-1' : dp[i]}` }
+                });
             }
-            steps.push({ dp: [...dp], coins, current: null, answer: dp[amount], highlightLines: [9], explanation: { title: '完成！', text: `湊出 ${amount} 最少需要 ${dp[amount]} 枚硬幣<br><br>組合：5+5+1 = 11` } });
+
+            const res = dp[amount] > amount ? -1 : dp[amount];
+            steps.push({
+                idx: amount, dp: [...dp], result: res, final: true,
+                highlightLines: [10],
+                explanation: { title: '完成', text: `結果: ${res}`, formula: `return ${res}` }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('coinsDisplay').innerHTML = coins.map(c => {
-                        let cls = 'coin';
-                        if (step.usedCoin === c) cls += ' used';
-                        return `<div class="${cls}">$${c}</div>`;
+                    // Render Coins
+                    const cDiv = document.getElementById('coinsDisplay');
+                    cDiv.innerHTML = currentCoins.map(c => {
+                        let cls = 'coin-bubble';
+                        if (step.coin === c) cls += ' active';
+                        return `<div class="${cls}">${c}</div>`;
                     }).join('');
-                    let dpHtml = '';
-                    for (let i = 0; i <= Math.min(amount, 11); i++) {
-                        let cls = 'dp-cell';
-                        if (step.current === i) cls += ' current';
-                        const val = step.dp?.[i] ?? 0;
-                        dpHtml += `<div class="${cls}"><div class="idx">${i}</div><div class="val">${val > amount ? '∞' : val}</div></div>`;
-                    }
-                    document.getElementById('dpTable').innerHTML = dpHtml;
-                    document.getElementById('answerDisplay').textContent = step.answer ?? '?';
+
+                    // Render DP Table
+                    const tDiv = document.getElementById('dpDisplay');
+                    tDiv.innerHTML = step.dp.map((val, i) => {
+                        let valStr = val > currentAmt ? '∞' : val;
+                        let cls = 'dp-val';
+                        if (val > currentAmt) cls += ' inf';
+                        
+                        if (i === step.idx) cls += ' active';
+                        // Highlight source if checking
+                        if (step.idx !== undefined && step.coin !== undefined && i === step.idx - step.coin) {
+                            cls += ' source';
+                        }
+                        
+                        return `<div class="dp-col">
+                            <div class="dp-header">${i}</div>
+                            <div class="${cls}">${valStr}</div>
+                        </div>`;
+                    }).join('');
+
+                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : '-';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentCoins, currentAmt));
         }
+
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>
