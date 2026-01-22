@@ -6,16 +6,21 @@
     <title>Binary Search 二分搜尋 - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .array { display: flex; gap: 4px; justify-content: center; margin: 20px 0; }
-        .element { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .array { display: flex; gap: 4px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .element { width: 42px; height: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .element .val { font-size: 1rem; }
+        .element .idx { font-size: 0.6rem; opacity: 0.7; }
         .element.excluded { opacity: 0.3; }
         .element.left { border-bottom: 3px solid var(--viz-warning); }
         .element.right { border-bottom: 3px solid var(--viz-error); }
         .element.mid { background: var(--viz-secondary); color: #0f172a; }
         .element.found { background: var(--viz-success); color: #0f172a; animation: pulse 0.5s; }
         @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-        .pointers { display: flex; gap: 4px; justify-content: center; margin-top: 5px; font-size: 0.7rem; color: var(--text-muted); }
-        .pointer { width: 45px; text-align: center; }
+        .custom-input-section { margin-top: 16px; padding: 16px; background: var(--viz-bg-secondary); border-radius: 10px; border: 1px dashed var(--viz-primary); }
+        .input-title { font-weight: 600; margin-bottom: 10px; color: var(--viz-primary); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { flex: 1; min-width: 80px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-bg-secondary); background: var(--viz-bg); color: var(--viz-text-main); font-family: 'Consolas', monospace; }
+        .input-row button { padding: 8px 16px; background: var(--viz-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -25,7 +30,6 @@
             <div class="viz-card">
                 <div class="viz-title">二分搜尋（BINARY SEARCH）</div>
                 <div class="array" id="arrayDisplay"></div>
-                <div class="pointers" id="pointersDisplay"></div>
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
@@ -42,20 +46,31 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(log n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">目標值</div><div class="state-value">9</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
+                    <div class="state-item"><div class="state-label">目標值</div><div class="state-value" id="targetDisplay">9</div></div>
                     <div class="state-item"><div class="state-label">L / M / R</div><div class="state-value" id="lmrDisplay">0 / 3 / 6</div></div>
                     <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-warning);"></div>左邊界</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-secondary);"></div>中點</div>
+                    <div class="legend-item"><div class="legend-color" style="background: var(--viz-error);"></div>右邊界</div>
+                </div>
+                <div class="custom-input-section">
+                    <div class="input-title">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>陣列:</label>
+                        <input type="text" id="customNums" placeholder="已排序陣列" value="-1,0,3,5,9,12,15">
+                    </div>
+                    <div class="input-row">
+                        <label>目標:</label>
+                        <input type="number" id="customTarget" value="9" style="width: 60px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -81,54 +96,69 @@
             { line: '    return -1;', id: 8 },
             { line: '}', id: 9 },
         ];
-        const nums = [-1, 0, 3, 5, 9, 12, 15];
-        const target = 9;
-        function generateAlgorithmSteps() {
+        let currentNums = [-1, 0, 3, 5, 9, 12, 15];
+        let currentTarget = 9;
+        function generateAlgorithmSteps(nums, target) {
             const steps = [];
-            steps.push({ l: 0, r: 6, m: 3, highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `陣列：[${nums.join(', ')}]<br>目標：${target}<br><br>l=0, r=6, m=(0+6)/2=3<br>nums[3]=5` } });
-            steps.push({ l: 0, r: 6, m: 3, check: true, highlightLines: [4,5], explanation: { title: '比較 nums[3]=5', text: `5 < 9（目標）<br>目標在右半部<br>l = m + 1 = 4`, formula: 'nums[3]=5 < target=9 → l = 4' } });
-            steps.push({ l: 4, r: 6, m: 5, highlightLines: [2,3], explanation: { title: '縮小範圍', text: 'l=4, r=6<br>m = (4+6)/2 = 5<br>nums[5]=12' } });
-            steps.push({ l: 4, r: 6, m: 5, check: true, highlightLines: [4,6], explanation: { title: '比較 nums[5]=12', text: `12 > 9<br>目標在左半部<br>r = m - 1 = 4`, formula: 'nums[5]=12 > target=9 → r = 4' } });
-            steps.push({ l: 4, r: 4, m: 4, highlightLines: [2,3], explanation: { title: '縮小範圍', text: 'l=4, r=4<br>m = 4<br>nums[4]=9' } });
-            steps.push({ l: 4, r: 4, m: 4, found: true, highlightLines: [4], explanation: { title: '🎉 找到目標！', text: 'nums[4] = 9 = target<br><br>回傳 index = 4<br><br>時間複雜度：O(log n)', formula: 'nums[4] = 9 == target → return 4' } });
+            let l = 0, r = nums.length - 1;
+            steps.push({ l, r, m: Math.floor((l + r) / 2), highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `陣列：[${nums.join(', ')}]<br>目標：${target}<br><br>l=0, r=${nums.length - 1}`, formula: `m = (l + r) / 2` } });
+            while (l <= r) {
+                const m = Math.floor((l + r) / 2);
+                if (nums[m] === target) {
+                    steps.push({ l, r, m, found: true, highlightLines: [4], explanation: { title: '🎉 找到目標！', text: `nums[${m}] = ${nums[m]} = target<br><br>回傳 index = ${m}`, formula: `nums[${m}] = ${target} → return ${m}` } });
+                    return steps;
+                } else if (nums[m] < target) {
+                    steps.push({ l, r, m, highlightLines: [4,5], explanation: { title: `比較 nums[${m}]=${nums[m]}`, text: `${nums[m]} < ${target}（目標）<br>目標在右半部<br>l = m + 1 = ${m + 1}`, formula: `${nums[m]} < ${target} → l = ${m + 1}` } });
+                    l = m + 1;
+                } else {
+                    steps.push({ l, r, m, highlightLines: [4,6], explanation: { title: `比較 nums[${m}]=${nums[m]}`, text: `${nums[m]} > ${target}（目標）<br>目標在左半部<br>r = m - 1 = ${m - 1}`, formula: `${nums[m]} > ${target} → r = ${m - 1}` } });
+                    r = m - 1;
+                }
+            }
+            steps.push({ l, r, m: -1, notFound: true, highlightLines: [8], explanation: { title: '❌ 找不到', text: `l > r，搜尋範圍為空<br>目標 ${target} 不在陣列中`, formula: `return -1` } });
             return steps;
         }
         let viz;
-        function init() {
+        function init(nums = currentNums, target = currentTarget) {
+            currentNums = nums; currentTarget = target;
+            document.getElementById('targetDisplay').textContent = target;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    let html = '';
-                    for (let i = 0; i < nums.length; i++) {
+                    document.getElementById('arrayDisplay').innerHTML = currentNums.map((n, i) => {
                         let cls = 'element';
-                        if (i < step.l || i > step.r) cls += ' excluded';
+                        if (step.m !== -1 && (i < step.l || i > step.r)) cls += ' excluded';
                         if (i === step.l) cls += ' left';
                         if (i === step.r) cls += ' right';
-                        if (i === step.m) cls += ' mid';
-                        if (step.found && i === step.m) cls += ' found';
-                        html += `<div class="${cls}">${nums[i]}</div>`;
+                        if (i === step.m) cls += step.found ? ' found' : ' mid';
+                        return `<div class="${cls}"><div class="val">${n}</div><div class="idx">[${i}]</div></div>`;
+                    }).join('');
+                    document.getElementById('lmrDisplay').textContent = step.m >= 0 ? `${step.l} / ${step.m} / ${step.r}` : '-';
+                    if (step.found) {
+                        document.getElementById('resultDisplay').textContent = step.m;
+                        document.getElementById('resultDisplay').style.color = 'var(--viz-success)';
+                    } else if (step.notFound) {
+                        document.getElementById('resultDisplay').textContent = '-1';
+                        document.getElementById('resultDisplay').style.color = 'var(--viz-error)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '?';
                     }
-                    document.getElementById('arrayDisplay').innerHTML = html;
-                    let pHtml = '';
-                    for (let i = 0; i < nums.length; i++) {
-                        let label = '';
-                        if (i === step.l && i === step.r && i === step.m) label = 'L=M=R';
-                        else if (i === step.l && i === step.m) label = 'L=M';
-                        else if (i === step.r && i === step.m) label = 'M=R';
-                        else if (i === step.l) label = 'L';
-                        else if (i === step.r) label = 'R';
-                        else if (i === step.m) label = 'M';
-                        pHtml += `<div class="pointer">${label}</div>`;
-                    }
-                    document.getElementById('pointersDisplay').innerHTML = pHtml;
-                    document.getElementById('lmrDisplay').textContent = `${step.l} / ${step.m} / ${step.r}`;
-                    document.getElementById('resultDisplay').textContent = step.found ? '4' : '?';
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNums, currentTarget));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runCustomInput() {
+            const nums = document.getElementById('customNums').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            const target = parseInt(document.getElementById('customTarget').value);
+            if (nums.length < 1 || nums.length > 15) { alert('陣列請輸入 1-15 個數字'); return; }
+            if (isNaN(target)) { alert('請輸入有效目標值'); return; }
+            // 確保排序
+            nums.sort((a, b) => a - b);
+            document.getElementById('customNums').value = nums.join(',');
+            init(nums, target);
+        }
+        function resetVisualization() { init(currentNums, currentTarget); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>
