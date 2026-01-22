@@ -3,14 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Valid Parenthesis String Visualization</title>
+    <title>Valid Parenthesis String - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .str-display { display: flex; gap: 3px; justify-content: center; margin: 15px 0; }
-        .char { width: 30px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 1.2rem; border-radius: 4px; background: var(--viz-primary); color: white; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .str-container { display: flex; gap: 3px; justify-content: center; margin: 20px 0; }
+        .char { 
+            width: 32px; height: 38px; display: flex; align-items: center; justify-content: center; 
+            font-family: monospace; font-size: 1.3rem; font-weight: bold; border-radius: 4px; 
+            transition: all 0.2s; border: 2px solid transparent;
+        }
         .char.open { background: var(--viz-success); color: #0f172a; }
-        .char.close { background: var(--viz-error); }
-        .char.star { background: var(--viz-secondary); color: #0f172a; }
+        .char.close { background: var(--viz-error); color: white; }
+        .char.star { background: var(--viz-warning); color: #0f172a; }
+        .char.current { border-color: white; transform: scale(1.1); }
+
+        .range-display {
+            text-align: center; padding: 15px; background: var(--viz-bg-secondary); 
+            border-radius: 8px; margin: 15px 0; font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
@@ -18,50 +33,48 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">VALID PARENTHESIS STRING</div>
-                <div class="str-display" id="strDisplay"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">有效的括號字串 (Valid Parenthesis String)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>字串 (只含 (, ), *):</label>
+                        <input type="text" id="strInput" value="(*)" style="width: 150px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
                 </div>
-                <div class="controls-row-2">
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                
+                <div class="str-container" id="strDisplay"></div>
+                <div class="range-display">
+                    未匹配 '(' 的可能範圍: [<span id="minDisplay">0</span>, <span id="maxDisplay">0</span>]
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-
                 
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Min Open</div><div class="state-value" id="minDisplay">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">Max Open</div><div class="state-value" id="maxDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">GREEDY RANGE</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -74,32 +87,86 @@
             { line: '    for (char c : s) {', id: 2 },
             { line: '        if (c == \'(\') { minOpen++; maxOpen++; }', id: 3 },
             { line: '        else if (c == \')\') { minOpen--; maxOpen--; }', id: 4 },
-            { line: '        else { minOpen--; maxOpen++; } // *', id: 5 },
+            { line: '        else { minOpen--; maxOpen++; }', id: 5 },
             { line: '        if (maxOpen < 0) return false;', id: 6 },
             { line: '        minOpen = max(minOpen, 0);', id: 7 },
             { line: '    }', id: 8 },
             { line: '    return minOpen == 0;', id: 9 },
             { line: '}', id: 10 },
         ];
-        const str = '(*))';
+        
+        let currentStr = '(*)';
 
-        function generateAlgorithmSteps() {
+        function runCustomInput() {
+            const s = document.getElementById('strInput').value.trim();
+            if (!/^[\(\)\*]*$/.test(s)) {
+                alert('只允許 (, ), * 字元');
+                return;
+            }
+            if (s.length > 20) {
+                alert('最多 20 個字元');
+                return;
+            }
+            currentStr = s;
+            init();
+        }
+
+        function generateAlgorithmSteps(s) {
             const steps = [];
             let minOpen = 0, maxOpen = 0;
             
-            steps.push({ idx: -1, minOpen: 0, maxOpen: 0, highlightLines: [0, 1], explanation: { title: 'Init', text: 'Track range [min, max] of open parens' }});
-            
-            for (let i = 0; i < str.length; i++) {
-                const c = str[i];
+            steps.push({
+                idx: -1, minOpen: 0, maxOpen: 0,
+                highlightLines: [0, 1],
+                explanation: { title: '初始化', text: `s = "${s}"<br>追蹤未匹配 '(' 的可能範圍 [min, max]`, formula: 'setup' }
+            });
+
+            for (let i = 0; i < s.length; i++) {
+                const c = s[i];
+                
                 if (c === '(') { minOpen++; maxOpen++; }
                 else if (c === ')') { minOpen--; maxOpen--; }
-                else { minOpen--; maxOpen++; }
+                else { minOpen--; maxOpen++; } // * can be (, ), or empty
+                
+                // Early termination
+                if (maxOpen < 0) {
+                    steps.push({
+                        idx: i, minOpen, maxOpen, result: false,
+                        highlightLines: [6],
+                        explanation: { title: '失敗!', text: `太多 ')' 無法匹配<br>maxOpen = ${maxOpen} < 0`, formula: 'return false' }
+                    });
+                    return steps;
+                }
+                
                 minOpen = Math.max(minOpen, 0);
-                steps.push({ idx: i, minOpen, maxOpen, highlightLines: c === '(' ? [3] : c === ')' ? [4] : [5], explanation: { title: `'${c}'`, text: `Range: [${minOpen}, ${maxOpen}]` }});
+                
+                let action = '';
+                if (c === '(') action = '( → min++, max++';
+                else if (c === ')') action = ') → min--, max--';
+                else action = '* → min-- (當做) or empty), max++ (當做()';
+                
+                steps.push({
+                    idx: i, minOpen, maxOpen,
+                    highlightLines: c === '(' ? [3] : c === ')' ? [4] : [5],
+                    explanation: { 
+                        title: `處理 s[${i}] = '${c}'`, 
+                        text: `${action}<br>範圍: [${minOpen}, ${maxOpen}]`,
+                        formula: `[${minOpen}, ${maxOpen}]`
+                    }
+                });
             }
-            
-            steps.push({ idx: -1, minOpen, maxOpen, highlightLines: [9], explanation: { title: 'Done!', text: `minOpen=0? ${minOpen === 0 ? '✓' : '✗'}` }});
-            
+
+            const result = minOpen === 0;
+            steps.push({
+                idx: -1, minOpen, maxOpen, result, final: true,
+                highlightLines: [9],
+                explanation: { 
+                    title: '完成!', 
+                    text: `minOpen = ${minOpen}<br>${result ? '可以完全匹配 ✓' : '無法匹配 ✗'}`, 
+                    formula: `return ${result}` 
+                }
+            });
+
             return steps;
         }
 
@@ -108,19 +175,31 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('strDisplay').innerHTML = [...str].map((c, i) => {
+                    // String
+                    document.getElementById('strDisplay').innerHTML = currentStr.split('').map((c, i) => {
                         let cls = 'char';
                         if (c === '(') cls += ' open';
                         else if (c === ')') cls += ' close';
                         else cls += ' star';
+                        if (i === step.idx) cls += ' current';
                         return `<span class="${cls}">${c}</span>`;
                     }).join('');
-                    document.getElementById('minDisplay').textContent = step.minOpen;
-                    document.getElementById('maxDisplay').textContent = step.maxOpen;
+
+                    document.getElementById('minDisplay').textContent = step.minOpen ?? 0;
+                    document.getElementById('maxDisplay').textContent = step.maxOpen ?? 0;
+                    
+                    if (step.result !== undefined) {
+                        document.getElementById('resultDisplay').textContent = step.result ? 'True ✓' : 'False ✗';
+                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '-';
+                        document.getElementById('resultDisplay').style.color = 'inherit';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentStr));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

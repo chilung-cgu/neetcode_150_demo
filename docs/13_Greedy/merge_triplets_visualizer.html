@@ -3,13 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merge Triplets Visualization</title>
+    <title>Merge Triplets - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .triplets { display: flex; gap: 8px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
-        .triplet { padding: 8px 12px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; }
-        .triplet.valid { background: var(--viz-success); color: #0f172a; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .triplets-container { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .triplet { 
+            padding: 10px 15px; border-radius: 8px; font-family: monospace; font-weight: bold;
+            background: var(--viz-bg-secondary); transition: all 0.3s; font-size: 1rem;
+            border: 2px solid transparent;
+        }
+        .triplet.valid { background: var(--viz-success); color: #0f172a; border-color: var(--viz-success); }
         .triplet.invalid { opacity: 0.3; }
+        .triplet.current { border-color: var(--viz-warning); transform: scale(1.05); }
+
+        .target-display {
+            text-align: center; padding: 15px; background: var(--viz-bg-secondary); 
+            border-radius: 8px; margin: 15px 0; font-size: 1.1rem;
+        }
+        .current-max { color: var(--viz-success); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -17,50 +33,51 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">MERGE TRIPLETS TO TARGET</div>
-                <div class="triplets" id="tripletsDisplay"></div>
-                <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                <div class="viz-title">合併三元組到目標 (Merge Triplets)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>Target:</label>
+                        <input type="text" id="targetInput" value="2, 7, 5" style="width: 100px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                    <div style="font-size:0.85rem; color: var(--viz-text-muted);">Triplets: [[2,5,3], [1,8,4], [1,7,5]]</div>
                 </div>
-                <div class="controls-row-2">
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                
+                <div class="triplets-container" id="tripletsDisplay"></div>
+                
+                <div class="target-display">
+                    Target: <span id="targetDisplay">[2, 7, 5]</span><br>
+                    Current Max: <span class="current-max" id="currentDisplay">[0, 0, 0]</span>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-
                 
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Target</div><div class="state-value">[2,7,5]</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">Current Max</div><div class="state-value" id="currentDisplay" style="color: var(--viz-success);">[0,0,0]</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">GREEDY</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -71,45 +88,128 @@
             { line: 'bool mergeTriplets(triplets, target) {', id: 0 },
             { line: '    set<int> found;', id: 1 },
             { line: '    for (auto& t : triplets) {', id: 2 },
-            { line: '        // Skip if any element exceeds target', id: 3 },
-            { line: '        if (t[0] > target[0] || t[1] > target[1] || t[2] > target[2])', id: 4 },
-            { line: '            continue;', id: 5 },
-            { line: '        // Collect matching positions', id: 6 },
-            { line: '        for (int i = 0; i < 3; i++)', id: 7 },
-            { line: '            if (t[i] == target[i]) found.insert(i);', id: 8 },
-            { line: '    }', id: 9 },
-            { line: '    return found.size() == 3;', id: 10 },
-            { line: '}', id: 11 },
+            { line: '        if (t[0] > target[0] || t[1] > target[1] || t[2] > target[2])', id: 3 },
+            { line: '            continue;', id: 4 },
+            { line: '        for (int i = 0; i < 3; i++)', id: 5 },
+            { line: '            if (t[i] == target[i]) found.insert(i);', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return found.size() == 3;', id: 8 },
+            { line: '}', id: 9 },
         ];
+        
         const triplets = [[2,5,3], [1,8,4], [1,7,5]];
-        const target = [2, 7, 5];
+        let currentTarget = [2, 7, 5];
 
-        function generateAlgorithmSteps() {
+        function runCustomInput() {
+            const str = document.getElementById('targetInput').value;
+            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            if (arr.length !== 3) {
+                alert('Target 必須是 3 個數字');
+                return;
+            }
+            currentTarget = arr;
+            init();
+        }
+
+        function generateAlgorithmSteps(target) {
             const steps = [];
-            const valid = [true, false, true]; // which triplets are valid
+            const found = new Set();
+            const validIndices = [];
+            const invalidIndices = [];
+            let currentMax = [0, 0, 0];
             
-            steps.push({ valid: [], current: [0, 0, 0], found: [], highlightLines: [0, 1], explanation: { title: 'Init', text: 'target = [2, 7, 5]' }});
-            steps.push({ valid: [0], current: [2, 5, 3], found: [0], highlightLines: [7, 8], explanation: { title: '[2,5,3] valid', text: 'Found target[0]=2' }});
-            steps.push({ valid: [0], current: [2, 5, 3], found: [0], invalid: [1], highlightLines: [4, 5], explanation: { title: '[1,8,4] invalid', text: '8 > 7, skip' }});
-            steps.push({ valid: [0, 2], current: [2, 7, 5], found: [0, 1, 2], highlightLines: [7, 8], explanation: { title: '[1,7,5] valid', text: 'Found target[1]=7, target[2]=5' }});
-            steps.push({ valid: [0, 2], found: [0, 1, 2], highlightLines: [10], explanation: { title: 'Done!', text: 'All 3 positions found ✓' }});
-            
+            steps.push({
+                validIndices: [], invalidIndices: [], currentMax: [0, 0, 0], found: [],
+                highlightLines: [0, 1],
+                explanation: { title: '初始化', text: `Target: [${target.join(', ')}]<br>尋找可用的 triplets`, formula: 'setup' }
+            });
+
+            for (let ti = 0; ti < triplets.length; ti++) {
+                const t = triplets[ti];
+                
+                // Check if valid (no element exceeds target)
+                const isValid = t[0] <= target[0] && t[1] <= target[1] && t[2] <= target[2];
+                
+                if (!isValid) {
+                    invalidIndices.push(ti);
+                    steps.push({
+                        validIndices: [...validIndices], invalidIndices: [...invalidIndices], 
+                        currentMax: [...currentMax], currentIdx: ti, found: [...found],
+                        highlightLines: [3, 4],
+                        explanation: { 
+                            title: `[${t.join(',')}] 無效`, 
+                            text: `某元素超過 target，跳過`,
+                            formula: 'skip'
+                        }
+                    });
+                    continue;
+                }
+                
+                validIndices.push(ti);
+                
+                // Update found positions
+                for (let i = 0; i < 3; i++) {
+                    if (t[i] === target[i]) found.add(i);
+                    currentMax[i] = Math.max(currentMax[i], t[i]);
+                }
+                
+                steps.push({
+                    validIndices: [...validIndices], invalidIndices: [...invalidIndices], 
+                    currentMax: [...currentMax], currentIdx: ti, found: [...found],
+                    highlightLines: [5, 6],
+                    explanation: { 
+                        title: `[${t.join(',')}] 有效`, 
+                        text: `已找到位置: [${[...found].join(', ')}]`,
+                        formula: `found: ${found.size}/3`
+                    }
+                });
+            }
+
+            const result = found.size === 3;
+            steps.push({
+                validIndices, invalidIndices, currentMax, found: [...found], result, final: true,
+                highlightLines: [8],
+                explanation: { 
+                    title: '完成!', 
+                    text: result ? `成功! 可以合併出 [${target.join(', ')}]` : '失敗! 無法合併出目標',
+                    formula: `return ${result}`
+                }
+            });
+
             return steps;
         }
 
         let viz;
         function init() {
+            document.getElementById('targetDisplay').textContent = `[${currentTarget.join(', ')}]`;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('tripletsDisplay').innerHTML = triplets.map((t, i) =>
-                        `<span class="triplet ${step.valid?.includes(i) ? 'valid' : ''} ${step.invalid?.includes(i) ? 'invalid' : ''}">[${t.join(',')}]</span>`
-                    ).join('');
-                    document.getElementById('currentDisplay').textContent = `[${step.current?.join(',') || '0,0,0'}]`;
+                    let html = '';
+                    triplets.forEach((t, i) => {
+                        let cls = 'triplet';
+                        if (step.validIndices?.includes(i)) cls += ' valid';
+                        if (step.invalidIndices?.includes(i)) cls += ' invalid';
+                        if (step.currentIdx === i) cls += ' current';
+                        html += `<span class="${cls}">[${t.join(', ')}]</span>`;
+                    });
+                    document.getElementById('tripletsDisplay').innerHTML = html;
+                    
+                    document.getElementById('currentDisplay').textContent = `[${step.currentMax?.join(', ') || '0, 0, 0'}]`;
+                    
+                    if (step.result !== undefined) {
+                        document.getElementById('resultDisplay').textContent = step.result ? 'True ✓' : 'False ✗';
+                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '-';
+                        document.getElementById('resultDisplay').style.color = 'inherit';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentTarget));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

@@ -3,13 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partition Labels Visualization</title>
+    <title>Partition Labels - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .str-display { display: flex; gap: 2px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
-        .char { width: 24px; height: 28px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 0.85rem; border-radius: 3px; }
-        .parts { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
-        .part { padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .str-container { display: flex; gap: 2px; justify-content: center; margin: 20px 0; flex-wrap: wrap; padding: 10px; }
+        .char { 
+            width: 24px; height: 28px; display: flex; align-items: center; justify-content: center; 
+            font-family: monospace; font-size: 0.85rem; border-radius: 3px; transition: all 0.2s;
+        }
+        .char.current { border: 2px solid white; }
+
+        .parts-container { display: flex; gap: 8px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+        .part { padding: 6px 12px; border-radius: 6px; font-family: monospace; font-size: 0.9rem; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -17,40 +27,45 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">PARTITION LABELS</div>
-                <div class="str-display" id="strDisplay"></div>
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">Partitions:</div>
-                <div class="parts" id="partsDisplay"></div>
+                <div class="viz-title">分割標籤 (Partition Labels)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>字串 (s):</label>
+                        <input type="text" id="strInput" value="ababcbacadefegdehijhklij" style="width: 250px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
+                <div class="str-container" id="strDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px; font-size: 0.9rem;">分區大小:</div>
+                <div class="parts-container" id="partsDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-            <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>完成</div>
+                
+                <div class="complexity-badge">
+                    <span class="label">Time:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">GREEDY</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">演算法 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -74,19 +89,74 @@
             { line: '    return result;', id: 13 },
             { line: '}', id: 14 },
         ];
-        const str = 'ababcbacadefegdehijhklij';
-        const colors = ['#ef4444', '#3b82f6', '#22c55e'];
-        const partitions = [[0, 8], [9, 14], [15, 23]]; // ranges
+        
+        let currentStr = 'ababcbacadefegdehijhklij';
+        const colors = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
 
-        function generateAlgorithmSteps() {
+        function runCustomInput() {
+            const s = document.getElementById('strInput').value.trim();
+            if (s.length < 1 || s.length > 40) {
+                alert('請輸入 1-40 個字元');
+                return;
+            }
+            currentStr = s;
+            init();
+        }
+
+        function generateAlgorithmSteps(s) {
             const steps = [];
+            const lastIdx = {};
+            for (let i = 0; i < s.length; i++) lastIdx[s[i]] = i;
             
-            steps.push({ parts: [], highlightLines: [0, 1, 2, 3, 4, 5], explanation: { title: 'Init', text: 'Find last index of each char' }});
-            steps.push({ parts: [[0, 8]], highlightLines: [8, 9, 10], explanation: { title: 'Partition 1', text: '"ababcbaca" (9 chars)' }});
-            steps.push({ parts: [[0, 8], [9, 14]], highlightLines: [8, 9, 10], explanation: { title: 'Partition 2', text: '"defegd" (6 chars)' }});
-            steps.push({ parts: [[0, 8], [9, 14], [15, 23]], highlightLines: [8, 9, 10], explanation: { title: 'Partition 3', text: '"hijhklij" (8 chars)' }});
-            steps.push({ parts: partitions, highlightLines: [13], explanation: { title: 'Done!', text: '[9, 6, 8]' }});
-            
+            steps.push({
+                current: -1, partitions: [], end: 0,
+                highlightLines: [0, 1, 2, 3, 4, 5],
+                explanation: { title: '初始化', text: '記錄每個字元的最後出現位置', formula: 'setup' }
+            });
+
+            let start = 0, end = 0;
+            const partitions = [];
+
+            for (let i = 0; i < s.length; i++) {
+                end = Math.max(end, lastIdx[s[i]]);
+                
+                if (i === end) {
+                    partitions.push([start, end]);
+                    
+                    steps.push({
+                        current: i, partitions: partitions.map(p => [...p]), end,
+                        highlightLines: [8, 9, 10],
+                        explanation: { 
+                            title: `分區 ${partitions.length} 完成!`, 
+                            text: `[${start}, ${end}] = "${s.slice(start, end + 1)}"<br>長度: ${end - start + 1}`,
+                            formula: `push(${end - start + 1})`
+                        }
+                    });
+                    
+                    start = i + 1;
+                } else if (i % 3 === 0 || i === s.length - 1) { // Sample some steps for long strings
+                    steps.push({
+                        current: i, partitions: partitions.map(p => [...p]), end, currentEnd: end,
+                        highlightLines: [6, 7],
+                        explanation: { 
+                            title: `掃描 s[${i}]='${s[i]}'`, 
+                            text: `lastIdx['${s[i]}'] = ${lastIdx[s[i]]}<br>end = ${end}`,
+                            formula: `end = max(end, ${lastIdx[s[i]]})`
+                        }
+                    });
+                }
+            }
+
+            steps.push({
+                current: -1, partitions, final: true,
+                highlightLines: [13],
+                explanation: { 
+                    title: '完成!', 
+                    text: `分區大小: [${partitions.map(p => p[1] - p[0] + 1).join(', ')}]`, 
+                    formula: `return [${partitions.map(p => p[1] - p[0] + 1).join(', ')}]` 
+                }
+            });
+
             return steps;
         }
 
@@ -95,18 +165,25 @@
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    document.getElementById('strDisplay').innerHTML = [...str].map((c, i) => {
-                        const partIdx = step.parts?.findIndex(p => i >= p[0] && i <= p[1]);
-                        const bg = partIdx >= 0 ? colors[partIdx] : 'var(--viz-primary)';
-                        return `<span class="char" style="background: ${bg}; color: white;">${c}</span>`;
-                    }).join('');
-                    document.getElementById('partsDisplay').innerHTML = (step.parts || []).map((p, i) =>
-                        `<span class="part" style="background: ${colors[i]}; color: white;">${p[1] - p[0] + 1}</span>`
+                    // String chars
+                    let html = '';
+                    for (let i = 0; i < currentStr.length; i++) {
+                        const partIdx = step.partitions?.findIndex(p => i >= p[0] && i <= p[1]) ?? -1;
+                        const bg = partIdx >= 0 ? colors[partIdx % colors.length] : 'var(--viz-bg-secondary)';
+                        const cls = i === step.current ? 'char current' : 'char';
+                        html += `<span class="${cls}" style="background:${bg}; color: white;">${currentStr[i]}</span>`;
+                    }
+                    document.getElementById('strDisplay').innerHTML = html;
+
+                    // Parts
+                    document.getElementById('partsDisplay').innerHTML = (step.partitions || []).map((p, i) => 
+                        `<span class="part" style="background:${colors[i % colors.length]}; color: white;">${p[1] - p[0] + 1}</span>`
                     ).join('');
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentStr));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

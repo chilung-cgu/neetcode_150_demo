@@ -3,15 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hand of Straights 一手順子 - 視覺化</title>
+    <title>Hand of Straights - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .cards { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .card { width: 40px; height: 55px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: white; color: #333; border: 2px solid #ddd; font-size: 1.1rem; transition: all 0.3s; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .cards-container { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .card { 
+            width: 40px; height: 55px; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border-radius: 6px; background: white; color: #333; 
+            border: 2px solid #ddd; font-size: 1.1rem; transition: all 0.3s;
+        }
         .card.grouped { background: var(--viz-success); color: #0f172a; border-color: var(--viz-success); }
-        .card.current { border-color: var(--viz-warning); border-width: 3px; }
+        .card.current { border-color: var(--viz-warning); border-width: 3px; transform: scale(1.1); }
         .card.used { opacity: 0.3; }
-        .groups { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 15px 0; }
+
+        .groups-container { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 15px 0; }
         .group { display: flex; gap: 3px; padding: 8px; background: var(--viz-bg-secondary); border-radius: 8px; }
         .group .card { width: 30px; height: 40px; font-size: 0.9rem; }
     </style>
@@ -21,39 +31,43 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">一手順子（GREEDY + HASH MAP）</div>
-                <div class="cards" id="cardsDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted);">已分組</div>
-                <div class="groups" id="groupsDisplay"></div>
+                <div class="viz-title">一手順子 (Hand of Straights)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>牌 (hand):</label>
+                        <input type="text" id="handInput" value="1, 2, 3, 6, 2, 3, 4, 7, 8" style="width: 200px;">
+                        <label>組大小:</label>
+                        <input type="number" id="sizeInput" value="3" style="width: 50px;" min="1" max="6">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
+                <div class="cards-container" id="cardsDisplay"></div>
+                
+                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.9rem;">已分組:</div>
+                <div class="groups-container" id="groupsDisplay"></div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
+                    <span class="label">Time:</span> O(n log n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(n)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">每組大小</div><div class="state-value">3</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -83,37 +97,136 @@
             { line: '    return true;', id: 12 },
             { line: '}', id: 13 },
         ];
-        const hand = [1, 2, 3, 6, 2, 3, 4, 7, 8];
-        const groupSize = 3;
-        function generateAlgorithmSteps() {
+        
+        let currentHand = [1, 2, 3, 6, 2, 3, 4, 7, 8];
+        let currentGroupSize = 3;
+
+        function runCustomInput() {
+            const str = document.getElementById('handInput').value;
+            const gs = parseInt(document.getElementById('sizeInput').value);
+            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            
+            if (arr.length < 1 || arr.length > 12 || isNaN(gs) || gs < 1) {
+                alert('請輸入有效的牌組 (1-12張) 和組大小');
+                return;
+            }
+            currentHand = arr;
+            currentGroupSize = gs;
+            init();
+        }
+
+        function generateAlgorithmSteps(hand, groupSize) {
             const steps = [];
-            steps.push({ used: [], groups: [], highlightLines: [0,1,2,3], explanation: { title: '初始化', text: `hand = [${hand.join(', ')}]<br>groupSize = 3<br><br>排序後用 HashMap 計數<br>從最小的牌開始組順子` } });
-            steps.push({ used: [0,1,2], groups: [[1,2,3]], current: [1,2,3], highlightLines: [4,5,6,7,8], explanation: { title: '組 1: [1,2,3]', text: '從 1 開始<br>找 1,2,3 各一張' } });
-            steps.push({ used: [0,1,2,4,5,6], groups: [[1,2,3],[2,3,4]], current: [2,3,4], highlightLines: [4,5,6,7,8], explanation: { title: '組 2: [2,3,4]', text: '從 2 開始<br>找 2,3,4 各一張' } });
-            steps.push({ used: [0,1,2,3,4,5,6,7,8], groups: [[1,2,3],[2,3,4],[6,7,8]], current: [6,7,8], highlightLines: [4,5,6,7,8], explanation: { title: '組 3: [6,7,8]', text: '從 6 開始<br>找 6,7,8 各一張' } });
-            steps.push({ used: [0,1,2,3,4,5,6,7,8], groups: [[1,2,3],[2,3,4],[6,7,8]], result: true, final: true, highlightLines: [12], explanation: { title: '🎉 成功！', text: '可以分成 3 組順子<br><br>時間：O(n log n)' } });
+            const sorted = [...hand].sort((a, b) => a - b);
+            
+            // Check divisibility
+            if (hand.length % groupSize !== 0) {
+                steps.push({
+                    groups: [], result: false,
+                    highlightLines: [1],
+                    explanation: { title: '失敗', text: `牌數 ${hand.length} 不能被 ${groupSize} 整除`, formula: 'return false' }
+                });
+                return steps;
+            }
+            
+            steps.push({
+                usedIndices: [], groups: [],
+                highlightLines: [0, 1, 2, 3],
+                explanation: { title: '初始化', text: `Hand: [${hand.join(', ')}]<br>GroupSize: ${groupSize}<br>排序後計數`, formula: 'setup' }
+            });
+
+            // Simulate grouping
+            const count = {};
+            for (const c of sorted) count[c] = (count[c] || 0) + 1;
+            
+            const groups = [];
+            const usedIndices = [];
+            const uniqueCards = [...new Set(sorted)].sort((a, b) => a - b);
+            
+            for (const start of uniqueCards) {
+                while (count[start] > 0) {
+                    const group = [];
+                    let valid = true;
+                    
+                    for (let i = 0; i < groupSize; i++) {
+                        if ((count[start + i] || 0) <= 0) {
+                            valid = false;
+                            break;
+                        }
+                        group.push(start + i);
+                    }
+                    
+                    if (!valid) {
+                        steps.push({
+                            usedIndices: [...usedIndices], groups: [...groups], result: false,
+                            highlightLines: [7],
+                            explanation: { title: '失敗!', text: `無法組成從 ${start} 開始的順子`, formula: 'return false' }
+                        });
+                        return steps;
+                    }
+                    
+                    // Mark used
+                    for (const c of group) {
+                        count[c]--;
+                        const idx = sorted.findIndex((v, i) => v === c && !usedIndices.includes(i));
+                        if (idx !== -1) usedIndices.push(idx);
+                    }
+                    
+                    groups.push([...group]);
+                    
+                    steps.push({
+                        usedIndices: [...usedIndices], groups: [...groups], current: group,
+                        highlightLines: [6, 7, 8],
+                        explanation: { 
+                            title: `組 ${groups.length}: [${group.join(', ')}]`, 
+                            text: `從 ${start} 開始組成順子`,
+                            formula: `group #${groups.length}`
+                        }
+                    });
+                }
+            }
+
+            steps.push({
+                usedIndices, groups, result: true, final: true,
+                highlightLines: [12],
+                explanation: { title: '完成!', text: `成功分成 ${groups.length} 組順子`, formula: 'return true' }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
+            const sorted = [...currentHand].sort((a, b) => a - b);
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
-                    const sorted = [...hand].sort((a,b) => a-b);
                     let html = '';
                     sorted.forEach((c, i) => {
                         let cls = 'card';
-                        if (step.used?.includes(i)) cls += ' used';
-                        if (step.current?.includes(c)) cls += ' current';
+                        if (step.usedIndices?.includes(i)) cls += ' used';
+                        if (step.current?.includes(c) && !step.usedIndices?.includes(i)) cls += ' current';
                         html += `<div class="${cls}">${c}</div>`;
                     });
                     document.getElementById('cardsDisplay').innerHTML = html;
-                    document.getElementById('groupsDisplay').innerHTML = (step.groups || []).map(g => `<div class="group">${g.map(c => `<div class="card grouped">${c}</div>`).join('')}</div>`).join('') || '無';
-                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
+                    
+                    document.getElementById('groupsDisplay').innerHTML = (step.groups || []).map(g => 
+                        `<div class="group">${g.map(c => `<div class="card grouped">${c}</div>`).join('')}</div>`
+                    ).join('') || '<span style="color: var(--viz-text-muted);">無</span>';
+                    
+                    if (step.result !== undefined) {
+                        document.getElementById('resultDisplay').textContent = step.result ? 'True ✓' : 'False ✗';
+                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '-';
+                        document.getElementById('resultDisplay').style.color = 'inherit';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentHand, currentGroupSize));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>

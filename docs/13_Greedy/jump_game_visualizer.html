@@ -3,17 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jump Game 跳躍遊戲 - 視覺化</title>
+    <title>Jump Game - 視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .array { display: flex; gap: 6px; justify-content: center; margin: 20px 0; }
-        .element { width: 50px; height: 55px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; background: var(--viz-primary); color: white; transition: all 0.3s; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .array-container { display: flex; gap: 6px; justify-content: center; margin: 20px 0; overflow-x: auto; padding: 10px; }
+        .element { 
+            width: 50px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s; border: 2px solid transparent;
+        }
         .element .val { font-weight: bold; font-size: 1.2rem; }
-        .element .idx { font-size: 0.65rem; opacity: 0.7; }
-        .element.current { background: var(--viz-secondary); color: #0f172a; }
+        .element .idx { font-size: 0.65rem; color: var(--viz-text-muted); }
+        .element.current { background: var(--viz-warning); color: #0f172a; border-color: white; }
         .element.reachable { background: var(--viz-success); color: #0f172a; }
-        .element.unreachable { background: var(--viz-error); opacity: 0.5; }
-        .reach-bar { height: 8px; background: var(--viz-success); border-radius: 4px; margin: 10px auto; transition: all 0.3s; }
+        .element.unreachable { background: var(--viz-error); color: white; opacity: 0.6; }
+        .element.goal { background: linear-gradient(135deg, var(--viz-warning), var(--viz-error)); }
+
+        .reach-bar-container { text-align: center; margin: 10px auto; max-width: 400px; }
+        .reach-bar { height: 10px; background: var(--viz-success); border-radius: 5px; transition: width 0.3s; }
     </style>
 </head>
 <body>
@@ -21,22 +32,34 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">跳躍遊戲（GREEDY）</div>
-                <div class="array" id="arrayDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted); margin: 5px 0;">最遠可達範圍</div>
-                <div class="reach-bar" id="reachBar"></div>
+                <div class="viz-title">跳躍遊戲 (Jump Game)</div>
+                <div class="custom-input-section">
+                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
+                    <div class="input-row">
+                        <label>陣列 (nums):</label>
+                        <input type="text" id="numsInput" value="2, 3, 1, 1, 4" style="width: 200px;">
+                        <button onclick="runCustomInput()">執行</button>
+                    </div>
+                </div>
+                
+                <div class="array-container" id="arrayDisplay"></div>
+                
+                <div class="reach-bar-container">
+                    <div style="font-size: 0.85rem; color: var(--viz-text-muted); margin-bottom: 5px;">最遠可達範圍</div>
+                    <div style="background: var(--viz-bg-secondary); border-radius: 5px; overflow: hidden;">
+                        <div class="reach-bar" id="reachBar" style="width: 0%;"></div>
+                    </div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
@@ -44,17 +67,11 @@
                 
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
                 <div class="state-grid">
-                    <div class="state-item"><div class="state-label">目前位置</div><div class="state-value" id="posDisplay">0</div></div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前處理</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>在堆疊中</div>
-                </div>
-                    <div class="state-item"><div class="state-label">最遠可達</div><div class="state-value" id="reachDisplay" style="color: var(--viz-success);">0</div></div>
-                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay">?</div></div>
+                    <div class="state-item"><div class="state-label">最遠可達</div><div class="state-value" id="reachDisplay">0</div></div>
+                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay">-</div></div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
@@ -78,41 +95,104 @@
             { line: '    return true;', id: 6 },
             { line: '}', id: 7 },
         ];
-        const nums = [2, 3, 1, 1, 4];
-        function generateAlgorithmSteps() {
+        
+        let currentNums = [2, 3, 1, 1, 4];
+
+        function runCustomInput() {
+            const str = document.getElementById('numsInput').value;
+            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            if (arr.length < 1 || arr.length > 12) {
+                alert('請輸入 1-12 個數字');
+                return;
+            }
+            currentNums = arr;
+            init();
+        }
+
+        function generateAlgorithmSteps(nums) {
             const steps = [];
             let maxReach = 0;
-            steps.push({ pos: -1, maxReach: 0, highlightLines: [0,1], explanation: { title: '初始化', text: `陣列：[${nums.join(', ')}]<br><br>貪心策略：追蹤最遠可達位置<br>如果當前位置超過最遠可達，則失敗` } });
+            
+            steps.push({
+                pos: -1, maxReach: 0,
+                highlightLines: [0, 1],
+                explanation: { title: '初始化', text: `陣列: [${nums.join(', ')}]<br>貪心: 追蹤最遠可達位置`, formula: 'maxReach = 0' }
+            });
+
             for (let i = 0; i < nums.length; i++) {
+                // Check if current position is reachable
+                if (i > maxReach) {
+                    steps.push({
+                        pos: i, maxReach, failed: true, result: false,
+                        highlightLines: [3],
+                        explanation: { title: '無法到達!', text: `位置 ${i} > maxReach ${maxReach}`, formula: 'return false' }
+                    });
+                    return steps;
+                }
+                
                 const newReach = Math.max(maxReach, i + nums[i]);
-                steps.push({ pos: i, maxReach, newReach, highlightLines: [2,3,4], explanation: { title: `位置 ${i}：可跳 ${nums[i]} 步`, text: `maxReach = max(${maxReach}, ${i}+${nums[i]}) = ${newReach}<br><br>${i} ≤ ${maxReach} → 可到達此位置`, formula: `maxReach = max(${maxReach}, ${i}+${nums[i]}) = ${newReach}` } });
+                
+                steps.push({
+                    pos: i, maxReach: newReach,
+                    highlightLines: [2, 4],
+                    explanation: { 
+                        title: `位置 ${i}: 可跳 ${nums[i]} 步`, 
+                        text: `maxReach = max(${maxReach}, ${i}+${nums[i]}) = ${newReach}`,
+                        formula: `maxReach = ${newReach}`
+                    }
+                });
+                
                 maxReach = newReach;
             }
-            steps.push({ pos: -1, maxReach, result: true, highlightLines: [6], explanation: { title: '🎉 可以到達終點！', text: `maxReach = ${maxReach} ≥ ${nums.length - 1}<br><br>回傳 true` } });
+
+            steps.push({
+                pos: nums.length - 1, maxReach, result: true, final: true,
+                highlightLines: [6],
+                explanation: { title: '完成!', text: `可以到達終點<br>maxReach=${maxReach} >= ${nums.length - 1}`, formula: 'return true' }
+            });
+
             return steps;
         }
+
         let viz;
         function init() {
+            const n = currentNums.length;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: (step) => {
                     let html = '';
-                    for (let i = 0; i < nums.length; i++) {
+                    for (let i = 0; i < currentNums.length; i++) {
                         let cls = 'element';
                         if (i === step.pos) cls += ' current';
-                        else if (i <= (step.newReach ?? step.maxReach)) cls += ' reachable';
-                        html += `<div class="${cls}"><div class="val">${nums[i]}</div><div class="idx">[${i}]</div></div>`;
+                        else if (i <= step.maxReach) cls += ' reachable';
+                        else if (step.failed) cls += ' unreachable';
+                        
+                        if (i === currentNums.length - 1) cls += ' goal';
+                        
+                        html += `<div class="${cls}">
+                            <div class="val">${currentNums[i]}</div>
+                            <div class="idx">[${i}]</div>
+                        </div>`;
                     }
                     document.getElementById('arrayDisplay').innerHTML = html;
-                    const reach = step.newReach ?? step.maxReach ?? 0;
-                    document.getElementById('reachBar').style.width = `${(reach / (nums.length - 1)) * 100}%`;
-                    document.getElementById('posDisplay').textContent = step.pos >= 0 ? step.pos : '-';
+                    
+                    const reach = step.maxReach ?? 0;
+                    const percent = Math.min(100, (reach / (currentNums.length - 1)) * 100);
+                    document.getElementById('reachBar').style.width = `${percent}%`;
                     document.getElementById('reachDisplay').textContent = reach;
-                    document.getElementById('resultDisplay').textContent = step.result ? 'true ✓' : '?';
+                    
+                    if (step.result !== undefined) {
+                        document.getElementById('resultDisplay').textContent = step.result ? 'True ✓' : 'False ✗';
+                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
+                    } else {
+                        document.getElementById('resultDisplay').textContent = '-';
+                        document.getElementById('resultDisplay').style.color = 'inherit';
+                    }
                 }
             });
-            viz.setSteps(generateAlgorithmSteps());
+            viz.setSteps(generateAlgorithmSteps(currentNums));
         }
+        
         function resetVisualization() { init(); }
         window.addEventListener('load', init);
     </script>
