@@ -3,23 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remove Nth Node From End Visualization</title>
+    <title>Remove Nth Node From End - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .list-display { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 15px 0; flex-wrap: wrap; }
-        .node { padding: 10px 16px; border-radius: 6px; font-family: monospace; background: var(--viz-primary); color: white; position: relative; }
-        .node.slow { border: 3px solid var(--viz-success); }
-        .node.fast { border: 3px solid var(--viz-secondary); }
-        .node.remove { background: var(--viz-error); text-decoration: line-through; }
-        .arrow { color: var(--viz-text-muted); }
-        .pointer-label { position: absolute; top: -20px; font-size: 0.7rem; color: var(--viz-text-muted); left: 50%; transform: translateX(-50%); }
-        .dummy-node { background: var(--viz-text-muted); opacity: 0.6; }
+        .visualization-area { background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%); border-radius: 16px; padding: 30px 20px; margin: 15px 0; }
+        .nodes-row { display: flex; align-items: center; justify-content: center; padding: 40px 20px 30px; }
+        .node-wrapper { display: flex; align-items: center; position: relative; }
+        .node { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; border-radius: 50%; background: linear-gradient(145deg, #3b82f6, #2563eb); color: white; position: relative; transition: all 0.4s; border: 3px solid transparent; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+        .node.dummy { background: linear-gradient(145deg, #475569, #334155); font-size: 0.8rem; }
+        .node.fast { border-color: #ef4444; box-shadow: 0 0 25px rgba(239, 68, 68, 0.6); }
+        .node.slow { border-color: #22c55e; box-shadow: 0 0 25px rgba(34, 197, 94, 0.6); }
+        .node.target { background: linear-gradient(145deg, #ef4444, #dc2626); animation: pulse 0.5s infinite alternate; }
+        .node.removed { opacity: 0.3; transform: scale(0.8); text-decoration: line-through; }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.15); box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); } }
+        .node-pointer-label { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+        .node-pointer-label.fast { background: #ef4444; color: white; }
+        .node-pointer-label.slow { background: #22c55e; color: #0f172a; }
+        .link { width: 30px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        .link svg { width: 30px; height: 20px; }
+        .gap-indicator { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: rgba(251, 191, 36, 0.2); border: 2px solid #fbbf24; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; color: #fbbf24; }
+        .legend-bar { display: flex; justify-content: center; gap: 20px; padding: 15px; background: rgba(30, 41, 59, 0.5); border-radius: 12px; margin-top: 15px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #94a3b8; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .legend-dot.fast { border: 2px solid #ef4444; background: transparent; }
+        .legend-dot.slow { border: 2px solid #22c55e; background: transparent; }
+        .legend-dot.target { background: linear-gradient(145deg, #ef4444, #dc2626); }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; padding: 15px 20px; margin-top: 15px; border-left: 4px solid #3b82f6; }
+        .step-breakdown-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
+        .step-breakdown-text { font-size: 0.95rem; color: #e2e8f0; font-family: 'Consolas', monospace; }
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
+        .input-title { font-weight: bold; margin-bottom: 10px; }
         .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+        .code-line.active { background: rgba(251, 191, 36, 0.15) !important; border-left: 3px solid #fbbf24 !important; }
     </style>
 </head>
 <body>
@@ -27,209 +44,107 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">REMOVE NTH NODE FROM END</div>
+                <div class="viz-title">移除倒數第 N 個節點 - 雙指針視覺化</div>
                 <div class="custom-input-section">
                     <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
-                        <input type="text" id="customList" placeholder="節點值" value="1,2,3,4,5" style="width: 150px;">
+                        <input type="text" id="customList" value="1,2,3,4,5" style="width: 120px;">
                         <label>n =</label>
                         <input type="number" id="customN" value="2" min="1" style="width: 60px;">
                         <button onclick="runCustomInput()">執行</button>
                     </div>
-                    <div class="input-hint">n = 倒數第 n 個節點</div>
                 </div>
-                <div class="list-display" id="listDisplay"></div>
-                <div class="controls">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
-                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
-                    <div class="speed-control">
-                        <label>速度:</label>
-                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
-                        </select>
+                <div class="visualization-area">
+                    <div class="nodes-row" id="nodesRow"></div>
+                    <div class="legend-bar">
+                        <div class="legend-item"><div class="legend-dot fast"></div>fast 指標</div>
+                        <div class="legend-item"><div class="legend-dot slow"></div>slow 指標</div>
+                        <div class="legend-item"><div class="legend-dot target"></div>待移除</div>
                     </div>
                 </div>
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
+                <div class="step-breakdown">
+                    <div class="step-breakdown-title">Step Breakdown</div>
+                    <div class="step-breakdown-text" id="stepBreakdown">點擊「下一步」開始</div>
                 </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Gap</div><div class="state-value" id="gapDisplay">n = 2</div></div>
-                    <div class="state-item"><div class="state-label">Target</div><div class="state-value" id="targetDisplay">?</div></div>
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control"><label>速度:</label><select id="speedSelect" onchange="viz.setSpeed(Number(this.value))"><option value="2000">0.5x</option><option value="1500" selected>1x</option><option value="1000">1.5x</option><option value="500">2x</option></select></div>
                 </div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>Slow</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>Fast</div>
-                </div>
+                <div class="complexity-badge"><span class="label">Time:</span> O(n) <span class="label" style="margin-left: 12px;">Space:</span> O(1)</div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">EXPLANATION</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
         </div>
-        <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">TWO POINTERS</div>
-                <div class="code-panel" id="codeDisplay"></div>
-            </div>
-        </div>
+        <div class="code-area"><div class="viz-card" style="height: 100%;"><div class="viz-title">演算法 (C++)</div><div class="code-panel" id="codeDisplay"></div></div></div>
     </div>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'ListNode* removeNthFromEnd(head, n) {', id: 0 },
+            { line: 'ListNode* removeNthFromEnd(ListNode* head, int n) {', id: 0 },
             { line: '    ListNode dummy(0, head);', id: 1 },
-            { line: '    ListNode *slow = &dummy, *fast = &dummy;', id: 2 },
-            { line: '    // Move fast n+1 steps ahead', id: 3 },
-            { line: '    for (int i = 0; i <= n; i++)', id: 4 },
-            { line: '        fast = fast->next;', id: 5 },
-            { line: '    // Move both until fast reaches end', id: 6 },
-            { line: '    while (fast) {', id: 7 },
+            { line: '    ListNode *fast = &dummy, *slow = &dummy;', id: 2 },
+            { line: '    // fast 先走 n+1 步', id: 3 },
+            { line: '    for (int i = 0; i <= n; i++) fast = fast->next;', id: 4 },
+            { line: '    // fast 和 slow 同時走', id: 5 },
+            { line: '    while (fast) {', id: 6 },
+            { line: '        fast = fast->next;', id: 7 },
             { line: '        slow = slow->next;', id: 8 },
-            { line: '        fast = fast->next;', id: 9 },
-            { line: '    }', id: 10 },
-            { line: '    // slow->next is the node to remove', id: 11 },
-            { line: '    slow->next = slow->next->next;', id: 12 },
-            { line: '    return dummy.next;', id: 13 },
-            { line: '}', id: 14 },
+            { line: '    }', id: 9 },
+            { line: '    // slow 現在指向待刪節點的前一個', id: 10 },
+            { line: '    slow->next = slow->next->next;', id: 11 },
+            { line: '    return dummy.next;', id: 12 },
+            { line: '}', id: 13 },
         ];
-
-        let currentList = [1, 2, 3, 4, 5];
-        let currentN = 2;
-
+        let currentList = [1, 2, 3, 4, 5], currentN = 2, viz;
+        function createArrowSVG() { return `<svg viewBox="0 0 30 20"><path d="M 3 10 L 22 10" stroke="#64748b" stroke-width="2" fill="none"/><polygon points="22,10 16,6 16,14" fill="#64748b"/></svg>`; }
         function generateAlgorithmSteps(list, n) {
             const steps = [];
             const len = list.length;
-            
-            // 確保 n 合法
-            if (n > len) n = len;
-            if (n < 1) n = 1;
-            
-            const targetIdx = len - n; // 0-indexed position to remove
-            
-            steps.push({ 
-                list: [...list], 
-                slow: -1, 
-                fast: -1, 
-                highlightLines: [0, 1, 2], 
-                explanation: { 
-                    title: '初始化', 
-                    text: `鏈表: dummy→${list.join('→')}<br>n = ${n} (移除倒數第 ${n} 個)<br><br>使用 dummy 節點簡化邊界情況`,
-                    formula: `倒數第 ${n} 個 = 正數第 ${len - n + 1} 個 (索引 ${targetIdx})`
-                }
-            });
-            
-            // Move fast n+1 steps ahead
-            for (let i = 0; i <= n; i++) {
-                steps.push({
-                    list: [...list],
-                    slow: -1,
-                    fast: i - 1, // -1 means at dummy
-                    highlightLines: [3, 4, 5],
-                    explanation: {
-                        title: `Fast 前進 - 第 ${i + 1}/${n + 1} 步`,
-                        text: `fast 移動到${i === 0 ? ' dummy 的下一個' : ` 索引 ${i - 1}`}`,
-                        formula: `gap = ${i + 1} (目標: n + 1 = ${n + 1})`
-                    }
-                });
+            const targetIdx = len - n; // 0-indexed position of node to remove
+            steps.push({ list: [...list], fastIdx: -1, slowIdx: -1, phase: 'init', highlightLines: [0, 1, 2], stepText: 'dummy + fast/slow 初始化', explanation: { title: '初始化', text: `鏈表：${list.join(' → ')}<br>n = ${n}<br><br>使用 dummy 節點簡化邊界處理`, formula: `目標：移除倒數第 ${n} 個 = 正數第 ${targetIdx + 1} 個 (${list[targetIdx]})` } });
+            // Fast moves n+1 steps
+            for (let i = 0; i <= n && i <= len; i++) {
+                steps.push({ list: [...list], fastIdx: i - 1, slowIdx: -1, phase: 'advance', highlightLines: [3, 4], stepText: `fast 前進第 ${i + 1} 步`, explanation: { title: `fast 先走 ${n + 1} 步`, text: `fast 走了 ${i + 1} 步<br>還需走 ${n - i} 步`, formula: `gap = ${n + 1}` } });
             }
-            
-            // Move both until fast reaches null
-            let slow = -1, fast = n;
+            // Both move together
+            let fast = n, slow = -1;
             while (fast < len) {
-                slow++;
-                fast++;
-                steps.push({
-                    list: [...list],
-                    slow: slow,
-                    fast: fast < len ? fast : null,
-                    highlightLines: [6, 7, 8, 9],
-                    explanation: {
-                        title: '同時移動 slow 和 fast',
-                        text: `slow: ${slow === -1 ? 'dummy' : list[slow]} (索引 ${slow})<br>fast: ${fast < len ? list[fast] : 'null'} (索引 ${fast})`,
-                        formula: `gap 保持 = ${n + 1}`
-                    }
-                });
+                fast++; slow++;
+                steps.push({ list: [...list], fastIdx: fast - 1 < len ? fast - 1 : null, slowIdx: slow, phase: 'together', highlightLines: [5, 6, 7, 8], stepText: `fast = ${fast < len ? list[fast] : 'null'}; slow = ${slow >= 0 && slow < len ? list[slow] : 'dummy'}`, explanation: { title: '同步移動', text: `fast 和 slow 同時前進<br><br>當 fast 到達末尾時，slow 恰好在目標前一個位置`, formula: `gap = ${n + 1} (固定)` } });
             }
-            
-            // Show the node to remove
-            steps.push({
-                list: [...list],
-                slow: slow,
-                remove: targetIdx,
-                highlightLines: [11, 12],
-                explanation: {
-                    title: `移除 slow.next`,
-                    text: `slow 在索引 ${slow}<br>slow.next = ${list[targetIdx]} (倒數第 ${n} 個)<br><br>執行: slow.next = slow.next.next`,
-                    formula: `刪除節點 ${list[targetIdx]}`
-                }
-            });
-            
-            // Result
+            // Target found
+            steps.push({ list: [...list], fastIdx: null, slowIdx: slow, targetIdx, phase: 'found', highlightLines: [10], stepText: `找到目標: ${list[targetIdx]}`, explanation: { title: '定位目標', text: `slow 指向索引 ${slow} (${slow >= 0 ? list[slow] : 'dummy'})<br>待移除：slow→next = ${list[targetIdx]}`, formula: `slow→next = 倒數第 ${n} 個` } });
+            // Remove
             const result = list.filter((_, i) => i !== targetIdx);
-            steps.push({
-                list: result,
-                highlightLines: [13, 14],
-                explanation: {
-                    title: '✅ 完成！',
-                    text: `原始: ${list.join('→')}<br>移除: ${list[targetIdx]}<br>結果: ${result.join('→')}`,
-                    formula: `Time: O(n), Space: O(1)`
-                }
-            });
-            
+            steps.push({ list: result, phase: 'done', removedVal: list[targetIdx], highlightLines: [11, 12], stepText: `slow->next = slow->next->next`, explanation: { title: '🎉 移除完成！', text: `移除了 ${list[targetIdx]}<br><br>結果：${result.join(' → ')}`, formula: `return dummy.next` } });
             return steps;
         }
-
-        function runCustomInput() {
-            const input = document.getElementById('customList').value;
-            const n = parseInt(document.getElementById('customN').value);
-            const list = input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            
-            if (list.length < 1) {
-                alert('請輸入至少 1 個節點');
-                return;
-            }
-            if (n < 1 || n > list.length) {
-                alert(`n 必須在 1 到 ${list.length} 之間`);
-                return;
-            }
-            
-            currentList = list;
-            currentN = n;
-            document.getElementById('gapDisplay').textContent = `n = ${n}`;
-            init(list, n);
-        }
-
-        let viz;
-        function init(list = currentList, n = currentN) {
-            document.getElementById('gapDisplay').textContent = `n = ${n}`;
-            document.getElementById('targetDisplay').textContent = `倒數第 ${n} 個`;
-            
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    const display = step.list.map((val, i) => {
-                        let cls = 'node';
-                        let label = '';
-                        if (i === step.slow) { cls += ' slow'; label = '<span class="pointer-label">slow</span>'; }
-                        if (i === step.fast) { cls += ' fast'; label += '<span class="pointer-label">fast</span>'; }
-                        if (i === step.remove) cls += ' remove';
-                        return `<span class="${cls}">${label}${val}</span>`;
-                    }).join('<span class="arrow">→</span>');
-                    document.getElementById('listDisplay').innerHTML = display;
-                }
+        function renderStep(step) {
+            const row = document.getElementById('nodesRow');
+            let html = '<div class="node-wrapper"><div class="node dummy">D';
+            if (step.slowIdx === -1 && step.phase !== 'done') html += '<span class="node-pointer-label slow">slow</span>';
+            if (step.fastIdx === -1 && step.phase === 'advance') html += '<span class="node-pointer-label fast">fast</span>';
+            html += `</div><div class="link">${createArrowSVG()}</div></div>`;
+            step.list.forEach((v, i) => {
+                let cls = 'node';
+                let labels = '';
+                if (step.targetIdx === i && step.phase === 'found') cls += ' target';
+                if (step.slowIdx === i) { cls += ' slow'; labels += '<span class="node-pointer-label slow">slow</span>'; }
+                if (step.fastIdx === i) { cls += ' fast'; labels += '<span class="node-pointer-label fast">fast</span>'; }
+                html += `<div class="node-wrapper"><div class="${cls}">${v}${labels}</div>`;
+                if (i < step.list.length - 1) html += `<div class="link">${createArrowSVG()}</div>`;
+                html += '</div>';
             });
-            viz.setSteps(generateAlgorithmSteps(list, n));
+            row.innerHTML = html;
+            document.getElementById('stepBreakdown').textContent = step.stepText || '';
         }
+        function init(list = currentList, n = currentN) { currentList = list; currentN = n; viz = new AlgorithmVisualizer({ codeLines: codeStructure, onStepChange: renderStep }); viz.setSteps(generateAlgorithmSteps(list, n)); }
+        function runCustomInput() { const list = document.getElementById('customList').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x)); const n = parseInt(document.getElementById('customN').value); if (list.length < 1 || n < 1 || n > list.length) { alert('請確保 1 ≤ n ≤ 節點數'); return; } init(list, n); }
         function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

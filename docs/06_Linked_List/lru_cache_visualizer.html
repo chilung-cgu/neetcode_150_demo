@@ -3,27 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LRU Cache 最近最少使用快取 - 視覺化</title>
+    <title>LRU Cache - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .cache { display: flex; gap: 8px; justify-content: center; margin: 20px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; flex-wrap: wrap; }
-        .cache-item { display: flex; flex-direction: column; align-items: center; padding: 10px 15px; background: var(--viz-primary); color: white; border-radius: 6px; transition: all 0.3s; }
-        .cache-item.new { background: var(--viz-success); color: #0f172a; animation: slideIn 0.3s; }
-        .cache-item.accessed { background: var(--viz-secondary); color: #0f172a; }
-        .cache-item.evicted { background: var(--viz-error); animation: fadeOut 0.3s; }
-        .cache-item .key { font-weight: bold; font-size: 1.1rem; }
-        .cache-item .val { font-size: 0.85rem; opacity: 0.8; }
-        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .op-display { text-align: center; font-size: 1.1rem; padding: 10px; background: var(--viz-bg-secondary); border-radius: 6px; margin: 10px 0; }
-        .op-display .op { color: var(--viz-secondary); font-weight: bold; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 30px 20px;
+            margin: 15px 0;
+        }
+
+        /* 雙向鏈表 */
+        .doubly-linked-list {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 30px 10px;
+            margin: 20px 0;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+
+        .node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 65px;
+            height: 65px;
+            border-radius: 12px;
+            font-weight: 700;
+            color: white;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .node.dummy {
+            background: rgba(100, 116, 139, 0.3);
+            border: 2px dashed #64748b;
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+
+        .node.cache {
+            background: linear-gradient(145deg, #3b82f6, #2563eb);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .node.cache .key { font-size: 1.1rem; }
+        .node.cache .val { font-size: 0.75rem; opacity: 0.8; }
+
+        .node.new {
+            background: linear-gradient(145deg, #22c55e, #16a34a);
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.5);
+            animation: slide-in 0.4s ease-out;
+        }
+
+        .node.accessed {
+            background: linear-gradient(145deg, #fbbf24, #f59e0b);
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.5);
+        }
+
+        .node.evicted {
+            background: linear-gradient(145deg, #ef4444, #dc2626);
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.5);
+            animation: fade-out 0.4s ease-out forwards;
+        }
+
+        @keyframes slide-in {
+            from { transform: translateY(-20px) scale(0.8); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes fade-out {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.5); }
+        }
+
+        /* 雙向箭頭 */
+        .arrows {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .arrows .forward { transform: translateY(-3px); }
+        .arrows .backward { transform: translateY(3px); }
+
+        /* 標籤 */
+        .list-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            margin-bottom: 5px;
+        }
+
+        .list-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            border-radius: 10px;
+        }
+
+        .list-label.lru {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .list-label.mru {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        /* HashMap 視覺化 */
+        .hashmap-panel {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border: 1px solid rgba(100, 116, 139, 0.3);
+        }
+
+        .hashmap-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .hashmap-entries {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .hashmap-entry {
+            padding: 6px 12px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-family: 'Consolas', monospace;
+            color: #94a3b8;
+        }
+
+        .hashmap-entry.highlight {
+            background: rgba(251, 191, 36, 0.2);
+            border: 1px solid #fbbf24;
+            color: #fbbf24;
+        }
+
+        /* 操作顯示 */
+        .operation-display {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .operation {
+            display: inline-block;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-family: 'Consolas', monospace;
+        }
+
+        .operation.get {
+            background: linear-gradient(145deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.1));
+            color: #fbbf24;
+            border: 2px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .operation.put {
+            background: linear-gradient(145deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1));
+            color: #22c55e;
+            border: 2px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .operation.evict {
+            background: linear-gradient(145deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+            color: #ef4444;
+            border: 2px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* 圖例 */
+        .legend-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 15px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #94a3b8; }
+        .legend-dot { width: 14px; height: 14px; border-radius: 6px; }
+        .legend-dot.cache { background: linear-gradient(145deg, #3b82f6, #2563eb); }
+        .legend-dot.new { background: linear-gradient(145deg, #22c55e, #16a34a); }
+        .legend-dot.accessed { background: linear-gradient(145deg, #fbbf24, #f59e0b); }
+        .legend-dot.evicted { background: linear-gradient(145deg, #ef4444, #dc2626); }
+
+        /* Step Breakdown */
+        .step-breakdown {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-top: 15px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .step-breakdown-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
+        .step-breakdown-text { font-size: 0.95rem; color: #e2e8f0; font-family: 'Consolas', monospace; }
+
+        /* 狀態面板 */
+        .state-panel {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 15px 0;
+        }
+
+        .state-item {
+            text-align: center;
+            padding: 10px 20px;
+            background: rgba(100, 116, 139, 0.1);
+            border-radius: 10px;
+        }
+
+        .state-item .label {
+            font-size: 0.7rem;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .state-item .value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+
+        /* 自訂輸入 */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
         .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
         .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row label { font-size: 0.85rem; }
         .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-        .input-row button.secondary { background: var(--viz-secondary); color: #0f172a; }
-        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
-        .history { margin-top: 10px; padding: 10px; background: var(--viz-bg-secondary); border-radius: 6px; font-family: monospace; font-size: 0.9rem; max-height: 100px; overflow-y: auto; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; color: white; border: none; cursor: pointer; font-weight: 600; }
+        .input-row button.put { background: #22c55e; }
+        .input-row button.get { background: #fbbf24; color: #0f172a; }
+        .input-row button.reset { background: #64748b; }
+
+        .code-line.active { background: rgba(251, 191, 36, 0.15) !important; border-left: 3px solid #fbbf24 !important; }
     </style>
 </head>
 <body>
@@ -31,27 +272,72 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">LRU Cache（HASH MAP + DOUBLY LINKED LIST）</div>
+                <div class="viz-title">LRU Cache - HashMap + 雙向鏈表</div>
+
                 <div class="custom-input-section">
                     <div class="input-title">🎮 互動測試</div>
                     <div class="input-row">
                         <label>容量:</label>
-                        <input type="number" id="capacityInput" value="2" min="1" max="10">
-                        <button onclick="resetWithCapacity()">重設</button>
+                        <input type="number" id="capacityInput" value="3" min="1" max="5">
+                        <button class="reset" onclick="resetWithCapacity()">重設</button>
                     </div>
                     <div class="input-row">
                         <label>Key:</label>
                         <input type="number" id="keyInput" value="1">
                         <label>Value:</label>
-                        <input type="number" id="valueInput" value="1">
-                        <button onclick="doPut()">Put</button>
-                        <button class="secondary" onclick="doGet()">Get</button>
+                        <input type="number" id="valueInput" value="100">
+                        <button class="put" onclick="doPut()">Put</button>
+                        <button class="get" onclick="doGet()">Get</button>
                     </div>
-                    <div class="input-hint">左邊 = 最近使用，右邊 = 最久未用</div>
                 </div>
-                <div class="op-display" id="opDisplay">-</div>
-                <div class="cache" id="cacheDisplay"></div>
-                <div class="history" id="historyDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="operation-display" id="operationDisplay">
+                        <span class="operation">LRUCache(3)</span>
+                    </div>
+
+                    <div class="list-labels">
+                        <span class="list-label lru">← LRU (最久未用)</span>
+                        <span class="list-label mru">MRU (最近使用) →</span>
+                    </div>
+
+                    <div class="doubly-linked-list" id="linkedListDisplay">
+                        <div class="node dummy">HEAD</div>
+                        <div class="arrows"><span class="forward">→</span><span class="backward">←</span></div>
+                        <div class="node dummy">TAIL</div>
+                    </div>
+
+                    <div class="hashmap-panel">
+                        <div class="hashmap-title">HashMap: key → Node*</div>
+                        <div class="hashmap-entries" id="hashmapDisplay">
+                            <span style="color: #64748b;">空</span>
+                        </div>
+                    </div>
+
+                    <div class="state-panel">
+                        <div class="state-item">
+                            <div class="label">容量</div>
+                            <div class="value" id="capacityVal">3</div>
+                        </div>
+                        <div class="state-item">
+                            <div class="label">目前大小</div>
+                            <div class="value" id="sizeVal">0</div>
+                        </div>
+                    </div>
+
+                    <div class="legend-bar">
+                        <div class="legend-item"><div class="legend-dot cache"></div>快取節點</div>
+                        <div class="legend-item"><div class="legend-dot new"></div>新插入</div>
+                        <div class="legend-item"><div class="legend-dot accessed"></div>被存取</div>
+                        <div class="legend-item"><div class="legend-dot evicted"></div>被驅逐</div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div class="step-breakdown-title">Step Breakdown</div>
+                    <div class="step-breakdown-text" id="stepBreakdown">點擊「下一步」開始演算法示範</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
@@ -68,18 +354,19 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="complexity-badge">
-                    <span class="label">Time:</span> O(1)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">容量</div><div class="state-value" id="capacityDisplay">2</div></div>
-                    <div class="state-item"><div class="state-label">大小</div><div class="state-value" id="sizeDisplay">0</div></div>
+                    <span class="label">Time:</span> O(1) get/put
+                    <span class="label" style="margin-left: 12px;">Space:</span> O(capacity)
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+
+            <div class="viz-card">
+                <div class="viz-title">演算法說明</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
         </div>
+
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
                 <div class="viz-title">資料結構 (C++)</div>
@@ -87,144 +374,218 @@
             </div>
         </div>
     </div>
+
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'class LRUCache {', id: 0 },
-            { line: '    int capacity;', id: 1 },
-            { line: '    list<pair<int,int>> cache; // doubly linked list', id: 2 },
-            { line: '    unordered_map<int, list<...>::iterator> map;', id: 3 },
-            { line: 'public:', id: 4 },
-            { line: '    int get(int key) {', id: 5 },
-            { line: '        if (!map.count(key)) return -1;', id: 6 },
-            { line: '        // 移到最前面', id: 7 },
-            { line: '        cache.splice(cache.begin(), cache, map[key]);', id: 8 },
-            { line: '        return map[key]->second;', id: 9 },
-            { line: '    }', id: 10 },
-            { line: '    void put(int key, int value) {', id: 11 },
-            { line: '        if (map.count(key)) { /* 更新並移到前面 */ }', id: 12 },
-            { line: '        if (cache.size() >= capacity) {', id: 13 },
-            { line: '            // 移除最後一個（最久未用）', id: 14 },
-            { line: '            map.erase(cache.back().first);', id: 15 },
-            { line: '            cache.pop_back();', id: 16 },
-            { line: '        }', id: 17 },
-            { line: '        cache.push_front({key, value});', id: 18 },
-            { line: '        map[key] = cache.begin();', id: 19 },
-            { line: '    }', id: 20 },
-            { line: '};', id: 21 },
+            { line: '    struct Node { int key, val; Node *prev, *next; };', id: 1 },
+            { line: '    int capacity;', id: 2 },
+            { line: '    unordered_map<int, Node*> map;', id: 3 },
+            { line: '    Node *head, *tail; // dummy nodes', id: 4 },
+            { line: '', id: 5 },
+            { line: '    void remove(Node* n) { // O(1)', id: 6 },
+            { line: '        n->prev->next = n->next;', id: 7 },
+            { line: '        n->next->prev = n->prev;', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    void insertAtMRU(Node* n) { // O(1)', id: 10 },
+            { line: '        n->prev = tail->prev;', id: 11 },
+            { line: '        n->next = tail;', id: 12 },
+            { line: '        tail->prev->next = n;', id: 13 },
+            { line: '        tail->prev = n;', id: 14 },
+            { line: '    }', id: 15 },
+            { line: '', id: 16 },
+            { line: '    int get(int key) {', id: 17 },
+            { line: '        if (!map.count(key)) return -1;', id: 18 },
+            { line: '        remove(map[key]); insertAtMRU(map[key]);', id: 19 },
+            { line: '        return map[key]->val;', id: 20 },
+            { line: '    }', id: 21 },
+            { line: '    void put(int key, int val) {', id: 22 },
+            { line: '        if (map.count(key)) remove(map[key]);', id: 23 },
+            { line: '        Node* n = new Node{key, val};', id: 24 },
+            { line: '        map[key] = n; insertAtMRU(n);', id: 25 },
+            { line: '        if (map.size() > capacity) {', id: 26 },
+            { line: '            Node* lru = head->next;', id: 27 },
+            { line: '            remove(lru); map.erase(lru->key);', id: 28 },
+            { line: '        }', id: 29 },
+            { line: '    }', id: 30 },
+            { line: '};', id: 31 },
         ];
 
-        let capacity = 2;
-        let cache = []; // [{k, v}]
-        let history = [];
+        let capacity = 3;
+        let cache = []; // [{k, v, state}] left=LRU, right=MRU
+        let viz;
 
-        function generateAlgorithmSteps() {
+        function generateDemoSteps() {
             const steps = [];
-            steps.push({ 
-                cache: [], op: `LRUCache(${capacity})`, 
-                highlightLines: [0,1,2,3], 
-                explanation: { 
-                    title: '初始化', 
-                    text: `容量 = ${capacity}<br><br>使用 HashMap 快速查找 O(1)<br>使用雙向鏈表維護順序 O(1)<br>所有操作 O(1)！`,
-                    formula: 'get/put = O(1)'
-                } 
+
+            // 初始化
+            steps.push({
+                cache: [], op: 'LRUCache(3)', opType: 'init',
+                highlightLines: [0, 1, 2, 3, 4],
+                stepText: 'head ↔ tail',
+                explanation: {
+                    title: '初始化 LRU Cache',
+                    text: `容量 = 3<br><br>使用 HashMap 提供 O(1) 查找<br>使用雙向鏈表維護 LRU 順序<br><br>head = LRU 端, tail = MRU 端`,
+                    formula: 'get() = O(1), put() = O(1)'
+                }
             });
-            steps.push({ cache: [{k:1,v:1,new:true}], op: 'put(1, 1)', highlightLines: [11,18,19], explanation: { title: 'put(1, 1)', text: '插入 key=1, value=1<br>放到最前面', formula: 'cache.push_front({1, 1})' } });
-            steps.push({ cache: [{k:2,v:2,new:true},{k:1,v:1}], op: 'put(2, 2)', highlightLines: [11,18,19], explanation: { title: 'put(2, 2)', text: '插入 key=2, value=2<br>放到最前面', formula: 'cache.push_front({2, 2})' } });
-            steps.push({ cache: [{k:1,v:1,accessed:true},{k:2,v:2}], op: 'get(1) → 1', highlightLines: [5,6,7,8,9], explanation: { title: 'get(1)', text: '找到 key=1<br>移到最前面<br>回傳 value=1', formula: 'splice(begin, map[1])' } });
-            steps.push({ cache: [{k:3,v:3,new:true},{k:1,v:1}], op: 'put(3, 3) → 移除 key=2', evicted: 2, highlightLines: [13,14,15,16,18], explanation: { title: 'put(3, 3)', text: '容量已滿！<br>移除最久未用的 key=2<br>插入 key=3', formula: 'pop_back(), push_front({3,3})' } });
-            steps.push({ cache: [{k:3,v:3},{k:1,v:1}], op: 'get(2) → -1', highlightLines: [5,6], explanation: { title: 'get(2)', text: 'key=2 已被移除<br>回傳 -1', formula: '!map.count(2) → return -1' } });
+
+            // put(1, 100)
+            steps.push({
+                cache: [{k: 1, v: 100, state: 'new'}], op: 'put(1, 100)', opType: 'put',
+                highlightLines: [22, 24, 25],
+                stepText: 'insert {1:100} at MRU',
+                explanation: { title: 'put(1, 100)', text: '插入 key=1, value=100<br>放到 MRU 端（最右邊）', formula: 'insertAtMRU({1, 100})' }
+            });
+
+            // put(2, 200)
+            steps.push({
+                cache: [{k: 1, v: 100}, {k: 2, v: 200, state: 'new'}], op: 'put(2, 200)', opType: 'put',
+                highlightLines: [22, 24, 25],
+                stepText: 'insert {2:200} at MRU',
+                explanation: { title: 'put(2, 200)', text: '插入 key=2<br>1 被推到 LRU 端', formula: 'insertAtMRU({2, 200})' }
+            });
+
+            // put(3, 300)
+            steps.push({
+                cache: [{k: 1, v: 100}, {k: 2, v: 200}, {k: 3, v: 300, state: 'new'}], op: 'put(3, 300)', opType: 'put',
+                highlightLines: [22, 24, 25],
+                stepText: 'insert {3:300} at MRU',
+                explanation: { title: 'put(3, 300)', text: '插入 key=3<br>容量已滿 (3/3)', formula: 'insertAtMRU({3, 300})' }
+            });
+
+            // get(1)
+            steps.push({
+                cache: [{k: 2, v: 200}, {k: 3, v: 300}, {k: 1, v: 100, state: 'accessed'}], op: 'get(1) → 100', opType: 'get',
+                highlightKey: 1,
+                highlightLines: [17, 18, 19, 20],
+                stepText: 'remove(1), insertAtMRU(1)',
+                explanation: { title: 'get(1) → 100', text: '找到 key=1<br>移到 MRU 端<br>回傳 value=100', formula: 'remove(); insertAtMRU()' }
+            });
+
+            // put(4, 400) - evict key=2
+            steps.push({
+                cache: [{k: 2, v: 200, state: 'evicted'}, {k: 3, v: 300}, {k: 1, v: 100}], op: 'put(4, 400) → 驅逐 key=2', opType: 'evict',
+                evictedKey: 2,
+                highlightLines: [26, 27, 28],
+                stepText: 'capacity exceeded → remove LRU',
+                explanation: { title: 'put(4, 400)', text: '容量已滿！<br>驅逐 LRU 節點 (key=2)<br>然後插入新節點', formula: 'remove(head->next)' }
+            });
+
+            steps.push({
+                cache: [{k: 3, v: 300}, {k: 1, v: 100}, {k: 4, v: 400, state: 'new'}], op: 'put(4, 400)', opType: 'put',
+                highlightLines: [24, 25],
+                stepText: 'insert {4:400} at MRU',
+                explanation: { title: '插入 key=4', text: 'key=2 已被驅逐<br>key=4 成為新的 MRU', formula: 'insertAtMRU({4, 400})' }
+            });
+
+            // get(2) - not found
+            steps.push({
+                cache: [{k: 3, v: 300}, {k: 1, v: 100}, {k: 4, v: 400}], op: 'get(2) → -1', opType: 'get',
+                highlightLines: [17, 18],
+                stepText: '!map.count(2) → return -1',
+                explanation: { title: 'get(2) → -1', text: 'key=2 已被驅逐<br>回傳 -1', formula: 'return -1' }
+            });
+
             return steps;
         }
 
-        function resetWithCapacity() {
-            capacity = parseInt(document.getElementById('capacityInput').value) || 2;
-            cache = [];
-            history = [];
-            document.getElementById('historyDisplay').innerHTML = '';
-            document.getElementById('capacityDisplay').textContent = capacity;
-            init();
+        function renderStep(step) {
+            const { cache: c, op, opType, evictedKey, highlightKey } = step;
+
+            // Operation display
+            const opEl = document.getElementById('operationDisplay');
+            opEl.innerHTML = `<span class="operation ${opType}">${op}</span>`;
+
+            // Doubly Linked List
+            let listHtml = '<div class="node dummy">HEAD</div>';
+
+            if (c && c.length > 0) {
+                c.forEach((item, i) => {
+                    listHtml += '<div class="arrows"><span class="forward">→</span><span class="backward">←</span></div>';
+                    let cls = 'node cache';
+                    if (item.state) cls += ` ${item.state}`;
+                    listHtml += `<div class="${cls}"><span class="key">k=${item.k}</span><span class="val">v=${item.v}</span></div>`;
+                });
+            }
+
+            listHtml += '<div class="arrows"><span class="forward">→</span><span class="backward">←</span></div>';
+            listHtml += '<div class="node dummy">TAIL</div>';
+
+            document.getElementById('linkedListDisplay').innerHTML = listHtml;
+
+            // HashMap
+            const validCache = (c || []).filter(item => item.state !== 'evicted');
+            let mapHtml = '';
+            if (validCache.length > 0) {
+                validCache.forEach(item => {
+                    const isHighlight = item.k === highlightKey;
+                    mapHtml += `<span class="hashmap-entry ${isHighlight ? 'highlight' : ''}">${item.k} → Node*</span>`;
+                });
+            } else {
+                mapHtml = '<span style="color: #64748b;">空</span>';
+            }
+            document.getElementById('hashmapDisplay').innerHTML = mapHtml;
+
+            // State
+            document.getElementById('sizeVal').textContent = validCache.length;
+            document.getElementById('stepBreakdown').textContent = step.stepText || '';
         }
 
-        function doGet() {
-            const key = parseInt(document.getElementById('keyInput').value);
-            const idx = cache.findIndex(item => item.k === key);
-            let result;
-            if (idx === -1) {
-                result = -1;
-            } else {
-                const item = cache.splice(idx, 1)[0];
-                cache.unshift(item);
-                result = item.v;
-            }
-            history.push(`get(${key}) → ${result}`);
-            updateDisplay(`get(${key}) → ${result}`, idx >= 0 ? key : null);
+        function init() {
+            cache = [];
+            document.getElementById('capacityVal').textContent = capacity;
+
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => renderStep(step)
+            });
+
+            viz.setSteps(generateDemoSteps());
+        }
+
+        function resetWithCapacity() {
+            capacity = parseInt(document.getElementById('capacityInput').value) || 3;
+            document.getElementById('capacityVal').textContent = capacity;
+            cache = [];
+            init();
         }
 
         function doPut() {
             const key = parseInt(document.getElementById('keyInput').value);
             const value = parseInt(document.getElementById('valueInput').value);
+            // Interactive mode - add to current cache
             const idx = cache.findIndex(item => item.k === key);
+            if (idx >= 0) cache.splice(idx, 1);
+
             let evicted = null;
-            
-            if (idx >= 0) {
-                cache.splice(idx, 1);
-            }
-            
             if (cache.length >= capacity) {
-                evicted = cache.pop();
+                evicted = cache.shift();
             }
-            
-            cache.unshift({k: key, v: value, new: true});
-            history.push(`put(${key}, ${value})${evicted ? ` → 移除 ${evicted.k}` : ''}`);
-            updateDisplay(`put(${key}, ${value})${evicted ? ` → 移除 ${evicted.k}` : ''}`, key);
+
+            cache.push({k: key, v: value, state: 'new'});
+            renderStep({cache: [...cache], op: `put(${key}, ${value})${evicted ? ' → 驅逐 k=' + evicted.k : ''}`, opType: evicted ? 'evict' : 'put'});
+            setTimeout(() => cache.forEach(item => item.state = null), 500);
         }
 
-        function updateDisplay(opText, highlightKey) {
-            document.getElementById('opDisplay').innerHTML = `<span class="op">${opText}</span>`;
-            let html = '';
-            if (cache.length > 0) {
-                cache.forEach((item, i) => {
-                    let cls = 'cache-item';
-                    if (item.new) cls += ' new';
-                    if (item.k === highlightKey && !item.new) cls += ' accessed';
-                    html += `<div class="${cls}"><div class="key">k=${item.k}</div><div class="val">v=${item.v}</div></div>`;
-                    item.new = false;
-                });
+        function doGet() {
+            const key = parseInt(document.getElementById('keyInput').value);
+            const idx = cache.findIndex(item => item.k === key);
+
+            if (idx === -1) {
+                renderStep({cache: [...cache], op: `get(${key}) → -1`, opType: 'get'});
             } else {
-                html = '<span style="color:var(--text-muted)">空</span>';
+                const item = cache.splice(idx, 1)[0];
+                item.state = 'accessed';
+                cache.push(item);
+                renderStep({cache: [...cache], op: `get(${key}) → ${item.v}`, opType: 'get', highlightKey: key});
+                setTimeout(() => item.state = null, 500);
             }
-            document.getElementById('cacheDisplay').innerHTML = html;
-            document.getElementById('sizeDisplay').textContent = cache.length;
-            document.getElementById('historyDisplay').innerHTML = history.map(h => `<div>${h}</div>`).join('');
         }
 
-        let viz;
-        function init() {
-            document.getElementById('capacityDisplay').textContent = capacity;
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    let html = '';
-                    if (step.cache?.length > 0) {
-                        step.cache.forEach(item => {
-                            let cls = 'cache-item';
-                            if (item.new) cls += ' new';
-                            if (item.accessed) cls += ' accessed';
-                            html += `<div class="${cls}"><div class="key">k=${item.k}</div><div class="val">v=${item.v}</div></div>`;
-                        });
-                    } else {
-                        html = '<span style="color:var(--text-muted)">空</span>';
-                    }
-                    document.getElementById('cacheDisplay').innerHTML = html;
-                    document.getElementById('opDisplay').innerHTML = `<span class="op">${step.op || '-'}</span>`;
-                    document.getElementById('sizeDisplay').textContent = step.cache?.length ?? 0;
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps());
-        }
-        function resetVisualization() { cache = []; history = []; document.getElementById('historyDisplay').innerHTML = ''; init(); }
-        window.addEventListener('load', init);
+        function resetVisualization() { cache = []; init(); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>
