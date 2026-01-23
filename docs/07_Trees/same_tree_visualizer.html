@@ -3,25 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Same Tree 相同的樹 - 視覺化</title>
+    <title>Same Tree - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .trees { display: flex; gap: 40px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
-        .tree { text-align: center; }
-        .tree-label { color: var(--text-muted); margin-bottom: 10px; font-weight: bold; }
-        .tree-nodes { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .level { display: flex; gap: 10px; justify-content: center; }
-        .node { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; }
-        .node.match { background: var(--viz-success); color: #0f172a; }
-        .node.mismatch { background: var(--viz-error); }
-        .node.current { border: 3px solid var(--viz-warning); }
-        .node.null { background: transparent; border: 2px dashed var(--text-muted); color: var(--text-muted); font-size: 0.7rem; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 30px 20px;
+            margin: 15px 0;
+        }
+
+        .trees-container {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            flex-wrap: wrap;
+        }
+
+        .tree-panel {
+            text-align: center;
+        }
+
+        .tree-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .tree-label.p { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .tree-label.q { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+
+        .tree-nodes {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .node {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border-radius: 50%;
+            color: white;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 3px solid transparent;
+        }
+
+        .node.p { background: linear-gradient(145deg, #3b82f6, #2563eb); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+        .node.q { background: linear-gradient(145deg, #a855f7, #9333ea); box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3); }
+
+        .node.current {
+            border-color: #fbbf24;
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.6);
+            transform: scale(1.15);
+        }
+
+        .node.match {
+            background: linear-gradient(145deg, #22c55e, #16a34a) !important;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .node.mismatch {
+            background: linear-gradient(145deg, #ef4444, #dc2626) !important;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+
+        .node.null {
+            background: transparent !important;
+            border: 2px dashed #64748b;
+            color: #64748b;
+            font-size: 0.7rem;
+            box-shadow: none;
+        }
+
+        /* 比較指示器 */
+        .compare-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            font-size: 2rem;
+        }
+
+        .compare-indicator .icon {
+            padding: 10px 20px;
+            border-radius: 15px;
+        }
+
+        .compare-indicator .icon.matching {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .compare-indicator .icon.not-matching {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .compare-indicator .icon.pending {
+            background: rgba(100, 116, 139, 0.2);
+            color: #94a3b8;
+        }
+
+        /* 結果面板 */
+        .result-panel {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .result-badge {
+            padding: 12px 25px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .result-badge.same { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 2px solid rgba(34, 197, 94, 0.4); }
+        .result-badge.different { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 2px solid rgba(239, 68, 68, 0.4); }
+        .result-badge.unknown { background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 2px solid rgba(100, 116, 139, 0.3); }
+
+        /* Step Breakdown */
+        .step-breakdown {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-top: 15px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .step-breakdown-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
+        .step-breakdown-text { font-size: 0.95rem; color: #e2e8f0; font-family: 'Consolas', monospace; }
+
+        /* 圖例 */
+        .legend-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 15px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #94a3b8; }
+        .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
+        .legend-dot.p { background: linear-gradient(145deg, #3b82f6, #2563eb); }
+        .legend-dot.q { background: linear-gradient(145deg, #a855f7, #9333ea); }
+        .legend-dot.match { background: linear-gradient(145deg, #22c55e, #16a34a); }
+        .legend-dot.mismatch { background: linear-gradient(145deg, #ef4444, #dc2626); }
+
+        /* 自訂輸入 */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
         .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
         .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
+        .input-row label { font-size: 0.85rem; width: 60px; }
+        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; flex: 1; min-width: 100px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+
+        .code-line.active { background: rgba(251, 191, 36, 0.15) !important; border-left: 3px solid #fbbf24 !important; }
     </style>
 </head>
 <body>
@@ -29,21 +185,45 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">相同的樹（遞迴比較）</div>
+                <div class="viz-title">Same Tree - 遞迴比較</div>
+
                 <div class="custom-input-section">
                     <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
                         <label>Tree p:</label>
-                        <input type="text" id="customTreeP" placeholder="層序遍歷" value="1,2,3" style="width: 120px;">
+                        <input type="text" id="customTreeP" value="1,2,3">
                     </div>
                     <div class="input-row">
                         <label>Tree q:</label>
-                        <input type="text" id="customTreeQ" placeholder="層序遍歷" value="1,2,3" style="width: 120px;">
+                        <input type="text" id="customTreeQ" value="1,2,3">
                         <button onclick="runCustomInput()">執行</button>
                     </div>
-                    <div class="input-hint">試試: p=1,2,3 q=1,2,4 (不同)</div>
                 </div>
-                <div class="trees" id="treesDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="trees-container" id="treesContainer"></div>
+
+                    <div class="compare-indicator">
+                        <span class="icon pending" id="compareIcon">？</span>
+                    </div>
+
+                    <div class="result-panel">
+                        <div class="result-badge unknown" id="resultBadge">比較中...</div>
+                    </div>
+
+                    <div class="legend-bar">
+                        <div class="legend-item"><div class="legend-dot p"></div>Tree p</div>
+                        <div class="legend-item"><div class="legend-dot q"></div>Tree q</div>
+                        <div class="legend-item"><div class="legend-dot match"></div>匹配</div>
+                        <div class="legend-item"><div class="legend-dot mismatch"></div>不匹配</div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div class="step-breakdown-title">Step Breakdown</div>
+                    <div class="step-breakdown-text" id="stepBreakdown">點擊「下一步」開始</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
@@ -60,29 +240,27 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(n)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(h)
                 </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
-                </div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>待比較</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前比較</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>匹配</div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+
+            <div class="viz-card">
+                <div class="viz-title">演算法說明</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
         </div>
+
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">遞迴比較 (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
@@ -90,13 +268,15 @@
             { line: '    if (!p && !q) return true;', id: 1 },
             { line: '    if (!p || !q) return false;', id: 2 },
             { line: '    if (p->val != q->val) return false;', id: 3 },
-            { line: '    return isSameTree(p->left, q->left) &&', id: 4 },
-            { line: '           isSameTree(p->right, q->right);', id: 5 },
-            { line: '}', id: 6 },
+            { line: '', id: 4 },
+            { line: '    return isSameTree(p->left, q->left) &&', id: 5 },
+            { line: '           isSameTree(p->right, q->right);', id: 6 },
+            { line: '}', id: 7 },
         ];
 
         let currentTreeP = [1, 2, 3];
         let currentTreeQ = [1, 2, 3];
+        let viz;
 
         function parseTree(input) {
             return input.split(',').map(x => {
@@ -109,33 +289,29 @@
             const steps = [];
             const matched = [];
             const mismatched = [];
-            let result = null;
 
             steps.push({
-                treeP: [...treeP],
-                treeQ: [...treeQ],
-                currentIdx: null,
-                matched: [],
-                mismatched: [],
+                treeP: [...treeP], treeQ: [...treeQ],
+                currentIdx: null, matched: [], mismatched: [],
                 result: null,
                 highlightLines: [0],
+                stepText: 'isSameTree(p, q)',
                 explanation: {
-                    title: '初始化',
-                    text: `Tree p: [${treeP.filter(x => x !== null).join(', ')}]<br>Tree q: [${treeQ.filter(x => x !== null).join(', ')}]<br><br>遞迴比較每個節點`,
+                    title: '開始比較',
+                    text: `Tree p: [${treeP.filter(x => x !== null).join(', ')}]<br>Tree q: [${treeQ.filter(x => x !== null).join(', ')}]<br><br>遞迴比較每個對應節點`,
                     formula: 'isSameTree(p, q)'
                 }
             });
 
-            // BFS comparison
             const maxLen = Math.max(treeP.length, treeQ.length);
-            
+
             function compare(idx) {
                 if (idx >= maxLen) return true;
-                
+
                 const pVal = idx < treeP.length ? treeP[idx] : null;
                 const qVal = idx < treeQ.length ? treeQ[idx] : null;
 
-                // Both null
+                // Both null - skip silently
                 if (pVal === null && qVal === null) {
                     return true;
                 }
@@ -144,17 +320,15 @@
                 if (pVal === null || qVal === null) {
                     mismatched.push(idx);
                     steps.push({
-                        treeP: [...treeP],
-                        treeQ: [...treeQ],
-                        currentIdx: idx,
-                        matched: [...matched],
-                        mismatched: [...mismatched],
+                        treeP: [...treeP], treeQ: [...treeQ],
+                        currentIdx: idx, matched: [...matched], mismatched: [...mismatched],
                         result: false,
                         highlightLines: [2],
+                        stepText: `p[${idx}]=${pVal ?? 'null'}, q[${idx}]=${qVal ?? 'null'} → 不同`,
                         explanation: {
-                            title: `節點 ${idx} 不匹配`,
-                            text: `p[${idx}] = ${pVal ?? 'null'}<br>q[${idx}] = ${qVal ?? 'null'}<br><br>一個為空一個非空 → false`,
-                            formula: `!p || !q → return false`
+                            title: `❌ 位置 ${idx} 不匹配`,
+                            text: `p = ${pVal ?? 'null'}, q = ${qVal ?? 'null'}<br>一個為空一個非空`,
+                            formula: '!p || !q → return false'
                         }
                     });
                     return false;
@@ -164,125 +338,148 @@
                 if (pVal !== qVal) {
                     mismatched.push(idx);
                     steps.push({
-                        treeP: [...treeP],
-                        treeQ: [...treeQ],
-                        currentIdx: idx,
-                        matched: [...matched],
-                        mismatched: [...mismatched],
+                        treeP: [...treeP], treeQ: [...treeQ],
+                        currentIdx: idx, matched: [...matched], mismatched: [...mismatched],
                         result: false,
                         highlightLines: [3],
+                        stepText: `${pVal} ≠ ${qVal} → 不同`,
                         explanation: {
-                            title: `節點 ${idx} 值不同`,
-                            text: `p[${idx}] = ${pVal}<br>q[${idx}] = ${qVal}<br><br>${pVal} ≠ ${qVal} → false`,
+                            title: `❌ 位置 ${idx} 值不同`,
+                            text: `p->val = ${pVal}, q->val = ${qVal}<br>${pVal} ≠ ${qVal}`,
                             formula: `${pVal} != ${qVal} → return false`
                         }
                     });
                     return false;
                 }
 
-                // Match
+                // Match!
                 matched.push(idx);
                 steps.push({
-                    treeP: [...treeP],
-                    treeQ: [...treeQ],
-                    currentIdx: idx,
-                    matched: [...matched],
-                    mismatched: [...mismatched],
+                    treeP: [...treeP], treeQ: [...treeQ],
+                    currentIdx: idx, matched: [...matched], mismatched: [...mismatched],
                     result: null,
-                    highlightLines: [3, 4, 5],
+                    highlightLines: [3, 5, 6],
+                    stepText: `${pVal} == ${qVal} ✓`,
                     explanation: {
-                        title: `節點 ${idx} 匹配`,
-                        text: `p[${idx}] = q[${idx}] = ${pVal} ✓<br><br>繼續比較子節點`,
+                        title: `✓ 位置 ${idx} 匹配`,
+                        text: `p->val = q->val = ${pVal}<br>繼續比較子節點`,
                         formula: `${pVal} == ${qVal} ✓`
                     }
                 });
 
-                // Check children
                 const leftResult = compare(2 * idx + 1);
                 if (!leftResult) return false;
-                
-                const rightResult = compare(2 * idx + 2);
-                return rightResult;
+                return compare(2 * idx + 2);
             }
 
-            result = compare(0);
+            const result = compare(0);
 
             steps.push({
-                treeP: [...treeP],
-                treeQ: [...treeQ],
-                currentIdx: null,
-                matched: [...matched],
-                mismatched: [...mismatched],
-                result: result,
+                treeP: [...treeP], treeQ: [...treeQ],
+                currentIdx: null, matched: [...matched], mismatched: [...mismatched],
+                result,
                 final: true,
-                highlightLines: result ? [4, 5] : [2, 3],
+                highlightLines: result ? [5, 6] : [2, 3],
+                stepText: `return ${result}`,
                 explanation: {
-                    title: result ? '🎉 相同！' : '❌ 不同',
-                    text: result 
-                        ? `所有 ${matched.length} 個節點都匹配<br><br>return true`
-                        : `發現不匹配的節點<br><br>return false`,
-                    formula: result ? 'return true' : 'return false'
+                    title: result ? '🎉 相同的樹！' : '❌ 不同的樹',
+                    text: result
+                        ? `所有 ${matched.length} 個節點都匹配`
+                        : '發現不匹配的節點',
+                    formula: `return ${result}`
                 }
             });
 
             return steps;
         }
 
-        function runCustomInput() {
-            const inputP = document.getElementById('customTreeP').value;
-            const inputQ = document.getElementById('customTreeQ').value;
-            const treeP = parseTree(inputP);
-            const treeQ = parseTree(inputQ);
-            
+        function renderTree(tree, label, step, treeType) {
+            let html = `<div class="tree-panel">
+                <div class="tree-label ${treeType}">${label}</div>
+                <div class="tree-nodes">`;
+
+            let idx = 0;
+            let levelSize = 1;
+
+            while (idx < tree.length) {
+                html += '<div class="tree-level">';
+                for (let i = 0; i < levelSize && idx < tree.length; i++, idx++) {
+                    const val = tree[idx];
+                    let cls = `node ${treeType}`;
+
+                    if (val === null) {
+                        cls = 'node null';
+                        html += `<div class="${cls}">∅</div>`;
+                    } else {
+                        if (step.matched?.includes(idx)) cls += ' match';
+                        if (step.mismatched?.includes(idx)) cls += ' mismatch';
+                        if (step.currentIdx === idx) cls += ' current';
+                        html += `<div class="${cls}">${val}</div>`;
+                    }
+                }
+                html += '</div>';
+                levelSize *= 2;
+            }
+
+            html += '</div></div>';
+            return html;
+        }
+
+        function renderStep(step) {
+            document.getElementById('treesContainer').innerHTML =
+                renderTree(step.treeP, 'Tree p', step, 'p') +
+                renderTree(step.treeQ, 'Tree q', step, 'q');
+
+            // 比較指示器
+            const icon = document.getElementById('compareIcon');
+            if (step.result === true) {
+                icon.textContent = '=';
+                icon.className = 'icon matching';
+            } else if (step.result === false) {
+                icon.textContent = '≠';
+                icon.className = 'icon not-matching';
+            } else {
+                icon.textContent = '？';
+                icon.className = 'icon pending';
+            }
+
+            // 結果
+            const badge = document.getElementById('resultBadge');
+            if (step.result === true) {
+                badge.textContent = 'true ✓';
+                badge.className = 'result-badge same';
+            } else if (step.result === false) {
+                badge.textContent = 'false ✗';
+                badge.className = 'result-badge different';
+            } else {
+                badge.textContent = '比較中...';
+                badge.className = 'result-badge unknown';
+            }
+
+            document.getElementById('stepBreakdown').textContent = step.stepText || '';
+        }
+
+        function init(treeP = currentTreeP, treeQ = currentTreeQ) {
             currentTreeP = treeP;
             currentTreeQ = treeQ;
+            const steps = generateAlgorithmSteps(treeP, treeQ);
+
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: (step) => renderStep(step)
+            });
+
+            viz.setSteps(steps);
+        }
+
+        function runCustomInput() {
+            const treeP = parseTree(document.getElementById('customTreeP').value);
+            const treeQ = parseTree(document.getElementById('customTreeQ').value);
             init(treeP, treeQ);
         }
 
-        let viz;
-        function init(treeP = currentTreeP, treeQ = currentTreeQ) {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    function renderTree(tree, label) {
-                        let html = `<div class="tree"><div class="tree-label">${label}</div><div class="tree-nodes">`;
-                        let idx = 0;
-                        let levelSize = 1;
-                        while (idx < tree.length) {
-                            html += '<div class="level">';
-                            for (let i = 0; i < levelSize && idx < tree.length; i++, idx++) {
-                                const val = tree[idx];
-                                let cls = 'node';
-                                if (val === null) {
-                                    cls += ' null';
-                                    html += `<div class="${cls}">∅</div>`;
-                                } else {
-                                    if (step.matched?.includes(idx)) cls += ' match';
-                                    if (step.mismatched?.includes(idx)) cls += ' mismatch';
-                                    if (step.currentIdx === idx) cls += ' current';
-                                    html += `<div class="${cls}">${val}</div>`;
-                                }
-                            }
-                            html += '</div>';
-                            levelSize *= 2;
-                        }
-                        html += '</div></div>';
-                        return html;
-                    }
-                    
-                    document.getElementById('treesDisplay').innerHTML = 
-                        renderTree(step.treeP, 'Tree p') + renderTree(step.treeQ, 'Tree q');
-                    
-                    document.getElementById('resultDisplay').textContent = 
-                        step.result === true ? 'true ✓' : (step.result === false ? 'false ✗' : '?');
-                    document.getElementById('resultDisplay').style.color = 
-                        step.result === true ? 'var(--viz-success)' : (step.result === false ? 'var(--viz-error)' : 'var(--viz-text)');
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(treeP, treeQ));
-        }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function resetVisualization() { init(currentTreeP, currentTreeQ); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>

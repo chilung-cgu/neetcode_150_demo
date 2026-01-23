@@ -3,22 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LCA of BST 最近公共祖先 - 視覺化</title>
+    <title>LCA of BST - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .tree { text-align: center; margin: 20px 0; }
-        .level { display: flex; justify-content: center; gap: 10px; margin: 8px 0; }
-        .node { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; }
-        .node.target { background: var(--viz-warning); color: #0f172a; }
-        .node.lca { background: var(--viz-success); color: #0f172a; }
-        .node.path { border: 3px solid var(--viz-secondary); }
-        .node.null { background: transparent; border: 2px dashed var(--text-muted); color: var(--text-muted); font-size: 0.7rem; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 30px 20px;
+            margin: 15px 0;
+        }
+
+        .tree-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 10px 0;
+        }
+
+        .node {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #3b82f6, #2563eb);
+            color: white;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 3px solid transparent;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .node.target {
+            background: linear-gradient(145deg, #fbbf24, #f59e0b);
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+        }
+
+        .node.path {
+            border-color: #a855f7;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+
+        .node.lca {
+            background: linear-gradient(145deg, #22c55e, #16a34a);
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.6);
+            transform: scale(1.15);
+        }
+
+        .node.null {
+            background: transparent;
+            border: 2px dashed #64748b;
+            color: #64748b;
+            font-size: 0.8rem;
+            box-shadow: none;
+        }
+
+        /* 狀態面板 */
+        .state-panel {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .state-item {
+            text-align: center;
+            padding: 12px 20px;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(100, 116, 139, 0.3);
+        }
+
+        .state-item .label {
+            font-size: 0.7rem;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .state-item .value {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .state-item.p .value { color: #fbbf24; }
+        .state-item.q .value { color: #fbbf24; }
+        .state-item.lca .value { color: #22c55e; }
+
+        /* BST 說明 */
+        .bst-rule {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 15px 0;
+            text-align: center;
+            font-family: 'Consolas', monospace;
+            color: #e2e8f0;
+        }
+
+        .bst-rule .highlight { color: #22c55e; font-weight: 700; }
+
+        /* Step Breakdown */
+        .step-breakdown {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-top: 15px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .step-breakdown-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
+        .step-breakdown-text { font-size: 0.95rem; color: #e2e8f0; font-family: 'Consolas', monospace; }
+
+        /* 圖例 */
+        .legend-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 15px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #94a3b8; }
+        .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
+        .legend-dot.normal { background: linear-gradient(145deg, #3b82f6, #2563eb); }
+        .legend-dot.target { background: linear-gradient(145deg, #fbbf24, #f59e0b); }
+        .legend-dot.lca { background: linear-gradient(145deg, #22c55e, #16a34a); }
+
+        /* 自訂輸入 */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
         .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row label { font-size: 0.85rem; }
         .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+
+        .code-line.active { background: rgba(251, 191, 36, 0.15) !important; border-left: 3px solid #fbbf24 !important; }
     </style>
 </head>
 <body>
@@ -26,11 +160,12 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">BST 最近公共祖先</div>
+                <div class="viz-title">LCA of BST - 利用 BST 性質</div>
+
                 <div class="custom-input-section">
                     <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
-                        <input type="text" id="customTree" placeholder="BST" value="6,2,8,0,4,7,9,null,null,3,5" style="width: 180px;">
+                        <input type="text" id="customTree" value="6,2,8,0,4,7,9,null,null,3,5" style="flex: 1; min-width: 150px;">
                     </div>
                     <div class="input-row">
                         <label>p =</label>
@@ -39,9 +174,42 @@
                         <input type="number" id="customQ" value="8" style="width: 60px;">
                         <button onclick="runCustomInput()">執行</button>
                     </div>
-                    <div class="input-hint">利用 BST 性質：都小往左，都大往右，分岔即 LCA</div>
                 </div>
-                <div class="tree" id="treeDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="tree-container" id="treeContainer"></div>
+
+                    <div class="bst-rule" id="bstRule">
+                        p, q 都 &lt; curr → 往左 | 都 &gt; curr → 往右 | 否則 → <span class="highlight">LCA</span>
+                    </div>
+
+                    <div class="state-panel">
+                        <div class="state-item p">
+                            <div class="label">節點 p</div>
+                            <div class="value" id="pVal">2</div>
+                        </div>
+                        <div class="state-item q">
+                            <div class="label">節點 q</div>
+                            <div class="value" id="qVal">8</div>
+                        </div>
+                        <div class="state-item lca">
+                            <div class="label">LCA</div>
+                            <div class="value" id="lcaVal">?</div>
+                        </div>
+                    </div>
+
+                    <div class="legend-bar">
+                        <div class="legend-item"><div class="legend-dot normal"></div>一般節點</div>
+                        <div class="legend-item"><div class="legend-dot target"></div>目標 (p, q)</div>
+                        <div class="legend-item"><div class="legend-dot lca"></div>LCA</div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div class="step-breakdown-title">Step Breakdown</div>
+                    <div class="step-breakdown-text" id="stepBreakdown">點擊「下一步」開始</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
@@ -58,31 +226,27 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="complexity-badge">
                     <span class="label">Time:</span> O(h)
                     <span class="label" style="margin-left: 12px;">Space:</span> O(1)
                 </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">節點 p</div><div class="state-value" id="pDisplay">2</div></div>
-                    <div class="state-item"><div class="state-label">節點 q</div><div class="state-value" id="qDisplay">8</div></div>
-                    <div class="state-item"><div class="state-label">LCA</div><div class="state-value" id="lcaDisplay" style="color: var(--viz-success);">?</div></div>
-                </div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目標節點</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>LCA</div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+
+            <div class="viz-card">
+                <div class="viz-title">演算法說明</div>
+                <div class="explanation" id="explanation"></div>
+            </div>
         </div>
+
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">BST LCA (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
@@ -101,8 +265,8 @@
         ];
 
         let currentTree = [6, 2, 8, 0, 4, 7, 9, null, null, 3, 5];
-        let currentP = 2;
-        let currentQ = 8;
+        let currentP = 2, currentQ = 8;
+        let viz;
 
         function parseTree(input) {
             return input.split(',').map(x => {
@@ -111,29 +275,18 @@
             });
         }
 
-        function findIdx(tree, val) {
-            for (let i = 0; i < tree.length; i++) {
-                if (tree[i] === val) return i;
-            }
-            return -1;
-        }
-
         function generateAlgorithmSteps(tree, p, q) {
             const steps = [];
             const path = [];
-            let lca = null;
 
             steps.push({
-                tree: [...tree],
-                p: p,
-                q: q,
-                currentIdx: null,
-                path: [],
-                lca: null,
+                tree: [...tree], p, q,
+                currentIdx: null, path: [], lca: null,
                 highlightLines: [0, 1, 2],
+                stepText: `找 LCA(${p}, ${q})`,
                 explanation: {
-                    title: '初始化',
-                    text: `BST 中找 p=${p}, q=${q} 的 LCA<br><br>利用 BST 性質：<br>都小於當前 → 往左<br>都大於當前 → 往右<br>分岔點 → LCA`,
+                    title: '開始搜尋',
+                    text: `在 BST 中找 p=${p} 和 q=${q} 的 LCA<br><br>BST 性質：左 < 根 < 右<br>利用此性質決定搜尋方向`,
                     formula: 'LCA = 第一個分岔點'
                 }
             });
@@ -145,49 +298,39 @@
 
                 if (p < val && q < val) {
                     steps.push({
-                        tree: [...tree],
-                        p: p,
-                        q: q,
-                        currentIdx: idx,
-                        path: [...path],
-                        lca: null,
+                        tree: [...tree], p, q,
+                        currentIdx: idx, path: [...path], lca: null,
                         highlightLines: [3, 4],
+                        stepText: `${p} < ${val} && ${q} < ${val} → 往左`,
                         explanation: {
                             title: `檢查節點 ${val}`,
-                            text: `p=${p} < ${val}, q=${q} < ${val}<br>都在左邊，往左走`,
-                            formula: `${p} < ${val} && ${q} < ${val} → 左`
+                            text: `p=${p} < ${val}, q=${q} < ${val}<br>兩者都在左子樹，往左走`,
+                            formula: `${p}, ${q} < ${val} → left`
                         }
                     });
                     idx = 2 * idx + 1;
                 } else if (p > val && q > val) {
                     steps.push({
-                        tree: [...tree],
-                        p: p,
-                        q: q,
-                        currentIdx: idx,
-                        path: [...path],
-                        lca: null,
+                        tree: [...tree], p, q,
+                        currentIdx: idx, path: [...path], lca: null,
                         highlightLines: [5, 6],
+                        stepText: `${p} > ${val} && ${q} > ${val} → 往右`,
                         explanation: {
                             title: `檢查節點 ${val}`,
-                            text: `p=${p} > ${val}, q=${q} > ${val}<br>都在右邊，往右走`,
-                            formula: `${p} > ${val} && ${q} > ${val} → 右`
+                            text: `p=${p} > ${val}, q=${q} > ${val}<br>兩者都在右子樹，往右走`,
+                            formula: `${p}, ${q} > ${val} → right`
                         }
                     });
                     idx = 2 * idx + 2;
                 } else {
-                    lca = val;
                     steps.push({
-                        tree: [...tree],
-                        p: p,
-                        q: q,
-                        currentIdx: idx,
-                        path: [...path],
-                        lca: lca,
+                        tree: [...tree], p, q,
+                        currentIdx: idx, path: [...path], lca: val,
                         highlightLines: [7, 8],
+                        stepText: `分岔！LCA = ${val}`,
                         explanation: {
                             title: `🎉 找到 LCA！`,
-                            text: `p=${p} 和 q=${q} 在 ${val} 的兩側（或其中之一就是 ${val}）<br>LCA = ${val}`,
+                            text: `p=${p} 和 q=${q} 在 ${val} 的兩側<br>（或其中之一就是 ${val}）<br><br>LCA = ${val}`,
                             formula: `分岔 → return ${val}`
                         }
                     });
@@ -195,77 +338,87 @@
                 }
             }
 
-            if (lca !== null) {
-                steps.push({
-                    tree: [...tree],
-                    p: p,
-                    q: q,
-                    currentIdx: null,
-                    path: [...path],
-                    lca: lca,
-                    final: true,
-                    highlightLines: [8],
-                    explanation: {
-                        title: '🎉 完成！',
-                        text: `LCA(${p}, ${q}) = ${lca}<br><br>Time: O(h), Space: O(1)`,
-                        formula: `return ${lca}`
-                    }
-                });
-            }
+            const lca = tree[path[path.length - 1]];
+            steps.push({
+                tree: [...tree], p, q,
+                currentIdx: null, path: [...path], lca,
+                final: true,
+                highlightLines: [8],
+                stepText: `return ${lca}`,
+                explanation: {
+                    title: '🎉 完成！',
+                    text: `LCA(${p}, ${q}) = ${lca}<br><br>Time: O(h), Space: O(1)`,
+                    formula: `return ${lca}`
+                }
+            });
 
             return steps;
         }
 
-        function runCustomInput() {
-            const input = document.getElementById('customTree').value;
-            const p = parseInt(document.getElementById('customP').value);
-            const q = parseInt(document.getElementById('customQ').value);
-            currentTree = parseTree(input);
-            currentP = p;
-            currentQ = q;
-            if (currentTree.length === 0 || currentTree[0] === null) {
-                alert('請輸入有效的樹');
-                return;
+        function renderStep(step) {
+            const { tree, p, q, currentIdx, path, lca } = step;
+
+            // 樹
+            const container = document.getElementById('treeContainer');
+            let html = '';
+            let idx = 0;
+            let levelSize = 1;
+
+            while (idx < tree.length) {
+                html += '<div class="tree-level">';
+                for (let i = 0; i < levelSize && idx < tree.length; i++, idx++) {
+                    const val = tree[idx];
+                    let cls = 'node';
+
+                    if (val === null) {
+                        cls += ' null';
+                        html += `<div class="${cls}">∅</div>`;
+                    } else {
+                        if (val === lca) cls += ' lca';
+                        else if (val === p || val === q) cls += ' target';
+                        if (path?.includes(idx)) cls += ' path';
+                        html += `<div class="${cls}">${val}</div>`;
+                    }
+                }
+                html += '</div>';
+                levelSize *= 2;
             }
-            init(currentTree, p, q);
+
+            container.innerHTML = html;
+
+            document.getElementById('pVal').textContent = p;
+            document.getElementById('qVal').textContent = q;
+            document.getElementById('lcaVal').textContent = lca ?? '?';
+            document.getElementById('stepBreakdown').textContent = step.stepText || '';
         }
 
-        let viz;
         function init(tree = currentTree, p = currentP, q = currentQ) {
-            document.getElementById('pDisplay').textContent = p;
-            document.getElementById('qDisplay').textContent = q;
-            
+            currentTree = tree;
+            currentP = p;
+            currentQ = q;
+            const steps = generateAlgorithmSteps(tree, p, q);
+
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    let html = '';
-                    let idx = 0, levelSize = 1;
-                    while (idx < step.tree.length) {
-                        html += '<div class="level">';
-                        for (let i = 0; i < levelSize && idx < step.tree.length; i++, idx++) {
-                            const val = step.tree[idx];
-                            let cls = 'node';
-                            if (val === null) {
-                                cls += ' null';
-                                html += `<div class="${cls}">∅</div>`;
-                            } else {
-                                if (val === step.p || val === step.q) cls += ' target';
-                                if (val === step.lca) cls += ' lca';
-                                if (step.path?.includes(idx)) cls += ' path';
-                                html += `<div class="${cls}">${val}</div>`;
-                            }
-                        }
-                        html += '</div>';
-                        levelSize *= 2;
-                    }
-                    document.getElementById('treeDisplay').innerHTML = html;
-                    document.getElementById('lcaDisplay').textContent = step.lca ?? '?';
-                }
+                onStepChange: (step) => renderStep(step)
             });
-            viz.setSteps(generateAlgorithmSteps(tree, p, q));
+
+            viz.setSteps(steps);
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        function runCustomInput() {
+            const tree = parseTree(document.getElementById('customTree').value);
+            const p = parseInt(document.getElementById('customP').value);
+            const q = parseInt(document.getElementById('customQ').value);
+            if (tree.length === 0 || tree[0] === null) {
+                alert('請輸入有效的 BST');
+                return;
+            }
+            init(tree, p, q);
+        }
+
+        function resetVisualization() { init(currentTree, currentP, currentQ); }
+        window.addEventListener('load', () => init());
     </script>
 </body>
 </html>
