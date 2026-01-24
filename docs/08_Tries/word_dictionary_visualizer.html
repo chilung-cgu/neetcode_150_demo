@@ -3,25 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Design Add and Search Words - 視覺化</title>
+    <title>Design Add and Search Words - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .trie { display: flex; flex-direction: column; align-items: center; margin: 20px 0; min-height: 100px; }
-        .level { display: flex; gap: 10px; margin: 5px 0; justify-content: center; }
-        .node { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; font-size: 0.9rem; }
-        .node.end { border: 3px solid var(--viz-success); }
-        .node.current { background: var(--viz-warning); color: #0f172a; }
-        .node.matched { background: var(--viz-success); color: #0f172a; }
-        .node.wildcard { background: var(--viz-secondary); color: #0f172a; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #trie-svg {
+            width: 100%; height: 400px;
+            background: transparent;
+            cursor: move;
+        }
+
+        .node-circle {
+            fill: #3b82f6; stroke: none;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+            transition: fill 0.3s ease, r 0.3s ease;
+        }
+        .node-circle.root { fill: #475569; }
+        .node-circle.is-end { stroke: #22c55e; stroke-width: 3px; }
+        .node-circle.current { fill: #fbbf24; filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.6)); }
+        .node-circle.visited { fill: #64748b; opacity: 0.8; }
+        .node-circle.match { fill: #22c55e; }
+
+        .node-text {
+            fill: white; font-family: 'Consolas', monospace; font-weight: bold; font-size: 14px;
+            text-anchor: middle; dominant-baseline: middle; pointer-events: none;
+        }
+
+        .link {
+            stroke: #64748b; stroke-width: 2px; opacity: 0.4;
+            transition: stroke 0.3s ease, stroke-width 0.3s ease;
+        }
+        .link.active { stroke: #fbbf24; stroke-width: 3px; opacity: 1; }
+        .link.visited { stroke: #64748b; opacity: 0.8; }
+        .link.match { stroke: #22c55e; stroke-width: 3px; opacity: 1; }
+
+        .op-tag {
+            background: rgba(30, 41, 59, 0.6); padding: 8px 16px; border-radius: 20px;
+            color: #94a3b8; font-size: 0.9rem; margin-bottom: 10px; border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
         .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
         .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
-        .words-list { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
-        .word-tag { padding: 4px 10px; background: var(--viz-success); color: #0f172a; border-radius: 4px; font-size: 0.85rem; }
-        .op-display { text-align: center; font-size: 1.1rem; color: var(--viz-secondary); margin: 10px 0; font-weight: bold; }
+
+        .step-breakdown {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 15px 20px;
+            border-left: 4px solid #3b82f6;
+            margin-top: 15px;
+            width: 100%; box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
@@ -29,258 +73,354 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">添加與搜索單詞（TRIE + DFS）</div>
+                <div class="viz-title">Design Add/Search Words (萬用字元)</div>
                 <div class="custom-input-section">
-                    <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
-                        <input type="text" id="wordInput" placeholder="輸入單詞" value="bad" style="width: 120px;">
-                        <button onclick="addWord()">addWord</button>
-                        <button onclick="searchWord()">search</button>
+                        <label>單詞:</label>
+                        <input type="text" id="wordInput" value="bad" placeholder="輸入單詞" maxlength="8">
+                        <button onclick="handleOp('add')">添加 (Add Word)</button>
+                        <button onclick="handleOp('search')">搜尋 (Search)</button>
                     </div>
-                    <div class="input-hint">"." 可匹配任意字母，例如: ".ad" 匹配 "bad", "dad"</div>
-                    <div style="text-align: center; color: var(--text-muted); margin-top: 10px;">已添加單詞</div>
-                    <div class="words-list" id="wordsList"></div>
+                    <div class="input-hint">支援 '.' 作為萬用字元 (僅搜尋時)</div>
+                    <div class="input-row" style="margin-top:10px">
+                        <button onclick="resetTrie()" style="background:var(--viz-error);">重置 (Reset)</button>
+                    </div>
                 </div>
-                <div class="op-display" id="opDisplay">-</div>
-                <div class="trie" id="trieDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="op-tag" id="opDisplay">準備就緒</div>
+                    <svg id="trie-svg">
+                        <g id="zoom-layer"></g> 
+                    </svg>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-                <div class="complexity-badge">
-                    <span class="label">addWord:</span> O(m)
-                    <span class="label" style="margin-left: 12px;">search:</span> O(26^m)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">-</div></div>
-                </div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>一般節點</div>
-                    <div class="legend-item"><div class="legend-color current"></div>萬用字元</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>單詞結尾</div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <!-- D3.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'class WordDictionary {', id: 0 },
-            { line: '    TrieNode* root;', id: 1 },
-            { line: 'public:', id: 2 },
-            { line: '    void addWord(string word) { /* 標準插入 */ }', id: 3 },
-            { line: '    bool search(string word) {', id: 4 },
-            { line: '        return dfs(root, word, 0);', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    bool dfs(TrieNode* node, string& word, int i) {', id: 7 },
-            { line: '        if (i == word.size()) return node->isEnd;', id: 8 },
-            { line: '        if (word[i] == \'.\') {', id: 9 },
-            { line: '            for (auto& [c, child] : node->children)', id: 10 },
-            { line: '                if (dfs(child, word, i+1)) return true;', id: 11 },
-            { line: '        } else {', id: 12 },
-            { line: '            if (node->children.count(word[i]))', id: 13 },
-            { line: '                return dfs(node->children[word[i]], word, i+1);', id: 14 },
-            { line: '        }', id: 15 },
-            { line: '        return false;', id: 16 },
-            { line: '    }', id: 17 },
-            { line: '};', id: 18 },
+            { line: 'class TrieNode {', id: 0 },
+            { line: '    TrieNode* children[26];', id: 1 },
+            { line: '    bool isEnd = false;', id: 2 },
+            { line: '};', id: 3 },
+            { line: 'void addWord(string word) {', id: 4 },
+            { line: '    TrieNode* curr = root;', id: 5 },
+            { line: '    for (char c : word) {', id: 6 },
+            { line: '        if (!curr->children[c]) new Node();', id: 7 },
+            { line: '        curr = curr->children[c];', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    curr->isEnd = true;', id: 10 },
+            { line: '}', id: 11 },
+            { line: 'bool search(string word) {', id: 12 },
+            { line: '    return dfs(word, 0, root);', id: 13 },
+            { line: '}', id: 14 },
+            { line: 'bool dfs(string& word, int j, TrieNode* node) {', id: 15 },
+            { line: '    for (int i = j; i < word.size(); i++) {', id: 16 },
+            { line: '        char c = word[i];', id: 17 },
+            { line: '        if (c == \'.\') {', id: 18 },
+            { line: '            for (child : node->children) {', id: 19 },
+            { line: '                if (dfs(word, i + 1, child)) return true;', id: 20 },
+            { line: '            }', id: 21 },
+            { line: '            return false;', id: 22 },
+            { line: '        }', id: 23 },
+            { line: '        if (!node->children[c]) return false;', id: 24 },
+            { line: '        node = node->children[c];', id: 25 },
+            { line: '    }', id: 26 },
+            { line: '    return node->isEnd;', id: 27 },
+            { line: '}', id: 28 }
         ];
 
-        let trie = {};
-        let insertedWords = [];
-
-        function insertWordToTrie(word) {
-            let node = trie;
-            for (const c of word) {
-                if (!node[c]) node[c] = {};
-                node = node[c];
-            }
-            node.isEnd = true;
-        }
-
-        function searchInTrie(word, node = trie, idx = 0) {
-            if (idx === word.length) return node.isEnd === true;
-            const c = word[idx];
-            if (c === '.') {
-                for (const key in node) {
-                    if (key !== 'isEnd' && searchInTrie(word, node[key], idx + 1)) return true;
-                }
-                return false;
-            }
-            if (!node[c]) return false;
-            return searchInTrie(word, node[c], idx + 1);
-        }
-
-        function generateAddSteps(word) {
-            const steps = [];
-            steps.push({
-                op: `addWord("${word}")`,
-                highlightLines: [3],
-                explanation: {
-                    title: `添加 "${word}"`,
-                    text: `標準 Trie 插入操作<br>建立路徑並標記結尾`,
-                    formula: 'insert(word)'
-                }
-            });
-            insertWordToTrie(word);
-            steps.push({
-                op: `addWord("${word}") ✓`,
-                path: word.split(''),
-                highlightLines: [3],
-                explanation: {
-                    title: `完成添加`,
-                    text: `"${word}" 已加入 Trie`,
-                    formula: 'node->isEnd = true'
-                }
-            });
-            return steps;
-        }
-
-        function generateSearchSteps(word) {
-            const steps = [];
-            const hasWildcard = word.includes('.');
-            
-            steps.push({
-                op: `search("${word}")`,
-                highlightLines: [4, 5],
-                explanation: {
-                    title: `搜尋 "${word}"`,
-                    text: hasWildcard 
-                        ? `包含 "." 萬用字元<br>需要 DFS 嘗試所有可能`
-                        : `標準 Trie 搜尋`,
-                    formula: 'dfs(root, word, 0)'
-                }
-            });
-
-            const result = searchInTrie(word);
-            
-            if (hasWildcard) {
-                steps.push({
-                    op: `search("${word}")`,
-                    wildcardIdx: word.indexOf('.'),
-                    highlightLines: [9, 10, 11],
-                    explanation: {
-                        title: `遇到 "."`,
-                        text: `嘗試所有可能的字母<br>任一成功即返回 true`,
-                        formula: 'for (c in children) dfs(child, i+1)'
-                    }
-                });
-            }
-
-            steps.push({
-                op: `search("${word}") ${result ? '✓' : '✗'}`,
-                result: result,
-                highlightLines: result ? [8] : [16],
-                explanation: {
-                    title: result ? '找到！' : '未找到',
-                    text: result ? `"${word}" 存在於字典中` : `"${word}" 不存在`,
-                    formula: `return ${result}`
-                }
-            });
-
-            return steps;
-        }
-
-        function addWord() {
-            const word = document.getElementById('wordInput').value.toLowerCase();
-            if (!word || word.includes('.')) {
-                alert('addWord 不能包含 "."');
-                return;
-            }
-            insertedWords.push(word);
-            updateWordsList();
-            viz.setSteps(generateAddSteps(word));
-        }
-
-        function searchWord() {
-            const word = document.getElementById('wordInput').value.toLowerCase();
-            if (!word) return;
-            viz.setSteps(generateSearchSteps(word));
-        }
-
-        function updateWordsList() {
-            document.getElementById('wordsList').innerHTML = 
-                insertedWords.map(w => `<span class="word-tag">${w}</span>`).join('') || 
-                '<span style="color: var(--text-muted)">無</span>';
-        }
-
-        function renderTrie() {
-            function buildHtml(obj, depth = 0) {
-                const entries = Object.entries(obj).filter(([k]) => k !== 'isEnd');
-                if (entries.length === 0) return '';
-                
-                let html = '<div class="level">';
-                for (const [char, child] of entries) {
-                    let cls = 'node';
-                    if (child.isEnd) cls += ' end';
-                    html += `<div class="${cls}">${char}</div>`;
-                }
-                html += '</div>';
-                
-                for (const [char, child] of entries) {
-                    html += buildHtml(child, depth + 1);
-                }
-                return html;
-            }
-
-            const entries = Object.entries(trie).filter(([k]) => k !== 'isEnd');
-            if (entries.length === 0) {
-                return '<div class="level"><div class="node" style="background: var(--viz-warning)">root</div></div>';
-            }
-            return '<div class="level"><div class="node" style="background: var(--viz-warning)">root</div></div>' + buildHtml(trie);
-        }
-
+        let root = { id: 'root', char: '', children: {}, isEnd: false };
         let viz;
-        function init() {
-            trie = {};
-            insertedWords = [];
-            updateWordsList();
+        let idCounter = 0;
+
+        function cloneTrie(node) {
+            const newNode = { ...node, children: {} };
+            for (let k in node.children) {
+                newNode.children[k] = cloneTrie(node.children[k]);
+            }
+            return newNode;
+        }
+
+        function generateSteps(startRoot, op, word) {
+            const steps = [];
+            const newRoot = cloneTrie(startRoot); // Simulation on clone
             
+            steps.push({
+                root: JSON.parse(JSON.stringify(newRoot)),
+                activeIds: ['root'], // Support multiple active nodes for DFS '.'
+                highlightLines: op === 'add' ? [4, 5] : [12, 13],
+                msg: `${op === 'add' ? '添加' : '搜尋'}: "${word}"`,
+                opName: op,
+                focusCharIndex: -1
+            });
+
+            if (op === 'add') {
+                let curr = newRoot;
+                for (let i = 0; i < word.length; i++) {
+                    const c = word[i];
+                    steps.push({
+                        root: JSON.parse(JSON.stringify(newRoot)),
+                        activeIds: [curr.id],
+                        highlightLines: [6],
+                        msg: `處理字符: '${c}'`,
+                        opName: op,
+                        focusCharIndex: i
+                    });
+
+                    if (!curr.children[c]) {
+                        curr.children[c] = { id: `n-${++idCounter}`, char: c, children: {}, isEnd: false };
+                        steps.push({
+                            root: JSON.parse(JSON.stringify(newRoot)),
+                            activeIds: [curr.id],
+                            highlightLines: [7],
+                            msg: `建立新節點 '${c}'`,
+                            opName: op,
+                            focusCharIndex: i
+                        });
+                    }
+                    curr = curr.children[c];
+                    steps.push({
+                        root: JSON.parse(JSON.stringify(newRoot)),
+                        activeIds: [curr.id],
+                        highlightLines: [8],
+                        msg: `移動到 '${c}'`,
+                        opName: op,
+                        focusCharIndex: i
+                    });
+                }
+                curr.isEnd = true;
+                steps.push({
+                    root: JSON.parse(JSON.stringify(newRoot)),
+                    activeIds: [curr.id],
+                    highlightLines: [10],
+                    msg: `標記結尾 (isEnd)`,
+                    opName: op,
+                    focusCharIndex: word.length
+                });
+            } else {
+                // Search with Backtracking
+                // We need to trace visualization steps inside DFS
+                // We'll use a stack or explicit recursion simulation
+                // Since simulation modifies nothing but traversal state, explicit recursion for step generation is fine.
+                
+                const performDFS = (node, index, pathIds) => {
+                    // Base steps are tricky in recursion because we want linear timeline.
+                    // We push steps to global `steps` array.
+                    
+                    if (index === word.length) {
+                        steps.push({
+                            root: JSON.parse(JSON.stringify(newRoot)),
+                            activeIds: pathIds,
+                            highlightLines: [27],
+                            msg: `到達單詞末尾。檢查 isEnd: ${node.isEnd}`,
+                            opName: op,
+                            resultSuccess: node.isEnd,
+                            focusCharIndex: index
+                        });
+                        return node.isEnd;
+                    }
+
+                    const c = word[index];
+                    
+                    steps.push({
+                        root: JSON.parse(JSON.stringify(newRoot)),
+                        activeIds: pathIds,
+                        highlightLines: [16, 17],
+                        msg: `檢查索引 ${index} ('${c}')`,
+                        opName: op,
+                        focusCharIndex: index
+                    });
+
+                    if (c === '.') {
+                        steps.push({
+                            root: JSON.parse(JSON.stringify(newRoot)),
+                            activeIds: pathIds,
+                            highlightLines: [18, 19],
+                            msg: `遇到萬用字元 '.'，嘗試所有子節點`,
+                            opName: op,
+                            focusCharIndex: index
+                        });
+
+                        const keys = Object.keys(node.children);
+                        for (let k of keys) {
+                            const child = node.children[k];
+                            steps.push({
+                                root: JSON.parse(JSON.stringify(newRoot)),
+                                activeIds: [...pathIds, child.id], // Show path extension
+                                highlightLines: [20],
+                                msg: `嘗試子節點 '${k}'`,
+                                opName: op,
+                                focusCharIndex: index
+                            });
+
+                            if (performDFS(child, index + 1, [...pathIds, child.id])) return true;
+                            
+                            steps.push({
+                                root: JSON.parse(JSON.stringify(newRoot)),
+                                activeIds: pathIds, // Backtrack visual
+                                highlightLines: [21], // loop continue
+                                msg: `分支 '${k}' 失敗，回溯`,
+                                opName: op,
+                                focusCharIndex: index
+                            });
+                        }
+                        return false;
+                    } else {
+                        if (!node.children[c]) {
+                            steps.push({
+                                root: JSON.parse(JSON.stringify(newRoot)),
+                                activeIds: pathIds,
+                                highlightLines: [24],
+                                msg: `找不到字符 '${c}'，返回 false`,
+                                opName: op,
+                                focusCharIndex: index
+                            });
+                            return false;
+                        }
+                        const child = node.children[c];
+                        steps.push({
+                            root: JSON.parse(JSON.stringify(newRoot)),
+                            activeIds: [...pathIds, child.id],
+                            highlightLines: [25],
+                            msg: `匹配 '${c}'，進入下一層`,
+                            opName: op,
+                            focusCharIndex: index
+                        });
+                        return performDFS(child, index + 1, [...pathIds, child.id]);
+                    }
+                };
+
+                performDFS(newRoot, 0, ['root']);
+            }
+
+            return { steps, finalRoot: newRoot };
+        }
+
+        // --- Render ---
+        const svg = d3.select("#trie-svg");
+        const gLayer = d3.select("#zoom-layer");
+        const zoom = d3.zoom().on("zoom", (e) => gLayer.attr("transform", e.transform));
+        svg.call(zoom);
+        
+        let width = 800, height = 400;
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            if(step.opName) document.getElementById('opDisplay').textContent = 
+                `${step.opName === 'add' ? '添加' : '搜尋'}: ${document.getElementById('wordInput').value}`;
+
+            const hierarchyData = d3.hierarchy(step.root, d => Object.values(d.children));
+            const treeLayout = d3.tree().size([width - 100, height - 100]);
+            treeLayout.nodeSize([50, 60]);
+            treeLayout(hierarchyData);
+            
+            const xOffset = width/2;
+            const yOffset = 50;
+
+            // Links
+            const links = gLayer.selectAll(".link").data(hierarchyData.links(), d => d.target.data.id);
+            links.enter().append("path").attr("class", "link")
+                 .merge(links)
+                 .attr("class", d => {
+                     // Check if this link is part of active path
+                     // Heuristic: target is in activeIds
+                     if (step.activeIds && step.activeIds.includes(d.target.data.id)) return "link active";
+                     return "link";
+                 })
+                 .transition().duration(300)
+                 .attr("d", d3.linkVertical().x(d => d.x + xOffset).y(d => d.y + yOffset));
+            links.exit().remove();
+
+            // Nodes
+            const nodes = gLayer.selectAll(".node").data(hierarchyData.descendants(), d => d.data.id);
+            const nEnter = nodes.enter().append("g").attr("class", "node");
+            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
+            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nUpdate = nodes.merge(nEnter).transition().duration(300)
+                .attr("transform", d => `translate(${d.x + xOffset},${d.y + yOffset})`);
+            
+            nodes.select(".node-circle").attr("class", d => {
+                let cls = "node-circle";
+                if (d.data.id === 'root') cls += " root";
+                if (d.data.isEnd) cls += " is-end";
+                
+                // Active logic
+                const isActive = step.activeIds && step.activeIds.includes(d.data.id);
+                // The *last* active id is the current focus
+                const isCurrent = step.activeIds && step.activeIds[step.activeIds.length-1] === d.data.id;
+                
+                if (isActive) cls += " visited"; // path part
+                if (isCurrent) cls += " current"; // head
+                if (step.resultSuccess && isCurrent) cls += " match";
+                
+                return cls;
+            });
+            nodes.select(".node-text").text(d => d.data.char);
+            
+            nodes.exit().remove();
+        }
+
+        function handleOp(op) {
+            const word = document.getElementById('wordInput').value.trim().toLowerCase();
+            if(!word) return;
+            // Check validation: add only letters, search allows '.'
+            if(op === 'add' && !/^[a-z]+$/.test(word)) return alert("添加僅限英文字母");
+            if(op === 'search' && !/^[a-z\.]+$/.test(word)) return alert("搜尋僅限字母與 '.'");
+
+            const { steps, finalRoot } = generateSteps(root, op, word);
+            if(op === 'add') root = finalRoot;
+            viz.setSteps(steps);
+        }
+
+        function resetTrie() {
+            root = { id: 'root', char: '', children: {}, isEnd: false };
+            idCounter = 0;
+            svg.selectAll("*").remove(); 
+            svg.append("g").attr("id", "zoom-layer");
+            viz.setSteps([{root:root, msg:"已重置", highlightLines:[]}]);
+        }
+
+        window.addEventListener('load', () => {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    document.getElementById('opDisplay').textContent = step.op || '-';
-                    document.getElementById('resultDisplay').textContent = 
-                        step.result === true ? 'true ✓' : 
-                        step.result === false ? 'false ✗' : '-';
-                    document.getElementById('resultDisplay').style.color = 
-                        step.result === true ? 'var(--viz-success)' : 
-                        step.result === false ? 'var(--viz-error)' : 'var(--viz-text)';
-                    document.getElementById('trieDisplay').innerHTML = renderTrie();
-                }
+                onStepChange: render
             });
-            
-            viz.setSteps([{
-                op: '初始化',
-                highlightLines: [0, 1, 2],
-                explanation: {
-                    title: '初始化 WordDictionary',
-                    text: '使用 Trie 支援 "." 萬用字元搜尋<br>"." 可匹配任意單個字母',
-                    formula: 'support wildcard "."'
-                }
-            }]);
-        }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+            handleOp('add');
+        });
     </script>
 </body>
 </html>

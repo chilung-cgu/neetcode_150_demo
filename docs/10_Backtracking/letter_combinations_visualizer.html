@@ -3,29 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Letter Combinations - 視覺化</title>
+    <title>Letter Combinations - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .phone-container { display: flex; gap: 15px; justify-content: center; margin: 20px 0; }
-        .digit-key { 
-            width: 60px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: var(--viz-bg-secondary); border-radius: 8px; border: 2px solid var(--viz-border); transition: all 0.3s;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
         }
-        .digit-key.active { background: var(--viz-primary); color: white; border-color: transparent; transform: scale(1.1); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
-        .key-num { font-size: 1.5rem; font-weight: bold; }
-        .key-chars { font-size: 0.8rem; letter-spacing: 2px; margin-top: 5px; opacity: 0.8; }
+
+        /* Phone Keypad */
+        .keypad {
+            display: flex; gap: 8px; margin-bottom: 10px;
+        }
+        .key {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 45px; height: 55px; background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569; border-radius: 8px; color: #94a3b8; transition: all 0.3s;
+        }
+        .key.active { background: #3b82f6; color: white; border-color: #60a5fa; transform: translateY(-5px); box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); }
+        .key-num { font-size: 1.1rem; font-weight: bold; }
+        .key-chars { font-size: 0.7rem; letter-spacing: 1px; }
+
+        .tree-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        #tree-svg { width: 100%; height: 100%; cursor: move; }
+
+        .node-rect { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; rx: 6; }
+        .node-rect.active { fill: #fbbf24; stroke: #f59e0b; filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6)); }
+        .node-rect.leaf { fill: #22c55e; stroke: #16a34a; }
         
-        .tree-path { font-size: 1.2rem; font-weight: bold; color: var(--viz-secondary); margin-bottom: 10px; text-align: center; height: 30px; }
+        .node-text { fill: white; font-family: monospace; font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
         
-        .results-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-height: 200px; overflow-y: auto; padding: 10px; }
-        .combo-badge { padding: 6px 12px; background: var(--viz-success); color: #0f172a; border-radius: 4px; font-family: monospace; font-weight: bold; }
-        .combo-badge.new { animation: popIn 0.5s; }
-        @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); } }
+        .link { fill: none; stroke: #475569; stroke-width: 1.5px; opacity: 0.3; transition: all 0.3s; }
+        .link.active { stroke: #fbbf24; opacity: 1; stroke-width: 2.5px; }
+
+        .results-panel {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 10px;
+            min-height: 50px; display: flex; flex-wrap: wrap; gap: 8px;
+        }
+        .res-tag { 
+            padding: 4px 10px; background: rgba(59, 130, 246, 0.2); 
+            border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 4px;
+            color: #93c5fd; font-family: monospace; font-size: 0.9rem;
+            animation: popIn 0.3s;
+        }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 100px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -33,171 +75,209 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">電話號碼字母組合 (Backtracking)</div>
+                <div class="viz-title">Letter Combinations (Phone)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>數字字串 (2-9):</label>
-                        <input type="text" id="digitsInput" value="23" style="width: 100px;" maxlength="4">
-                        <button onclick="runCustomInput()">執行</button>
+                        <label>Digits (2-9):</label>
+                        <input type="text" id="digitsInput" value="23">
+                        <button onclick="runVisualizer()">生成組合</button>
                     </div>
                 </div>
-                
-                <div class="phone-container" id="phoneDisplay"></div>
-                
-                <div style="text-align: center;">當前組合</div>
-                <div class="tree-path" id="pathDisplay"></div>
-                
-                <div class="results-grid" id="resultsDisplay"></div>
-                
+
+                <div class="visualization-area">
+                    <div class="keypad" id="keypadDisplay">
+                        <!-- Rendered key map -->
+                    </div>
+                    
+                    <div class="tree-viewport">
+                        <svg id="tree-svg"><g id="zoom-group"></g></svg>
+                    </div>
+                    
+                    <div class="results-panel" id="resultsDisplay"></div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <div class="speed-control">
-                        <label>速度:</label>
-                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(4^N * N)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(N)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">組合總數</div><div class="state-value" id="countDisplay">0</div></div>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'void backtrack(digits, idx, path, res) {', id: 0 },
-            { line: '    if (idx == digits.size()) {', id: 1 },
-            { line: '        res.push_back(path); return;', id: 2 },
+            { line: 'void dfs(i, curStr) {', id: 0 },
+            { line: '    if (curStr.size() == digits.size()) {', id: 1 },
+            { line: '        res.push_back(curStr); return;', id: 2 },
             { line: '    }', id: 3 },
-            { line: '    string chars = phone[digits[idx]];', id: 4 },
-            { line: '    for (char c : chars) {', id: 5 },
-            { line: '        backtrack(digits, idx + 1, path + c, res);', id: 6 },
-            { line: '    }', id: 7 },
-            { line: '}', id: 8 },
+            { line: '    for (char c : map[digits[i]]) {', id: 4 },
+            { line: '        dfs(i + 1, curStr + c);', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '}', id: 7 }
         ];
 
-        const phoneMap = {
+        const digitMap = {
             '2': 'abc', '3': 'def', '4': 'ghi', '5': 'jkl',
             '6': 'mno', '7': 'pqrs', '8': 'tuv', '9': 'wxyz'
         };
 
-        let currentDigits = "23";
+        let viz;
 
-        function runCustomInput() {
-            const s = document.getElementById('digitsInput').value.trim();
-            if (!/^[2-9]+$/.test(s) || s.length > 4) {
-                alert('請輸入 2-9 的數字，長度 1-4');
-                return;
-            }
-            currentDigits = s;
-            init();
+        function renderKeypad(activeDigit) {
+            const keys = ['2','3','4','5','6','7','8','9'];
+            const container = document.getElementById('keypadDisplay');
+            container.innerHTML = keys.map(k => {
+                let cls = 'key';
+                if (k === activeDigit) cls += ' active';
+                return `
+                    <div class="${cls}">
+                        <div class="key-num">${k}</div>
+                        <div class="key-chars">${digitMap[k]}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        function generateAlgorithmSteps(digits) {
+        function generateSteps(digits) {
             const steps = [];
             const result = [];
             
-            steps.push({
-                path: "", idx: 0, result: [], 
-                highlightLines: [0],
-                explanation: { title: '初始化', text: `Input: "${digits}"<br>準備開始組合`, formula: 'backtrack(0, "")' }
-            });
+            let nodes = [{id: 'root', label: '""', depth: 0}];
+            let links = [];
+            let idCounter = 0;
+            const newId = () => `n-${++idCounter}`;
 
-            function backtrack(idx, path) {
-                if (idx === digits.length) {
-                    result.push(path);
-                    steps.push({
-                        path: path, idx: idx, result: [...result], newFound: true,
-                        highlightLines: [1, 2, 3],
-                        explanation: { title: '完成組合', text: `Path長度達標<br>加入結果: "${path}"`, formula: 'Found' }
-                    });
+            const pushStep = (msg, hl, activeId, activeDigit) => {
+                steps.push({
+                    nodes: JSON.parse(JSON.stringify(nodes)),
+                    links: JSON.parse(JSON.stringify(links)),
+                    activeId: activeId,
+                    activeDigit: activeDigit,
+                    result: JSON.parse(JSON.stringify(result)),
+                    msg: msg,
+                    highlightLines: hl
+                });
+            };
+
+            pushStep(`Init: Digits "${digits}"`, [0], 'root', null);
+
+            const dfs = (i, curStr, parentId) => {
+                if (curStr.length === digits.length) {
+                    result.push(curStr);
+                    const p = nodes.find(n=>n.id===parentId);
+                    if(p) p.isLeaf = true;
+                    pushStep(`Base Case: 組合 "${curStr}" 完成`, [1, 2], parentId, null);
                     return;
                 }
 
-                const digit = digits[idx];
-                const chars = phoneMap[digit];
-                
+                const d = digits[i];
+                const chars = digitMap[d];
+
                 for (let c of chars) {
-                    steps.push({
-                        path: path + c, idx: idx, result: [...result],
-                        currentDigit: digits[idx], currentChar: c,
-                        highlightLines: [4, 5, 6],
-                        explanation: { title: `按鍵 '${digit}' 選 '${c}'`, text: `當前路徑: "${path + c}"<br>遞迴下一個數字`, formula: `path + '${c}'` }
-                    });
+                    const nextId = newId();
+                    const nextStr = curStr + c;
                     
-                    backtrack(idx + 1, path + c);
+                    nodes.push({id: nextId, label: nextStr, depth: i+1});
+                    links.push({source: parentId, target: nextId});
+                    
+                    pushStep(`Digit '${d}' 選擇 '${c}': 進入遞迴`, [4, 5], nextId, d);
+                    
+                    dfs(i + 1, nextStr, nextId);
                 }
-            }
+            };
 
-            if (digits.length > 0) backtrack(0, "");
-            
-            steps.push({
-                path: "", idx: 0, result: [...result], final: true,
-                explanation: { title: '結束', text: `共產生 ${result.length} 個組合`, formula: 'Done' }
-            });
-
+            dfs(0, "", 'root');
+            pushStep("完成", [7], 'root', null);
             return steps;
         }
 
-        let viz;
-        function init() {
-            // Visualize Phone Keys relevant to input
-            // Or just generic T9 layout?
-            // Let's show relevant keys only or a strip
-            const phoneDiv = document.getElementById('phoneDisplay');
-            phoneDiv.innerHTML = [...currentDigits].map((d, i) => `
-                <div class="digit-key" id="key-${i}">
-                    <div class="key-num">${d}</div>
-                    <div class="key-chars">${phoneMap[d]}</div>
-                </div>
-            `).join('');
+        const svg = d3.select("#tree-svg");
+        const g = d3.select("#zoom-group");
+        const zoom = d3.zoom().on("zoom", (e) => g.attr("transform", e.transform));
+        svg.call(zoom);
 
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Update key highlight
-                    [...currentDigits].forEach((_, i) => {
-                        const key = document.getElementById(`key-${i}`);
-                        if (key) {
-                             if (i === step.idx) key.classList.add('active');
-                             else key.classList.remove('active');
-                        }
-                    });
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            renderKeypad(step.activeDigit);
+            
+            document.getElementById('resultsDisplay').innerHTML = step.result.map(r => 
+                `<span class="res-tag">${r}</span>`
+            ).join('');
 
-                    document.getElementById('pathDisplay').textContent = step.path; // Current partial path
-                    
-                    document.getElementById('resultsDisplay').innerHTML = (step.result || []).map((r, i) => {
-                        const isNew = step.newFound && i === step.result.length - 1;
-                        return `<span class="combo-badge${isNew?' new':''}">${r}</span>`;
-                    }).join('');
-                    
-                    document.getElementById('countDisplay').textContent = step.result ? step.result.length : 0;
-                }
+            if(!step.nodes || !step.nodes.length) return;
+
+            const parentMap = {};
+            step.links.forEach(l => parentMap[l.target] = l.source);
+            
+            const root = d3.stratify()
+                .id(d => d.id)
+                .parentId(d => d.id === 'root' ? null : parentMap[d.id])
+                (step.nodes);
+
+            const treeLayout = d3.tree().nodeSize([70, 70]);
+            treeLayout(root);
+            
+            const links = g.selectAll(".link").data(root.links(), d => d.target.id);
+            const lEnter = links.enter().append("path").attr("class", "link");
+            links.merge(lEnter)
+                .attr("class", d => d.target.id === step.activeId ? "link active" : "link")
+                .transition().duration(300)
+                .attr("d", d3.linkVertical().x(d=>d.x).y(d=>d.y));
+            links.exit().remove();
+            
+            const nodes = g.selectAll(".node").data(root.descendants(), d => d.id);
+            const nEnter = nodes.enter().append("g").attr("class", "node");
+            nEnter.append("rect").attr("width", 50).attr("height", 24).attr("x", -25).attr("y", -12).attr("class", "node-rect");
+            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nUpdate = nodes.merge(nEnter).transition().duration(300)
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+            
+            nUpdate.select("rect").attr("class", d => {
+                let c = "node-rect";
+                if(d.id === step.activeId) c += " active";
+                if(d.data.isLeaf) c += " leaf";
+                return c;
             });
-            viz.setSteps(generateAlgorithmSteps(currentDigits));
+            nUpdate.select("text").text(d => d.data.label);
+            
+            nodes.exit().remove();
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runVisualizer() {
+            const val = document.getElementById('digitsInput').value.trim();
+            if(!/^[2-9]+$/.test(val)) return alert("請輸入數字 2-9");
+            if(val.length > 4) if(!confirm("長度 > 4 太慢，確定？")) return;
+            
+            svg.call(zoom.transform, d3.zoomIdentity.translate(400, 50).scale(0.8));
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(generateSteps(val));
+        }
+
+        window.addEventListener('load', () => {
+             renderKeypad(null);
+             runVisualizer();
+        });
     </script>
 </body>
 </html>

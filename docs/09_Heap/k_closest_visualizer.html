@@ -2,29 +2,56 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K Closest Points to Origin - 視覺化</title>
+    <title>K Closest Points (Max Heap) - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .canvas-container { position: relative; width: 100%; max-width: 320px; height: 320px; margin: 0 auto; background: #1e293b; border-radius: 12px; border: 2px solid var(--viz-border); overflow: hidden; }
-        .grid-lines { position: absolute; inset: 0; background-image: linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px); background-size: 40px 40px; opacity: 0.3; }
-        .axis { position: absolute; background: #64748b; opacity: 0.5; }
-        .axis-x { top: 50%; left: 0; right: 0; height: 1px; }
-        .axis-y { left: 50%; top: 0; bottom: 0; width: 1px; }
-        .origin-point { position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; background: var(--viz-error); border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; box-shadow: 0 0 10px var(--viz-error); }
-        .point { position: absolute; width: 12px; height: 12px; background: var(--viz-primary); border-radius: 50%; transform: translate(-50%, -50%); transition: all 0.3s; z-index: 5; cursor: default; }
-        .point.visiting { border: 2px solid var(--viz-warning); width: 16px; height: 16px; z-index: 20; }
-        .point.kept { background: var(--viz-success); box-shadow: 0 0 8px var(--viz-success); }
-        .point.rejected { background: var(--viz-text-muted); opacity: 0.3; }
-        
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .dual-view {
+            display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;
+        }
+
+        .panel {
+            background: rgba(30, 41, 59, 0.4); border-radius: 12px; padding: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .panel-title { font-size: 0.9rem; color: #94a3b8; font-weight: bold; margin-bottom: 10px; }
+
+        /* Chart View */
+        #chart-svg { width: 300px; height: 300px; background: rgba(0,0,0,0.2); border-radius: 8px; }
+        .point { fill: #94a3b8; transition: all 0.3s; }
+        .point.active { fill: #fbbf24; r: 6; }
+        .point.kept { fill: #22c55e; }
+        .grid-line { stroke: #475569; stroke-width: 1; opacity: 0.3; }
+        .axis { stroke: #cbd5e1; stroke-width: 2; }
+
+        /* Heap View */
+        #heap-svg { width: 300px; height: 300px; }
+        .node-circle { fill: #3b82f6; stroke: none; transition: all 0.3s; }
+        .node-circle.root { stroke: #ef4444; stroke-width: 3px; } /* Max Heap Root is largest dist */
+        .node-text { fill: white; font-family: monospace; font-size: 10px; pointer-events: none; text-anchor: middle; dominant-baseline: middle; }
+        .link { stroke: #64748b; stroke-width: 2px; opacity: 0.5; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
         .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-        
-        .heap-status { margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; }
-        .heap-bar { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
-        .heap-item { padding: 4px 8px; background: var(--viz-success); border-radius: 4px; font-size: 0.8rem; }
+
+        .step-breakdown {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px; border-left: 4px solid #3b82f6;
+            padding: 15px 20px;
+        }
     </style>
 </head>
 <body>
@@ -32,206 +59,240 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">K 個最近的點（MAX HEAP）</div>
+                <div class="viz-title">K Closest Points (Max Heap)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>點 (x,y):</label>
-                        <input type="text" id="pointsInput" value="1,3; -2,2; 5,8; 0,1" style="width: 200px;" placeholder="x1,y1; x2,y2...">
+                        <label>Points (x,y;...):</label>
+                        <input type="text" id="pointsInput" value="1,3; -2,2; 5,8; 0,1">
                         <label>K:</label>
-                        <input type="number" id="kInput" value="2" style="width: 50px;" min="1">
-                        <button onclick="runCustomInput()">執行</button>
+                        <input type="number" id="kInput" value="2" style="width:50px">
+                        <button onclick="runVisualizer()">執行</button>
                     </div>
                 </div>
-                
-                <div class="canvas-container" id="canvas">
-                    <div class="grid-lines"></div>
-                    <div class="axis axis-x"></div>
-                    <div class="axis axis-y"></div>
-                    <div class="origin-point" title="原點 (0,0)"></div>
+
+                <div class="visualization-area">
+                    <div class="dual-view">
+                        <div class="panel">
+                            <div class="panel-title">2D Plane (距離原點)</div>
+                            <svg id="chart-svg">
+                                <!-- Grid -->
+                                <line x1="0" y1="150" x2="300" y2="150" class="axis" />
+                                <line x1="150" y1="0" x2="150" y2="300" class="axis" />
+                                <g id="points-g"></g>
+                            </svg>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-title">Max Heap (Size K)</div>
+                            <svg id="heap-svg"><g id="heap-g"></g></svg>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="heap-status">
-                    <div style="font-size: 0.9rem; margin-bottom: 5px;">Max Heap (Size ≤ K)</div>
-                    <div class="heap-bar" id="heapDisplay"></div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
-                
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n log k)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(k)
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'vector<vector<int>> kClosest(points, k) {', id: 0 },
-            { line: '    priority_queue<pair<int, int>> pq;', id: 1 },
+            { line: '    priority_queue<pair<int, int>> maxHeap;', id: 1 },
             { line: '    for (auto& p : points) {', id: 2 },
             { line: '        int dist = p[0]*p[0] + p[1]*p[1];', id: 3 },
-            { line: '        pq.push({dist, i});', id: 4 },
-            { line: '        if (pq.size() > k) {', id: 5 },
-            { line: '            pq.pop(); // 移除最遠的', id: 6 },
+            { line: '        maxHeap.push({dist, i});', id: 4 },
+            { line: '        if (maxHeap.size() > k) {', id: 5 },
+            { line: '            maxHeap.pop(); // Remove farthest', id: 6 },
             { line: '        }', id: 7 },
             { line: '    }', id: 8 },
-            { line: '    return getAllItems(pq);', id: 9 },
-            { line: '}', id: 10 },
+            { line: '    return all in heap;', id: 9 },
+            { line: '}', id: 10 }
         ];
 
-        let currentPoints = [[1,3], [-2,2], [5,8], [0,1]];
-        let currentK = 2;
+        let viz;
 
-        function parsePoints(str) {
-            return str.split(';').map(s => {
-                const parts = s.trim().split(',');
-                if (parts.length !== 2) return null;
-                const x = parseInt(parts[0]);
-                const y = parseInt(parts[1]);
-                return isNaN(x) || isNaN(y) ? null : [x, y];
-            }).filter(p => p !== null);
-        }
-
-        function distSq(p) { return p[0]*p[0] + p[1]*p[1]; }
-
-        function generateAlgorithmSteps(points, k) {
+        function simulate(points, k) {
             const steps = [];
-            const heap = []; // {dist, index}
+            // Heap stores {dist, index}
+            // Max Heap logic: parent > children
+            let heap = []; 
+            
+            const swap = (i, j) => [heap[i], heap[j]] = [heap[j], heap[i]];
+            const siftUp = (i) => {
+                while(i > 0) {
+                    let p = Math.floor((i-1)/2);
+                    if(heap[i].dist > heap[p].dist) { swap(i, p); i=p; } else break;
+                }
+            };
+            const siftDown = (i) => {
+                while(true) {
+                    let l=2*i+1, r=2*i+2, large=i;
+                    if(l<heap.length && heap[l].dist > heap[large].dist) large=l;
+                    if(r<heap.length && heap[r].dist > heap[large].dist) large=r;
+                    if(large!==i) { swap(i, large); i=large; } else break;
+                }
+            };
+            const push = (item) => { heap.push(item); siftUp(heap.length-1); };
+            const pop = () => {
+                if(heap.length===0) return;
+                const top = heap[0];
+                const last = heap.pop();
+                if(heap.length > 0) { heap[0] = last; siftDown(0); }
+                return top;
+            };
 
             steps.push({
-                points: points,
-                heap: [],
-                visitingIdx: null,
-                rejectedIdxs: [],
-                highlightLines: [0, 1],
-                explanation: {
-                    title: '初始化 Max Heap',
-                    text: `目標：找出離原點最近的 ${k} 個點<br>策略：維護大小為 K 的 Max Heap<br>如果 Heap > K，彈出最大的（最遠的），留下的就是最近的。`,
-                    formula: 'priority_queue (Max Heap)'
-                }
+                heap: [], allPoints: points, activeP: null,
+                msg: `初始化 K=${k}, 準備處理 ${points.length} 個點`,
+                highlightLines: [1]
             });
 
-            const rejected = new Set();
-
-            for (let i = 0; i < points.length; i++) {
+            for(let i=0; i<points.length; i++) {
                 const p = points[i];
-                const d = distSq(p);
+                const dist = p[0]*p[0] + p[1]*p[1];
                 
-                // Add to heap
-                heap.push({d, i});
-                heap.sort((a, b) => b.d - a.d); // Max heap: largest first
-
-                let popped = null;
-                if (heap.length > k) {
-                    popped = heap.shift(); // Remove largest
-                    rejected.add(popped.i);
-                }
-
                 steps.push({
-                    points: points,
-                    heap: [...heap],
-                    visitingIdx: i,
-                    rejectedIdxs: [...rejected],
-                    poppedIdx: popped ? popped.i : null,
-                    highlightLines: popped ? [3, 4, 5, 6] : [3, 4],
-                    explanation: {
-                        title: `處理點 [${p[0]}, ${p[1]}]`,
-                        text: `距離平方 = ${d}<br>${popped ? `Heap > K，移除最遠點 [${points[popped.i]}] (dist=${popped.d})` : `加入 Heap (目前大小 ${heap.length})`}`,
-                        formula: `dist = ${p[0]}² + ${p[1]}² = ${d}`
-                    }
+                    heap: JSON.parse(JSON.stringify(heap)), allPoints: points, activeP: i,
+                    msg: `處理點 [${p[0]}, ${p[1]}]，距離平方=${dist}`,
+                    highlightLines: [2, 3]
                 });
+
+                push({dist, i, p});
+                steps.push({
+                    heap: JSON.parse(JSON.stringify(heap)), allPoints: points, activeP: i,
+                    msg: `Push 到 Heap`,
+                    highlightLines: [4]
+                });
+
+                if (heap.length > k) {
+                    const removed = pop();
+                    steps.push({
+                        heap: JSON.parse(JSON.stringify(heap)), allPoints: points, activeP: i,
+                        msg: `Heap size > K，移除最遠點 [${removed.p[0]}, ${removed.p[1]}] (Dist=${removed.dist})`,
+                        highlightLines: [6]
+                    });
+                }
             }
 
             steps.push({
-                points: points,
-                heap: [...heap],
-                visitingIdx: null,
-                rejectedIdxs: [...rejected],
-                final: true,
+                heap: JSON.parse(JSON.stringify(heap)), allPoints: points, activeP: null,
+                msg: `完成！Heap 中剩下的 ${heap.length} 個點即為最近點`,
                 highlightLines: [9],
-                explanation: {
-                    title: '完成',
-                    text: `Heap 中剩下的 ${heap.length} 個點即為最近的 K 個點。<br>結果: ${heap.map(h => `[${points[h.i]}]`).join(', ')}`,
-                    formula: 'return heap'
-                }
+                final: true
             });
 
             return steps;
         }
 
-        function runCustomInput() {
-            const pStr = document.getElementById('pointsInput').value;
-            const kVal = parseInt(document.getElementById('kInput').value);
-            const pts = parsePoints(pStr);
-            if (pts.length === 0 || isNaN(kVal) || kVal < 1) {
-                alert('輸入格式錯誤 (範例: "1,2; 3,4") 或 K 值無效');
-                return;
+        const gPoints = d3.select("#points-g");
+        const gHeap = d3.select("#heap-g").attr("transform", "translate(0, 40)");
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+
+            // Render Chart
+            gPoints.selectAll("*").remove();
+            // Scale logic simple: fixed 300x300, center at 150,150. range -10 to 10 mapped to 0-300
+            const scale = (v) => 150 + v * 15;
+            
+            step.allPoints.forEach((p, idx) => {
+                const isActive = step.activeP === idx;
+                const isInHeap = step.heap.some(h => h.i === idx);
+                
+                gPoints.append("circle")
+                    .attr("cx", scale(p[0]))
+                    .attr("cy", scale(-p[1])) // y inverted in svg
+                    .attr("r", 4)
+                    .attr("class", `point ${isActive?'active':''} ${isInHeap?'kept':''}`);
+            });
+
+            // Render Heap
+            if(step.heap.length === 0) {
+                gHeap.selectAll("*").remove(); return;
             }
-            currentPoints = pts;
-            currentK = kVal;
-            init();
+            
+            const stratify = (idx) => {
+                if(idx >= step.heap.length) return null;
+                const node = { id: idx, val: step.heap[idx], children: [] };
+                const l = stratify(2*idx+1);
+                const r = stratify(2*idx+2);
+                if(l) node.children.push(l);
+                if(r) node.children.push(r);
+                return node;
+            };
+            const root = d3.hierarchy(stratify(0));
+            const treeLayout = d3.tree().size([280, 220]);
+            treeLayout(root);
+
+            // Links
+            const links = gHeap.selectAll(".link").data(root.links());
+            links.enter().append("path").attr("class", "link")
+                .merge(links).attr("d", d3.linkVertical().x(d=>d.x).y(d=>d.y));
+            links.exit().remove();
+
+            // Nodes
+            const nodes = gHeap.selectAll(".node").data(root.descendants());
+            const nEnter = nodes.enter().append("g").attr("class", "node");
+            nEnter.append("circle").attr("r", 15).attr("class", "node-circle");
+            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nUpdate = nodes.merge(nEnter).attr("transform", d=>`translate(${d.x},${d.y})`);
+            nUpdate.select(".node-circle").attr("class", d => {
+                let s = "node-circle";
+                if(d.data.id === 0) s += " root";
+                return s;
+            });
+            nUpdate.select(".node-text").text(d => d.data.val.dist);
+            
+            nodes.exit().remove();
         }
 
-        let viz;
-        function init() {
-            const maxVal = Math.max(...currentPoints.flat().map(Math.abs), 5);
-            const scale = 140 / maxVal; // Map maxVal to ~140px (half canvas width)
+        function runVisualizer() {
+            const pStr = document.getElementById('pointsInput').value;
+            const k = parseInt(document.getElementById('kInput').value);
+            
+            const points = pStr.split(';').map(s => {
+                const parts = s.split(',').map(x=>parseInt(x.trim()));
+                return (parts.length===2 && !isNaN(parts[0])) ? parts : null;
+            }).filter(x=>x);
+            
+            if(points.length===0 || isNaN(k)) return;
 
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Update Canvas
-                    const canvas = document.getElementById('canvas');
-                    // Remove existing points but keep grid/origin
-                    const oldPoints = canvas.querySelectorAll('.point');
-                    oldPoints.forEach(p => p.remove());
-
-                    step.points.forEach((p, i) => {
-                        const el = document.createElement('div');
-                        el.className = 'point';
-                        if (step.visitingIdx === i) el.classList.add('visiting');
-                        else if (step.heap.some(h => h.i === i)) el.classList.add('kept');
-                        else if (step.rejectedIdxs.includes(i)) el.classList.add('rejected');
-                        
-                        el.style.left = `calc(50% + ${p[0] * scale}px)`;
-                        el.style.top = `calc(50% - ${p[1] * scale}px)`;
-                        el.title = `[${p[0]},${p[1]}] d²=${distSq(p)}`;
-                        canvas.appendChild(el);
-                    });
-
-                    // Update Heap Display
-                    document.getElementById('heapDisplay').innerHTML = step.heap.map(h => {
-                        const p = step.points[h.i];
-                        return `<div class="heap-item">[${p[0]},${p[1]}]<br>${h.d}</div>`;
-                    }).join('');
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentPoints, currentK));
+            viz.setSteps(simulate(points, k));
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

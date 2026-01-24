@@ -3,40 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>N-Queens - 視覺化</title>
+    <title>N-Queens - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
 
-        .board-container { display: flex; justify-content: center; margin: 20px 0; }
-        .board { 
-            display: grid; gap: 2px; padding: 10px; background: #6b4c35; border-radius: 6px; 
+        /* Chess Board */
+        .board-container {
+            display: grid; gap: 2px;
+            background: #475569; padding: 5px; border-radius: 4px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
-        .cell { 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 1.8rem; font-weight: bold; position: relative;
+        .cell {
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; position: relative;
         }
-        .cell.light { background: #f0d9b5; }
-        .cell.dark { background: #b58863; }
-        .cell.queen { color: #000; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        /* Attack zones */
-        .cell.attacked::after {
-            content: ''; position: absolute; width: 30%; height: 30%; 
-            background: rgba(255, 0, 0, 0.4); border-radius: 50%;
+        .cell.white { background: #e2e8f0; color: #1e293b; }
+        .cell.black { background: #64748b; color: #f1f5f9; }
+        
+        /* Attack Overlay */
+        .attack-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(239, 68, 68, 0.4); opacity: 0; transition: opacity 0.3s;
         }
-        .cell.current { box-shadow: inset 0 0 0 3px var(--viz-primary); }
-        .cell.invalid { background: rgba(255, 0, 0, 0.3) !important; }
+        .cell.attacked .attack-layer { opacity: 1; }
+        
+        .queen {
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.4));
+            animation: dropIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes dropIn { from { transform: scale(0) translateY(-20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
 
-        .solutions-gallery { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-top: 15px; }
-        .mini-board { 
-            display: grid; gap: 1px; width: 60px; height: 60px; background: #6b4c35; border: 2px solid var(--viz-success);
-        }
-        .mini-cell { background: #f0d9b5; }
-        .mini-cell.q { background: var(--viz-success); }
+        /* Results */
+        .results-info { font-size: 0.9rem; color: #94a3b8; margin-top: 10px; }
+        .solution-count { font-weight: bold; color: #22c55e; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -44,243 +61,211 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">N 皇后 (N-Queens)</div>
+                <div class="viz-title">N-Queens</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>N (1-6 建議):</label>
-                        <input type="number" id="nInput" value="4" style="width: 60px;" min="1" max="8">
-                        <button onclick="runCustomInput()">執行</button>
+                        <label>N (1-8):</label>
+                        <input type="number" id="nInput" value="4" min="1" max="8">
+                        <button onclick="runVisualizer()">開始解題</button>
                     </div>
                 </div>
-                
-                <div class="board-container">
-                    <div class="board" id="boardDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="board-container" id="boardDisplay"></div>
+                    <div class="results-info">已找到解: <span class="solution-count" id="solCount">0</span></div>
                 </div>
-                
-                <div style="text-align: center; color: var(--text-muted);">已找到的解</div>
-                <div class="solutions-gallery" id="solutionsDisplay"></div>
-                
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1000">0.5x</option>
+                            <option value="500" selected>1x</option>
+                            <option value="200">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(N!)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(N)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">解總數</div><div class="state-value" id="countDisplay">0</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'void solve(row, n, cols, diag1, diag2) {', id: 0 },
+            { line: 'void solve(row) {', id: 0 },
             { line: '    if (row == n) {', id: 1 },
-            { line: '        result.push_back(board); return;', id: 2 },
+            { line: '        res.push_back(board); return;', id: 2 },
             { line: '    }', id: 3 },
             { line: '    for (int col = 0; col < n; col++) {', id: 4 },
-            { line: '        if (cols[col] || diag1[r+c] || diag2[r-c]) continue;', id: 5 },
-            { line: '        board[row][col] = \'Q\';', id: 6 },
-            { line: '        cols[col] = diag1[r+c] = diag2[r-c] = true;', id: 7 },
-            { line: '        solve(row + 1, n, ...);', id: 8 },
-            { line: '        // Backtrack', id: 9 },
-            { line: '        board[row][col] = \'.\';', id: 10 },
-            { line: '        cols[col] = diag1[r+c] = diag2[r-c] = false;', id: 11 },
-            { line: '    }', id: 12 },
-            { line: '}', id: 13 },
+            { line: '        if (isValid(row, col)) {', id: 5 },
+            { line: '            board[row][col] = \'Q\';', id: 6 },
+            { line: '            solve(row + 1);', id: 7 },
+            { line: '            board[row][col] = \'.\'; // Backtrack', id: 8 },
+            { line: '        }', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '}', id: 11 }
         ];
 
-        let currentN = 4;
+        let viz;
 
-        function runCustomInput() {
-            const val = parseInt(document.getElementById('nInput').value);
-            if (isNaN(val) || val < 1 || val > 8) { // 8 is slow but possible, restrict for UX
-                alert('請輸入 1-8 之間的 N');
-                return;
-            }
-            // Visualization complexity: >6 gets very long
-            if (val > 6 && !confirm('N > 6 會產生大量步驟，可能很慢。確定要執行嗎？')) return;
-            
-            currentN = val;
-            init();
-        }
-
-        function generateAlgorithmSteps(n) {
+        function generateSteps(n) {
             const steps = [];
-            const solutions = [];
-            // State tracking
-            const cols = new Set();
-            const diag1 = new Set(); // r + c
-            const diag2 = new Set(); // r - c
-            const queens = []; // {r, c}
-            
-            steps.push({
-                queens: [], cols: [], diag1: [], diag2: [], solutions: [],
-                highlightLines: [0],
-                explanation: { title: '初始化', text: `N=${n}<br>準備開始`, formula: 'solve(0)' }
-            });
+            let solutionCount = 0;
+            const queens = []; // array of col indices for each row. -1 if empty.
+            for(let i=0; i<n; i++) queens[i] = -1;
 
-            function solve(row) {
-                if (row === n) {
-                    solutions.push([...queens]);
-                    steps.push({
-                        queens: [...queens], solutions: [...solutions], row: row,
-                        newFound: true,
-                        highlightLines: [1, 2, 3],
-                        explanation: { title: '找到解！', text: `成功放置 ${n} 個皇后`, formula: 'Found' }
-                    });
+            // Sets for O(1) checking
+            const cols = new Set();
+            const posDiag = new Set(); // r + c
+            const negDiag = new Set(); // r - c
+
+            const pushStep = (msg, hl, activeRow, activeCol, showAttack=false) => {
+                // Snapshot attack board
+                const attacked = []; // list of {r, c}
+                if (showAttack && activeRow !== null && activeCol !== null) {
+                    // Calculate affected cells for visualization highlight
+                    // Row is activeRow
+                    // Col is activeCol
+                    // Diagonals
+                    for(let r=0; r<n; r++) {
+                        for(let c=0; c<n; c++) {
+                            if (c === activeCol || 
+                                (r + c) === (activeRow + activeCol) || 
+                                (r - c) === (activeRow - activeCol)) {
+                                attacked.push({r, c});
+                            }
+                        }
+                    }
+                }
+
+                steps.push({
+                    queens: [...queens],
+                    attacked: attacked,
+                    activeSpot: {r: activeRow, c: activeCol},
+                    solCount: solutionCount,
+                    msg: msg,
+                    highlightLines: hl
+                });
+            };
+
+            pushStep(`Init: ${n}x${n} Board`, [0], 0, -1);
+
+            const solve = (r) => {
+                if (r === n) {
+                    solutionCount++;
+                    pushStep(`找到第 ${solutionCount} 組解!`, [1, 2], null, null);
                     return;
                 }
 
-                for (let col = 0; col < n; col++) {
-                    const isAttacked = cols.has(col) || diag1.has(row + col) || diag2.has(row - col);
+                for (let c = 0; c < n; c++) {
+                    const isSafe = !cols.has(c) && !posDiag.has(r+c) && !negDiag.has(r-c);
                     
-                    steps.push({
-                        queens: [...queens], row: row, col: col, solutions: [...solutions],
-                        trying: true, isAttacked: isAttacked,
-                        highlightLines: [4, 5],
-                        explanation: { 
-                            title: `嘗試放置 (${row}, ${col})`, 
-                            text: isAttacked ? '❌ 受到攻擊 (跳過)' : '✅ 安全 (放置)', 
-                            formula: `check (${row}, ${col})` 
-                        }
-                    });
-
-                    if (!isAttacked) {
-                        // Place
-                        queens.push({r: row, c: col});
-                        cols.add(col);
-                        diag1.add(row + col);
-                        diag2.add(row - col);
+                    if (!isSafe) {
+                        pushStep(`Row ${r}, Col ${c}: 受攻擊，跳過`, [5], r, c, true);
+                    } else {
+                        pushStep(`Row ${r}, Col ${c}: 安全，放置皇后`, [6], r, c);
                         
-                        steps.push({
-                            queens: [...queens], row: row, col: col, solutions: [...solutions],
-                            highlightLines: [6, 7, 8],
-                            explanation: { title: '放置皇后', text: `標記 Col, Diagonals<br>遞迴解決 Row ${row+1}`, formula: `solve(${row+1})` }
-                        });
-
-                        solve(row + 1);
-
-                        // Backtrack
-                        queens.pop();
-                        cols.delete(col);
-                        diag1.delete(row + col);
-                        diag2.delete(row - col);
+                        queens[r] = c;
+                        cols.add(c);
+                        posDiag.add(r+c);
+                        negDiag.add(r-c);
                         
-                        steps.push({
-                            queens: [...queens], row: row, col: col, solutions: [...solutions],
-                            highlightLines: [9, 10, 11],
-                            explanation: { title: '回溯', text: `移除 (${row}, ${col})<br>嘗試下一列`, formula: 'backtrack' }
-                        });
+                        solve(r + 1);
+                        
+                        pushStep(`回溯: 移除 Row ${r}, Col ${c} 的皇后`, [8], r, c);
+                        
+                        queens[r] = -1;
+                        cols.delete(c);
+                        posDiag.delete(r+c);
+                        negDiag.delete(r-c);
                     }
                 }
-            }
+            };
 
             solve(0);
-            
-            steps.push({
-                queens: [], row: 0, solutions: [...solutions], final: true,
-                explanation: { title: '結束', text: `共找到 ${solutions.length} 個解`, formula: 'Done' }
-            });
-
+            pushStep(`搜尋結束，共找到 ${solutionCount} 組解`, [11], null, null, false);
             return steps;
         }
 
-        let viz;
-        function init() {
-            // Setup Board
-            const board = document.getElementById('boardDisplay');
-            board.style.gridTemplateColumns = `repeat(${currentN}, 40px)`;
-            board.innerHTML = ''; // Steps will fill it, but maybe initial empty grid
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('solCount').textContent = step.solCount;
+
+            const n = Math.sqrt(step.queens.length); // or from input, but queens matches n
+            // Actually queens.length is n.
+            
+            const container = document.getElementById('boardDisplay');
+            container.style.gridTemplateColumns = `repeat(${step.queens.length}, 50px)`;
+            container.style.gridTemplateRows = `repeat(${step.queens.length}, 50px)`;
+            container.innerHTML = '';
+
+            // Helper to check if attacked
+            const isAttacked = (r, c) => {
+                if(!step.attacked) return false;
+                return step.attacked.some(p => p.r === r && p.c === c);
+            };
+
+            for(let r=0; r<step.queens.length; r++) {
+                for(let c=0; c<step.queens.length; c++) {
+                    const cell = document.createElement('div');
+                    let cls = 'cell ' + ((r+c)%2===0 ? 'white' : 'black');
+                    
+                    if (isAttacked(r, c)) cls += ' attacked';
+                    
+                    cell.className = cls;
+
+                    const attackLayer = document.createElement('div');
+                    attackLayer.className = 'attack-layer';
+                    cell.appendChild(attackLayer);
+
+                    if (step.queens[r] === c) {
+                        const q = document.createElement('div');
+                        q.className = 'queen';
+                        q.textContent = '♛';
+                        cell.appendChild(q);
+                    } else if (step.activeSpot && step.activeSpot.r === r && step.activeSpot.c === c) {
+                        // Current cursor
+                        const cursor = document.createElement('div');
+                        cursor.style.position = 'absolute';
+                        cursor.style.width = '10px'; cursor.style.height = '10px';
+                        cursor.style.background = '#fbbf24'; cursor.style.borderRadius = '50%';
+                        cell.appendChild(cursor);
+                    }
+
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function runVisualizer() {
+            const n = parseInt(document.getElementById('nInput').value);
+            if(n < 1 || n > 8) return alert("N 必須在 1-8 之間");
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Render Board
-                    board.innerHTML = '';
-                    for (let r = 0; r < currentN; r++) {
-                        for (let c = 0; c < currentN; c++) {
-                            let cls = 'cell ' + ((r + c) % 2 === 0 ? 'light' : 'dark');
-                            let content = '';
-                            
-                            // Check if queen here
-                            const isQueen = step.queens?.some(q => q.r === r && q.c === c);
-                            if (isQueen) {
-                                cls += ' queen';
-                                content = '♛';
-                            }
-                            
-                            // Highlight trying
-                            if (step.trying && step.row === r && step.col === c) {
-                                if (step.isAttacked) cls += ' invalid';
-                                else cls += ' current';
-                            }
-
-                            // Optional: Visualize attacks for current step context?
-                            // Simpler: if finding valid spot, show attacks?
-                            // Not implemented fully to keep UI clean, "invalid" style is enough
-                            
-                            const cell = document.createElement('div');
-                            cell.className = cls;
-                            cell.textContent = content;
-                            board.appendChild(cell);
-                        }
-                    }
-
-                    // Render Solutions Gallery
-                    if (step.newFound) {
-                        // Scroll to new
-                    }
-                    const gal = document.getElementById('solutionsDisplay');
-                    gal.innerHTML = (step.solutions || []).map(sol => {
-                        let miniGrid = '';
-                        // Render mini board solution
-                        // Since sol is array of {r,c}, we can just map simple dots
-                        // CSS grid for mini board
-                        const size = 60; 
-                        const cellSize = size / currentN;
-                        let solHtml = `<div class="mini-board" style="width:${size}px; height:${size}px; grid-template-columns:repeat(${currentN}, 1fr)">`;
-                        
-                        // We need to fill n*n cells
-                        for(let r=0; r<currentN; r++) {
-                            for(let c=0; c<currentN; c++) {
-                                const hasQ = sol.some(q => q.r === r && q.c === c);
-                                solHtml += `<div class="mini-cell ${hasQ?'q':''}"></div>`;
-                            }
-                        }
-                        solHtml += '</div>';
-                        return solHtml;
-                    }).join('');
-                    
-                    document.getElementById('countDisplay').textContent = step.solutions ? step.solutions.length : 0;
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentN));
+            viz.setSteps(generateSteps(n));
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

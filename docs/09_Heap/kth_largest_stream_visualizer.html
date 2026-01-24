@@ -3,26 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kth Largest Element in Stream - 視覺化</title>
+    <title>Kth Largest Element in a Stream - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .heap { display: flex; flex-direction: column; align-items: center; margin: 20px 0; min-height: 120px; }
-        .heap-level { display: flex; gap: 10px; margin: 5px 0; justify-content: center; }
-        .heap-node { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; font-size: 1.1rem; transition: all 0.3s; }
-        .heap-node.root { background: var(--viz-success); color: #0f172a; }
-        .heap-node.new { animation: popIn 0.5s; border: 3px solid var(--viz-warning); }
-        .heap-node.pop { opacity: 0.5; transform: scale(0.8); background: var(--viz-error); }
-        @keyframes popIn { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
-        
-        .stream { display: flex; gap: 8px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
-        .stream-item { padding: 8px 15px; background: var(--viz-bg-secondary); border-radius: 6px; font-weight: bold; font-family: monospace; }
-        .stream-item.added { background: var(--viz-warning); color: #0f172a; }
-        
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .dual-view {
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+        }
+
+        /* Tree View */
+        .tree-panel {
+            width: 100%; height: 300px;
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        #tree-svg { width: 100%; height: 100%; }
+
+        /* Array View */
+        .array-view {
+            display: flex; gap: 6px; padding: 15px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            flex-wrap: wrap; justify-content: center;
+        }
+        .array-item {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(59, 130, 246, 0.2);
+            color: #e2e8f0; font-family: monospace; font-weight: bold;
+            border-radius: 6px;
+            position: relative;
+            transition: all 0.3s;
+        }
+        .array-item .idx {
+            position: absolute; top: -18px; font-size: 0.6rem; color: #64748b;
+        }
+        .array-item.active { background: #fbbf24; color: #0f172a; transform: scale(1.1); z-index: 10; box-shadow: 0 0 10px #fbbf24; }
+        .array-item.compare { background: #a855f7; color: white; }
+        .array-item.root { border: 2px solid #22c55e; }
+
+        /* D3 Styles */
+        .node-circle { fill: #3b82f6; transition: fill 0.3s; stroke: #1e293b; stroke-width: 2px; }
+        .node-circle.active { fill: #fbbf24; filter: drop-shadow(0 0 5px #fbbf24); }
+        .node-circle.compare { fill: #a855f7; }
+        .node-circle.root { stroke: #22c55e; stroke-width: 3px; }
+        .node-text { fill: white; font-family: monospace; font-weight: bold; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .link { stroke: #64748b; stroke-width: 2px; opacity: 0.5; fill: none; }
+
+        /* Stats & Stream */
+        .stats-panel {
+            display: flex; gap: 20px; justify-content: center;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 8px;
+        }
+        .stat-item { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #fbbf24; }
+        .stat-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 80px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+
+        .step-breakdown {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 15px 20px;
+            border-left: 4px solid #3b82f6;
+            margin-top: 15px;
+            width: 100%; box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
@@ -30,265 +91,372 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">數據流中第 K 大元素（MIN HEAP）</div>
+                <div class="viz-title">Kth Largest Element in a Stream (Min Heap)</div>
                 <div class="custom-input-section">
-                    <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>初始流:</label>
-                        <input type="text" id="initialStream" value="4, 5, 8, 2" style="width: 150px;">
                         <label>K:</label>
-                        <input type="number" id="kValue" value="3" style="width: 50px;" min="1">
-                        <button onclick="resetWithCustom()">重置</button>
+                        <input type="number" id="kInput" value="3" min="1" style="width:50px">
+                        <label>初始流 (CSV):</label>
+                        <input type="text" id="streamInput" value="4, 5, 8, 2" style="flex:1">
+                        <button onclick="initViz()">初始化</button>
                     </div>
-                    <div class="input-row">
-                        <label>Add:</label>
-                        <input type="number" id="addValue" value="3" style="width: 60px;">
-                        <button onclick="addSingleValue()">加入</button>
+                    <div class="input-row" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.1); paddingTop:10px;">
+                        <label>添加數字:</label>
+                        <input type="number" id="addInput" value="3" style="width:60px">
+                        <button onclick="handleAdd()" style="background:#22c55e;">Add()</button>
+                        <button onclick="resetViz()" style="background:var(--viz-error);">重置</button>
                     </div>
                 </div>
-                
-                <div style="text-align: center; color: var(--text-muted); margin-top: 10px;">Min Heap (Size ≤ K)</div>
-                <div class="heap" id="heapDisplay"></div>
-                
-                <div style="text-align: center; color: var(--text-muted);">歷史數據流</div>
-                <div class="stream" id="streamDisplay"></div>
-                
+
+                <div class="visualization-area">
+                    <div class="stats-panel">
+                        <div class="stat-item"><div class="stat-val" id="kDisplay">3</div><div class="stat-label">K (Capacity)</div></div>
+                        <div class="stat-item"><div class="stat-val" id="sizeDisplay">0</div><div class="stat-label">Heap Size</div></div>
+                        <div class="stat-item"><div class="stat-val" id="kthDisplay">-</div><div class="stat-label">Kth Largest</div></div>
+                    </div>
+                    
+                    <div class="dual-view">
+                        <div class="array-view" id="arrayDisplay"></div>
+                        <div class="tree-panel">
+                            <svg id="tree-svg">
+                                <g id="tree-g"></g>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="800" selected>1x</option>
+                            <option value="300">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(log k) add
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(k)
-                </div>
-                
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">K</div><div class="state-value" id="kDisplay">3</div></div>
-                    <div class="state-item"><div class="state-label">第 K 大</div><div class="state-value" id="kthDisplay" style="color: var(--viz-success);">?</div></div>
-                </div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color root"></div>堆頂 (第 K 大)</div>
-                    <div class="legend-item"><div class="legend-color new"></div>新加入</div>
-                    <div class="legend-item"><div class="legend-color pop"></div>移除</div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'class KthLargest {', id: 0 },
-            { line: '    priority_queue<int, vector<int>, greater<int>> minHeap;', id: 1 },
+            { line: '    priority_queue<int, ..., greater<int>> minHeap;', id: 1 },
             { line: '    int k;', id: 2 },
-            { line: 'public:', id: 3 },
-            { line: '    KthLargest(int k, vector<int>& nums) : k(k) {', id: 4 },
-            { line: '        for (int n : nums) add(n);', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    int add(int val) {', id: 7 },
-            { line: '        minHeap.push(val);', id: 8 },
-            { line: '        if (minHeap.size() > k) minHeap.pop();', id: 9 },
-            { line: '        return minHeap.top(); // 第 k 大', id: 10 },
-            { line: '    }', id: 11 },
-            { line: '};', id: 12 },
+            { line: '    int add(int val) {', id: 3 },
+            { line: '        minHeap.push(val);', id: 4 },
+            { line: '        if (minHeap.size() > k) {', id: 5 },
+            { line: '            minHeap.pop();', id: 6 },
+            { line: '        }', id: 7 },
+            { line: '        return minHeap.top();', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '};', id: 10 }
         ];
 
-        let currentK = 3;
-        let currentStream = [4, 5, 8, 2];
-        let addedValues = [];
+        let viz;
+        // Global simulation state
+        let k = 3;
+        let heap = []; // Representing minHeap array
 
-        function parseStream(input) {
-            return input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-        }
+        // Helper to clone heap for steps
+        const snap = () => JSON.parse(JSON.stringify(heap));
 
-        // Min Heap Implementation
-        class MinHeap {
-            constructor() { this.heap = []; }
-            push(val) {
-                this.heap.push(val);
-                this.bubbleUp(this.heap.length - 1);
-            }
-            pop() {
-                if (this.heap.length === 0) return null;
-                const min = this.heap[0];
-                const last = this.heap.pop();
-                if (this.heap.length > 0) {
-                    this.heap[0] = last;
-                    this.bubbleDown(0);
-                }
-                return min;
-            }
-            peek() { return this.heap[0]; }
-            size() { return this.heap.length; }
-            bubbleUp(idx) {
-                while (idx > 0) {
-                    let pIdx = Math.floor((idx - 1) / 2);
-                    if (this.heap[idx] >= this.heap[pIdx]) break;
-                    [this.heap[idx], this.heap[pIdx]] = [this.heap[pIdx], this.heap[idx]];
-                    idx = pIdx;
-                }
-            }
-            bubbleDown(idx) {
-                while (true) {
-                    let left = 2 * idx + 1, right = 2 * idx + 2, swap = idx;
-                    if (left < this.heap.length && this.heap[left] < this.heap[swap]) swap = left;
-                    if (right < this.heap.length && this.heap[right] < this.heap[swap]) swap = right;
-                    if (swap === idx) break;
-                    [this.heap[idx], this.heap[swap]] = [this.heap[swap], this.heap[idx]];
-                    idx = swap;
-                }
-            }
-        }
-
-        function generateAlgorithmSteps(k, initialNums, adds) {
+        function generateAddSteps(val, currentHeap, capacity) {
             const steps = [];
-            const mh = new MinHeap();
-            const fullStream = [...initialNums];
+            let h = [...currentHeap];
             
+            // 1. Push
+            h.push(val);
             steps.push({
-                heap: [],
-                stream: [...initialNums],
-                k: k,
-                kth: null,
-                highlightLines: [0, 1, 2, 4],
-                explanation: {
-                    title: '初始化',
-                    text: `K = ${k}<br>初始數據流: [${initialNums.join(', ')}]<br>準備建立 Min Heap`,
-                    formula: 'priority_queue<int, vector<int>, greater<int>> minHeap'
-                }
+                heap: [...h],
+                activeIdx: h.length - 1,
+                highlightLines: [4],
+                msg: `加入值 ${val} 到堆尾`,
+                kth: h[0]
             });
 
-            // Process initial stream
-            for (const n of initialNums) {
-                mh.push(n);
-                const popped = mh.size() > k ? mh.pop() : null;
+            // Sift Up
+            let idx = h.length - 1;
+            while (idx > 0) {
+                let parentIdx = Math.floor((idx - 1) / 2);
+                steps.push({
+                    heap: [...h],
+                    activeIdx: idx,
+                    compareIdx: parentIdx,
+                    highlightLines: [4], // Still processing push
+                    msg: `比較: ${h[idx]} < ${h[parentIdx]} (Parent)?`,
+                    kth: h[0]
+                });
+
+                if (h[idx] < h[parentIdx]) {
+                    // Swap
+                    [h[idx], h[parentIdx]] = [h[parentIdx], h[idx]];
+                    steps.push({
+                        heap: [...h],
+                        activeIdx: parentIdx,
+                        highlightLines: [4],
+                        msg: `交換: ${h[parentIdx]} 與 ${h[idx]}`,
+                        kth: h[0]
+                    });
+                    idx = parentIdx;
+                } else {
+                    break;
+                }
+            }
+
+            // 2. Check Size
+            steps.push({
+                heap: [...h],
+                highlightLines: [5],
+                msg: `檢查大小: ${h.length} > ${capacity}?`,
+                kth: h[0]
+            });
+
+            if (h.length > capacity) {
+                // Pop Min (Root)
+                const removed = h[0];
+                h[0] = h[h.length - 1];
+                h.pop();
                 
                 steps.push({
-                    heap: [...mh.heap],
-                    stream: [...initialNums],
-                    addedVal: n,
-                    poppedVal: popped,
-                    k: k,
-                    kth: mh.size() === k ? mh.peek() : null,
-                    highlightLines: [5, 8, 9],
-                    explanation: {
-                        title: `初始化: 加入 ${n}`,
-                        text: `加入 ${n}${popped !== null ? `，Heap 大小 > K，移除最小元素 ${popped}` : ''}<br>目前堆頂(第 ${k} 大): ${mh.size() === k ? mh.peek() : '不足 K 個'}`,
-                        formula: `minHeap.push(${n})` + (popped ? `; minHeap.pop()` : '')
-                    }
+                    heap: [...h],
+                    activeIdx: 0,
+                    highlightLines: [6],
+                    msg: `大小超過 K，移除堆頂 (最小值 ${removed})，將尾部 ${h[0]} 移至堆頂`,
+                    kth: h[0]
                 });
+
+                // Sift Down
+                let i = 0;
+                while (true) {
+                    let left = 2 * i + 1;
+                    let right = 2 * i + 2;
+                    let smallest = i;
+
+                    if (left < h.length) {
+                        steps.push({
+                            heap: [...h],
+                            activeIdx: smallest,
+                            compareIdx: left,
+                            highlightLines: [6],
+                            msg: `比較: ${h[smallest]} > ${h[left]} (Left)?`,
+                            kth: h[0]
+                        });
+                        if (h[left] < h[smallest]) smallest = left;
+                    }
+                    
+                    if (right < h.length) {
+                        steps.push({
+                            heap: [...h],
+                            activeIdx: smallest,
+                            compareIdx: right,
+                            highlightLines: [6],
+                            msg: `比較: ${h[smallest]} > ${h[right]} (Right)?`,
+                            kth: h[0]
+                        });
+                        if (h[right] < h[smallest]) smallest = right;
+                    }
+
+                    if (smallest !== i) {
+                        [h[i], h[smallest]] = [h[smallest], h[i]];
+                        steps.push({
+                            heap: [...h],
+                            activeIdx: smallest,
+                            highlightLines: [6],
+                            msg: `交換: ${h[smallest]} 與 ${h[i]}`,
+                            kth: h[0]
+                        });
+                        i = smallest;
+                    } else {
+                        break;
+                    }
+                }
             }
 
-            // Process added values
-            for (const val of adds) {
-                fullStream.push(val);
-                mh.push(val);
-                const popped = mh.size() > k ? mh.pop() : null;
-                const kth = mh.peek();
+            // 3. Result
+            steps.push({
+                heap: [...h],
+                activeIdx: 0,
+                highlightLines: [8],
+                msg: `返回堆頂 (第 K 大): ${h[0]}`,
+                kth: h[0]
+            });
 
-                steps.push({
-                    heap: [...mh.heap],
-                    stream: [...fullStream],
-                    addedVal: val,
-                    poppedVal: popped,
-                    k: k,
-                    kth: kth,
-                    highlightLines: [7, 8, 9, 10],
-                    explanation: {
-                        title: `Add(${val})`,
-                        text: `加入 ${val}${popped !== null ? `，Heap > K，移除 ${popped}` : ''}<br>更新後堆頂 = ${kth} (即第 ${k} 大)`,
-                        formula: `return ${kth}`
-                    }
-                });
-            }
-
-            return steps;
+            return { steps, finalHeap: h };
         }
 
-        function resetWithCustom() {
-            const streamStr = document.getElementById('initialStream').value;
-            const kVal = parseInt(document.getElementById('kValue').value);
-            if (isNaN(kVal) || kVal < 1) { alert('K 必須 >= 1'); return; }
+        // --- Render ---
+        const svg = d3.select("#tree-svg");
+        const gTree = d3.select("#tree-g");
+        // Center tree g
+        gTree.attr("transform", "translate(0, 40)");
+
+        let width = 600, height = 300;
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('sizeDisplay').textContent = step.heap.length;
+            document.getElementById('kthDisplay').textContent = step.kth !== undefined ? step.kth : '-';
+
+            // 1. Array View
+            const arrC = document.getElementById('arrayDisplay');
+            arrC.innerHTML = step.heap.map((val, i) => {
+                let cls = 'array-item';
+                if (i === 0) cls += ' root';
+                if (i === step.activeIdx) cls += ' active';
+                if (i === step.compareIdx) cls += ' compare';
+                return `<div class="${cls}"><span class="idx">${i}</span>${val}</div>`;
+            }).join('');
+
+            // 2. Tree View
+            // D3 Hierarchy from Array
+            if (step.heap.length === 0) {
+                gTree.selectAll("*").remove();
+                return;
+            }
+
+            const stratify = (idx) => {
+                if (idx >= step.heap.length) return null;
+                const node = { id: idx, val: step.heap[idx], children: [] };
+                const left = stratify(2 * idx + 1);
+                const right = stratify(2 * idx + 2);
+                if(left) node.children.push(left);
+                if(right) node.children.push(right);
+                return node;
+            }
             
-            currentStream = parseStream(streamStr);
-            currentK = kVal;
-            addedValues = [];
-            init();
+            const rootData = stratify(0);
+            const hierarchy = d3.hierarchy(rootData);
+            const treeLayout = d3.tree().size([document.querySelector('.tree-panel').clientWidth, 220]);
+            treeLayout(hierarchy);
+
+            // Links
+            const links = gTree.selectAll(".link").data(hierarchy.links(), d => d.target.data.id);
+            links.enter().append("path").attr("class", "link")
+                .merge(links)
+                .transition().duration(200)
+                .attr("d", d3.linkVertical().x(d=>d.x).y(d=>d.y));
+            links.exit().remove();
+
+            // Nodes
+            const nodes = gTree.selectAll(".node").data(hierarchy.descendants(), d => d.data.id);
+            const nEnter = nodes.enter().append("g").attr("class", "node");
+            nEnter.append("circle").attr("r", 18).attr("class", "node-circle");
+            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
+
+            const nUpdate = nodes.merge(nEnter)
+                .transition().duration(200)
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+            
+            nUpdate.select(".node-circle").attr("class", d => {
+                let cls = "node-circle";
+                if (d.data.id === 0) cls += " root";
+                if (d.data.id === step.activeIdx) cls += " active";
+                if (d.data.id === step.compareIdx) cls += " compare";
+                return cls;
+            });
+            nUpdate.select(".node-text").text(d => d.data.val);
+            
+            nodes.exit().remove();
         }
 
-        function addSingleValue() {
-            const val = parseInt(document.getElementById('addValue').value);
-            if (isNaN(val)) return;
-            addedValues.push(val);
-            init(); // Re-run visually with new history
-        }
+        // Init
+        function initViz() {
+            k = parseInt(document.getElementById('kInput').value);
+            const str = document.getElementById('streamInput').value;
+            const nums = str.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            
+            document.getElementById('kDisplay').textContent = k;
+            
+            // Build initial heap
+            heap = [];
+            // We can simulate add one by one, but for init let's just do it fast or reset
+            // For now, let's treat init as empty then adding one by one internally without animation for initial state?
+            // User likely wants to see initialization.
+            // Let's just set heap empty and let user add or pre-populate logically.
+            // Actually, problem says "initial stream".
+            
+            // Let's just fill it properly without detailed steps for init, just final state
+            const pq = new MinPriorityQueue(); // Simple simulation
+            for(let n of nums) {
+                pq.enqueue(n);
+                if(pq.size() > k) pq.dequeue();
+            }
+            heap = pq.values(); // Assuming we use a helper or manual array
+            
+            // Actually, let's implement array logic
+            heap = [];
+            for(let n of nums) {
+               // push
+               heap.push(n);
+               // sift up
+               let c = heap.length-1;
+               while(c > 0) {
+                   let p = Math.floor((c-1)/2);
+                   if(heap[c] < heap[p]) { [heap[c],heap[p]] = [heap[p],heap[c]]; c = p; } else break;
+               }
+               // pop if needed
+               if(heap.length > k) {
+                   heap[0] = heap.pop();
+                   // sift down
+                   let i = 0;
+                   while(true) {
+                       let l=2*i+1, r=2*i+2, s=i;
+                       if(l<heap.length && heap[l]<heap[s]) s=l;
+                       if(r<heap.length && heap[r]<heap[s]) s=r;
+                       if(s!==i) { [heap[i],heap[s]] = [heap[s],heap[i]]; i=s; } else break;
+                   }
+               }
+            }
 
-        let viz;
-        function init() {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    document.getElementById('kDisplay').textContent = step.k;
-                    document.getElementById('kthDisplay').textContent = step.kth !== null ? step.kth : '-';
-                    
-                    // Render Heap
-                    let heapHtml = '';
-                    const heap = step.heap || [];
-                    if (heap.length === 0) heapHtml = '<div style="color:var(--text-muted)">空</div>';
-                    else {
-                        // Simple level rendering logic
-                        let idx = 0;
-                        let levelSize = 1;
-                        while (idx < heap.length) {
-                            heapHtml += '<div class="heap-level">';
-                            for (let i = 0; i < levelSize && idx < heap.length; i++) {
-                                const val = heap[idx];
-                                let cls = 'heap-node';
-                                if (idx === 0) cls += ' root';
-                                if (val === step.addedVal && step.poppedVal === undefined) cls += ' new'; 
-                                heapHtml += `<div class="${cls}">${val}</div>`;
-                                idx++;
-                            }
-                            heapHtml += '</div>';
-                            levelSize *= 2;
-                        }
-                    }
-                    document.getElementById('heapDisplay').innerHTML = heapHtml;
-                    
-                    // Render Stream
-                    document.getElementById('streamDisplay').innerHTML = (step.stream || []).map(n => {
-                        let cls = 'stream-item';
-                        if (n === step.addedVal) cls += ' added';
-                        return `<span class="${cls}">${n}</span>`;
-                    }).join('');
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentK, currentStream, addedValues));
+            viz.setSteps([{
+                heap: [...heap], activeIdx: null, msg: "初始化完成", kth: heap.length>=k ? heap[0] : null, highlightLines: [1]
+            }]);
         }
-        function resetVisualization() { 
-            addedValues = [];
-            init(); 
+
+        function handleAdd() {
+            const val = parseInt(document.getElementById('addInput').value);
+            if(isNaN(val)) return;
+            
+            const { steps, finalHeap } = generateAddSteps(val, heap, k);
+            heap = finalHeap;
+            viz.setSteps(steps);
+            viz.startAutoPlay();
         }
-        window.addEventListener('load', init);
+
+        function resetViz() {
+            heap = [];
+            viz.setSteps([{heap:[], msg:"已重置", highlightLines:[]}]);
+        }
+
+        window.addEventListener('load', () => {
+            initViz();
+        });
     </script>
 </body>
 </html>

@@ -2,37 +2,76 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Last Stone Weight 最後一塊石頭 - 視覺化</title>
+    <title>Last Stone Weight (Max Heap) - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .stones { display: flex; gap: 8px; justify-content: center; margin: 15px 0; flex-wrap: wrap; align-items: flex-end; min-height: 80px; }
-        .stone { 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-family: monospace; font-weight: bold; background: var(--viz-primary); color: white;
-            transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-        .stone.smash { background: var(--viz-error); animation: shake 0.5s; }
-        .stone.result { background: var(--viz-success); color: #0f172a; border: 3px solid #fff; }
-        .stone.new { background: var(--viz-warning); color: #0f172a; animation: popIn 0.5s; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        @keyframes popIn { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
-        
-        .battle-arena { 
-            text-align: center; margin: 15px auto; padding: 15px; 
-            background: var(--viz-bg-secondary); border-radius: 12px; width: fit-content; min-width: 200px;
+
+        .dual-view {
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
         }
-        .battle-text { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; }
-        .battle-visual { font-size: 2rem; }
+
+        .tree-panel {
+            width: 100%; height: 320px;
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 12px;
+            position: relative;
+        }
+        #tree-svg { width: 100%; height: 100%; }
+
+        .array-view {
+            display: flex; gap: 6px; padding: 15px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            flex-wrap: wrap; justify-content: center;
+        }
+        .array-item {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            background: #3b82f6; color: white;
+            border-radius: 50%; /* Stones are round */
+            font-weight: bold; position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+        .array-item.active { background: #fbbf24; transform: scale(1.2); z-index: 10; }
+        .array-item.second { background: #f59e0b; }
         
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .smash-zone {
+            height: 80px; display: flex; align-items: center; justify-content: center; gap: 40px;
+            background: rgba(255,255,255,0.05); border-radius: 12px;
+            margin-top: 10px; position: relative;
+        }
+        .stone-slot {
+            width: 50px; height: 50px; border: 2px dashed #64748b; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; color: #64748b;
+        }
+        
+        .stone-anim {
+            width: 50px; height: 50px; background: #fbbf24; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; color: black; box-shadow: 0 0 10px #fbbf24;
+        }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
         .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-        .heap-view { display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
-        .heap-bar { width: 40px; background: var(--viz-primary); margin: 0 2px; border-radius: 4px 4px 0 0; transition: height 0.3s; }
-        .heap-container { display: flex; align-items: flex-end; height: 100px; border-bottom: 2px solid var(--viz-border); padding-bottom: 2px; }
+
+        .step-breakdown {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px; border-left: 4px solid #3b82f6;
+            padding: 15px 20px;
+        }
     </style>
 </head>
 <body>
@@ -40,63 +79,62 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">最後一塊石頭的重量（MAX HEAP）</div>
+                <div class="viz-title">Last Stone Weight (Max Heap)</div>
                 <div class="custom-input-section">
-                    <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
-                        <input type="text" id="stonesInput" value="2, 7, 4, 1, 8, 1" style="width: 200px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <label>石頭重量:</label>
+                        <input type="text" id="numsInput" value="2, 7, 4, 1, 8, 1">
+                        <button onclick="runVisualizer()">粉碎 (Smash)!</button>
                     </div>
                 </div>
-                
-                <div class="battle-arena">
-                    <div class="battle-text" id="battleText">準備開始</div>
-                    <div class="battle-visual" id="battleVisual">⚖️</div>
+
+                <div class="visualization-area">
+                    <div class="dual-view">
+                        <div class="array-view" id="arrayDisplay"></div>
+                        <div class="tree-panel">
+                            <svg id="tree-svg"><g id="tree-g"></g></svg>
+                        </div>
+                    </div>
+                    
+                    <div class="smash-zone" id="smashZone">
+                        <div class="stone-slot" id="slot1">Y</div>
+                        <div style="font-size:2rem;">💥</div>
+                        <div class="stone-slot" id="slot2">X</div>
+                    </div>
                 </div>
-                
-                <div style="text-align: center; color: var(--text-muted); margin-top: 10px;">目前石頭 (Max Heap)</div>
-                <div class="stones" id="stonesDisplay"></div>
-                
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n log n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">剩餘石頭數</div><div class="state-value" id="countDisplay">0</div></div>
-                    <div class="state-item"><div class="state-label">最終結果</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
-                </div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>石頭</div>
-                    <div class="legend-item"><div class="legend-color smash" style="background:var(--viz-error)"></div>碰撞</div>
-                    <div class="legend-item"><div class="legend-color new" style="background:var(--viz-warning)"></div>新產生</div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
@@ -105,136 +143,194 @@
             { line: '    while (pq.size() > 1) {', id: 2 },
             { line: '        int y = pq.top(); pq.pop();', id: 3 },
             { line: '        int x = pq.top(); pq.pop();', id: 4 },
-            { line: '        if (y > x) {', id: 5 },
-            { line: '            pq.push(y - x);', id: 6 },
-            { line: '        }', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '    return pq.empty() ? 0 : pq.top();', id: 9 },
-            { line: '}', id: 10 },
+            { line: '        if (x != y) pq.push(y - x);', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return pq.empty() ? 0 : pq.top();', id: 7 },
+            { line: '}', id: 8 }
         ];
-        
-        let currentStones = [2, 7, 4, 1, 8, 1];
 
-        function parseStones(input) {
-            return input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-        }
+        let viz;
 
-        function generateAlgorithmSteps(stones) {
+        function simulateMaxHeap(initialStones) {
             const steps = [];
-            // Use array to simulate Max Heap (sorted descending)
-            let heap = [...stones].sort((a, b) => b - a);
-            
-            steps.push({
-                stones: [...heap],
-                battleText: "初始化 Heap",
-                battleVisual: "🏗️",
-                highlightLines: [0, 1],
-                explanation: { 
-                    title: '建立 Max Heap', 
-                    text: `所有石頭放入 Max Heap<br>排序後：[${heap.join(', ')}]`,
-                    formula: 'priority_queue<int> pq'
+            let heap = []; // Max Heap array representation
+
+            // Heap Utils
+            const swap = (i, j) => [heap[i], heap[j]] = [heap[j], heap[i]];
+            const siftUp = (i) => {
+                while(i > 0) {
+                    let p = Math.floor((i-1)/2);
+                    if(heap[i] > heap[p]) { swap(i, p); i=p; } else break;
                 }
-            });
+            };
+            const siftDown = (i) => {
+                while(true) {
+                    let l=2*i+1, r=2*i+2, large=i;
+                    if(l<heap.length && heap[l]>heap[large]) large=l;
+                    if(r<heap.length && heap[r]>heap[large]) large=r;
+                    if(large!==i) { swap(i, large); i=large; } else break;
+                }
+            };
+            const push = (val) => { heap.push(val); siftUp(heap.length-1); };
+            const pop = () => {
+                if(heap.length===0) return null;
+                const top = heap[0];
+                const last = heap.pop();
+                if(heap.length > 0) { heap[0] = last; siftDown(0); }
+                return top;
+            };
+
+            // Build Heap
+            for(let s of initialStones) push(s); // Naive build
+            // Better: Floyd's build, but for simulation let's assume valid heap start
+            // Actually, let's just make it a valid heap instantly for step 0
             
-            while (heap.length > 1) {
+            // Re-build manually for correct initial state
+            heap = [...initialStones];
+            for(let i=Math.floor(heap.length/2)-1; i>=0; i--) siftDown(i);
+
+            steps.push({
+                heap: [...heap], 
+                highlightLines: [1], 
+                msg: `初始化 Max Heap: [${heap.join(', ')}]`,
+                y: null, x: null
+            });
+
+            while(heap.length > 1) {
+                steps.push({
+                    heap: [...heap],
+                    highlightLines: [2],
+                    msg: `Heap 大小 > 1，繼續粉碎`
+                });
+
+                // Pop Y
                 const y = heap[0];
-                const x = heap[1];
+                const lastY = heap.pop();
+                if(heap.length > 0) { heap[0] = lastY; siftDown(0); } else { /* heap empty */ }
                 
                 steps.push({
-                    stones: [...heap],
-                    smashIdx: [0, 1],
-                    battleText: `碰撞：${y} vs ${x}`,
-                    battleVisual: "💥",
-                    highlightLines: [2, 3, 4],
-                    explanation: { 
-                        title: `取出最重兩塊`, 
-                        text: `Y = ${y} (最重)<br>X = ${x} (次重)`,
-                        formula: `y=${y}, x=${x}`
-                    }
+                    heap: [...heap],
+                    y: y, x: null,
+                    highlightLines: [3],
+                    msg: `取出最重石頭 Y = ${y}`
                 });
+
+                // Pop X
+                const x = heap[0];
+                const lastX = heap.pop();
+                if(heap.length > 0) { heap[0] = lastX; siftDown(0); }
                 
-                heap = heap.slice(2); // pop two
-                
-                if (y > x) {
-                    const diff = y - x;
-                    heap.push(diff);
-                    heap.sort((a, b) => b - a);
-                    
+                steps.push({
+                    heap: [...heap],
+                    y: y, x: x,
+                    highlightLines: [4],
+                    msg: `取出次重石頭 X = ${x}`
+                });
+
+                // Smash
+                if (x !== y) {
+                    const remain = y - x;
+                    push(remain);
                     steps.push({
-                        stones: [...heap],
-                        newStone: diff,
-                        battleText: `${y} - ${x} = ${diff}`,
-                        battleVisual: "✨",
-                        highlightLines: [5, 6],
-                        explanation: { 
-                            title: `產生新石頭 ${diff}`, 
-                            text: `${y} > ${x}，兩者相減產生新石頭 ${diff}<br>放回 Heap`,
-                            formula: `push(${y} - ${x})`
-                        }
+                        heap: [...heap],
+                        y: y, x: x, smash: true,
+                        highlightLines: [5],
+                        msg: `X != Y, 粉碎！放回 ${y} - ${x} = ${remain}`
                     });
                 } else {
                     steps.push({
-                        stones: [...heap],
-                        battleText: `${y} = ${x} (抵銷)`,
-                        battleVisual: "💨",
+                        heap: [...heap],
+                        y: y, x: x, smash: true,
                         highlightLines: [5],
-                        explanation: { 
-                            title: '完全抵銷', 
-                            text: `${y} == ${x}，兩塊石頭完全粉碎<br>無新石頭`,
-                            formula: `y == x`
-                        }
+                        msg: `X == Y, 兩者皆粉碎，不放回`
                     });
                 }
             }
-            
-            const result = heap.length === 0 ? 0 : heap[0];
+
             steps.push({
-                stones: [...heap],
-                result: result,
-                battleText: `最終結果: ${result}`,
-                battleVisual: "🏆",
-                highlightLines: [9],
-                explanation: { 
-                    title: '結束', 
-                    text: heap.length === 0 ? '所有石頭粉碎' : `剩下一塊石頭：${result}`,
-                    formula: `return ${result}` 
-                }
+                heap: [...heap],
+                highlightLines: [7],
+                msg: `剩下的石頭重量: ${heap.length ? heap[0] : 0}`,
+                done: true
             });
-            
+
             return steps;
         }
 
-        function runCustomInput() {
-            const input = document.getElementById('stonesInput').value;
-            currentStones = parseStones(input);
-            if (currentStones.length === 0) { alert('請輸入有效數字'); return; }
-            init();
+        const svg = d3.select("#tree-svg");
+        const gTree = d3.select("#tree-g").attr("transform", "translate(0, 40)");
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            // Render Smash Zone
+            const s1 = document.getElementById('slot1');
+            const s2 = document.getElementById('slot2');
+            s1.innerHTML = step.y !== null && step.y !== undefined ? `<div class="stone-anim" style="transform:scale(1.2)">${step.y}</div>` : 'Y';
+            s2.innerHTML = step.x !== null && step.x !== undefined ? `<div class="stone-anim">${step.x}</div>` : 'X';
+
+            // Render Array
+            const arrC = document.getElementById('arrayDisplay');
+            arrC.innerHTML = step.heap.map((v, i) => 
+                `<div class="array-item">${v}</div>`
+            ).join('');
+
+            // Render Tree
+            if(step.heap.length === 0) {
+                gTree.selectAll("*").remove();
+                return;
+            }
+            
+            const stratify = (idx) => {
+                if(idx >= step.heap.length) return null;
+                const node = { id: idx, val: step.heap[idx], children: [] };
+                const l = stratify(2*idx+1);
+                const r = stratify(2*idx+2);
+                if(l) node.children.push(l);
+                if(r) node.children.push(r);
+                return node;
+            };
+            
+            const root = d3.hierarchy(stratify(0));
+            const treeLayout = d3.tree().size([document.querySelector('.tree-panel').clientWidth, 220]);
+            treeLayout(root);
+
+            const links = gTree.selectAll(".link").data(root.links(), d=>d.target.data.id);
+            links.enter().append("path").attr("class", "link")
+                .merge(links)
+                .transition().duration(200)
+                .attr("d", d3.linkVertical().x(d=>d.x).y(d=>d.y))
+                .style("stroke", "#cbd5e1").style("fill", "none");
+            links.exit().remove();
+
+            const nodes = gTree.selectAll(".node-g").data(root.descendants(), d=>d.data.id);
+            const nEnter = nodes.enter().append("g").attr("class", "node-g");
+            nEnter.append("circle").attr("r", 18).attr("fill", "#3b82f6");
+            nEnter.append("text").attr("fill", "white").attr("dy", 5).attr("text-anchor", "middle").style("font-weight", "bold");
+            
+            const nUpdate = nodes.merge(nEnter)
+                .transition().duration(200)
+                .attr("transform", d=>`translate(${d.x},${d.y})`);
+            
+            nUpdate.select("circle"); 
+            nUpdate.select("text").text(d=>d.data.val);
+            
+            nodes.exit().remove();
         }
 
-        let viz;
-        function init() {
+        function runVisualizer() {
+            const val = document.getElementById('numsInput').value;
+            const nums = val.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            if(!nums.length) return;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    document.getElementById('stonesDisplay').innerHTML = (step.stones || []).map((s, i) => {
-                        const size = Math.min(60, 30 + s * 3);
-                        let cls = 'stone';
-                        if (step.smashIdx?.includes(i)) cls += ' smash';
-                        if (step.newStone === s && !step.smashIdx) cls += ' new'; // Simple heuristic
-                        if (step.result !== undefined && step.stones.length === 1) cls += ' result';
-                        return `<div class="${cls}" style="width: ${size}px; height: ${size}px;">${s}</div>`;
-                    }).join('');
-                    
-                    document.getElementById('battleText').textContent = step.battleText || '-';
-                    document.getElementById('battleVisual').textContent = step.battleVisual || '';
-                    document.getElementById('countDisplay').textContent = step.stones?.length ?? 0;
-                    document.getElementById('resultDisplay').textContent = step.result ?? '?';
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentStones));
+            viz.setSteps(simulateMaxHeap(nums));
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

@@ -3,24 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Search II - 視覺化</title>
+    <title>Word Search II - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .grid { display: grid; gap: 2px; max-width: 220px; margin: 0 auto; }
-        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; background: var(--viz-primary); color: white; border-radius: 4px; font-size: 1.1rem; font-weight: bold; }
-        .cell.path { background: var(--viz-secondary); color: #0f172a; }
-        .cell.found { background: var(--viz-success); color: #0f172a; }
-        .cell.visited { background: var(--viz-warning); color: #0f172a; }
-        .words-display { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
-        .word-item { padding: 6px 12px; border-radius: 4px; font-family: monospace; background: rgba(255,255,255,0.1); }
-        .word-item.found { background: var(--viz-success); color: #0f172a; }
-        .word-item.searching { background: var(--viz-warning); color: #0f172a; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .dual-view {
+            display: flex; gap: 20px; width: 100%; justify-content: center; flex-wrap: wrap;
+        }
+        
+        .view-panel {
+            background: rgba(30, 41, 59, 0.4); border-radius: 12px; padding: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .view-title { font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px; font-weight: bold; }
+
+        /* Grid View */
+        .grid-container {
+            display: inline-grid; gap: 4px; 
+        }
+        .cell {
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            background: #334155; border-radius: 4px; font-weight: bold; color: #cbd5e1;
+            transition: all 0.3s;
+        }
+        .cell.visiting { background: #fbbf24; color: #0f172a; transform: scale(1.1); box-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
+        .cell.backtrack { background: #ef4444; opacity: 0.7; }
+        .cell.found { background: #22c55e; color: white; }
+        .cell.path { border: 2px solid #60a5fa; }
+
+        /* Trie View (Svg) */
+        #trie-svg { width: 300px; height: 300px; background: transparent; }
+        
+        .trie-node { fill: #3b82f6; stroke: none; transition: all 0.3s; }
+        .trie-node.current { fill: #fbbf24; filter: drop-shadow(0 0 5px #fbbf24); }
+        .trie-node.match { fill: #22c55e; stroke: #fff; stroke-width: 2px; }
+        .trie-node.root { fill: #64748b; }
+        .trie-text { fill: white; font-family: monospace; font-size: 10px; pointer-events: none; text-anchor: middle; dominant-baseline: middle; }
+        
+        .trie-link { stroke: #64748b; stroke-width: 1.5px; opacity: 0.3; }
+        .trie-link.active { stroke: #fbbf24; stroke-width: 2px; opacity: 1; }
+
+        /* Result List */
+        .found-words { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; min-height: 30px; }
+        .word-tag { padding: 4px 10px; background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 12px; color: #4ade80; font-size: 0.8rem; }
+
+        /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input, .input-row textarea { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-        .input-hint { font-size: 0.8rem; color: var(--viz-text-muted); margin-top: 5px; }
+        .input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
+        .input-row textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; height: 50px; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 15px 20px;
+            border-left: 4px solid #3b82f6;
+            margin-top: 15px;
+            width: 100%; box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
@@ -28,235 +80,348 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">WORD SEARCH II (TRIE + BACKTRACKING)</div>
+                <div class="viz-title">Word Search II (Trie + DFS)</div>
                 <div class="custom-input-section">
-                    <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
-                        <textarea id="boardInput" rows="4" style="width: 180px;">o,a,a,n
+                        <div>
+                            <label>Grid (csv):</label>
+                            <textarea id="boardInput">o,a,a,n
 e,t,a,e
 i,h,k,r
 i,f,l,v</textarea>
+                        </div>
+                        <div>
+                            <label>Words (comma):</label>
+                            <input type="text" id="wordsInput" value="oath,pea,eat,rain">
+                        </div>
+                        <button onclick="runVisualizer()">開始搜尋</button>
                     </div>
-                    <div class="input-row">
-                        <input type="text" id="wordsInput" placeholder="單詞列表" value="oath,pea,eat,rain" style="width: 200px;">
-                        <button onclick="runCustomInput()">執行</button>
-                    </div>
-                    <div class="input-hint">每行一列，逗號分隔字母</div>
                 </div>
-                <div class="grid" id="gridDisplay" style="grid-template-columns: repeat(4, 40px);"></div>
-                <div style="margin-top: 15px; text-align: center; color: var(--viz-text-muted);">找到的單詞：</div>
-                <div class="words-display" id="wordsDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="dual-view">
+                        <div class="view-panel">
+                            <div class="view-title">Grid (DFS 訪問)</div>
+                            <div class="grid-container" id="gridDisplay"></div>
+                        </div>
+                        <div class="view-panel">
+                            <div class="view-title">Trie (前綴匹配)</div>
+                            <svg id="trie-svg">
+                                <g id="zoom-layer"></g> 
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 10px; color: #94a3b8; font-size: 0.9rem;">已找到單詞:</div>
+                    <div class="found-words" id="foundDisplay"></div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← Prev</button>
-                    <div class="step-indicator">Step <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">Next →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ Reset</button>
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="800" selected>1x</option>
+                            <option value="300">1.5x</option>
                         </select>
                     </div>
                 </div>
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(m×n×4^L)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(W×L)
-                </div>
-                <div class="legend">
-                    <div class="legend-item"><div class="legend-color normal"></div>未訪問</div>
-                    <div class="legend-item"><div class="legend-color current"></div>目前路徑</div>
-                    <div class="legend-item"><div class="legend-color in-stack"></div>找到單詞</div>
-                </div>
             </div>
-            <div class="viz-card">
-                <div class="viz-title">演算法說明</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
-            <div class="viz-card" style="height: 100%; box-sizing: border-box;">
-                <div class="viz-title">ALGORITHM</div>
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <!-- D3.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'vector<string> findWords(board, words) {', id: 0 },
-            { line: '    // Build Trie from words', id: 1 },
-            { line: '    Trie trie;', id: 2 },
-            { line: '    for (auto& w : words) trie.insert(w);', id: 3 },
-            { line: '    set<string> result;', id: 4 },
-            { line: '    for (int i = 0; i < m; i++)', id: 5 },
-            { line: '        for (int j = 0; j < n; j++)', id: 6 },
-            { line: '            dfs(board, i, j, trie.root, "", result);', id: 7 },
-            { line: '    return vector<string>(result.begin(), result.end());', id: 8 },
-            { line: '}', id: 9 },
-            { line: 'void dfs(board, i, j, node, path, result) {', id: 10 },
-            { line: '    if (node->isWord) result.insert(path);', id: 11 },
-            { line: '    char c = board[i][j]; board[i][j] = \'#\';', id: 12 },
-            { line: '    // Explore 4 directions', id: 13 },
-            { line: '    for (auto [di, dj] : {{0,1},{1,0},{0,-1},{-1,0}})', id: 14 },
-            { line: '        if (valid(ni, nj) && node->children[c])', id: 15 },
-            { line: '            dfs(board, ni, nj, node->children[c], path+c, result);', id: 16 },
-            { line: '    board[i][j] = c; // backtrack', id: 17 },
-            { line: '}', id: 18 },
+            { line: 'void findWords(board, words) {', id: 0 },
+            { line: '    Trie* root = buildTrie(words);', id: 1 },
+            { line: '    for(int r=0; r<rows; r++)', id: 2 },
+            { line: '        for(int c=0; c<cols; c++)', id: 3 },
+            { line: '            dfs(r, c, root);', id: 4 },
+            { line: '}', id: 5 },
+            { line: 'void dfs(r, c, node) {', id: 6 },
+            { line: '    char ch = board[r][c];', id: 7 },
+            { line: '    if (!node->children[ch]) return;', id: 8 },
+            { line: '    node = node->children[ch];', id: 9 },
+            { line: '    if (node->word) {', id: 10 },
+            { line: '        res.push_back(node->word);', id: 11 },
+            { line: '        node->word = null; // Dedup', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '    board[r][c] = \'#\'; // Visited', id: 14 },
+            { line: '    dfs(r+1, c, node); dfs(r-1, c, node); ...', id: 15 },
+            { line: '    board[r][c] = ch; // Backtrack', id: 16 },
+            { line: '}', id: 17 }
         ];
 
-        let currentBoard = [['o','a','a','n'],['e','t','a','e'],['i','h','k','r'],['i','f','l','v']];
-        let currentWords = ['oath', 'pea', 'eat', 'rain'];
-
-        function parseBoard(input) {
-            return input.trim().split('\n').map(row => 
-                row.split(',').map(c => c.trim().toLowerCase())
-            );
-        }
-
-        function generateAlgorithmSteps(board, words) {
-            const steps = [];
-            const m = board.length, n = board[0].length;
-            const found = new Set();
-            
-            // Build Trie
-            const trie = {};
-            for (const word of words) {
-                let node = trie;
-                for (const c of word) {
-                    if (!node[c]) node[c] = {};
-                    node = node[c];
-                }
-                node.isWord = word;
-            }
-
-            steps.push({
-                board: board,
-                words: words,
-                path: [],
-                found: [],
-                highlightLines: [0, 1, 2, 3, 4],
-                explanation: {
-                    title: '建構 Trie',
-                    text: `將所有單詞加入 Trie<br>單詞: [${words.join(', ')}]`,
-                    formula: 'for word in words: trie.insert(word)'
-                }
-            });
-
-            // DFS simulation
-            function dfs(i, j, node, path, visited) {
-                if (i < 0 || i >= m || j < 0 || j >= n) return;
-                if (visited.has(`${i},${j}`)) return;
-                
-                const c = board[i][j];
-                if (!node[c]) return;
-                
-                const newVisited = new Set(visited);
-                newVisited.add(`${i},${j}`);
-                const newPath = [...path, [i, j]];
-                const nextNode = node[c];
-                
-                if (nextNode.isWord && !found.has(nextNode.isWord)) {
-                    found.add(nextNode.isWord);
-                    steps.push({
-                        board: board,
-                        words: words,
-                        path: newPath,
-                        found: [...found],
-                        currentWord: nextNode.isWord,
-                        highlightLines: [11],
-                        explanation: {
-                            title: `找到 "${nextNode.isWord}"！`,
-                            text: `路徑: ${newPath.map(p => board[p[0]][p[1]]).join('→')}`,
-                            formula: `result.insert("${nextNode.isWord}")`
-                        }
-                    });
-                } else if (newPath.length > 1) {
-                    steps.push({
-                        board: board,
-                        words: words,
-                        path: newPath,
-                        found: [...found],
-                        highlightLines: [14, 15, 16],
-                        explanation: {
-                            title: `DFS 探索`,
-                            text: `目前路徑: ${newPath.map(p => board[p[0]][p[1]]).join('→')}<br>繼續探索四個方向`,
-                            formula: `path = "${newPath.map(p => board[p[0]][p[1]]).join('')}"`
-                        }
-                    });
-                }
-                
-                dfs(i+1, j, nextNode, newPath, newVisited);
-                dfs(i-1, j, nextNode, newPath, newVisited);
-                dfs(i, j+1, nextNode, newPath, newVisited);
-                dfs(i, j-1, nextNode, newPath, newVisited);
-            }
-
-            for (let i = 0; i < m; i++) {
-                for (let j = 0; j < n; j++) {
-                    dfs(i, j, trie, [], new Set());
-                }
-            }
-
-            steps.push({
-                board: board,
-                words: words,
-                path: [],
-                found: [...found],
-                final: true,
-                highlightLines: [8],
-                explanation: {
-                    title: '🎉 完成！',
-                    text: `找到 ${found.size} 個單詞: [${[...found].join(', ')}]<br><br>Time: O(m×n×4^L), Space: O(W×L)`,
-                    formula: `return [${[...found].join(', ')}]`
-                }
-            });
-
-            return steps;
-        }
-
-        function runCustomInput() {
-            const boardInput = document.getElementById('boardInput').value;
-            const wordsInput = document.getElementById('wordsInput').value;
-            currentBoard = parseBoard(boardInput);
-            currentWords = wordsInput.split(',').map(w => w.trim().toLowerCase());
-            init(currentBoard, currentWords);
-        }
-
         let viz;
-        function init(board = currentBoard, words = currentWords) {
-            const n = board[0].length;
-            document.getElementById('gridDisplay').style.gridTemplateColumns = `repeat(${n}, 40px)`;
+        let idCounter = 0;
+
+        // --- Trie Logic ---
+        function buildDetailedTrie(words) {
+            const root = { id: 'root', char: '', children: {}, word: null };
+            let cnt = 0;
+            for(let w of words) {
+                let curr = root;
+                for(let c of w) {
+                    if(!curr.children[c]) {
+                        curr.children[c] = { id: `t-${++cnt}`, char: c, children: {}, word: null };
+                    }
+                    curr = curr.children[c];
+                }
+                curr.word = w;
+            }
+            return root;
+        }
+
+        function generateSteps(boardInput, wordsInput) {
+            const steps = [];
+            const board = boardInput.map(row => [...row]);
+            const R = board.length, C = board[0].length;
+            const root = buildDetailedTrie(wordsInput);
+            
+            // Initial Step
+            steps.push({
+                board: JSON.parse(JSON.stringify(board)),
+                root: JSON.parse(JSON.stringify(root)), // snapshot trie state
+                trieActive: 'root',
+                gridActive: null,
+                found: [],
+                highlightLines: [1],
+                msg: "構建 Trie 完畢，準備開始 DFS"
+            });
+
+            const foundWords = [];
+
+            const dfs = (r, c, trieNodePath) => {
+                // Get current trie node from path (last id)
+                // Need to traverse our snapshot structure? 
+                // Simulation uses the real `root` object structure we built.
+                
+                // For visualization, we need the ID of the current trie node
+                let currNode = root;
+                for(let i=1; i<trieNodePath.length; i++) {
+                    // This logic is tricky. Instead of re-traversing, let's pass the node object in recursion?
+                    // Yes, but for step snapshot we need IDs.
+                }
+                // Simpler: pass currNode in recursion
+            };
+            
+            // Re-implement simplified DFS with step recording
+            
+            const runDFS = (r, c, node) => {
+                const char = board[r][c];
+                // Check Trie
+                if (!node.children[char]) return;
+                
+                const nextNode = node.children[char];
+                
+                // Step: Moving to grid cell and trie node
+                steps.push({
+                    board: JSON.parse(JSON.stringify(board)),
+                    root: root, // Structure doesn't change, passing ref is okay if we don't mutate structure (we do mutate node.word)
+                    // Actually we mutate node.word to null for dedup. Better deep copy root or track found words separately.
+                    // Let's track found separately.
+                    trieActive: nextNode.id,
+                    gridActive: { r, c },
+                    found: [...foundWords],
+                    highlightLines: [7, 8, 9],
+                    msg: `Grid (${r},${c}) '${char}' 匹配 Trie 節點`
+                });
+
+                if (nextNode.word) {
+                    foundWords.push(nextNode.word);
+                    const w = nextNode.word;
+                    nextNode.word = null; // Dedup in simulation
+                    
+                    steps.push({
+                        board: JSON.parse(JSON.stringify(board)), // needed?
+                        trieActive: nextNode.id,
+                        gridActive: { r, c },
+                        found: [...foundWords],
+                        highlightLines: [10, 11, 12],
+                        msg: `找到單詞: "${w}"！`
+                    });
+                }
+
+                const temp = board[r][c];
+                board[r][c] = '#';
+                
+                steps.push({
+                    board: JSON.parse(JSON.stringify(board)),
+                    found: [...foundWords],
+                    trieActive: nextNode.id,
+                    gridActive: { r, c, visited: true },
+                    highlightLines: [14],
+                    msg: `標記 (${r},${c}) 為 Visited`
+                });
+
+                const dirs = [[0,1], [0,-1], [1,0], [-1,0]];
+                for (let [dr, dc] of dirs) {
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < R && nc >= 0 && nc < C && board[nr][nc] !== '#') {
+                        if (nextNode.children[board[nr][nc]]) { // Optimization: only recurse if trie has path
+                             runDFS(nr, nc, nextNode);
+                        }
+                    }
+                }
+
+                board[r][c] = temp;
+                steps.push({
+                    board: JSON.parse(JSON.stringify(board)),
+                    found: [...foundWords],
+                    trieActive: node.id, // Back to parent
+                    gridActive: { r, c, backtrack: true },
+                    highlightLines: [16],
+                    msg: `回溯 (${r},${c})`
+                });
+            };
+
+            for(let r=0; r<R; r++) {
+                for(let c=0; c<C; c++) {
+                    if (root.children[board[r][c]]) {
+                        runDFS(r, c, root);
+                    }
+                }
+            }
+            
+            steps.push({
+                board: JSON.parse(JSON.stringify(board)),
+                root: root,
+                trieActive: 'root',
+                found: [...foundWords],
+                highlightLines: [5],
+                msg: "搜尋完成"
+            });
+
+            return { steps, root };
+        }
+
+        // --- Render ---
+        const svg = d3.select("#trie-svg");
+        const gLayer = d3.select("#zoom-layer");
+        const zoom = d3.zoom().on("zoom", (e) => gLayer.attr("transform", e.transform));
+        svg.call(zoom);
+        
+        // Initial Zoom transform
+        svg.call(zoom.transform, d3.zoomIdentity.translate(150, 20).scale(0.8));
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('foundDisplay').innerHTML = step.found.map(w => `<span class="word-tag">${w}</span>`).join('');
+
+            // Render Grid
+            const gridC = document.getElementById('gridDisplay');
+            if(step.board) {
+                gridC.style.gridTemplateColumns = `repeat(${step.board[0].length}, 40px)`;
+                gridC.innerHTML = '';
+                for(let r=0; r<step.board.length; r++) {
+                    for(let c=0; c<step.board[0].length; c++) {
+                        let cls = 'cell';
+                        const val = step.board[r][c];
+                        if (step.gridActive) {
+                            if (step.gridActive.r === r && step.gridActive.c === c) {
+                                if (step.gridActive.backtrack) cls += ' backtrack';
+                                else cls += ' visiting';
+                            }
+                        }
+                        if (val === '#') cls += ' path';
+                        
+                        const div = document.createElement('div');
+                        div.className = cls;
+                        div.textContent = val === '#' ? '' : val; // Hide original char if visited? No, logic needs restore. Logic used # but viz wants char.
+                        // Actually simulation replaced it. We should keep original board copy for display if we want to show char under visited.
+                        // For now show visited marker.
+                        gridC.appendChild(div);
+                    }
+                }
+            }
+
+            // Render Trie
+            // We use the root from generation time (static structure) but highlight active node
+            // Or re-bind data if structure changed? Structure is static after build.
+            // Just updated highlights.
+            
+            // But we need to run d3 hierarchy layout once.
+            // Let's do it in runVisualizer or if root changed.
+            // Since we pass root in steps, we can re-render.
+            
+            const root = d3.hierarchy(step.root || {}, d => Object.values(d.children));
+            const treeLayout = d3.tree().size([260, 260]);
+            treeLayout.nodeSize([30, 40]);
+            treeLayout(root);
+            
+            // Links
+            const links = gLayer.selectAll(".trie-link").data(root.links(), d=>d.target.data.id);
+            links.enter().append("path").attr("class", "trie-link")
+                .merge(links)
+                .attr("class", d => {
+                    // Activate link if target is active node? No, active node is single point.
+                    // Highlight path to active node would be better.
+                    return "trie-link";
+                })
+                .attr("d", d3.linkVertical().x(d=>d.x).y(d=>d.y));
+            links.exit().remove();
+            
+            // Nodes
+            const nodes = gLayer.selectAll(".trie-node-g").data(root.descendants(), d=>d.data.id);
+            const nEnter = nodes.enter().append("g").attr("class", "trie-node-g");
+            nEnter.append("circle").attr("r", 12).attr("class", "trie-node");
+            nEnter.append("text").attr("class", "trie-text").attr("dy", 1);
+            
+            const nUpdate = nodes.merge(nEnter)
+                .attr("transform", d=>`translate(${d.x},${d.y})`);
+            
+            nUpdate.select(".trie-node").attr("class", d => {
+                let cls = "trie-node";
+                if(d.data.id === step.trieActive) cls += " current";
+                if(d.data.word) cls += " match"; // If word exists (not null)
+                return cls;
+            });
+            nUpdate.select(".trie-text").text(d => d.data.char || '.');
+            
+            nodes.exit().remove();
+        }
+
+        function runVisualizer() {
+            const bStr = document.getElementById('boardInput').value;
+            const wStr = document.getElementById('wordsInput').value;
+            
+            const board = bStr.trim().split('\n').map(r => r.split(',').map(c => c.trim()));
+            const words = wStr.split(',').map(w => w.trim());
+            
+            if (board.length === 0 || words.length === 0) return;
+
+            const { steps } = generateSteps(board, words);
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    let html = '';
-                    for (let i = 0; i < step.board.length; i++) {
-                        for (let j = 0; j < step.board[0].length; j++) {
-                            const onPath = step.path?.some(p => p[0] === i && p[1] === j);
-                            let cls = 'cell';
-                            if (onPath) cls += ' path';
-                            html += `<div class="${cls}">${step.board[i][j]}</div>`;
-                        }
-                    }
-                    document.getElementById('gridDisplay').innerHTML = html;
-                    
-                    document.getElementById('wordsDisplay').innerHTML = step.words.map(w => {
-                        let cls = 'word-item';
-                        if (step.found?.includes(w)) cls += ' found';
-                        else if (step.currentWord === w) cls += ' searching';
-                        return `<span class="${cls}">${w}</span>`;
-                    }).join('');
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(board, words));
+            viz.setSteps(steps);
         }
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

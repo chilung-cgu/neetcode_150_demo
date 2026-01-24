@@ -2,22 +2,65 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Scheduler - 視覺化</title>
+    <title>Task Scheduler - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .dashboard {
+            display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+        }
+
+        /* Heap / Queue Panel */
+        .queue-panel {
+            background: rgba(30, 41, 59, 0.4); border-radius: 12px; padding: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.2); width: 250px;
+        }
+        .panel-title { font-size: 0.9rem; color: #94a3b8; margin-bottom: 8px; font-weight: bold; }
+        
+        .task-list { display: flex; flex-direction: column; gap: 5px; }
+        .task-item {
+            display: flex; justify-content: space-between; padding: 6px 10px;
+            background: rgba(59, 130, 246, 0.2); border-radius: 6px;
+            color: #e2e8f0; font-family: monospace;
+        }
+        .task-item.cooldown { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+
+        /* Timeline Grid */
+        .timeline-panel {
+            flex: 1; min-width: 300px;
+            background: rgba(15, 23, 42, 0.5); border-radius: 12px; padding: 15px;
+            overflow-x: auto;
+        }
+        .timeline-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, 40px); gap: 5px;
+        }
+        .time-slot {
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            background: #334155; border-radius: 6px; font-weight: bold;
+            color: #94a3b8; transition: all 0.3s;
+        }
+        .time-slot.active { background: #3b82f6; color: white; transform: scale(1.1); }
+        .time-slot.idle { background: #475569; color: #cbd5e1; opacity: 0.5; border: 1px dashed #94a3b8; }
+        .time-slot.new { animation: popIn 0.3s; }
+
+        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; }
         .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
 
-        .timeline { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 8px; min-height: 50px; }
-        .time-slot { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-weight: bold; background: var(--viz-bg-secondary); border: 1px solid var(--viz-border); }
-        .time-slot.task { background: var(--viz-primary); color: white; border-color: transparent; }
-        .time-slot.idle { background: var(--viz-error); color: white; opacity: 0.5; }
-        
-        .freq-info { margin-top: 10px; display: flex; gap: 10px; justify-content: center; }
-        .freq-badge { padding: 4px 8px; background: var(--viz-bg-secondary); border-radius: 4px; font-size: 0.9rem; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; }
     </style>
 </head>
 <body>
@@ -25,325 +68,253 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">任務調度器 (Task Scheduler)</div>
+                <div class="viz-title">Task Scheduler (CPU Timeline)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>任務:</label>
-                        <input type="text" id="tasksInput" value="A,A,A,B,B,B" style="width: 150px;" placeholder="A,B,C...">
-                        <label>冷卻時間 n:</label>
-                        <input type="number" id="nInput" value="2" style="width: 50px;" min="0">
-                        <button onclick="runCustomInput()">執行</button>
+                        <label>Tasks (e.g. AAABBC):</label>
+                        <input type="text" id="tasksInput" value="AAABBB">
+                        <label>N (Cooldown):</label>
+                        <input type="number" id="nInput" value="2" style="width:50px">
+                        <button onclick="runVisualizer()">排程 (Schedule)</button>
                     </div>
                 </div>
-                
-                <div style="text-align: center; color: var(--text-muted); margin-top: 10px;">頻率統計</div>
-                <div class="freq-info" id="freqDisplay"></div>
-                
-                <div style="text-align: center; color: var(--text-muted); margin-top: 20px;">執行時間線 (Greedy 填充)</div>
-                <div class="timeline" id="timelineDisplay"></div>
-                
+
+                <div class="visualization-area">
+                    <div class="dashboard">
+                        <div class="queue-panel">
+                            <div class="panel-title">Ready Queue (Max Heap)</div>
+                            <div class="task-list" id="heapList"></div>
+                        </div>
+                        <div class="queue-panel">
+                            <div class="panel-title">Cooldown Queue (Wait)</div>
+                            <div class="task-list" id="waitList"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-panel">
+                        <div class="panel-title">CPU Timeline (Total Time: <span id="timeCount">0</span>)</div>
+                        <div class="timeline-grid" id="timelineGrid"></div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="800" selected>1x</option>
+                            <option value="300">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">maxFreq</div><div class="state-value" id="maxFreq">-</div></div>
-                    <div class="state-item"><div class="state-label">maxCount</div><div class="state-value" id="maxCount">-</div></div>
-                    <div class="state-item"><div class="state-label">最少時間</div><div class="state-value" id="resultDisplay" style="color: var(--viz-success);">?</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int leastInterval(vector<char>& tasks, int n) {', id: 0 },
-            { line: '    vector<int> freq(26);', id: 1 },
-            { line: '    int maxFreq = 0;', id: 2 },
-            { line: '    for (char t : tasks) {', id: 3 },
-            { line: '        freq[t-\'A\']++;', id: 4 },
-            { line: '        maxFreq = max(maxFreq, freq[t-\'A\']);', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    int maxCount = 0;', id: 7 },
-            { line: '    for (int f : freq) if (f == maxFreq) maxCount++;', id: 8 },
-            { line: '    ', id: 9 },
-            { line: '    int partCount = maxFreq - 1;', id: 10 },
-            { line: '    int partLength = n - (maxCount - 1);', id: 11 },
-            { line: '    int emptySlots = partCount * partLength;', id: 12 },
-            { line: '    int availableTasks = tasks.size() - maxFreq * maxCount;', id: 13 },
-            { line: '    int idles = max(0, emptySlots - availableTasks);', id: 14 },
-            { line: '    ', id: 15 },
-            { line: '    return tasks.size() + idles;', id: 16 },
-            { line: '}', id: 17 },
+            { line: 'int leastInterval(tasks, n) {', id: 0 },
+            { line: '    // Frequency Map & Max Heap', id: 1 },
+            { line: '    priority_queue<int> maxHeap;', id: 2 },
+            { line: '    queue<pair<int, int>> waitQueue; // {rem, time}', id: 3 },
+            { line: '    int time = 0;', id: 4 },
+            { line: '    while (!maxHeap.empty() || !waitQueue.empty()) {', id: 5 },
+            { line: '        time++;', id: 6 },
+            { line: '        if (!maxHeap.empty()) {', id: 7 },
+            { line: '            int rem = maxHeap.top() - 1;', id: 8 },
+            { line: '            maxHeap.pop();', id: 9 },
+            { line: '            if (rem > 0) waitQueue.push({rem, time + n});', id: 10 },
+            { line: '        }', id: 11 },
+            { line: '        if (!waitQueue.empty() && waitQueue.front().time == time) {', id: 12 },
+            { line: '            maxHeap.push(waitQueue.front().cnt);', id: 13 },
+            { line: '            waitQueue.pop();', id: 14 },
+            { line: '        }', id: 15 },
+            { line: '    }', id: 16 },
+            { line: '    return time;', id: 17 },
+            { line: '}', id: 18 }
         ];
 
-        let currentTasks = ['A','A','A','B','B','B'];
-        let currentN = 2;
+        let viz;
 
-        function runCustomInput() {
-            const tStr = document.getElementById('tasksInput').value.toUpperCase();
-            const nVal = parseInt(document.getElementById('nInput').value);
-            
-            const tasks = tStr.split(/[^A-Z]/).filter(c => c && c.length === 1);
-            if (tasks.length === 0 || isNaN(nVal) || nVal < 0) {
-                alert('輸入無效');
-                return;
-            }
-            currentTasks = tasks;
-            currentN = nVal;
-            init();
-        }
-
-        function generateAlgorithmSteps(tasks, n) {
+        function simulate(tasksStr, n) {
             const steps = [];
-            const freq = {};
-            tasks.forEach(t => freq[t] = (freq[t] || 0) + 1);
+            const counts = {};
+            for(let c of tasksStr) counts[c] = (counts[c]||0)+1;
             
-            const maxFreq = Math.max(...Object.values(freq));
-            const maxCount = Object.values(freq).filter(f => f === maxFreq).length;
-            const totalTasks = tasks.length;
+            // Simulation logic
+            // We need to track actual Task Names for clearer visualization
+            // So heap stores {char, count}
             
-            // Step 1: Count Freq
-            steps.push({
-                timeline: [], freq, maxFreq, maxCount, n,
-                highlightLines: [1,2,3,4,5,6],
-                explanation: {
-                    title: '統計頻率',
-                    text: `總任務數: ${tasks.length}, n = ${n}<br>與最高頻率任務數量相同的有 ${maxCount} 個`,
-                    formula: `maxFreq = ${maxFreq}, maxCount = ${maxCount}`
-                }
-            });
-
-            // Step 2: Ideal frame calculation
-            // Maximize visualization: Draw the chunks
-            const timeline = [];
-            const chunkCount = maxFreq - 1;
-            const chunkLen = n + 1;
+            let heap = Object.entries(counts).map(([k,v]) => ({char:k, cnt:v}));
+            heap.sort((a,b) => b.cnt - a.cnt); // simulate max heap
             
-            steps.push({
-                timeline: [], freq, maxFreq, maxCount, n,
-                highlightLines: [10, 11, 12],
-                explanation: {
-                    title: '建立骨架',
-                    text: `以最高頻率 ${maxFreq} 建立框架。<br>需要 ${maxFreq - 1} 個間隔區域，每個區域長度至少 ${n}。<br>最後加上結尾的 ${maxCount} 個任務。`,
-                    formula: `partCount = ${maxFreq} - 1 = ${maxFreq - 1}`
-                }
-            });
-
-            // Formula calculation details
-            // Formula: (maxFreq - 1) * (n + 1) + maxCount
-            // OR max(tasks.size(), calculated)
-            
-            // Let's visualize the "filling" conceptually
-            // We can construct a visual representation string
-            // Frame: A _ _ A _ _ A
-            // With n=2, maxFreq=3 (A)
-            
-            const simpleFormulaResult = (maxFreq - 1) * (n + 1) + maxCount;
-            const finalResult = Math.max(totalTasks, simpleFormulaResult);
-
-            // Construct a visual "timeline" for demonstration
-            // This is a simplified simulation for visualization purposes
-            // Actual element placement
-            const sortedTasks = Object.keys(freq).sort((a,b) => freq[b] - freq[a]);
-            const matrixHeight = maxFreq; // Rows
-            // Actually the "rows" approach is better for visualization
-            // But let's stick to the timeline array approach
-            
-            let simulatedTimeline = [];
-            const cols = (maxFreq - 1) * (n + 1) + maxCount;
-             // Just use the formula value for "slots"
-             // if result > tasks.size(), we have idles
-             
-            steps.push({
-                 timeline: [], freq, maxFreq, maxCount, n,
-                 highlightLines: [13, 14, 15, 16],
-                 explanation: {
-                     title: '計算結果',
-                     text: `公式計算：(maxFreq - 1) * (n + 1) + maxCount<br>= (${maxFreq}-1) * (${n}+1) + ${maxCount} = ${simpleFormulaResult}<br><br>最終結果取 max(總任務數, 公式值)`,
-                     formula: `max(${totalTasks}, ${simpleFormulaResult}) = ${finalResult}`
-                 }
-            });
-            
-            // Generate a visual fill
-            // This is "greedy" filling for visualization
-            const resultTimeline = new Array(finalResult).fill('idle');
-            let idx = 0;
-            // Fill MaxFreq tasks first
-            // A . . A . . A
-            // B . . B . . B
-            
-            // A more accurate greedy simulation for visualization:
-            // Priority Queue simulation
-            
-            let simStepsString = [];
-            let counts = {...freq};
+            let waitQ = []; // {char, cnt, readyTime}
             let time = 0;
-            // Simple simulation to generate timeline
-            // Since we already have the formula result, we can just show "Idles" if any
-            
-            // Let's just create a schematic timeline based on formula
-            // Group 1: A B ... (n idle)
-            // Group 2: A B ...
-            // ...
-            // Group Last: A B
-            
-            let displayTimeline = [];
-            for(let i=0; i<maxFreq-1; i++) {
-                // Add "maxCount" tasks
-                // Then (n - maxCount + 1) idles... strictly this logic is complex to render perfectly 
-                // Let's simplified render:
-                // Just A, B, ... n idles, A, B...
-                // Only if total tasks > formula result, we don't show idles.
-                
-                // If formula > tasks, we have idles
-            }
-            
-            if (finalResult > totalTasks) {
-                // Must simulate idles
-                // Simply: fill columns
-                // Col 0: A A A
-                // Col 1: B B B
-                // ...
-                // But visualized as linear time
-                
-                // Let's run a micro-simulation to get the exact timeline for visualization
-                // It makes it much better
-                
-                let q = []; // [count, char]
-                for(let k in freq) q.push([freq[k], k]);
-                q.sort((a,b) => b[0] - a[0]); // Sort by freq desc
-                
-                let t = 0;
-                let history = [];
-                
-                while(q.length > 0) {
-                    let k_cycle = n + 1;
-                    let temp = [];
-                    while (k_cycle > 0 && q.length > 0) {
-                        let top = q.shift(); // remove max freq
-                        top[0]--;
-                        history.push(top[1]);
-                        temp.push(top);
-                        k_cycle--;
-                        t++;
-                    }
-                    
-                    for(let item of temp) {
-                        if (item[0] > 0) q.push(item);
-                    }
-                    q.sort((a,b) => b[0] - a[0]); // re-sort
-                    
-                    if (q.length === 0) break; // done
-                    
-                    // IF there are still tasks, we must fill the rest of cycle with idle
-                    while (k_cycle > 0) {
-                        history.push('idle');
-                        k_cycle--;
-                        t++;
-                    }
-                }
-                displayTimeline = history;
-            } else {
-                 // No idles, just packed
-                  displayTimeline = tasks.sort(); // naive packing visual
-                  // Actually if no idles, order doesn't impact total time, just show packed
-                  
-                  // For better visual, show interleaved
-                   let q = [];
-                    for(let k in freq) q.push([freq[k], k]);
-                    q.sort((a,b) => b[0] - a[0]);
-                    
-                    // Simple interleaved string
-                    // This is hard to get perfect without full simulation, but full simulation is O(N) which is fine
-                    // Re-use logic above
-                     let q2 = []; // [count, char]
-                    for(let k in freq) q2.push([freq[k], k]);
-                    q2.sort((a,b) => b[0] - a[0]); 
-                    let history = [];
-                    while(q2.length > 0) {
-                        let k_cycle = n + 1;
-                        let temp = [];
-                        while (k_cycle > 0 && q2.length > 0) {
-                             let top = q2.shift(); 
-                             top[0]--;
-                             history.push(top[1]);
-                             temp.push(top);
-                             k_cycle--;
-                        }
-                        for(let item of temp) if (item[0] > 0) q2.push(item);
-                        q2.sort((a,b) => b[0] - a[0]);
-                        // Don't add idles if finished
-                    }
-                    displayTimeline = history;
-            }
+            let timeline = [];
+
+            // Helper to sort heap
+            const reorderHeap = () => heap.sort((a,b) => b.cnt - a.cnt);
 
             steps.push({
-                timeline: displayTimeline,
-                freq, maxFreq, maxCount, n,
-                final: true,
-                result: finalResult,
-                highlightLines: [16, 17],
-                explanation: {
-                    title: '完成',
-                    text: `模擬執行序列如上圖。<br>總長度: ${finalResult} (紅色為 IDLE)`,
-                    formula: `return ${finalResult}`
+                heap: JSON.parse(JSON.stringify(heap)),
+                waitQ: [], timeline: [], time: 0,
+                msg: "初始化: 計算頻率，建立 Max Heap",
+                highlightLines: [1, 2]
+            });
+
+            while(heap.length > 0 || waitQ.length > 0) {
+                time++;
+                let currentTask = null;
+                
+                // Check Wait Queue -> Heap
+                // Logic: In loop, we process task then check if waitQ is ready for NEXT time
+                // Or: check waitQ for CURRENT time first?
+                // Standard problem: push to waitQ with `time + n`. It becomes available at `time + n + 1`? 
+                // Wait, if time=1, n=2. Push {rem, 1+2=3}. At time=3, it is NOT ready? Or ready?
+                // Cooldown is n. So interval is n+1. 
+                // e.g. A at 1. Next A at 1 + 2 + 1 = 4. 
+                // WaitQ condition: `waitQ.front().time <= time`? Actually usually we process waitQ first
+                
+                // Let's follow standard simulation:
+                // 1. Check Heap. Pick top.
+                // 2. Put into WaitQ with readyTime
+                // 3. Check WaitQ if anything ready now?
+                
+                // But WaitQ items become ready basically.
+                
+                let processed = false;
+                
+                if (heap.length > 0) {
+                    const task = heap.shift(); // Pop max
+                    currentTask = task.char;
+                    task.cnt--;
+                    timeline.push({val: task.char, t: time});
+                    
+                    steps.push({
+                        heap: JSON.parse(JSON.stringify(heap)),
+                        waitQ: JSON.parse(JSON.stringify(waitQ)),
+                        timeline: [...timeline], time,
+                        msg: `時間 ${time}: 執行任務 ${task.char} (剩餘 ${task.cnt})`,
+                        highlightLines: [7, 8, 9]
+                    });
+
+                    if (task.cnt > 0) {
+                        waitQ.push({ ...task, readyTime: time + n + 1 });
+                        steps.push({
+                            heap: JSON.parse(JSON.stringify(heap)),
+                            waitQ: JSON.parse(JSON.stringify(waitQ)),
+                            timeline: [...timeline], time,
+                            msg: `任務 ${task.char} 進入冷卻 (Ready at ${time + n + 1})`,
+                            highlightLines: [10]
+                        });
+                    }
+                    processed = true;
+                } else {
+                    // IDLE
+                    timeline.push({val: 'IDLE', t: time});
+                    steps.push({
+                        heap: JSON.parse(JSON.stringify(heap)),
+                        waitQ: JSON.parse(JSON.stringify(waitQ)),
+                        timeline: [...timeline], time,
+                        msg: `時間 ${time}: Heap 空，執行 IDLE`,
+                        highlightLines: [6] // implicit else
+                    });
                 }
+
+                // Check WaitQ readiness for NEXT cycle 
+                // Actually if we simulate `time` increment at start of loop:
+                // Check if any `readyTime == time + 1` ? 
+                // The algo usually: check waitq.front().readyTime == time (if checking at start).
+                // My logic: `waitQ.push({rem, time + n + 1})`. This means it can be picked at `time + n + 1`.
+                
+                // We check if waitQ has items ready for NEXT iteration.
+                // But let's check Current logic:
+                // If we check at end of loop, we check `readyTime <= time + 1`?
+                
+                if (waitQ.length > 0 && waitQ[0].readyTime === time + 1) {
+                    const ready = waitQ.shift();
+                    heap.push({char: ready.char, cnt: ready.cnt});
+                    reorderHeap();
+                    steps.push({
+                        heap: JSON.parse(JSON.stringify(heap)),
+                        waitQ: JSON.parse(JSON.stringify(waitQ)),
+                        timeline: [...timeline], time,
+                        msg: `任務 ${ready.char} 冷卻結束，回到 Heap`,
+                        highlightLines: [12, 13]
+                    });
+                }
+            }
+            
+            steps.push({
+                heap: [], waitQ: [], timeline: [...timeline], time,
+                msg: `完成！總時間: ${time}`,
+                highlightLines: [17],
+                final: true
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Update Freq
-                    document.getElementById('freqDisplay').innerHTML = Object.entries(step.freq || {}).map(([k,v]) => 
-                        `<div class="freq-badge">${k}: ${v}</div>`
-                    ).join('');
-                    
-                    document.getElementById('maxFreq').textContent = step.maxFreq ?? '-';
-                    document.getElementById('maxCount').textContent = step.maxCount ?? '-';
-                    document.getElementById('resultDisplay').textContent = step.result ?? '?';
-                    
-                    // Update Timeline
-                    document.getElementById('timelineDisplay').innerHTML = (step.timeline || []).map(t => {
-                        let cls = 'time-slot';
-                        if (t === 'idle') cls += ' idle';
-                        else cls += ' task';
-                        return `<div class="${cls}">${t === 'idle' ? '🛑' : t}</div>`;
-                    }).join('');
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(currentTasks, currentN));
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('timeCount').textContent = step.time || 0;
+
+            // Heap
+            document.getElementById('heapList').innerHTML = (step.heap||[]).map(t => 
+                `<div class="task-item"><span>${t.char}</span><span>${t.cnt}</span></div>`
+            ).join('');
+
+            // WaitQ
+            document.getElementById('waitList').innerHTML = (step.waitQ||[]).map(t => 
+                `<div class="task-item cooldown"><span>${t.char}</span><span>@ ${t.readyTime}</span></div>`
+            ).join('');
+
+            // Timeline
+            const tl = document.getElementById('timelineGrid');
+            tl.innerHTML = (step.timeline||[]).map(slot => {
+                let cls = 'time-slot';
+                if(slot.val === 'IDLE') cls += ' idle';
+                else cls += ' active';
+                return `<div class="${cls}">${slot.val === 'IDLE' ? 'Ø' : slot.val}</div>`;
+            }).join('');
+            
+            // Auto scroll timeline
+            tl.scrollLeft = tl.scrollWidth;
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runVisualizer() {
+            const raw = document.getElementById('tasksInput').value.toUpperCase();
+            const tasks = raw.replace(/[^A-Z]/g, '');
+            const n = parseInt(document.getElementById('nInput').value);
+            
+            if(!tasks || isNaN(n)) return alert("請輸入任務 A-Z 和 N");
+
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(tasks, n));
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

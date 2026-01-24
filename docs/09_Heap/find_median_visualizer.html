@@ -2,32 +2,83 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find Median from Data Stream - 視覺化</title>
+    <title>Find Median (Two Heaps) - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .heap-container { display: flex; gap: 20px; justify-content: center; margin: 20px 0; }
-        .heap-wrapper { text-align: center; }
-        .heap-title { font-size: 0.9rem; margin-bottom: 8px; font-weight: bold; }
-        .heap-items { display: flex; flex-direction: column-reverse; gap: 4px; align-items: center; min-height: 120px; width: 120px; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 8px; border: 2px dashed var(--viz-border); }
-        .heap-item { 
-            padding: 8px 14px; border-radius: 4px; font-family: monospace; font-weight: bold; 
-            min-width: 40px; text-align: center; transition: all 0.3s;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
         }
-        .max-heap .heap-title { color: var(--viz-primary); }
-        .max-heap .heap-items { border-color: var(--viz-primary); }
-        .max-heap .heap-item { background: var(--viz-primary); color: white; }
+
+        /* Scale Visual */
+        .scale-container {
+            width: 500px; height: 300px; position: relative; margin-top: 30px;
+        }
         
-        .min-heap .heap-title { color: var(--viz-secondary); }
-        .min-heap .heap-items { border-color: var(--viz-secondary); }
-        .min-heap .heap-item { background: var(--viz-secondary); color: #0f172a; }
+        .scale-bar {
+            width: 400px; height: 8px; background: #64748b; border-radius: 4px;
+            position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
         
-        .heap-item.new { box-shadow: 0 0 10px var(--viz-warning); transform: scale(1.1); }
+        .scale-pivot {
+            width: 0; height: 0; 
+            border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 40px solid #94a3b8;
+            position: absolute; top: 56px; left: 50%; transform: translateX(-50%);
+        }
+
+        .heap-bucket {
+            width: 140px; min-height: 120px;
+            background: rgba(30, 41, 59, 0.6); border: 2px solid #475569;
+            border-radius: 0 0 50px 50px;
+            position: absolute; top: 18px; /* hang from bar */
+            display: flex; flex-direction: column-reverse; align-items: center; padding: 10px; gap: 5px;
+            transition: all 0.5s;
+        }
+        .bucket-left { left: 0; border-top: 4px solid #3b82f6; } /* Max Heap */
+        .bucket-right { right: 0; border-top: 4px solid #a855f7; } /* Min Heap */
         
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        .bucket-rope {
+            width: 2px; height: 50px; background: #94a3b8; position: absolute; top: -50px; left: 50%;
+        }
+
+        .element {
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            animation: dropIn 0.4s;
+        }
+        .element.small { background: #3b82f6; }
+        .element.large { background: #a855f7; }
+        .element.top { border: 2px solid #fbbf24; z-index: 10; transform: scale(1.1); }
+
+        @keyframes dropIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .scale-label {
+            position: absolute; top: -30px; width: 100%; text-align: center; color: #cbd5e1; font-weight: bold; font-size: 0.9rem;
+        }
+
+        /* Stats */
+        .median-display {
+            font-size: 2rem; font-weight: bold; color: #22c55e;
+            text-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+            margin-bottom: 10px;
+        }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 80px; }
         .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -35,233 +86,207 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">數據流中的中位數 (Two Heaps)</div>
+                <div class="viz-title">Find Median (Two Heaps)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>初始數字:</label>
-                        <input type="text" id="initNums" value="1, 2, 3" style="width: 120px;" placeholder="1, 2, 3">
-                        <button onclick="resetWithCustom()">設置初始</button>
-                    </div>
-                    <div class="input-row">
-                        <label>加入數字:</label>
-                        <input type="number" id="addNumInput" value="4" style="width: 60px;">
-                        <button onclick="addSingleNum()">Add Num</button>
+                        <label>添加數字:</label>
+                        <input type="number" id="numInput" value="5">
+                        <button onclick="handleAdd()">Add</button>
+                        <button onclick="resetViz()" style="background:var(--viz-error)">Reset</button>
                     </div>
                 </div>
-                
-                <div class="heap-container">
-                    <div class="heap-wrapper max-heap">
-                        <div class="heap-title">Smaller Half (Max Heap)</div>
-                        <div class="heap-items" id="maxHeapDisplay"></div>
-                    </div>
-                    <div class="heap-wrapper min-heap">
-                        <div class="heap-title">Larger Half (Min Heap)</div>
-                        <div class="heap-items" id="minHeapDisplay"></div>
+
+                <div class="visualization-area">
+                    <div>當前中位數 (Median)</div>
+                    <div class="median-display" id="medianText">-</div>
+
+                    <div class="scale-container">
+                        <div class="scale-bar" id="scaleBar">
+                            <div class="heap-bucket bucket-left" id="maxHeap">
+                                <div class="bucket-rope"></div>
+                                <div class="scale-label">Max Heap (Smaller Half)</div>
+                            </div>
+                            <div class="heap-bucket bucket-right" id="minHeap">
+                                <div class="bucket-rope"></div>
+                                <div class="scale-label">Min Heap (Larger Half)</div>
+                            </div>
+                        </div>
+                        <div class="scale-pivot"></div>
                     </div>
                 </div>
-                
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <div class="speed-control">
-                        <label>速度:</label>
-                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(log n) add
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">總數 n</div><div class="state-value" id="countDisplay">0</div></div>
-                    <div class="state-item"><div class="state-label">中位數</div><div class="state-value" id="medianDisplay" style="color: var(--viz-success);">?</div></div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'class MedianFinder {', id: 0 },
-            { line: '    priority_queue<int> maxHeap; // 左半部 (Smaller)', id: 1 },
-            { line: '    priority_queue<int, vector<int>, greater<int>> minHeap; // 右半部 (Larger)', id: 2 },
-            { line: '    void addNum(int num) {', id: 3 },
-            { line: '        maxHeap.push(num);', id: 4 },
-            { line: '        minHeap.push(maxHeap.top()); maxHeap.pop();', id: 5 },
-            { line: '        if (minHeap.size() > maxHeap.size()) {', id: 6 },
-            { line: '            maxHeap.push(minHeap.top()); minHeap.pop();', id: 7 },
-            { line: '        }', id: 8 },
-            { line: '    }', id: 9 },
-            { line: '    double findMedian() {', id: 10 },
-            { line: '        if (maxHeap.size() > minHeap.size()) return maxHeap.top();', id: 11 },
-            { line: '        return (maxHeap.top() + minHeap.top()) / 2.0;', id: 12 },
-            { line: '    }', id: 13 },
-            { line: '};', id: 14 },
+            { line: 'priority_queue<int> maxHeap; // Left', id: 0 },
+            { line: 'priority_queue<int, ..., greater> minHeap; // Right', id: 1 },
+            { line: 'void addNum(int num) {', id: 2 },
+            { line: '    maxHeap.push(num);', id: 3 },
+            { line: '    minHeap.push(maxHeap.top()); maxHeap.pop();', id: 4 },
+            { line: '    if (maxHeap.size() < minHeap.size()) {', id: 5 },
+            { line: '        maxHeap.push(minHeap.top()); minHeap.pop();', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '}', id: 8 },
+            { line: 'double findMedian() {', id: 9 },
+            { line: '    return maxHeap.size() > minHeap.size()', id: 10 },
+            { line: '       ? maxHeap.top()', id: 11 },
+            { line: '       : (maxHeap.top() + minHeap.top()) / 2.0;', id: 12 },
+            { line: '}', id: 13 }
         ];
 
-        let initialNums = [1, 2, 3];
-        let addedNums = []; // To track added numbers interactively
+        let viz;
+        let leftHeap = []; // Max Heap (simulate sort for viz simplicity? No, heap order matters for 'top')
+        // Actually, for visualization "bucket" view, sorted order or just pile is fine. 
+        // But logic relies on TOP.
+        // We will maintain sorted arrays for the simulator to easily get min/max
+        let rightHeap = []; // Min Heap
 
-        function parseNums(str) {
-            return str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-        }
+        // Need proper heap Logic?
+        // Let's just use array and sort for simulation simplicity since N is small
+        // Left: Descending (Top is index 0)
+        // Right: Ascending (Top is index 0)
 
-        function generateAlgorithmSteps(initList, addList) {
+        function simulateAdd(num) {
             const steps = [];
-            const maxH = [], minH = []; // Simulating heaps with arrays
             
-            // Helper to maintain heap property conceptually (array sort)
-            const rebalance = () => {
-                maxH.sort((a,b) => b-a);
-                minH.sort((a,b) => a-b);
-            };
-
-            const allNums = [...initList];
+            // 1. Always push to MaxHeap first
+            const lClone = [...leftHeap];
+            const rClone = [...rightHeap];
+            
+            lClone.push(num);
+            lClone.sort((a,b)=>b-a); // maintain max heap property simulate
             
             steps.push({
-                maxH: [], minH: [], median: null, count: 0,
-                explanation: { title: '初始化', text: '建立兩個 Heap：<br>Max Heap (左半部, 儲存較小的一半)<br>Min Heap (右半部, 儲存較大的一半)' }
+                left: [...lClone], right: [...rClone],
+                msg: `加入 ${num} 到 Max Heap (左)`,
+                highlightLines: [3]
             });
 
-            // Replay all inputs
-            let currentCount = 0;
-            const processNum = (num, isNewAdd) => {
-                currentCount++;
+            // 2. Move Max of Left to Right
+            const maxVal = lClone.shift(); // Top
+            rClone.push(maxVal);
+            rClone.sort((a,b)=>a-b); // maintain min heap
+            
+            steps.push({
+                left: [...lClone], right: [...rClone],
+                msg: `平衡: 將左邊最大值 ${maxVal} 移至右邊`,
+                highlightLines: [4]
+            });
+
+            // 3. Balance Sizes
+            if (lClone.length < rClone.length) {
+                const minVal = rClone.shift(); // Top of right
+                lClone.push(minVal);
+                lClone.sort((a,b)=>b-a);
                 
-                // 1. push to maxHeap
-                maxH.push(num);
-                rebalance();
                 steps.push({
-                    maxH: [...maxH], minH: [...minH], count: currentCount,
-                    newNum: isNewAdd ? num : undefined,
-                    highlightLines: [4],
-                    explanation: { 
-                        title: `加入 ${num}`, 
-                        text: `推入 Max Heap`,
-                        formula: `maxHeap.push(${num})`
-                    }
+                    left: [...lClone], right: [...rClone],
+                    msg: `平衡大小: 左 < 右，將右邊最小值 ${minVal} 移回左邊`,
+                    highlightLines: [5, 6]
                 });
+            }
 
-                // 2. move max of maxHeap to minHeap
-                const topMax = maxH.shift();
-                minH.push(topMax);
-                rebalance();
-                steps.push({
-                    maxH: [...maxH], minH: [...minH], count: currentCount,
-                    highlightLines: [5],
-                    explanation: { 
-                        title: `平衡: 移至 Min Heap`, 
-                        text: `將 Max Heap 最大值 (${topMax}) 移至 Min Heap<br>確保右半部都大於左半部`,
-                        formula: `minHeap.push(${topMax})`
-                    }
-                });
+            // Calculate Median
+            let median;
+            if (lClone.length > rClone.length) median = lClone[0];
+            else median = (lClone[0] + rClone[0]) / 2.0;
 
-                // 3. balance sizes
-                if (minH.length > maxH.length) {
-                    const topMin = minH.shift();
-                    maxH.push(topMin);
-                    rebalance();
-                    steps.push({
-                        maxH: [...maxH], minH: [...minH], count: currentCount,
-                        highlightLines: [6, 7],
-                        explanation: { 
-                            title: `平衡: 調整大小`, 
-                            text: `Min Heap 比 Max Heap 多，移回一個 (${topMin})<br>保持 Max Heap 大小 >= Min Heap (差最多 1)`,
-                            formula: `size(min) > size(max) -> move back`
-                        }
-                    });
-                }
+            steps.push({
+                left: [...lClone], right: [...rClone],
+                median: median,
+                msg: `計算中位數: ${median}`,
+                highlightLines: [10, 11, 12]
+            });
+
+            return { steps, resLeft: lClone, resRight: rClone };
+        }
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            if (step.median !== undefined) document.getElementById('medianText').textContent = step.median;
+            
+            // Render Buckets
+            const renderBucket = (id, items, cls) => {
+                const el = document.getElementById(id);
+                // Keep the rope and label, clear elements
+                // Actually easier to just append elements
+                const old = el.querySelectorAll('.element');
+                old.forEach(e => e.remove());
                 
-                // Calculate Median
-                let med;
-                let formulaStr;
-                if (maxH.length > minH.length) {
-                    med = maxH[0];
-                    formulaStr = 'maxHeap.top()';
-                } else {
-                    med = (maxH[0] + minH[0]) / 2.0;
-                    formulaStr = `(${maxH[0]} + ${minH[0]}) / 2.0`;
-                }
-
-                steps.push({
-                    maxH: [...maxH], minH: [...minH], count: currentCount,
-                    median: med,
-                    highlightLines: [11, 12],
-                    explanation: { 
-                        title: `計算中位數`, 
-                        text: `Max: ${maxH.length}, Min: ${minH.length}<br>中位數 = ${med}`,
-                        formula: formulaStr
-                    }
+                items.forEach((val, idx) => {
+                    const d = document.createElement('div');
+                    let c = `element ${cls}`;
+                    if(idx===0) c += ' top'; // visualize top
+                    d.className = c;
+                    d.textContent = val;
+                    el.appendChild(d);
                 });
             };
 
-            for (const n of initList) processNum(n, false);
-            for (const n of addList) {
-                // For "added" numbers, we process them as part of the flow
-                // But visualized as "Add" action
-                 processNum(n, true);
-            }
+            renderBucket('maxHeap', step.left, 'small'); // small numbers
+            renderBucket('minHeap', step.right, 'large'); // large numbers
 
-            return steps;
+            // Scale Animation
+            const bar = document.getElementById('scaleBar');
+            const diff = step.left.length - step.right.length;
+            // if diff > 0 (Left heavier), rotate left down (-deg)
+            // if diff < 0 (Right heavier), rotate right down (+deg)
+            // Actually usually |diff| <= 1.
+            
+            let deg = 0;
+            if (diff > 0) deg = -5;
+            else if (diff < 0) deg = 5;
+            
+            bar.style.transform = `translateX(-50%) rotate(${deg}deg)`;
         }
 
-        function resetWithCustom() {
-            const str = document.getElementById('initNums').value;
-            initialNums = parseNums(str);
-            addedNums = []; // clear added
-            init();
+        function handleAdd() {
+            const val = parseInt(document.getElementById('numInput').value);
+            if(isNaN(val)) return;
+            
+            const { steps, resLeft, resRight } = simulateAdd(val);
+            leftHeap = resLeft;
+            rightHeap = resRight;
+            
+            viz.setSteps(steps);
+            viz.startAutoPlay();
         }
 
-        function addSingleNum() {
-            const val = parseInt(document.getElementById('addNumInput').value);
-            if (isNaN(val)) return;
-            addedNums.push(val);
-            init();
-            // Auto jump to end to show the new addition
-            setTimeout(() => {
-                viz.setStep(viz.steps.length - 1); // Not exact, but close
-            }, 100);
+        function resetViz() {
+            leftHeap = []; rightHeap = [];
+            viz.setSteps([{left:[], right:[], median:'-', msg:"已重置", highlightLines:[]}]);
+            document.getElementById('medianText').textContent = '-';
         }
 
-        let viz;
-        function init() {
+        window.addEventListener('load', () => {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Render Heaps
-                    document.getElementById('maxHeapDisplay').innerHTML = (step.maxH || []).map(n => 
-                        `<div class="heap-item ${n === step.newNum ? 'new' : ''}">${n}</div>`
-                    ).join('');
-                    document.getElementById('minHeapDisplay').innerHTML = (step.minH || []).map(n => 
-                        `<div class="heap-item ${n === step.newNum ? 'new' : ''}">${n}</div>`
-                    ).join('');
-                    
-                    document.getElementById('countDisplay').textContent = step.count || 0;
-                    document.getElementById('medianDisplay').textContent = step.median !== undefined && step.median !== null ? step.median : '?';
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(initialNums, addedNums));
-        }
-        
-        function resetVisualization() { 
-            addedNums = [];
-            init(); 
-        }
-        window.addEventListener('load', init);
+            // Initial state
+            viz.setSteps([{left:[], right:[], msg:"準備就緒", highlightLines:[]}]);
+        });
     </script>
 </body>
 </html>

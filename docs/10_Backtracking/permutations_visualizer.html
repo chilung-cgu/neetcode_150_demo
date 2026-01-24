@@ -3,35 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Permutations 全排列 - 視覺化</title>
+    <title>Permutations (Swap Tree) - 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
 
-        .items-container { display: flex; gap: 8px; justify-content: center; margin: 20px 0; }
-        .item-box { 
-            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; 
-            border-radius: 50%; background: var(--viz-bg-secondary); border: 2px solid var(--viz-border);
-            font-weight: bold; transition: all 0.3s;
+        .tree-viewport {
+            width: 100%; height: 450px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }
-        .item-box.used { opacity: 0.3; background: var(--viz-text-muted); }
-        .item-box.current { border-color: var(--viz-primary); box-shadow: 0 0 10px var(--viz-primary); transform: scale(1.1); }
+        #tree-svg { width: 100%; height: 100%; cursor: move; }
+
+        .node-rect { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; rx: 6; }
+        .node-rect.active { fill: #fbbf24; stroke: #f59e0b; filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6)); }
+        .node-rect.leaf { fill: #22c55e; stroke: #16a34a; }
         
-        .slots-container { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; min-height: 40px; }
-        .slot { 
-            width: 40px; height: 40px; border-bottom: 3px solid var(--viz-text-muted); 
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold;
-        }
-        .slot.filled { border-bottom-color: var(--viz-success); color: var(--viz-success); }
+        .node-text { fill: white; font-family: monospace; font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .edge-label { fill: #94a3b8; font-size: 10px; opacity: 0.8; }
         
-        .results-grid { 
-            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; 
-            max-height: 200px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 6px;
+        .link { fill: none; stroke: #475569; stroke-width: 1.5px; opacity: 0.3; transition: all 0.3s; }
+        .link.active { stroke: #fbbf24; opacity: 1; stroke-width: 2.5px; }
+
+        .results-panel {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 10px;
+            min-height: 50px; display: flex; flex-wrap: wrap; gap: 8px;
         }
-        .result-badge { padding: 4px 8px; background: var(--viz-success); color: #0f172a; border-radius: 4px; font-family: monospace; }
+        .res-tag { 
+            padding: 4px 10px; background: rgba(59, 130, 246, 0.2); 
+            border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 4px;
+            color: #93c5fd; font-family: monospace; font-size: 0.9rem;
+            animation: popIn 0.3s;
+        }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 100px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -39,188 +63,205 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">全排列 (Permutations)</div>
+                <div class="viz-title">Permutations (Swap)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>數列 (unique):</label>
-                        <input type="text" id="numsInput" value="1, 2, 3" style="width: 150px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <label>Nums:</label>
+                        <input type="text" id="numsInput" value="1, 2, 3">
+                        <button onclick="runVisualizer()">生成排列</button>
                     </div>
                 </div>
-                
-                <div class="items-container" id="sourceDisplay"></div>
-                <div style="text-align: center; color: var(--text-muted); margin-bottom: 5px;">當前排列構建</div>
-                <div class="slots-container" id="slotsDisplay"></div>
-                
-                <div class="results-grid" id="resultsDisplay"></div>
-                
+
+                <div class="visualization-area">
+                    <div class="tree-viewport">
+                        <svg id="tree-svg"><g id="zoom-group"></g></svg>
+                    </div>
+                    
+                    <div class="results-panel" id="resultsDisplay"></div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <div class="speed-control">
-                        <label>速度:</label>
-                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(N!)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(N)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">排列總數</div><div class="state-value" id="countDisplay">0</div></div>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'void backtrack(vector<int>& nums, vector<bool>& used,', id: 0 },
-            { line: '               vector<int>& path, vector<...>& res) {', id: 1 },
-            { line: '    if (path.size() == nums.size()) {', id: 2 },
-            { line: '        res.push_back(path); return;', id: 3 },
-            { line: '    }', id: 4 },
-            { line: '    for (int i = 0; i < nums.size(); i++) {', id: 5 },
-            { line: '        if (used[i]) continue; // Skip used', id: 6 },
-            { line: '        used[i] = true;', id: 7 },
-            { line: '        path.push_back(nums[i]);', id: 8 },
-            { line: '        backtrack(nums, used, path, res);', id: 9 },
-            { line: '        path.pop_back(); // Backtrack', id: 10 },
-            { line: '        used[i] = false;', id: 11 },
-            { line: '    }', id: 12 },
-            { line: '}', id: 13 },
+            { line: 'void backtrack(nums, start) {', id: 0 },
+            { line: '    if (start == nums.size()) {', id: 1 },
+            { line: '        res.push_back(nums); return;', id: 2 },
+            { line: '    }', id: 3 },
+            { line: '    for (int i = start; i < nums.size(); i++) {', id: 4 },
+            { line: '        swap(nums[start], nums[i]);', id: 5 },
+            { line: '        backtrack(nums, start + 1);', id: 6 },
+            { line: '        swap(nums[start], nums[i]); // Restore', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '}', id: 9 }
         ];
 
-        let currentNums = [1, 2, 3];
+        let viz;
 
-        function runCustomInput() {
-            const str = document.getElementById('numsInput').value;
-            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            // Ensure unique
-            const unique = [...new Set(arr)];
-            
-            if (unique.length === 0 || unique.length > 5) {
-                alert('請輸入 1-5 個不重複數字');
-                return;
-            }
-            currentNums = unique;
-            init();
-        }
-
-        function generateAlgorithmSteps(nums) {
+        function generateSteps(nums) {
             const steps = [];
             const result = [];
-            const n = nums.length;
             
-            steps.push({
-                used: new Array(n).fill(false), path: [], result: [],
-                highlightLines: [0, 1],
-                explanation: { title: '初始化', text: `N = ${n}，排列總數預計 ${factorial(n)}`, formula: 'backtrack([], used)' }
-            });
+            // Nodes structure: {id, label:[...], depth}
+            // Use ID based on call stack path? or simple counter.
+            // But we need to keep track of parent ID to link.
+            
+            let nodes = [{id: 'root', label: [...nums], depth: 0}];
+            let links = [];
+            let idCounter = 0;
+            const newId = () => `n-${++idCounter}`;
 
-            function backtrack(path, used) {
-                if (path.length === n) {
-                    result.push([...path]);
-                    steps.push({
-                        used: [...used], path: [...path], result: [...result],
-                        highlightLines: [2, 3, 4],
-                        explanation: { title: '找到排列', text: `Path 長度 == N，收集结果: [${path.join(', ')}]`, formula: 'path.size() == n' }
-                    });
+            const pushStep = (msg, hl, activeId) => {
+                steps.push({
+                    nodes: JSON.parse(JSON.stringify(nodes)),
+                    links: JSON.parse(JSON.stringify(links)),
+                    activeId: activeId,
+                    result: JSON.parse(JSON.stringify(result)),
+                    msg: msg,
+                    highlightLines: hl
+                });
+            };
+
+            pushStep(`Init: Nums [${nums}]`, [0], 'root');
+
+            const backtrack = (arr, start, parentId) => {
+                if (start === arr.length) {
+                    result.push([...arr]);
+                    const p = nodes.find(n=>n.id===parentId);
+                    if(p) p.isLeaf = true;
+                    pushStep(`Base Case: 找到排列 [${arr}]`, [1, 2], parentId);
                     return;
                 }
 
-                for (let i = 0; i < n; i++) {
-                    // Try steps showing loop check
-                    
-                    if (used[i]) {
-                         // Optional: visualize skipping used
-                         continue;
-                    }
+                for (let i = start; i < arr.length; i++) {
+                    pushStep(`迴圈 i=${i}, start=${start}. 準備 Swap`, [4], parentId);
 
-                    // Choose
-                    used[i] = true;
-                    path.push(nums[i]);
+                    // Swap
+                    [arr[start], arr[i]] = [arr[i], arr[start]];
                     
-                    steps.push({
-                        used: [...used], path: [...path], result: [...result],
-                        currentIdx: i,
-                        highlightLines: [7, 8, 9],
-                        explanation: { title: `選擇 ${nums[i]}`, text: `標記 used[${i}] = true<br>加入 path`, formula: `push(${nums[i]})` }
-                    });
-
-                    backtrack(path, used);
-
-                    // Backtrack
-                    path.pop();
-                    used[i] = false;
+                    const nextId = newId();
+                    nodes.push({id: nextId, label: [...arr], depth: start + 1});
+                    links.push({source: parentId, target: nextId, label: `Swap(${start},${i})`});
                     
-                    steps.push({
-                        used: [...used], path: [...path], result: [...result],
-                        currentIdx: i,
-                        highlightLines: [10, 11],
-                        explanation: { title: '回溯', text: `移除 ${nums[i]}，標記 used[${i}] = false`, formula: 'pop(); used=false' }
-                    });
+                    pushStep(`Swap(${start}, ${i}) -> [${arr}]`, [5, 6], nextId);
+                    
+                    backtrack(arr, start + 1, nextId);
+
+                    // Backtrack Swap
+                    [arr[start], arr[i]] = [arr[i], arr[start]];
+                    
+                    pushStep(`Backtrack: 恢復 Swap(${start}, ${i}) -> [${arr}]`, [7], parentId);
                 }
-            }
+            };
 
-            backtrack([], new Array(n).fill(false));
+            const initialArr = [...nums];
+            backtrack(initialArr, 0, 'root');
+            pushStep("完成", [9], 'root');
             
-            steps.push({
-                used: new Array(n).fill(false), path: [], result: [...result],
-                final: true,
-                explanation: { title: '完成', text: `共 ${result.length} 種排列`, formula: 'Done' }
-            });
-
             return steps;
         }
 
-        function factorial(n) { return n <= 1 ? 1 : n * factorial(n - 1); }
+        const svg = d3.select("#tree-svg");
+        const g = d3.select("#zoom-group");
+        const zoom = d3.zoom().on("zoom", (e) => g.attr("transform", e.transform));
+        svg.call(zoom);
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    document.getElementById('sourceDisplay').innerHTML = currentNums.map((num, i) => {
-                        let cls = 'item-box';
-                        if (step.used && step.used[i]) cls += ' used';
-                        if (step.currentIdx === i && step.used && step.used[i]) cls += ' current'; // being selected
-                        return `<div class="${cls}">${num}</div>`;
-                    }).join('');
-                    
-                    document.getElementById('slotsDisplay').innerHTML = Array.from({length: currentNums.length}).map((_, i) => {
-                         const val = step.path && step.path[i] !== undefined ? step.path[i] : '';
-                         let cls = 'slot';
-                         if (val !== '') cls += ' filled';
-                         return `<div class="${cls}">${val}</div>`;
-                    }).join('');
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('resultsDisplay').innerHTML = step.result.map(r => 
+                `<span class="res-tag">[${r.join(', ')}]</span>`
+            ).join('');
 
-                    document.getElementById('resultsDisplay').innerHTML = (step.result || []).map(r => 
-                         `<div class="result-badge">[${r.join(', ')}]</div>`
-                    ).join('');
-                    
-                    document.getElementById('countDisplay').textContent = step.result ? step.result.length : 0;
-                }
+            if(!step.nodes || !step.nodes.length) return;
+
+            const parentMap = {};
+            step.links.forEach(l => parentMap[l.target] = l.source);
+            
+            const root = d3.stratify()
+                .id(d => d.id)
+                .parentId(d => d.id === 'root' ? null : parentMap[d.id])
+                (step.nodes);
+
+            const treeLayout = d3.tree().nodeSize([90, 80]); // Wider for array labels
+            treeLayout(root);
+            
+            const links = g.selectAll(".link").data(root.links(), d => d.target.id);
+            const lEnter = links.enter().append("g").attr("class", "link-group");
+            lEnter.append("path").attr("class", "link");
+            lEnter.append("text").attr("class", "edge-label").attr("dy", -5).attr("text-anchor", "middle");
+
+            const lUpdate = links.merge(lEnter);
+            lUpdate.select("path")
+                .attr("class", d => d.target.id === step.activeId ? "link active" : "link")
+                .transition().duration(300)
+                .attr("d", d3.linkVertical().x(d=>d.x).y(d=>d.y));
+            
+            lUpdate.select("text")
+                .text(d => {
+                   const l = step.links.find(x=>x.target===d.target.id);
+                   return l ? l.label.replace('Swap', 'S') : '';
+                })
+                .attr("x", d => (d.source.x + d.target.x) / 2)
+                .attr("y", d => (d.source.y + d.target.y) / 2);
+            
+            links.exit().remove();
+
+            const nodes = g.selectAll(".node").data(root.descendants(), d => d.id);
+            const nEnter = nodes.enter().append("g").attr("class", "node");
+            nEnter.append("rect").attr("width", 80).attr("height", 24).attr("x", -40).attr("y", -12).attr("class", "node-rect");
+            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nUpdate = nodes.merge(nEnter).transition().duration(300)
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+            
+            nUpdate.select("rect").attr("class", d => {
+                let c = "node-rect";
+                if(d.id === step.activeId) c += " active";
+                if(d.data.isLeaf) c += " leaf";
+                return c;
             });
-            viz.setSteps(generateAlgorithmSteps(currentNums));
+            nUpdate.select("text").text(d => `[${d.data.label.join(',')}]`);
+            
+            nodes.exit().remove();
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runVisualizer() {
+            const val = document.getElementById('numsInput').value;
+            const nums = val.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            if(nums.length > 5 && !confirm("N > 5 太慢，確定？")) return;
+            
+            svg.call(zoom.transform, d3.zoomIdentity.translate(400, 50).scale(0.8));
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(generateSteps(nums));
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>
