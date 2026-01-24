@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linked List Cycle - D3 視覺化</title>
+    <title>Linked List Cycle - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,34 +13,50 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
-            min-height: 480px;
+            min-height: 500px;
         }
+
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; r: 20px; }
+        .node-text { fill: white; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
         
-        #viz-svg { width: 100%; height: 400px; }
+        .node-normal { fill: #334155; stroke: #475569; }
+        .node-cycle-entry { fill: #334155; stroke: #a855f7; stroke-width: 3px; }
+        .node-met { fill: #fbbf24; stroke: #fff; filter: drop-shadow(0 0 10px #fbbf24); }
 
-        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; stroke: #64748b; }
-        .node-circle.start { stroke: #3b82f6; }
-        .node-circle.cycle-start { stroke: #a855f7; fill: rgba(168, 85, 247, 0.1); }
-        .node-circle.met { fill: #22c55e; stroke: #fbbf24; filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.8)); }
-
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: opacity 0.5s; opacity: 0.6; }
-        .link.cycle-edge { stroke: #a855f7; stroke-dasharray: 5; }
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: all 0.5s; opacity: 0.6; }
+        .link-cycle { stroke: #a855f7; stroke-dasharray: 4; }
 
         /* Pointers */
-        .ptr-slow { fill: #22c55e; stroke: #16a34a; }
-        .ptr-fast { fill: #ef4444; stroke: #b91c1c; }
-        .ptr-label { font-size: 12px; font-weight: bold; text-anchor: middle; fill: white; }
+        .ptr-label { font-size: 12px; font-weight: bold; text-anchor: middle; fill: white; font-family: monospace; }
+        .ptr-arrow { stroke: white; stroke-width: 2px; fill: none; marker-end: url(#arrow-white); }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
+        input[type=number] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 50px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -48,27 +64,42 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Linked List Cycle - Floyd's Cycle Detection</div>
+                <div class="viz-title">Linked List Cycle (Floyd's Algorithm)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Nodes:</label>
-                        <input type="text" id="nodesInput" value="3,2,0,-4">
-                        <label>Cycle Index:</label>
-                        <input type="number" id="cycleInput" value="1" style="width:50px;">
-                        <button onclick="runVisualizer()">檢測</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Nodes:</label>
+                            <input type="text" id="nodesInput" value="3, 2, 0, -4">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Loop Pos:</label>
+                            <input type="number" id="cycleInput" value="1" min="-1">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Run</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <defs>
-                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L9,3 z" fill="#64748b" />
-                            </marker>
-                        </defs>
-                        <g id="main-group" transform="translate(30, 30)"></g>
-                        <g id="overlay-group" transform="translate(30, 30)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Slow (1x)</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Fast (2x)</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Meeting Point</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#64748b"/>
+                                </marker>
+                                <marker id="arrow-white" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="white"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -87,12 +118,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -111,260 +142,322 @@
             { line: '    while (fast && fast->next) {', id: 2 },
             { line: '        slow = slow->next;', id: 3 },
             { line: '        fast = fast->next->next;', id: 4 },
-            { line: '        if (slow == fast) return true;', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    return false;', id: 7 },
-            { line: '}', id: 8 }
+            { line: '        if (slow == fast) {', id: 5 },
+            { line: '            return true;', id: 6 },
+            { line: '        }', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return false;', id: 9 },
+            { line: '}', id: 10 }
         ];
 
         let viz;
 
-        function simulate(values, cycleIdx) {
+        function simulate(values, pos) {
             const steps = [];
-            const n = values.length;
-            const hasCycle = (cycleIdx >= 0 && cycleIdx < n);
             
-            // Build Graph Layout (Rho Shape)
-            const SPACING = 60;
-            const RADIUS = 70;
-            
-            const nodes = [];
-            let linearLen = hasCycle ? cycleIdx : n;
-            let cycleLen = hasCycle ? n - cycleIdx : 0;
-            
-            // Linear part
-            for(let i=0; i<linearLen; i++) {
-                let type = (i===0) ? 'start' : 'normal';
-                nodes.push({ id: i, val: values[i], x: i*SPACING, y: 50, type });
+            // Build Nodes
+            const nodes = values.map((v, i) => ({id: i, val: v, next: i < values.length-1 ? i+1 : null}));
+            if (pos >= 0 && pos < nodes.length) {
+                nodes[nodes.length-1].next = pos; // Create cycle
             }
             
-            // Cycle part
-            if(hasCycle) {
-                const cx = (linearLen) * SPACING + 20;
-                const cy = 150;
-                
-                for(let i=0; i<cycleLen; i++) {
-                    const angle = -Math.PI/2 + (2 * Math.PI * i) / cycleLen;
-                    const trueIdx = linearLen + i;
-                    let type = (i===0) ? 'cycle-start' : 'cycle-node';
-                    nodes.push({
-                        id: trueIdx, val: values[trueIdx],
-                        x: cx + Math.cos(angle) * RADIUS,
-                        y: cy + Math.sin(angle) * RADIUS,
-                        type
-                    });
-                }
-            } else {
-                // If no cycle, continue linear layout but maybe wrap if too long?
-                // For sim, let's just keep going right but ensure it fits?
-                // Or just layout rest
-                // Actually above loop covered up to n IF linearLen=n.
-            }
-
-            let slow = 0, fast = 0;
-            
-            // Initial Step
-            steps.push({
+            // Helper
+            const snap = (s, f, met) => ({
                 nodes: JSON.parse(JSON.stringify(nodes)),
-                s: 0, f: 0,
-                msg: "Start: Slow=Fast=0",
-                highlightLines: [1],
-                explanation: {
-                    title: '初始化',
-                    text: '建立兩個指標：慢指標 (Slow) 和快指標 (Fast)，都從頭節點開始。',
-                    formula: 'slow = head, fast = head'
-                }
+                slow: s, fast: f, met,
+                cycleStart: pos
             });
 
-            let limit = 2 * n; 
-            if(!hasCycle) limit = n + 2;
+            let slow = 0;
+            let fast = 0;
             
-            let met = false;
+            steps.push({
+                ...snap(slow, fast, false),
+                msg: "Init slow=head, fast=head",
+                highlightLines: [0, 1],
+                explanation: { title: "初始化", text: "使用快慢指針 Floyd's Cycle Detection。都從頭開始。", formula: "slow=0, fast=0" }
+            });
+
+            // Need to simulate step by step visual movement
+            // Limit iterations to prevent infinite loop bug in viz
+            let limit = 0;
+            const maxLimit = values.length * 3; 
             
-            while(limit-- > 0 && !met) {
-                if (fast >= n) break; // null
-                
-                steps.push({
-                    nodes: JSON.parse(JSON.stringify(nodes)),
-                    s: slow, f: fast,
-                    msg: `檢查 while(fast && fast->next)`,
-                    highlightLines: [2],
-                    explanation: {
-                        title: '檢查迴圈條件',
-                        text: `確認 fast (${fast}) 和 fast->next 是否存在。<br>這確保快指標可以安全地走兩步。`,
-                        formula: 'fast != null && fast.next != null'
-                    }
-                });
-                
-                const getNext = (i) => {
-                    if (i === n-1) return hasCycle ? cycleIdx : n; // n is null
-                    return i + 1;
-                };
-                
-                let fNext = getNext(fast);
-                if (fNext >= n) { // fast->next is null
-                     steps.push({
-                        nodes: JSON.parse(JSON.stringify(nodes)),
-                        s: slow, f: fast,
-                        msg: "Fast->Next 為 Null，無 Cycle",
-                        highlightLines: [7],
-                        final: true,
-                        explanation: {
-                            title: '無環檢測',
-                            text: '快指標到達鏈表末尾 (Null)，證明鏈表中沒有環。',
-                            formula: 'return false'
-                        }
+            while (limit < maxLimit) {
+                const fastNode = nodes.find(n => n.id === fast);
+                if (!fastNode || fastNode.next === null) {
+                    // Check loop condition
+                    steps.push({
+                        ...snap(slow, fast, false),
+                        msg: "Fast reached end (NULL). No Cycle.",
+                        highlightLines: [2],
+                        explanation: { title: "無環", text: "快指針走到了盡頭 (NULL)，表示鏈表沒有環。", formula: "fast->next == NULL" }
+                    });
+                    steps.push({
+                        ...snap(slow, fast, false),
+                        final: true, result: false,
+                        msg: "Return False", highlightLines: [9],
+                        explanation: { title: "結束", text: "返回 false。", formula: "return false" } 
                     });
                     return steps;
                 }
-
-                // Move pointers
-                slow = getNext(slow);
-                fast = getNext(fNext); // fast move 2
                 
-                if (fast > n) fast = n; // clamp
-
-                steps.push({
-                    nodes: JSON.parse(JSON.stringify(nodes)),
-                    s: slow, f: fast,
-                    msg: `Slow 走 1步 -> ${slow}, Fast 走 2步 -> ${fast>=n?'null':fast}`,
-                    highlightLines: [3, 4],
-                    explanation: {
-                        title: '移動指標',
-                        text: `慢指標走 1 步到節點 ${slow}。<br>快指標走 2 步到節點 ${fast>=n?'Null':fast}。<br>如果有環，快指標最終會追上慢指標。`,
-                        formula: 'slow = slow.next; fast = fast.next.next'
-                    }
-                });
-
-                if (slow === fast && slow < n) {
+                // slow move 1
+                const sNode = nodes.find(n => n.id === slow);
+                const sNext = sNode.next;
+                // fast move 2
+                // first step
+                const fNext1 = fastNode.next;
+                const fNode1 = nodes.find(n => n.id === fNext1); // if exists
+                
+                if (fNode1 && fNext1 !== null) {
+                    const fNext2 = fNode1.next;
+                    // Move
+                    slow = sNext;
+                    fast = fNext2; // could be null if linear
+                    
                     steps.push({
-                        nodes: JSON.parse(JSON.stringify(nodes)),
-                        s: slow, f: fast,
-                        msg: "Slow == Fast! 檢測到 Cycle",
-                        highlightLines: [5],
-                        final: true,
-                        isMeeting: true,
-                        explanation: {
-                            title: '發現環！',
-                            text: `慢指標和快指標在節點 ${slow} 相遇！<br>證明鏈表中存在環。`,
-                            formula: 'slow == fast; return true'
+                        ...snap(slow, fast, false),
+                        msg: `Slow move 1, Fast move 2`,
+                        highlightLines: [3, 4],
+                        explanation: { 
+                            title: "移動指針", 
+                            text: `慢指針前進 1 步，快指針前進 2 步。<br>如果快指針追上慢指針，則有環。`, 
+                            formula: "slow+=1, fast+=2" 
                         }
                     });
-                    met = true;
+                    
+                    if (slow === fast) {
+                         steps.push({
+                            ...snap(slow, fast, true),
+                            result: true, final: true,
+                            msg: "Slow == Fast! Cycle Detected.",
+                            highlightLines: [5, 6],
+                            explanation: { title: "相遇", text: "快指針追上了慢指針！證明鏈表中存在環。", formula: "slow == fast" }
+                        });
+                        return steps;
+                    }
+                } else {
+                     // Fast hit null on second step
+                     fast = null;
+                     steps.push({
+                        ...snap(slow, fast, false),
+                        msg: "Fast reached end (NULL). No Cycle.",
+                        highlightLines: [2, 9],
+                        explanation: { title: "無環", text: "快指針到達末尾。", formula: "return false" }
+                    });
+                    return steps;
                 }
+                
+                limit++;
             }
             
-            if(!met) {
-                 steps.push({
-                    nodes: JSON.parse(JSON.stringify(nodes)),
-                    s: slow, f: fast,
-                    msg: "Fast 到達 null，無 Cycle",
-                    highlightLines: [7],
-                    final: true,
-                    explanation: {
-                        title: '無環檢測',
-                        text: '快指標到達鏈表末尾，未發現環。',
-                        formula: 'return false'
-                    }
-                });
-            }
-
             return steps;
         }
 
+        // --- Render ---
         const svg = d3.select("#viz-svg");
-        const gMain = d3.select("#main-group");
-        const gOverlay = d3.select("#overlay-group");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-
-            // Links
-            const nodeMap = new Map(step.nodes.map(n=>[n.id, n]));
-            const linkData = step.nodes.slice(0, step.nodes.length-1).map(n => ({
-                s: n, t: nodeMap.get(n.id+1)
-            }));
             
-            // Add cycle link if exists (last node to cycleIdx)
-            // But how do we know cycleIdx from here easily? 
-            // In simulate logic, the last node wraps.
-            // Visually we just draw link from last node to cycle-start node if it exists
-            const lastNode = step.nodes[step.nodes.length-1];
-            // Find cycle start node
-            const cycleStart = step.nodes.find(n => n.type === 'cycle-start');
-            if(cycleStart) {
-                linkData.push({s: lastNode, t: cycleStart, isCycle: true});
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
             }
 
-            const lSel = gMain.selectAll(".link").data(linkData);
-            lSel.enter().append("path").attr("class", "link")
-                .merge(lSel)
-                .attr("d", d => {
-                    if (d.isCycle) {
-                        // Curve for cycle wrap
-                        // Simple curve
-                        return `M ${d.s.x},${d.s.y} Q ${d.s.x+50},${d.s.y+50} ${d.t.x},${d.t.y+10}`;
+            const nodes = step.nodes;
+            const cycleStart = step.cycleStart;
+            
+            // Layout: 
+            // Stem nodes horizontal.
+            // Loop nodes in specific geometry (Circle or Rectangle)?
+            // We need to calculate layout based on pos.
+            // If pos = -1, Linear.
+            // If pos >= 0, Nodes 0 to pos-1 are Stem. Nodes pos to end are Loop.
+            
+            let stemLen = 0;
+            let loopLen = 0;
+            if (cycleStart === -1 || cycleStart === undefined || cycleStart === null) {
+                stemLen = nodes.length;
+            } else {
+                stemLen = cycleStart;
+                loopLen = nodes.length - cycleStart;
+            }
+            
+            const startX = 50;
+            const startY = 200;
+            const spacing = 70;
+            
+            // Stem layout
+            nodes.forEach((n, i) => {
+                if (i < stemLen) {
+                    n.x = startX + i * spacing;
+                    n.y = startY;
+                }
+            });
+            
+            // Loop layout
+            if (loopLen > 0) {
+                // Determine circle center
+                // Start of loop is at end of stem
+                const stemEndX = startX + (stemLen - 1) * spacing;
+                // If loop is small, maybe just a small polygon.
+                // Simple Polygon layout for loop
+                const cx = (stemLen > 0 ? (startX + (stemLen)*spacing) : startX) + 50;
+                const cy = startY;
+                const radius = Math.max(60, loopLen * 20);
+                
+                // Angle slice
+                const slice = (2 * Math.PI) / loopLen;
+                
+                // Arrange loop nodes around center
+                // Node cycleStart should be "left-most" on circle to connect to stem easily?
+                // Let's position loop nodes such that cycleStart is at PI (left).
+                
+                for (let j = 0; j < loopLen; j++) {
+                    const idx = stemLen + j;
+                    const angle = Math.PI - (j * slice); // Counter-clockwise starting from left
+                    nodes[idx].x = cx + radius * Math.cos(angle);
+                    nodes[idx].y = cy + radius * Math.sin(angle); // Screen Y is down positive, sin gives y disp
+                    // Flip y? sin(Pi) = 0. sin(0)=0. sin(Pi/2)=1 (down). 
+                }
+                
+                // Update stem last node target if stem exists?
+                // Stem last node connects to nodes[stemLen] (which is at angle PI, i.e., left side of circle)
+                // Coordinates should match roughly.
+                // Re-adjust cx so leftmost circle point aligns with stem end + spacing
+                if (stemLen > 0) {
+                     const loopLeftX = cx - radius;
+                     const desiredX = nodes[stemLen-1].x + spacing;
+                     const shift = desiredX - loopLeftX;
+                     // apply shift to all loop nodes
+                     for(let j=0; j<loopLen; j++) nodes[stemLen+j].x += shift;
+                }
+            }
+
+            // Links
+            const links = [];
+            nodes.forEach(n => {
+                if (n.next !== null && n.next !== undefined) {
+                    const t = nodes.find(x => x.id === n.next);
+                     // Is cycle edge?
+                    if (t) {
+                         const isCycleBack = (n.id === nodes.length-1 && t.id === cycleStart);
+                         links.push({
+                             s: {x: n.x, y: n.y},
+                             t: {x: t.x, y: t.y},
+                             id: `${n.id}-${t.id}`,
+                             isCycle: isCycleBack
+                         });
                     }
-                    return `M ${d.s.x},${d.s.y} L ${d.t.x},${d.t.y}`;
+                }
+            });
+            
+            const linkSel = svg.selectAll(".link-path").data(links, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            
+            linkSel.merge(linkEnter)
+                .transition().duration(500)
+                .attr("d", d => {
+                    // Straight or curve?
+                    if (d.isCycle) {
+                        // Curve back
+                        // Control point
+                        return `M${d.s.x},${d.s.y} Q${(d.s.x+d.t.x)/2},${d.s.y - 120} ${d.t.x},${d.t.y}`;
+                    }
+                    return `M${d.s.x},${d.s.y} L${d.t.x},${d.t.y}`;
                 })
-                .attr("class", d => d.isCycle ? "link cycle-edge" : "link");
-            lSel.exit().remove();
-
+                .attr("class", d => d.isCycle ? "link-path link-cycle" : "link-path");
+                
+            linkSel.exit().remove();
+            
             // Nodes
-            const nodes = gMain.selectAll(".node-g").data(step.nodes, d=>d.id);
-            const nEnter = nodes.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 18).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-
-            const nUpdate = nodes.merge(nEnter)
+            const nodeSel = svg.selectAll(".node-g").data(nodes, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 20);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter)
                 .attr("transform", d => `translate(${d.x}, ${d.y})`);
             
-            nUpdate.select("circle").attr("class", d => {
-                let c = "node-circle";
-                if(d.type==='start') c += " start";
-                if(d.type==='cycle-start') c += " cycle-start";
-                if(step.isMeeting && d.id === step.s) c += " met";
-                return c;
-            });
-            nUpdate.select(".node-text").text(d => d.val);
-
-            nodes.exit().remove();
-
-            // Pointers
-            const pointers = [
-                {id:'Slow', idx:step.s, color:'#22c55e', offset:-30},
-                {id:'Fast', idx:step.f, color:'#ef4444', offset:-50}
-            ];
-            
-            const ptrs = gOverlay.selectAll(".ptr-g").data(pointers, d=>d.id);
-            const pEnter = ptrs.enter().append("g").attr("class", "ptr-g");
-            pEnter.append("path").attr("d", "M0,0 L-6,-10 L6,-10 Z").attr("fill", d=>d.color);
-            pEnter.append("text").attr("class", "ptr-label").attr("y", -15).text(d=>d.id).attr("fill", d=>d.color);
-            
-            ptrs.merge(pEnter).transition().duration(400)
-                .attr("transform", d => {
-                    const n = step.nodes[d.idx]; // index matches id here roughly
-                    // Be careful if n > nodes.length (null)
-                    if(!n || d.idx >= step.nodes.length) {
-                        // Position off screen or at end?
-                        const last = step.nodes[step.nodes.length-1];
-                        return `translate(${last.x + 100}, ${last.y})`;
-                    }
-                    return `translate(${n.x}, ${n.y})`;
+            nodeMerge.select("circle")
+                .attr("class", d => {
+                    let c = "node-circle";
+                    if (d.id === cycleStart) c += " node-cycle-entry"; 
+                    else c += " node-normal";
+                    
+                    if (step.met && d.id === step.slow) c += " node-met";
+                    return c;
                 });
-            ptrs.exit().remove();
+            
+            nodeMerge.select("text").text(d => d.val);
+            nodeSel.exit().remove();
+            
+            // Pointers (Slow: Green, Fast: Red)
+            const pts = [];
+            if (step.slow !== null) pts.push({id: step.slow, label: 'S', type: 'slow'});
+            if (step.fast !== null) pts.push({id: step.fast, label: 'F', type: 'fast'});
+            
+            // Group by node to stack
+            const stacked = {};
+            pts.forEach(p => {
+                if (!stacked[p.id]) stacked[p.id] = [];
+                stacked[p.id].push(p);
+            });
+            
+            const ptrData = [];
+            Object.keys(stacked).forEach(k => {
+                const arr = stacked[k];
+                const node = nodes.find(n => n.id === parseInt(k));
+                if (node) {
+                    arr.forEach((p, i) => {
+                        ptrData.push({
+                            label: p.label, type: p.type,
+                            x: node.x,
+                            y: node.y - 30 - (i * 25)
+                        });
+                    });
+                }
+            });
+            
+            const ptrSel = svg.selectAll(".ptr-g").data(ptrData, d => d.label); // Track by label S/F
+            const ptrEnter = ptrSel.enter().append("g").attr("class", "ptr-g");
+            ptrEnter.append("rect").attr("width", 30).attr("height", 20).attr("x", -15).attr("y", -10).attr("rx", 4);
+            ptrEnter.append("text").attr("class", "ptr-label").attr("dy", 4);
+            ptrEnter.append("path").attr("class", "ptr-arrow").attr("d", "M0,10 L0,20").attr("marker-end", "url(#arrow-white)");
+            
+            const ptrMerge = ptrSel.merge(ptrEnter);
+            ptrMerge.transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            ptrMerge.select("rect").style("fill", d => d.type === 'slow' ? '#22c55e' : '#ef4444');
+            ptrMerge.select("text").text(d => d.label);
+            
+            ptrSel.exit().remove();
         }
 
         function runVisualizer() {
-            const str = document.getElementById('nodesInput').value;
-            const cycleIdx = parseInt(document.getElementById('cycleInput').value);
-            const values = str.split(',').map(x=>x.trim());
+            const raw = document.getElementById('nodesInput').value;
+            const vals = raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            const cPos = parseInt(document.getElementById('cycleInput').value);
+            
+            if(vals.length === 0) return;
+            // Check pos
+            if (cPos >= vals.length){ alert('Cycle index out of bounds'); return; }
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(simulate(values, cycleIdx));
+            viz.setSteps(simulate(vals, cPos));
         }
 
         window.addEventListener('load', runVisualizer);

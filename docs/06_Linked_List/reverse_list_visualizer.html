@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reverse Linked List - D3 精緻視覺化</title>
+    <title>Reverse Linked List - D3 深度視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,32 +13,56 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
-            min-height: 400px;
+            min-height: 450px;
         }
-        
-        #viz-svg { width: 100%; height: 350px; }
 
-        .node-circle { fill: #334155; stroke: #64748b; stroke-width: 3px; transition: all 0.3s; }
-        .node-circle.active { fill: rgba(251, 191, 36, 0.1); stroke: #fbbf24; }
-        .node-circle.processed { fill: rgba(34, 197, 94, 0.1); stroke: #22c55e; }
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 16px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-        
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: all 0.5s; opacity: 0.6; }
-        .link.reversed { stroke: #22c55e; marker-end: url(#arrow-reversed); }
-        .link.null { stroke-dasharray: 5; opacity: 0.3; }
+        /* Nodes */
+        .node-circle { fill: #334155; stroke: #475569; stroke-width: 2px; rx: 50%; transition: fill 0.3s, stroke 0.3s; }
+        .node-circle.active { stroke: #fbbf24; stroke-width: 3px; filter: drop-shadow(0 0 5px #fbbf24); }
+        .node-circle.reversed { fill: #22c55e; stroke: #86efac; }
+        .node-text { fill: white; font-family: monospace; font-size: 16px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 3px; marker-end: url(#arrow); transition: all 0.5s; }
+        .link-path.reversed { stroke: #22c55e; marker-end: url(#arrow-success); }
+        .link-path.broken { stroke: #ef4444; stroke-dasharray: 5; opacity: 0.5; marker-end: none; }
 
         /* Pointers */
-        .ptr-label { font-size: 12px; font-weight: bold; text-anchor: middle; fill: white; }
+        .ptr-label { font-size: 12px; font-weight: bold; text-anchor: middle; fill: white; text-shadow: 0 1px 2px black; font-family: monospace; }
+        .ptr-arrow { stroke: white; stroke-width: 2px; fill: none; marker-end: url(#arrow-white); }
+        .ptr-group { transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         
+        .ptr-prev rect { fill: #a855f7; }
+        .ptr-curr rect { fill: #fbbf24; }
+        .ptr-next rect { fill: #3b82f6; }
+
+        /* Null Node */
+        .null-node text { fill: #94a3b8; font-size: 12px; font-style: italic; }
+
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 200px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -46,28 +70,42 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Reverse Linked List (Iterative)</div>
+                <div class="viz-title">Reverse Linked List</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Nodes:</label>
-                        <input type="text" id="nodesInput" value="1, 2, 3, 4, 5">
-                        <button onclick="runVisualizer()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Nodes:</label>
+                            <input type="text" id="nodesInput" value="1, 2, 3, 4, 5">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Reverse</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <defs>
-                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="24" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L9,3 z" fill="#64748b" />
-                            </marker>
-                            <marker id="arrow-reversed" markerWidth="10" markerHeight="10" refX="24" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L9,3 z" fill="#22c55e" />
-                            </marker>
-                        </defs>
-                        <g id="main-group" transform="translate(50, 150)"></g>
-                        <g id="pointers-group" transform="translate(50, 150)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#a855f7"></div>Prev</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Curr</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Next</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Reversed</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="28" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#64748b"/>
+                                </marker>
+                                <marker id="arrow-success" viewBox="0 -5 10 10" refX="28" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#22c55e"/>
+                                </marker>
+                                <marker id="arrow-white" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="white"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -86,12 +124,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -106,13 +144,13 @@
     <script>
         const codeStructure = [
             { line: 'ListNode* reverseList(ListNode* head) {', id: 0 },
-            { line: '    ListNode *prev = nullptr;', id: 1 },
-            { line: '    ListNode *curr = head;', id: 2 },
+            { line: '    ListNode* prev = nullptr;', id: 1 },
+            { line: '    ListNode* curr = head;', id: 2 },
             { line: '    while (curr != nullptr) {', id: 3 },
-            { line: '        ListNode *next = curr->next;', id: 4 },
+            { line: '        ListNode* nextTemp = curr->next;', id: 4 },
             { line: '        curr->next = prev;', id: 5 },
             { line: '        prev = curr;', id: 6 },
-            { line: '        curr = next;', id: 7 },
+            { line: '        curr = nextTemp;', id: 7 },
             { line: '    }', id: 8 },
             { line: '    return prev;', id: 9 },
             { line: '}', id: 10 }
@@ -122,207 +160,315 @@
 
         function simulate(values) {
             const steps = [];
-            // Nodes structure: {id, val, x, y}
-            // Layout: horizontal
+            // Node structure: id, val, nextId
+            // We visualize nodes as specific positions.
             const nodes = values.map((v, i) => ({
-                id: i, val: v, x: i * 80 + 20, y: 0
+                id: i, val: v, next: (i < values.length - 1) ? i + 1 : -1,
+                isReversed: false
             }));
             
-            // Links: source (id) -> target (id)
-            // Initially 0->1, 1->2 ...
-            let links = [];
-            for(let i=0; i<nodes.length-1; i++) {
-                links.push({s: i, t: i+1});
-            }
-
-            // Pointers state: index in 'nodes' array or -1 (null)
-            // prev, curr, next
+            // Pointers: prev, curr, next
+            // -1 means nullptr
             
-            const pushState = (msg, hl, prev, curr, next, explanation) => {
-                steps.push({
-                    nodes: JSON.parse(JSON.stringify(nodes)),
-                    links: JSON.parse(JSON.stringify(links)),
-                    pointers: { prev, curr, next },
-                    msg, highlightLines: hl,
-                    explanation
-                });
-            };
-
-            // Init
-            let prev = -1; // null
+            let prev = -1; // nullptr
             let curr = 0;  // head
-            let next = -1; // undefined initially
-
-            pushState("Init: prev=null, curr=head", [1, 2], prev, curr, next, {
-                title: '初始化指針',
-                text: '初始化兩個指針：<br>prev (前一個節點) 指向 null。<br>curr (當前節點) 指向 head。<br>準備開始遍歷並反轉。',
-                formula: 'prev = null; curr = head'
+            let nextTemp = -1;
+            
+            // Initial State
+            steps.push({
+                nodes: JSON.parse(JSON.stringify(nodes)),
+                pointers: { prev, curr, next: -1 },
+                msg: "Init: prev=NULL, curr=Head",
+                highlightLines: [0, 1, 2],
+                explanation: {
+                    title: "初始化指針",
+                    text: "prev 指向 NULL (新鏈表的尾部)。<br>curr 指向 Head (當前處理節點)。",
+                    formula: "prev=null, curr=head"
+                }
             });
 
-            while(curr < nodes.length) {
-                // Loop Start
-                pushState(`Loop: curr=${nodes[curr].val}`, [3], prev, curr, next, {
-                    title: '進入迴圈',
-                    text: `檢查 curr 是否為 null。當前 curr 指向 ${nodes[curr].val}，繼續執行。`,
-                    formula: 'curr != null'
+            while (curr !== -1 && curr < nodes.length) { // safety bounds
+                // 1. Save next
+                const currNode = nodes[curr]; // access by index/id
+                nextTemp = currNode.next;
+                
+                steps.push({
+                    nodes: JSON.parse(JSON.stringify(nodes)),
+                    pointers: { prev, curr, next: nextTemp },
+                    msg: `Save next: next = curr->next (${nextTemp === -1 ? 'NULL' : nodes[nextTemp].val})`,
+                    highlightLines: [4],
+                    explanation: {
+                        title: "暫存 Next",
+                        text: "在切斷 curr->next 之前，必須先暫存下一個節點，否則會丟失後續鏈表。",
+                        formula: "next = curr->next"
+                    }
                 });
 
-                // next = curr.next
-                // Finding next based on initial structure logic (which is linear i -> i+1)
-                // BUT after reversal links change? No, 'next' logic follows OLD structure or current links?
-                // In code: next = curr->next.
-                // Initially curr(0)->next(1).
-                // Wait, if we change structure, we must track actual links.
-                // Links array holds current structure.
-                const currLink = links.find(l => l.s === curr);
-                next = currLink ? currLink.t : -1; // -1 as null
+                // 2. Reverse link
+                currNode.next = prev;
+                currNode.isReversed = true;
                 
-                // Correction: In standard reversal, next is simply the original next node.
-                // Since this is SLL, we can just say index+1 if we haven't messed up indices usage.
-                // Yes, we traverse linearly 0, 1, 2... so next is just curr+1 (in original indices) if not reversed yet?
-                // Actually, logic is: save 'curr->next' (which points to next node in original chain).
-                // Since we process linearly, this is always the node at index curr+1.
-                // But strictly speaking, we rely on the link.
-                // Let's rely on simulated 'links' state.
-                // initially links are s->t.
-                // When we reverse, we change s->t to s->prev.
-                
-                // Wait, if we use find(l => l.s === curr), initially it returns (curr, curr+1). Correct.
-                // After reversal of previous node, does it affect current?
-                // No, previous node changed ITS next. Current node still points to its original next.
-                // So this logic holds.
-                
-                pushState(`Save next: next = ${next!==-1 ? nodes[next].val : 'null'}`, [4], prev, curr, next, {
-                    title: '暫存 Next',
-                    text: `為了不丟失後續鏈表，先將 curr->next 存入 next 指針。<br>Next 指向 ${next!==-1 ? nodes[next].val : 'null'}。`,
-                    formula: 'next = curr->next'
+                steps.push({
+                    nodes: JSON.parse(JSON.stringify(nodes)),
+                    pointers: { prev, curr, next: nextTemp },
+                    msg: `Reverse: curr->next = prev (${prev === -1 ? 'NULL' : (prev < nodes.length ? nodes[prev].val : 'Err')})`,
+                    highlightLines: [5],
+                    explanation: {
+                        title: "反轉指向",
+                        text: "將當前節點的 next 指針反向指向 prev。",
+                        formula: "curr->next = prev"
+                    }
                 });
 
-                // curr->next = prev
-                // Update links
-                links = links.filter(l => l.s !== curr);
-                if(prev !== -1) {
-                    links.push({s: curr, t: prev, type: 'reversed'});
-                }
-                // (Visual: if prev is null, no link out of curr, pointing to nothing)
-
-                pushState(`Reverse: ${nodes[curr].val} -> ${prev!==-1?nodes[prev].val:'null'}`, [5], prev, curr, next, {
-                    title: '反轉指針',
-                    text: `將 curr 的 next 指針指向 prev。<br>現在 ${nodes[curr].val} 指向 ${prev!==-1?nodes[prev].val:'null'}。<br>這是反轉的關鍵步驟。`,
-                    formula: 'curr->next = prev'
-                });
-
-                // prev = curr
+                // 3. Move prev
                 prev = curr;
-                pushState(`Move prev: prev = ${nodes[prev].val}`, [6], prev, curr, next, {
-                    title: '移動 prev',
-                    text: `prev 向前移動一步，變成當前節點 ${nodes[prev].val}。<br>為下一次迭代做準備。`,
-                    formula: 'prev = curr'
+                steps.push({
+                    nodes: JSON.parse(JSON.stringify(nodes)),
+                    pointers: { prev, curr, next: nextTemp },
+                    msg: "Move prev to curr",
+                    highlightLines: [6],
+                    explanation: {
+                        title: "推進 Prev",
+                        text: "prev 向前移動一步，變為當前節點。",
+                        formula: "prev = curr"
+                    }
                 });
 
-                // curr = next
-                curr = (next === -1) ? nodes.length : next; // use length to signify end of loop condition logic
-                
-                pushState(`Move curr: curr = ${curr<nodes.length ? nodes[curr].val : 'null'}`, [7], prev, curr, next, {
-                    title: '移動 curr',
-                    text: `curr 向前移動一步，指向剛才暫存的 next。<br>準備處理下一個節點。`,
-                    formula: 'curr = next'
+                // 4. Move curr
+                curr = nextTemp;
+                steps.push({
+                    nodes: JSON.parse(JSON.stringify(nodes)),
+                    pointers: { prev, curr, next: nextTemp },
+                    msg: "Move curr to next",
+                    highlightLines: [7],
+                    explanation: {
+                        title: "推進 Curr",
+                        text: "curr 向前移動一步，變為剛才暫存的 next。",
+                        formula: "curr = next"
+                    }
                 });
             }
-
-            pushState("Done: return prev", [9], prev, curr, next, {
-                title: '完成',
-                text: `curr 為 null，迴圈結束。<br>prev 停在新的頭節點 (${nodes[prev].val})。<br>返回 prev。`,
-                formula: 'return prev'
+            
+            steps.push({
+                nodes: JSON.parse(JSON.stringify(nodes)),
+                pointers: { prev, curr, next: -1 },
+                result: prev, final: true,
+                msg: "Done. Return prev as new head.",
+                highlightLines: [9],
+                explanation: {
+                    title: "完成",
+                    text: "curr 為 NULL，遍歷結束。prev 現在指向新的頭節點。",
+                    formula: "return prev"
+                }
             });
 
             return steps;
         }
 
+        // --- Render ---
         const svg = d3.select("#viz-svg");
-        const gMain = d3.select("#main-group");
-        const gPtrs = d3.select("#pointers-group");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-
-            // Links
-            const linkData = step.links.map(l => ({
-                s: step.nodes[l.s], t: step.nodes[l.t], type: l.type
-            }));
             
-            const lSel = gMain.selectAll(".link").data(linkData, d => d.s.id + "-" + d.t.id);
-            lSel.enter().append("path").attr("class", "link")
-                .merge(lSel)
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const nodes = step.nodes;
+            const ptr = step.pointers;
+            const n = nodes.length;
+            const nodeR = 25;
+            const spacing = 80;
+            const startX = (width - (n * spacing)) / 2 + nodeR;
+            const startY = height / 2;
+
+            // Generate coords
+            nodes.forEach((node, i) => {
+                node.x = startX + i * spacing;
+                node.y = startY;
+            });
+
+            // Null nodes visualization (Head prev and Tail next)
+            // Left null (initial prev)
+            const leftNull = {x: startX - spacing, y: startY, id: -1, val: "NULL"};
+            // Right null (original tail)
+            const rightNull = {x: startX + n * spacing, y: startY, id: -2, val: "NULL"};
+
+            // Helper to get coords by id
+            const getCoords = (id) => {
+                if (id === -1) return leftNull; // Prev initial
+                if (id === -1 && ptr.next === -1 && nodes[nodes.length-1].next === -1) return rightNull; // Ambiguous -1?
+                // Logic fix: 
+                // In our sim, -1 is nullptr.
+                // Physically, initially previous is left of head.
+                // Originally next of tail is right of tail.
+                // We should deduce position based on context or just fixed Null zones?
+                // Let's use flexible NULLs. 
+                // If id is -1... 
+                // We map -1 to a "floating null" or specific ones?
+                // Visual simplification: nodes[curr].next points to what?
+                // If it points to -1, and it isReversed, it points left. If not reversed, points right.
+            };
+            
+            // Draw Links
+            const links = [];
+            nodes.forEach(node => {
+                let targetX, targetY;
+                if (node.next === -1) {
+                    // Null
+                    if (node.isReversed) { targetX = leftNull.x; targetY = leftNull.y; } // Points to new tail null (left)
+                    else { targetX = rightNull.x; targetY = rightNull.y; } // Points to original tail null (right)
+                } else {
+                    const targetNode = nodes[node.next];
+                    targetX = targetNode.x; targetY = targetNode.y;
+                }
+                
+                links.push({
+                    source: {x: node.x, y: node.y},
+                    target: {x: targetX, y: targetY},
+                    id: node.id,
+                    reversed: node.isReversed
+                });
+            });
+
+            const linkSel = svg.selectAll(".link-path").data(links, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            
+            linkSel.merge(linkEnter)
                 .transition().duration(500)
                 .attr("d", d => {
-                    // Start and end points
-                    const sx = d.s.x, sy = d.s.y;
-                    const tx = d.t.x, ty = d.t.y;
+                    // Control point calculation for curve
+                    // If target < source (reversed), curve down
+                    // If target > source (normal), straight line
+                    const sx = d.source.x, sy = d.source.y;
+                    const tx = d.target.x, ty = d.target.y;
                     
-                    if(d.type === 'reversed') {
+                    if (d.reversed) {
                         // Curve below
-                        return `M ${sx},${sy+15} Q ${(sx+tx)/2},${sy+60} ${tx},${ty+15}`;
+                        const dist = Math.abs(sx - tx);
+                        return `M${sx},${sy+nodeR} Q${(sx+tx)/2},${sy+nodeR+dist*0.5} ${tx},${ty+nodeR}`;
                     } else {
-                        // Straight or slight curve above
-                        return `M ${sx},${sy-15} L ${tx},${ty-15}`;
+                        // Straight
+                        return `M${sx+nodeR},${sy} L${tx-nodeR-5},${ty}`; // -5 gap for arrow
                     }
                 })
-                .attr("class", d => d.type === 'reversed' ? "link reversed" : "link")
-                .attr("marker-end", d => d.type === 'reversed' ? "url(#arrow-reversed)" : "url(#arrow)");
-            
-            lSel.exit().remove();
+                .attr("class", d => d.reversed ? "link-path reversed" : "link-path")
+                .attr("marker-end", d => d.reversed ? "url(#arrow-success)" : "url(#arrow)");
+                
+            linkSel.exit().remove();
 
-            // Nodes
-            const nSel = gMain.selectAll(".node-g").data(step.nodes, d => d.id);
-            const nEnter = nSel.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 2);
+            // Draw Nodes
+            const nodeSel = svg.selectAll(".node-g").data(nodes, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
             
-            const nUpdate = nSel.merge(nEnter)
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", nodeR);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter)
                 .attr("transform", d => `translate(${d.x}, ${d.y})`);
             
-            nUpdate.select("circle").attr("class", d => {
-                // Highlight if involved
-                let c = "node-circle";
-                if(step.pointers.curr === d.id) c += " active";
-                if(step.pointers.prev === d.id) c += " processed";
-                return c;
-            });
-            nUpdate.select("text").text(d => d.val);
-            nSel.exit().remove();
-
-            // Pointers
-            const ptrs = [
-                {id: 'prev', idx: step.pointers.prev, color: '#22c55e', offset: 40},
-                {id: 'curr', idx: step.pointers.curr, color: '#fbbf24', offset: 60},
-                {id: 'next', idx: step.pointers.next, color: '#f97316', offset: 80}
-            ];
-            
-            const pSel = gPtrs.selectAll(".ptr-g").data(ptrs, d => d.id);
-            const pEnter = pSel.enter().append("g").attr("class", "ptr-g");
-            pEnter.append("path").attr("d", "M0,0 L-5,10 L5,10 Z").attr("class", "pointer-arrow");
-            pEnter.append("text").attr("class", "ptr-label").attr("y", 22);
-            
-            const pUpdate = pSel.merge(pEnter).transition().duration(400)
-                .attr("transform", d => {
-                    let x = 0;
-                    if(d.idx === -1 || d.idx === undefined) x = -50; 
-                    else if(d.idx >= step.nodes.length) x = step.nodes[step.nodes.length-1].x + 80;
-                    else x = step.nodes[d.idx].x;
-                    
-                    return `translate(${x}, ${d.offset}) rotate(180)`;
+            nodeMerge.select("circle")
+                .attr("class", d => {
+                    let c = "node-circle";
+                    if (ptr.curr === d.id) c += " active";
+                    if (d.isReversed) c += " reversed";
+                    return c;
                 });
+            
+            nodeMerge.select("text").text(d => d.val);
+            
+            nodeSel.exit().remove();
+            
+            // Draw NULLs
+            const nulls = [leftNull, rightNull];
+            const nullSel = svg.selectAll(".null-g").data(nulls);
+            const nullEnter = nullSel.enter().append("g").attr("class", "null-g");
+            nullEnter.append("text").text("NULL").attr("class", "node-text").style("fill", "#64748b").style("font-size", "12px");
+            nullSel.merge(nullEnter).attr("transform", d => `translate(${d.x}, ${d.y})`);
+
+            // Draw Pointers labels
+            // We need to group pointers by target node to stack them
+            const ptrMap = {}; // id -> [labels]
+            const addPtr = (id, label, color) => {
+                let targetId = id;
+                if (id === -1) {
+                    // Logic to attach null ptrs
+                    // Simplified: just render separate logic
+                }
+                if (!ptrMap[id]) ptrMap[id] = [];
+                ptrMap[id].push({label, color});
+            };
+            
+            addPtr(ptr.prev, "prev", "#a855f7");
+            addPtr(ptr.curr, "curr", "#fbbf24");
+            addPtr(ptr.next, "next", "#3b82f6");
+            
+            const ptrData = [];
+            // Map Map to Array
+            Object.keys(ptrMap).forEach(key => {
+                const k = parseInt(key);
+                let x, y;
+                if (k >= 0 && k < nodes.length) {
+                    x = nodes[k].x;
+                    y = nodes[k].y - 40;
+                } else {
+                    // Null pointers
+                    // If prev is -1 (init), usually Left NULL
+                    // If next is -1 (end), usually Right NULL (init) or Left NULL (end reversed)
+                    // Heuristic:
+                    if (k === -1) {
+                        x = leftNull.x; y = leftNull.y - 40;
+                        if (ptr.next === -1 && ptr.curr >= nodes.length) { // End state
+                             // Actually at end, curr is NULL (Right), next is NULL (Right)
+                             // prev is last node.
+                             x = rightNull.x;
+                        }
+                    }
+                }
                 
-            pUpdate.select("path").style("fill", d => d.color);
-            pUpdate.select("text").text(d => d.id).style("fill", d => d.color)
-                .attr("transform", "rotate(180) translate(0, 10)"); // Text right side up
+                ptrMap[k].forEach((p, i) => {
+                    ptrData.push({
+                        label: p.label,
+                        color: p.color,
+                        x: x,
+                        y: y - i * 25, // Stack upwards
+                        id: k + p.label
+                    });
+                });
+            });
+            
+            const ptrSel = svg.selectAll(".ptr-group").data(ptrData, d => d.label); // Key by label 
+            const ptrEnter = ptrSel.enter().append("g").attr("class", "ptr-group");
+            
+            // Label rect
+            ptrEnter.append("rect").attr("width", 40).attr("height", 20).attr("x", -20).attr("y", -10).attr("rx", 4);
+            ptrEnter.append("text").attr("class", "ptr-label").attr("dy", 4);
+            // Arrow down
+            ptrEnter.append("path").attr("d", "M0,10 L0,25").attr("class", "ptr-arrow").attr("stroke", "white").attr("marker-end", "url(#arrow-white)");
+            
+            const ptrMerge = ptrSel.merge(ptrEnter);
+            ptrMerge.transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
                 
-            pSel.exit().remove();
+            ptrMerge.select("rect").style("fill", d => d.color);
+            ptrMerge.select("text").text(d => d.label);
+            
+            ptrSel.exit().remove();
         }
 
         function runVisualizer() {
-            const vals = document.getElementById('nodesInput').value.split(',').map(x=>x.trim());
+            const raw = document.getElementById('nodesInput').value;
+            const vals = raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            if(vals.length === 0) return;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render

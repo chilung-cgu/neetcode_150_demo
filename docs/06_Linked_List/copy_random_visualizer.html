@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copy List with Random Pointer - D3 精緻視覺化</title>
+    <title>Copy List with Random Pointer - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,36 +13,55 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
             min-height: 500px;
         }
+
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 450px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; r: 20px; }
+        .node-text { fill: white; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
         
-        #viz-svg { width: 100%; height: 450px; }
+        .node-original { fill: #334155; stroke: #3b82f6; }
+        .node-copy { fill: #1e293b; stroke: #22c55e; }
+        .node-active { stroke: #fbbf24; stroke-width: 4px; filter: drop-shadow(0 0 5px #fbbf24); }
 
-        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; }
-        .node-circle.original { stroke: #3b82f6; fill: #1e293b; }
-        .node-circle.copy { stroke: #22c55e; fill: #1e293b; }
-        .node-circle.active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.1); }
-
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-        .node-subtext { fill: #94a3b8; font-size: 10px; text-anchor: middle; }
-
-        .link { fill: none; stroke-width: 2px; transition: all 0.5s; opacity: 0.8; }
-        .link.next { stroke: #64748b; marker-end: url(#arrow-next); }
-        .link.random { stroke: #a855f7; stroke-dasharray: 4; marker-end: url(#arrow-random); }
-        .link.map-link { stroke: #fbbf24; stroke-dasharray: 2; opacity: 0.4; }
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: all 0.5s; opacity: 0.6; }
+        .link-random { stroke: #a855f7; stroke-dasharray: 4; marker-end: url(#arrow-random); opacity: 0.8; }
         
-        /* Map Entry */
-        .map-box { fill: rgba(30, 41, 59, 0.8); stroke: #475569; rx: 6; }
-        .map-text { fill: #cbd5e1; font-size: 12px; font-family: monospace; text-anchor: middle; }
+        /* Map Lines */
+        .map-line { stroke: #fbbf24; stroke-width: 1px; stroke-dasharray: 2; opacity: 0.4; }
+
+        /* Pointers */
+        .ptr-label { font-size: 12px; font-weight: bold; text-anchor: middle; fill: white; font-family: monospace; }
+        .ptr-arrow { stroke: white; stroke-width: 2px; fill: none; marker-end: url(#arrow-white); }
+        
+        /* Row Labels */
+        .row-label { font-size: 12px; fill: #94a3b8; text-anchor: start; font-weight: bold; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -50,30 +69,45 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Copy Random List (HashMap Approach)</div>
+                <div class="viz-title">Copy List with Random Pointer</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Values:</label>
-                        <input type="text" id="valsInput" value="7,13,11,10,1">
-                        <label>Randoms (Indices):</label>
-                        <input type="text" id="randsInput" value="null,0,4,2,0">
-                        <button onclick="runVisualizer()">複製</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Vals:</label>
+                            <input type="text" id="valsInput" value="7, 13, 11, 10, 1">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Rand Idxs:</label>
+                            <input type="text" id="randsInput" value="null, 0, 4, 2, 0">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Copy</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <defs>
-                            <marker id="arrow-next" markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L9,3 z" fill="#64748b" />
-                            </marker>
-                            <marker id="arrow-random" markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L9,3 z" fill="#a855f7" />
-                            </marker>
-                        </defs>
-                        <g id="map-group" transform="translate(50, 20)"></g>
-                        <g id="main-group" transform="translate(50, 150)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Original</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Copy</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#a855f7"></div>Random Link</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#64748b"/>
+                                </marker>
+                                <marker id="arrow-random" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#a855f7"/>
+                                </marker>
+                                <marker id="arrow-white" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="white"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -92,12 +126,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -112,252 +146,316 @@
     <script>
         const codeStructure = [
             { line: 'Node* copyRandomList(Node* head) {', id: 0 },
-            { line: '    if (!head) return nullptr;', id: 1 },
-            { line: '    unordered_map<Node*, Node*> map;', id: 2 },
+            { line: '    unordered_map<Node*, Node*> map;', id: 1 },
+            { line: '    // 1. Create Copies', id: 2 },
             { line: '    Node* curr = head;', id: 3 },
-            { line: '    // Phase 1: Copy Nodes', id: 4 },
-            { line: '    while (curr) {', id: 5 },
-            { line: '        map[curr] = new Node(curr->val);', id: 6 },
-            { line: '        curr = curr->next;', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '    // Phase 2: Connect Pointers', id: 9 },
-            { line: '    curr = head;', id: 10 },
-            { line: '    while (curr) {', id: 11 },
-            { line: '        map[curr]->next = map[curr->next];', id: 12 },
-            { line: '        map[curr]->random = map[curr->random];', id: 13 },
-            { line: '        curr = curr->next;', id: 14 },
-            { line: '    }', id: 15 },
-            { line: '    return map[head];', id: 16 },
-            { line: '}', id: 17 }
+            { line: '    while (curr) {', id: 4 },
+            { line: '        map[curr] = new Node(curr->val);', id: 5 },
+            { line: '        curr = curr->next;', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    // 2. Link Pointers', id: 8 },
+            { line: '    curr = head;', id: 9 },
+            { line: '    while (curr) {', id: 10 },
+            { line: '        map[curr]->next = map[curr->next];', id: 11 },
+            { line: '        map[curr]->random = map[curr->random];', id: 12 },
+            { line: '        curr = curr->next;', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '    return map[head];', id: 15 },
+            { line: '}', id: 16 }
         ];
 
         let viz;
 
-        function simulate(values, rands) {
+        function simulate(values, randIndices) {
             const steps = [];
-            // Org Links
-            const nodes = values.map((v,i) => ({id: i, val: v, type: 'org'}));
-            let links = [];
-            for(let i=0; i<nodes.length; i++) {
-                if(i < nodes.length-1) links.push({s: i, t: i+1, type: 'next'});
-                if(rands[i] !== null) links.push({s: i, t: rands[i], type: 'random'});
-            }
+            
+            // Build original nodes
+            const origNodes = values.map((v, i) => ({
+                id: i, val: v, 
+                next: (i < values.length - 1) ? i+1 : null,
+                random: (randIndices[i] !== null && randIndices[i] !== undefined) ? randIndices[i] : null,
+                type: 'original', row: 0
+            }));
+            
+            // Only need logical structure to simulation
+            // Map logic: map[id] exists means copy created.
+            
+            const copies = []; // Array of copy nodes
+            const mapKeys = new Set(); // Track which orig IDs have copies
+            // Visual map lines: from orig to copy
+            
+            const snap = (curr) => ({
+                origNodes: JSON.parse(JSON.stringify(origNodes)),
+                copyNodes: JSON.parse(JSON.stringify(copies)),
+                curr: curr,
+                mapKeys: new Set(mapKeys)
+            });
 
-            // State: 
-            // map: { orgId: copyId } (Visual mapping)
-            // copyNodes: array of nodes {id, val, type: 'copy'}
-            // copyLinks: array of links
+            // Pass 1
+            steps.push({
+                ...snap(0),
+                msg: "Phase 1: Create copies. Iterating list...",
+                highlightLines: [2, 3],
+                explanation: {
+                    title: "Phase 1: 建立節點複本",
+                    text: "遍歷原鏈表，為每個節點創建一個新節點 (Copy)，並存入 Hash Map 中 (Key=Orig, Value=Copy)。",
+                    formula: "map[curr] = new Node()"
+                }
+            });
             
-            const map = {}; // orgId -> copyNodeObject
-            const copyNodes = [];
-            const copyLinks = [];
-            
-            const pushState = (msg, hl, activeId=null, explanation=null) => {
+            for (let i = 0; i < origNodes.length; i++) {
+                const copyNode = {
+                    id: `c_${i}`, val: origNodes[i].val, 
+                    next: null, random: null, 
+                    type: 'copy', row: 1, originalId: i // link back
+                };
+                copies.push(copyNode);
+                mapKeys.add(i);
+                
                 steps.push({
-                    orgNodes: JSON.parse(JSON.stringify(nodes)),
-                    orgLinks: JSON.parse(JSON.stringify(links)),
-                    copyNodes: JSON.parse(JSON.stringify(copyNodes)),
-                    copyLinks: JSON.parse(JSON.stringify(copyLinks)),
-                    map: {...map}, // shallow copy of keys is enough as values are ids
-                    activeId,
-                    msg, highlightLines: hl,
-                    explanation
-                });
-            };
-
-            pushState("Init: HashMap prepared", [1, 2], null, {
-                title: '初始化 Map',
-                text: '準備一個 HashMap 來儲存 `Old Node -> New Node` 的對應關係。',
-                formula: 'map<Node*, Node*>'
-            });
-
-            // Phase 1
-            for(let i=0; i<nodes.length; i++) {
-                const node = nodes[i];
-                pushState(`Phase 1: Copy Node ${node.val}`, [5], node.id, {
-                    title: `訪問 Original Node ${node.val}`,
-                    text: `遍歷原鏈表。當前節點值為 ${node.val}。`,
-                    formula: 'curr = head'
-                });
-                
-                // Create Copy
-                const copyNode = { id: `c-${node.id}`, val: node.val, type: 'copy', orgId: node.id };
-                copyNodes.push(copyNode);
-                map[node.id] = copyNode.id;
-                
-                pushState(`Created Copy ${node.val}, Add to Map`, [6], node.id, {
-                    title: '建立副本',
-                    text: `建立新節點 ${node.val}。並將對應關係存入 Map：Original(${node.id}) -> Copy(${copyNode.id})。`,
-                    formula: 'map[curr] = new Node(curr->val)'
+                    ...snap(i),
+                    msg: `Create Copy of Node ${i} (${origNodes[i].val})`,
+                    highlightLines: [4, 5],
+                    explanation: {
+                        title: `複製節點 ${i}`,
+                        text: `創建值為 ${origNodes[i].val} 的新節點。此時 next 和 random 指針尚未連接。`,
+                        formula: `map[${i}] = Node(${origNodes[i].val})`
+                    }
                 });
             }
-
-            // Phase 2
-            pushState("Phase 2: Use Map to connect pointers", [10, 11], null, {
-                title: 'Phase 2: 連接指針',
-                text: '再次遍歷原鏈表，利用 Map 查找對應的副本節點，並連接 Next 和 Random 指針。',
-                formula: 'curr = head'
+            
+            // Pass 2
+            steps.push({
+                ...snap(0),
+                msg: "Phase 2: Link Value. Reset curr to Head.",
+                highlightLines: [8, 9],
+                explanation: {
+                    title: "Phase 2: 連接指針",
+                    text: "再次遍歷原鏈表。利用 Hash Map 找到對應的 Copy 節點，並設定其 next 和 random。",
+                    formula: "Link Pointers"
+                }
             });
-
-            for(let i=0; i<nodes.length; i++) {
-                const orgId = i;
-                const copyId = map[orgId];
+            
+            for (let i = 0; i < origNodes.length; i++) {
+                const orig = origNodes[i];
+                const copy = copies[i];
                 
-                pushState(`Connect pointers for Copy ${nodes[i].val}`, [11], orgId, {
-                    title: `處理節點 ${nodes[i].val}`,
-                    text: `取出原節點對應的副本節點，準備設定其 Next 和 Random。`,
-                    formula: 'copy = map[curr]'
-                });
-
-                // Next
-                if(i < nodes.length-1) {
-                    const nextOrgId = i + 1;
-                    const nextCopyId = map[nextOrgId];
-                    copyLinks.push({s: copyId, t: nextCopyId, type: 'next'});
-                    
-                    pushState(`Set Next: Copy(${nodes[i].val}) -> Copy(${nodes[i+1].val})`, [12], orgId, {
-                        title: '連接 Next',
-                        text: `原節點的 Next 是 ${nodes[i+1].val}。透過 Map 找到對應的副本，將當前副本的 Next 指向它。`,
-                        formula: 'map[curr]->next = map[curr->next]'
+                // Link Next
+                if (orig.next !== null) {
+                    copy.next = `c_${orig.next}`;
+                    steps.push({
+                        ...snap(i),
+                        msg: `Link Copy[${i}]->next to Copy[${orig.next}]`,
+                        highlightLines: [11],
+                        explanation: {
+                            title: "連接 Next",
+                            text: `Orig[${i}]->next 是 Orig[${orig.next}]。所以 Copy[${i}]->next 設為 map[Orig[${orig.next}]] (即 Copy[${orig.next}])。`,
+                            formula: "copy->next = map[orig->next]"
+                        }
                     });
                 }
-
-                // Random
-                if(rands[i] !== null) {
-                    const randOrgId = rands[i];
-                    const randCopyId = map[randOrgId];
-                    copyLinks.push({s: copyId, t: randCopyId, type: 'random'});
-                    
-                    pushState(`Set Random: Copy(${nodes[i].val}) -> Copy(${nodes[rands[i]].val})`, [13], orgId, {
-                        title: '連接 Random',
-                        text: `原節點的 Random 指向 ${nodes[rands[i]].val}。透過 Map 找到對應的副本，連接 Random 指針。`,
-                        formula: 'map[curr]->random = map[curr->random]'
+                
+                // Link Random
+                if (orig.random !== null) {
+                    copy.random = `c_${orig.random}`;
+                    steps.push({
+                        ...snap(i),
+                        msg: `Link Copy[${i}]->random to Copy[${orig.random}]`,
+                        highlightLines: [12],
+                        explanation: {
+                            title: "連接 Random",
+                            text: `Orig[${i}]->random 是 Orig[${orig.random}]。所以 Copy[${i}]->random 設為 map[Orig[${orig.random}]]。`,
+                            formula: "copy->random = map[orig->random]"
+                        }
+                    });
+                } else {
+                     steps.push({
+                        ...snap(i),
+                        msg: `Copy[${i}]->random is NULL`,
+                        highlightLines: [12],
+                        explanation: { title: "Random 為空", text: "原節點 random 指向 NULL，複製節點也指向 NULL。", formula: "random = null" }
                     });
                 }
             }
-
-            pushState("Done", [16], null, {
-                title: '完成',
-                text: '返回複製鏈表的頭節點 (map[head])。',
-                formula: 'return map[head]'
+            
+            steps.push({
+                ...snap(null),
+                final: true, msg: "Done. Return map[head]",
+                highlightLines: [15],
+                explanation: { title: "完成", text: "返回新鏈表的頭節點 (Copy[0])。", formula: "return copyHead" }
             });
 
             return steps;
         }
 
+        // --- Render ---
         const svg = d3.select("#viz-svg");
-        const gMap = d3.select("#map-group");
-        const gMain = d3.select("#main-group");
+        const width = 600;
+        const height = 450;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-
-            const SPACING = 80;
             
-            // Layout Original Nodes (Top Row)
-            step.orgNodes.forEach((n, i) => {
-                n.x = i * SPACING;
-                n.y = 0;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const origs = step.origNodes;
+            const copies = step.copyNodes;
+            const curr = step.curr;
+            
+            // Layout
+            // Row 0 (Orig): y=100
+            // Row 1 (Copy): y=300
+            const startX = 50;
+            const spacing = 80;
+            
+            origs.forEach(n => {
+                n.x = startX + n.id * spacing;
+                n.y = 100;
+            });
+            copies.forEach((n, i) => {
+                // n.id is c_0, c_1... map back to index i
+                n.x = startX + i * spacing;
+                n.y = 300;
             });
             
-            // Layout Copy Nodes (Bottom Row)
-            step.copyNodes.forEach((n, i) => {
-                n.x = i * SPACING;
-                n.y = 150;
-            });
-
-            // Map Visualization
-            // A box above showing Key->Val lines?
-            // Or just draw dashed lines from Top Node to Bottom Node indicating map relationship?
-            // Simple dashed lines are best for "Map" concept in graph viz
+            // All nodes combined for rendering
+            const allNodes = [...origs, ...copies];
             
-            const mapLinks = [];
-            step.copyNodes.forEach(cn => {
-                const org = step.orgNodes.find(n => n.id === cn.orgId); // orgId stored in copy
-                if(org) {
-                    mapLinks.push({s: org, t: cn});
+            // Draw Map Lines (Vertical dashed)
+            const mapLines = [];
+            copies.forEach((c, i) => {
+                // If map exists
+                if (step.mapKeys.has(c.originalId)) {
+                    mapLines.push({
+                        s: {x: origs[c.originalId].x, y: origs[c.originalId].y},
+                        t: {x: c.x, y: c.y},
+                        id: `map-${i}`
+                    });
                 }
             });
-
-            const mlSel = gMain.selectAll(".link-map").data(mapLinks);
-            mlSel.enter().append("path").attr("class", "link map-link")
-                .merge(mlSel)
-                .transition().duration(500)
-                .attr("d", d => `M ${d.s.x},${d.s.y+20} L ${d.t.x},${d.t.y-20}`);
-            mlSel.exit().remove();
-
-            // Render Links (Org and Copy)
-            const allLinks = [
-                ...step.orgLinks.map(l => ({...l, srcNodes: step.orgNodes})),
-                ...step.copyLinks.map(l => ({...l, srcNodes: step.copyNodes}))
-            ];
             
-            // Need to map IDs to coords. copy IDs are strings "c-X".
-            // Helper
-            const getNode = (list, id) => list.find(n => n.id === id);
-
-            const lSel = gMain.selectAll(".link-graph").data(allLinks, d => d.s + "-" + d.t + "-" + (d.srcNodes === step.copyNodes ? 'c' : 'o'));
-            const lEnter = lSel.enter().append("path").attr("class", d => "link " + d.type);
+            const mapSel = svg.selectAll(".map-line").data(mapLines, d => d.id);
+            mapSel.enter().append("line").attr("class", "map-line")
+                .merge(mapSel)
+                .attr("x1", d => d.s.x).attr("y1", d => d.s.y + 20)
+                .attr("x2", d => d.t.x).attr("y2", d => d.t.y - 20);
+            mapSel.exit().remove();
             
-            lSel.merge(lEnter).transition().duration(500)
-                .attr("class", d => "link-graph link " + d.type)
-                .attr("d", d => {
-                    const s = getNode(d.srcNodes, d.s);
-                    const t = getNode(d.srcNodes, d.t);
-                    if(!s || !t) return "";
-                    
-                    if(d.type === 'next') {
-                        return `M ${s.x+15},${s.y} L ${t.x-15},${t.y}`;
+            // Links (Next & Random)
+            const links = [];
+            allNodes.forEach(n => {
+                // Next
+                if (n.next !== null) {
+                    const tId = n.next; 
+                    // c_x or int x?
+                    let target;
+                    if (typeof tId === 'string' && tId.startsWith('c_')) {
+                        target = copies.find(c => c.id === tId);
                     } else {
-                        // Random curve
-                        // Curve up for original, down for copy?
-                        // Or simple curve
-                        const dir = (d.srcNodes === step.orgNodes) ? -1 : 1;
-                        const h = 40 * dir;
-                        return `M ${s.x},${s.y} Q ${(s.x+t.x)/2},${s.y+h} ${t.x},${t.y}`;
+                        target = origs.find(o => o.id === tId);
                     }
+                    
+                    if (target) {
+                        links.push({
+                            s: {x: n.x, y: n.y},
+                            t: {x: target.x, y: target.y},
+                            type: 'next',
+                            id: `next-${n.id}-${target.id}`
+                        });
+                    }
+                }
+                
+                // Random
+                if (n.random !== null) {
+                    const rId = n.random;
+                    let target;
+                    if (typeof rId === 'string' && rId.startsWith('c_')) {
+                        target = copies.find(c => c.id === rId);
+                    } else {
+                        target = origs.find(o => o.id === rId);
+                    }
+                    
+                    if (target) {
+                        links.push({
+                            s: {x: n.x, y: n.y},
+                            t: {x: target.x, y: target.y},
+                            type: 'random',
+                            id: `rand-${n.id}-${target.id}`
+                        });
+                    }
+                }
+            });
+            
+            const linkSel = svg.selectAll(".link-path").data(links, d => d.id);
+            const linkEnter = linkSel.enter().append("path");
+            
+            linkSel.merge(linkEnter)
+                .attr("class", d => d.type === 'next' ? "link-path" : "link-path link-random")
+                .transition().duration(500)
+                .attr("d", d => {
+                    // Next: straight
+                    if(d.type === 'next') return `M${d.s.x+20},${d.s.y} L${d.t.x-20},${d.t.y}`;
+                    // Random: Curve high
+                    // If self loop?
+                    if (d.s.x === d.t.x && d.s.y === d.t.y) {
+                         // Loop up
+                         return `M${d.s.x},${d.s.y-20} C${d.s.x-30},${d.s.y-70} ${d.s.x+30},${d.s.y-70} ${d.s.x},${d.s.y-20}`;
+                    }
+                    const h = Math.abs(d.s.x - d.t.x) * 0.5 + 30;
+                    // Copy row curves bottom, Orig row curves top
+                    const dir = d.s.y > 200 ? 1 : -1;
+                    return `M${d.s.x},${d.s.y + (dir*20)} Q${(d.s.x+d.t.x)/2},${d.s.y + (dir*h)} ${d.t.x},${d.t.y + (dir*20)}`;
                 });
-            lSel.exit().remove();
-
+            
+            linkSel.exit().remove();
+            
             // Nodes
-            const allNodes = [...step.orgNodes, ...step.copyNodes];
-            const nSel = gMain.selectAll(".node-g").data(allNodes, d => d.id);
-            const nEnter = nSel.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 15).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-            if(step.activeId !== null) nEnter.append("text").attr("class", "node-subtext").attr("dy", 28); // Label?
-
-            const nUpdate = nSel.merge(nEnter).transition().duration(500)
+            const nodeSel = svg.selectAll(".node-g").data(allNodes, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 20);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter)
                 .attr("transform", d => `translate(${d.x}, ${d.y})`);
             
-            nUpdate.select("circle").attr("class", d => {
-                let c = "node-circle";
-                if(d.type === 'org') c += " original";
-                if(d.type === 'copy') c += " copy";
-                if(d.id === step.activeId) c += " active";
-                return c;
-            });
-            nUpdate.select(".node-text").text(d => d.val);
+            nodeMerge.select("circle")
+                .attr("class", d => {
+                    let c = "node-circle";
+                    if (d.type === 'original') c += " node-original"; else c += " node-copy";
+                    if (d.id === curr || (d.type === 'copy' && d.originalId === curr)) c += " node-active";
+                    return c;
+                });
             
-            nSel.exit().remove();
+            nodeMerge.select("text").text(d => d.val);
+            
+            nodeSel.exit().remove();
+            
+             // Row Labels
+            svg.selectAll(".row-lbl").remove();
+            svg.append("text").attr("x", 10).attr("y", 105).text("Original").attr("class", "row-label row-lbl");
+            svg.append("text").attr("x", 10).attr("y", 305).text("Copy (Map)").attr("class", "row-label row-lbl");
         }
 
         function runVisualizer() {
-            const vStr = document.getElementById('valsInput').value;
-            const rStr = document.getElementById('randsInput').value;
-            
-            const vals = vStr.split(',').map(x=>parseInt(x.trim()));
-            const rands = rStr.split(',').map(x => {
-                const t = x.trim();
-                return (t==='null'||t==='') ? null : parseInt(t);
+            const vals = document.getElementById('valsInput').value.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            const randsRaw = document.getElementById('randsInput').value.split(',');
+            const rands = randsRaw.map(x => {
+                const t = x.trim().toLowerCase();
+                if(t === 'null' || t === '') return null;
+                const n = parseInt(t);
+                return isNaN(n) ? null : n;
             });
             
-            // Validate length
-            if(vals.length !== rands.length) {
-                alert("Values and Randoms length mismatch");
-                return;
-            }
-
+            if(vals.length === 0) return;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render

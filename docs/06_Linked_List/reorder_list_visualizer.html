@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reorder List - D3 精緻視覺化</title>
+    <title>Reorder List - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,31 +13,50 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
-            min-height: 480px;
+            min-height: 500px;
         }
-        
-        #viz-svg { width: 100%; height: 400px; }
 
-        .node-circle { stroke-width: 3px; transition: all 0.5s; fill: #334155; stroke: #64748b; }
-        .node-circle.first-half { stroke: #3b82f6; fill: rgba(59, 130, 246, 0.1); }
-        .node-circle.second-half { stroke: #a855f7; fill: rgba(168, 85, 247, 0.1); }
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; r: 18px; }
+        .node-text { fill: white; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
         
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-        
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: all 0.5s; opacity: 0.6; }
-        .link.merge { stroke: #22c55e; stroke-width: 3px; }
+        .node-left { fill: #3b82f6; stroke: #60a5fa; }
+        .node-right { fill: #a855f7; stroke: #c084fc; }
+        .node-active { stroke: #fbbf24; stroke-width: 4px; filter: drop-shadow(0 0 5px #fbbf24); }
+
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: all 0.5s; opacity: 0.6; }
+        .link-path.merged { stroke: #22c55e; marker-end: url(#arrow-success); opacity: 1; stroke-width: 3px; }
 
         /* Pointers */
-        .ptr-label { font-size: 12px; font-weight: bold; text-anchor: middle; fill: white; }
+        .ptr-label { font-size: 12px; font-weight: bold; text-anchor: middle; fill: white; font-family: monospace; }
+        .ptr-arrow { stroke: white; stroke-width: 2px; fill: none; marker-end: url(#arrow-white); }
+        
+        /* Legends */
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -45,25 +64,41 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Reorder List (L0 -> Ln -> L1 -> Ln-1 ...)</div>
+                <div class="viz-title">Reorder List</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>List:</label>
-                        <input type="text" id="nodesInput" value="1, 2, 3, 4, 5">
-                        <button onclick="runVisualizer()">Reorder</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Nodes:</label>
+                            <input type="text" id="nodesInput" value="1, 2, 3, 4, 5">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Reorder</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <defs>
-                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L9,3 z" fill="#64748b" />
-                            </marker>
-                        </defs>
-                        <g id="main-group" transform="translate(50, 50)"></g>
-                        <g id="overlay-group" transform="translate(50, 50)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Left Half</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#a855f7"></div>Right Half</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Pointers</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#64748b"/>
+                                </marker>
+                                <marker id="arrow-success" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#22c55e"/>
+                                </marker>
+                                <marker id="arrow-white" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="white"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -82,12 +117,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -103,283 +138,335 @@
         const codeStructure = [
             { line: 'void reorderList(ListNode* head) {', id: 0 },
             { line: '    // 1. Find Middle', id: 1 },
-            { line: '    slow = head; fast = head->next;', id: 2 },
+            { line: '    ListNode *slow = head, *fast = head->next;', id: 2 },
             { line: '    while (fast && fast->next) {', id: 3 },
-            { line: '        slow = slow->next;', id: 4 },
-            { line: '        fast = fast->next->next;', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    // 2. Reverse Second Half', id: 7 },
-            { line: '    second = slow->next; slow->next = null;', id: 8 },
-            { line: '    prev = null;', id: 9 },
-            { line: '    while (second) {', id: 10 },
-            { line: '        temp = second->next; second->next = prev;', id: 11 },
-            { line: '        prev = second; second = temp;', id: 12 },
-            { line: '    }', id: 13 },
-            { line: '    // 3. Merge', id: 14 },
-            { line: '    second = prev; first = head;', id: 15 },
-            { line: '    while (second) {', id: 16 },
-            { line: '        t1 = first->next; t2 = second->next;', id: 17 },
-            { line: '        first->next = second; second->next = t1;', id: 18 },
-            { line: '        first = t1; second = t2;', id: 19 },
-            { line: '    }', id: 20 },
-            { line: '}', id: 21 },
+            { line: '        slow = slow->next; fast = fast->next->next;', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    // 2. Reverse Second Half', id: 6 },
+            { line: '    ListNode* second = slow->next;', id: 7 },
+            { line: '    slow->next = nullptr; // cut off', id: 8 },
+            { line: '    // ... reverse logic (standard) ...', id: 9 },
+            { line: '    // 3. Merge', id: 10 },
+            { line: '    ListNode *first = head;', id: 11 },
+            { line: '    while (second) {', id: 12 },
+            { line: '        ListNode *tmp1 = first->next, *tmp2 = second->next;', id: 13 },
+            { line: '        first->next = second; second->next = tmp1;', id: 14 },
+            { line: '        first = tmp1; second = tmp2;', id: 15 },
+            { line: '    }', id: 16 },
+            { line: '}', id: 17 }
         ];
 
         let viz;
 
         function simulate(values) {
             const steps = [];
-            // Basic nodes: 0..N-1
-            const nodes = values.map((v, i) => ({ id: i, val: v, group: 'none' }));
-            let links = [];
-            for(let i=0; i<nodes.length-1; i++) links.push({s:i, t:i+1});
-
-            // State capture
-            const pushState = (msg, hl, ptrs={}, mode='linear', explanation=null) => {
-                steps.push({
-                    nodes: JSON.parse(JSON.stringify(nodes)),
-                    links: JSON.parse(JSON.stringify(links)),
-                    ptrs,
-                    mode,
-                    msg, highlightLines: hl,
-                    explanation
-                });
-            };
-
-            // Phase 1: Find Middle
-            let slow = 0, fast = 0; // indices
             
-            // Logic correction for Fast Init: fast = head.next? Code uses head.next.
-            // If length=1, fast is null.
-            if(values.length > 1) fast = 1; else fast = -1; // null
+            // Phase 1: Nodes linear
+            const nodes = values.map((v, i) => ({
+                id: i, val: v, next: (i < values.length - 1) ? i+1 : null,
+                row: 0, col: i, type: 'left' // initially all left/row 0
+            }));
             
-            pushState("Phase 1: 尋找中點 (Fast & Slow)", [1, 2], {slow, fast}, 'linear', {
-                title: 'Phase 1: 尋找中點',
-                text: '使用快慢指標 (Fast & Slow) 尋找鏈表的中點。Slow 每次走一步，Fast 每次走兩步。',
-                formula: 'slow = head, fast = head->next'
+            // Helper
+            const snap = (nodes, ptrs) => ({
+                nodes: JSON.parse(JSON.stringify(nodes)),
+                pointers: {...ptrs}
             });
-
-            // Fast logic matches code: while (fast && fast->next)
-            // Simulating node structure traversal
-            let fastNode = fast === -1 ? null : nodes[fast];
-            // Safe traversal simulation
             
-            while(fast !== -1 && fast+1 < nodes.length) { // fast.next != null
-                // fast move 2
-                let nextFast = fast + 2; 
-                if(nextFast >= nodes.length) nextFast = -1; // off bound
-                
-                slow = slow + 1;
-                fast = nextFast;
-                
-                pushState(`Slow -> ${slow}, Fast moves 2`, [3, 4, 5], {slow, fast}, 'linear', {
-                    title: '移動指標',
-                    text: `Slow 移動到 ${nodes[slow].val}。<br>Fast 移動兩步。當 Fast 到達末尾時，Slow 將位於中點。`,
-                    formula: 'slow = slow->next; fast = fast->next->next'
-                });
-            }
+            let slow = 0;
+            let fast = (nodes.length > 1) ? 1 : null; // fast = head.next
+            if (nodes.length <= 1) fast = null; // safety
             
-            pushState(`中點找到: ${nodes[slow].val}`, [6], {slow}, 'linear', {
-                title: '確認中點',
-                text: `Slow 指向鏈表中點 (前一節點，若為偶數長度)。我們將從此處切斷鏈表。`,
-                formula: 'mid = slow'
+            // 1. Find Mid
+            // Actually standard algo uses fast = head or head.next, neetcode uses head.next to find true left-mid.
+            
+            steps.push({
+                ...snap(nodes, {slow, fast}),
+                msg: "Phase 1: Find Middle. slow=head, fast=head->next",
+                highlightLines: [2],
+                explanation: { title: "Phase 1: 尋找中點", text: "使用快慢指針法。慢指針每次走一步，快指針每次走兩步。", formula: "slow=1x, fast=2x" }
             });
-
-            // Phase 2: Split and Reverse
-            const midIdx = slow;
-            const secondStartIdx = midIdx + 1;
             
-            // Cut link
-            links = links.filter(l => l.s !== midIdx);
-            
-            // Identify groups for coloring
-            for(let i=0; i<=midIdx; i++) nodes[i].group = 'first';
-            for(let i=secondStartIdx; i<nodes.length; i++) nodes[i].group = 'second';
-            
-            pushState("Phase 2: 切斷並反轉後半段", [7, 8], {second: secondStartIdx}, 'split', {
-                title: 'Phase 2: 切割與反轉',
-                text: '將鏈表從中點切斷。準備反轉後半段鏈表 (紫色部分)。',
-                formula: 'second = slow->next; slow->next = null'
-            });
-
-            // Reverse second half logic
-            // Nodes indices: secondStartIdx ... n-1
-            let prev = -1;
-            let curr = secondStartIdx;
-            
-            // If empty second half (e.g. length 1)
-            if(curr >= nodes.length) curr = -1; 
-
-            while(curr !== -1) {
-                // next temp logic
-                // Find current 'next' from links
-                const link = links.find(l => l.s === curr);
-                const next = link ? link.t : -1;
+            while (fast !== null && fast !== undefined) {
+                const fastNode = nodes.find(n => n.id === fast);
+                 // check fast->next
+                const nextFast = fastNode ? fastNode.next : null;
+                if (nextFast === null) break;
                 
-                // Remove out link
-                links = links.filter(l => l.s !== curr);
-                // Add reverse link
-                if(prev !== -1) links.push({s: curr, t: prev});
+                slow = nodes[slow].next;
                 
-                // Move ptrs
-                const oldCurr = curr;
-                curr = next;
-                prev = oldCurr;
-                
-                pushState("Reversing...", [10, 11, 12], {prev, curr: oldCurr}, 'split', {
-                    title: '反轉中',
-                    text: `將後半段節點 ${nodes[oldCurr].val} 的指針反向。`,
-                    formula: 'curr->next = prev'
-                });
-            }
-            
-            // New head of second list is 'prev'.
-            const head2 = prev; // index
-            pushState("反轉完成，準備合併", [13, 14], {first: 0, second: head2}, 'split', {
-                title: '反轉完成',
-                text: '後半段已反轉。現在我們有兩個鏈表：頭半段 (藍色) 和反轉後的後半段 (紫色)。',
-                formula: 'Time to Merge'
-            });
-
-            // Phase 3: Merge
-            let p1 = 0;
-            let p2 = head2;
-            
-            while(p1 !== -1 && p2 !== -1) {
-                // t1 = p1.next, t2 = p2.next
-                // Find nexts in current links structure
-                const l1 = links.find(l => l.s === p1);
-                const t1 = l1 ? l1.t : -1;
-                
-                const l2 = links.find(l => l.s === p2);
-                const t2 = l2 ? l2.t : -1;
-                
-                // Re-wire
-                // p1 -> p2
-                links = links.filter(l => l.s !== p1);
-                links.push({s: p1, t: p2, type: 'merge'});
-                
-                // p2 -> t1
-                links = links.filter(l => l.s !== p2);
-                if(t1 !== -1) {
-                    links.push({s: p2, t: t1, type: 'merge'});
+                // fast = fast.next.next
+                let fNext = nodes[fast].next;
+                if (fNext !== null) {
+                    fast = nodes[fNext].next;
+                } else {
+                    fast = null;
                 }
                 
-                pushState(`Merge: ${nodes[p1].val} -> ${nodes[p2].val}`, [17, 18], {first: p1, second: p2}, 'merge', {
-                    title: '交錯合併',
-                    text: `將 List2 的節點 (${nodes[p2].val}) 插入到 List1 的節點 (${nodes[p1].val}) 之後。`,
-                    formula: 'p1->next = p2; p2->next = t1'
+                steps.push({
+                    ...snap(nodes, {slow, fast}),
+                    msg: "Move slow 1 step, fast 2 steps",
+                    highlightLines: [3, 4, 5],
+                    explanation: { title: "移動指針", text: "slow = slow->next<br>fast = fast->next->next", formula: "Move pointers" }
                 });
-                
-                p1 = t1;
-                p2 = t2;
             }
             
-            pushState("完成", [21], {}, 'merge', {
-                title: '完成',
-                text: '鏈表重排結束。',
-                formula: 'Done'
+            // Cut
+            const midId = slow;
+            let secondHead = nodes[midId].next;
+            
+            nodes[midId].next = null; // Cut
+            
+            steps.push({
+                ...snap(nodes, {slow}),
+                msg: "Phase 2: Split. slow->next = null",
+                highlightLines: [7, 8],
+                explanation: { title: "Phase 2: 切斷鏈表", text: "slow 所在位置即為左半部的尾端。將其 next 設為 null，並標記右半部起點 second。", formula: "List Split" }
+            });
+            
+            if (secondHead === null) {
+                // Done (singlenode)
+                 steps.push({
+                    ...snap(nodes, {}),
+                    msg: "Only 1 node. Done.", highlightLines: [17], final: true,
+                    explanation: { title: "完成", text: "只有一個節點，無須重排。", formula: "Done" }
+                });
+                return steps;
+            }
+            
+            // 2. Reverse Second Half (Abstracted)
+            // Lets manually reverse the 'nodes' array structure starting from secondHead
+            // And visualize them moving to Row 1 (Right specific)
+            
+            // Collect second half indices
+            const secondHalfIds = [];
+            let curr = secondHead;
+            while(curr !== null) {
+                secondHalfIds.push(curr);
+                // Mark type right
+                nodes[curr].type = 'right';
+                // Move visually to row 1
+                nodes[curr].row = 1;
+                curr = nodes[curr].next;
+            }
+            
+            // Re-assign cols for second half to align nicely?
+            secondHalfIds.forEach((id, idx) => {
+                nodes[id].col = idx; // reset cols for row 1
+            });
+            
+            steps.push({
+                ...snap(nodes, {second: secondHead}),
+                msg: "Move second half to lower row for reversal",
+                highlightLines: [9],
+                explanation: { title: "准备反转", text: "將右半部鏈表獨立出來準備反轉。", formula: "Prepare visuals" }
             });
 
+            // Perform Reverse Logic on data
+            let prev = null;
+            let current = secondHead;
+            while (current !== null) {
+                const nextTemp = nodes[current].next;
+                nodes[current].next = prev;
+                prev = current;
+                current = nextTemp;
+            }
+            secondHead = prev; // new head of reversed list
+            
+            // Update pointers in snapshot to show reversed
+            steps.push({
+                ...snap(nodes, {second: secondHead}),
+                msg: "Reversed second half",
+                highlightLines: [9],
+                explanation: { title: "反轉右半部", text: "完成右半部鏈表的反轉 (pointer reversal)。現在 second 指向反轉後的頭。", formula: "Reverse Done" }
+            });
+            
+            // 3. Merge ZigZag
+            // L1 head = 0. L2 head = secondHead.
+            let first = 0; // head
+            let second = secondHead;
+            
+            steps.push({
+                ...snap(nodes, {first, second}),
+                msg: "Phase 3: Merge. first=head, second=reversedHead",
+                highlightLines: [11],
+                explanation: { title: "Phase 3: 合併", text: "開始交錯合併兩個鏈表。", formula: "Merge Start" }
+            });
+
+            // Visualize merge by re-linking and maybe moving nodes to a central line?
+            // Or just links updating.
+            
+            while (second !== null) {
+                const tmp1 = nodes[first].next;
+                const tmp2 = nodes[second].next;
+                
+                // Show vars
+                steps.push({
+                    ...snap(nodes, {first, second}),
+                    msg: `Prepare merge: tmp1=${tmp1!==null?nodes[tmp1].val:'X'}, tmp2=${tmp2!==null?nodes[tmp2].val:'X'}`,
+                    highlightLines: [13],
+                    explanation: { title: "暫存 Next", text: "暫存兩個鏈表的下一個節點，以免斷鏈。", formula: "Save tmp1, tmp2" }
+                });
+                
+                // Link first -> second
+                nodes[first].next = second;
+                
+                // Visual update: move second node to visually indicate it's inserted?
+                // Let's keep rows but draw green links.
+                
+                steps.push({
+                    ...snap(nodes, {first, second}),
+                    msg: `first->next = second (${nodes[second].val})`,
+                    highlightLines: [14],
+                    explanation: { title: "連接 First -> Second", text: "將左邊節點指向右邊節點。", formula: "first->next = second" }
+                });
+                
+                // Link second -> tmp1
+                nodes[second].next = tmp1;
+                
+                steps.push({
+                    ...snap(nodes, {first, second}),
+                    msg: `second->next = tmp1 (${tmp1!==null?nodes[tmp1].val:'NULL'})`,
+                    highlightLines: [14],
+                    explanation: { title: "連接 Second -> next", text: "將右邊節點指向原本左邊的下一個節點。", formula: "second->next = tmp1" }
+                });
+                
+                first = tmp1;
+                second = tmp2;
+                
+                steps.push({
+                    ...snap(nodes, {first, second}),
+                    msg: "Advance pointers",
+                    highlightLines: [15],
+                    explanation: { title: "移動指針", text: "兩個指針都向前移動一步，準備下一輪合併。", formula: "Advance" }
+                });
+            }
+            
+            steps.push({
+                ...snap(nodes, {}),
+                final: true, msg: "Done", highlightLines: [17],
+                explanation: { title: "完成", text: "合併結束，鏈表已重排完成。", formula: "Done" }
+            });
+            
             return steps;
         }
 
+        // --- Render ---
         const svg = d3.select("#viz-svg");
-        const gMain = d3.select("#main-group");
-        const gOverlay = d3.select("#overlay-group");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-
-            // Layout Calculation
-            const SPACING = 70;
-            const START_X = 50;
             
-            step.nodes.forEach(n => {
-                if(step.mode === 'linear') {
-                    n.x = START_X + n.id * SPACING;
-                    n.y = 150;
-                } else if (step.mode === 'split') {
-                    if (n.group === 'second') {
-                        n.x = START_X + (n.id - (step.nodes.length/2)) * SPACING + 100; // offset?
-                        // Simplification: keep relative x but shift y
-                        n.x = START_X + n.id * SPACING; // Keep X to show reversing in place logically?
-                        // Or stack them?
-                        // Let's put second half below
-                        n.y = 250;
-                    } else {
-                        n.x = START_X + n.id * SPACING;
-                        n.y = 150;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const nodes = step.nodes;
+            const ptr = step.pointers || {};
+            
+            // Calculate coords
+            // Row 0: y=100. Row 1: y=250.
+            const spacing = 70;
+            const startX = 50;
+            
+            nodes.forEach(n => {
+                n.targetX = startX + n.col * spacing;
+                n.targetY = n.row === 0 ? 100 : 250;
+            });
+            
+            // Links
+            const links = [];
+            nodes.forEach(n => {
+                if(n.next !== null && n.next !== undefined) {
+                    const t = nodes.find(x => x.id === n.next);
+                    if(t) {
+                        links.push({
+                            s: {x: n.targetX, y: n.targetY},
+                            t: {x: t.targetX, y: t.targetY},
+                            id: `${n.id}-${t.id}`,
+                            cross: n.row !== t.row
+                        });
                     }
-                } else if (step.mode === 'merge') {
-                    // Re-calculate x based on current chain order is hard without traversing links.
-                    // Visual simplification: Keep original X but fluctuate Y?
-                    // Or keep 'split' Y positions but draw new links?
-                    // Better: Keep split layout to see the "zipper" effect clearly.
-                    if (n.group === 'second') n.y = 250; else n.y = 150;
-                    n.x = START_X + n.id * SPACING;
                 }
             });
-
-            // Links
-            const lSel = gMain.selectAll(".link").data(step.links, d => d.s + "-" + d.t);
-            lSel.enter().append("path").attr("class", "link")
-                .merge(lSel)
+            
+            // Draw Links
+            const linkSel = svg.selectAll(".link-path").data(links, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            
+            linkSel.merge(linkEnter)
                 .transition().duration(500)
                 .attr("d", d => {
-                    const s = step.nodes[d.s];
-                    const t = step.nodes[d.t];
-                    return `M ${s.x},${s.y} L ${t.x},${t.y}`;
+                     // If cross row (merge), curve
+                     return `M${d.s.x + 20},${d.s.y} L${d.t.x - 20},${d.t.y}`;
                 })
-                .attr("stroke", d => d.type === 'merge' ? '#22c55e' : null);
-            lSel.exit().remove();
-
-            // Nodes
-            const nSel = gMain.selectAll(".node-g").data(step.nodes, d => d.id);
-            const nEnter = nSel.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-            
-            const nUpdate = nSel.merge(nEnter).transition().duration(500)
-                .attr("transform", d => `translate(${d.x}, ${d.y})`);
-            
-            nUpdate.select("circle").attr("class", d => {
-                let c = "node-circle";
-                if(d.group === 'first') c+= " first-half";
-                if(d.group === 'second') c+= " second-half";
-                return c;
-            })
-            // Highlight ptrs
-            .style("stroke", d => {
-                if(Object.values(step.ptrs).includes(d.id)) return "#fbbf24";
-                return null;
-            })
-            .style("stroke-width", d => Object.values(step.ptrs).includes(d.id) ? 4 : 3);
-
-            nUpdate.select("text").text(d => d.val);
-            nSel.exit().remove();
-
-            // Pointers Overlay
-            const ptrData = [];
-            Object.entries(step.ptrs).forEach(([k, v]) => {
-                if(v !== -1 && step.nodes[v]) {
-                    ptrData.push({l: k, x: step.nodes[v].x, y: step.nodes[v].y});
-                }
-            });
-            
-            const pSel = gOverlay.selectAll(".ptr").data(ptrData, d => d.l);
-            const pEnter = pSel.enter().append("g").attr("class", "ptr");
-            pEnter.append("text").attr("class", "ptr-label").attr("y", -30);
-            
-            const pUpdate = pSel.merge(pEnter).transition().duration(500)
-                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+                .attr("class", d => d.cross ? "link-path merged" : "link-path");
                 
-            pUpdate.select("text").text(d => d.l);
-            pSel.exit().remove();
+            linkSel.exit().remove();
+            
+            // Draw Nodes
+            const nodeSel = svg.selectAll(".node-g").data(nodes, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 20);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter);
+            nodeMerge.transition().duration(500)
+                .attr("transform", d => `translate(${d.targetX}, ${d.targetY})`);
+            
+            nodeMerge.select("circle")
+                .attr("class", d => {
+                    let c = "node-circle";
+                    if (d.type === 'left') c += " node-left";
+                    if (d.type === 'right') c += " node-right";
+                    // Pointers highlight
+                    if (ptr.first === d.id || ptr.second === d.id || ptr.slow === d.id || ptr.fast === d.id) c += " node-active";
+                    return c;
+                });
+            
+            nodeMerge.select("text").text(d => d.val);
+            
+            nodeSel.exit().remove();
+            
+            // Pointers
+            const activePtrs = [];
+            if (ptr.slow !== undefined && ptr.slow !== null) activePtrs.push({id: ptr.slow, label: 'slow'});
+            if (ptr.fast !== undefined && ptr.fast !== null) activePtrs.push({id: ptr.fast, label: 'fast'});
+            if (ptr.first !== undefined && ptr.first !== null) activePtrs.push({id: ptr.first, label: 'first'});
+            if (ptr.second !== undefined && ptr.second !== null) activePtrs.push({id: ptr.second, label: 'second'});
+            
+            const ptrSel = svg.selectAll(".ptr-g").data(activePtrs, d => d.label);
+            const ptrEnter = ptrSel.enter().append("g").attr("class", "ptr-g");
+            ptrEnter.append("rect").attr("width", 40).attr("height", 20).attr("x", -20).attr("y", -25).attr("rx", 4).attr("fill", "#fbbf24");
+            ptrEnter.append("text").attr("class", "ptr-label").attr("dy", -11);
+            ptrEnter.append("path").attr("d", "M0,-5 L0,15").attr("stroke", "white").attr("stroke-width", 2).attr("marker-end", "url(#arrow-white)");
+            
+            const ptrMerge = ptrSel.merge(ptrEnter);
+            ptrMerge.transition().duration(500)
+                .attr("transform", d => {
+                    const n = nodes.find(x => x.id === d.id);
+                    if(!n) return `translate(0,0)`;
+                    return `translate(${n.targetX}, ${n.targetY - 30})`;
+                });
+            
+            ptrMerge.select("text").text(d => d.label);
+            
+            ptrSel.exit().remove();
         }
 
         function runVisualizer() {
-            const vals = document.getElementById('nodesInput').value.split(',').map(x=>parseInt(x.trim()));
+            const raw = document.getElementById('nodesInput').value;
+            const vals = raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            if(vals.length === 0) return;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render

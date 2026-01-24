@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merge Two Sorted Lists - D3 動態視覺化</title>
+    <title>Merge Two Sorted Lists - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,36 +13,55 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
-            min-height: 450px;
+            min-height: 480px;
         }
-        
-        #viz-svg { width: 100%; height: 400px; }
 
-        .node-circle { stroke-width: 3px; transition: all 0.5s; r: 20px; }
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-        
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: all 0.5s; opacity: 0.6; }
-        
-        /* Node Types */
-        .node-l1 { fill: #3b82f6; stroke: #2563eb; }
-        .node-l2 { fill: #a855f7; stroke: #9333ea; }
-        .node-merged { stroke: #22c55e; fill: rgba(34, 197, 94, 0.2); } 
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .node-dimmed { opacity: 0.3; }
-        .node-active { stroke: #fbbf24; stroke-width: 4px; filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6)); }
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; r: 20px; }
+        .node-text { fill: white; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        
+        .node-l1 { fill: #3b82f6; stroke: #60a5fa; }
+        .node-l2 { fill: #a855f7; stroke: #c084fc; }
+        .node-dummy { fill: #64748b; stroke: #94a3b8; stroke-dasharray: 4; }
+        
+        .node-active { stroke: #fbbf24; stroke-width: 4px; filter: drop-shadow(0 0 5px #fbbf24); }
+        .node-merged { fill: #22c55e; stroke: #4ade80; } /* After merge */
 
-        /* Labels */
-        .label-text { font-size: 14px; fill: #94a3b8; font-weight: bold; }
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: all 0.5s; opacity: 0.6; }
+        .link-path.merged { stroke: #22c55e; marker-end: url(#arrow-success); opacity: 1; stroke-width: 3px; }
+
+        /* Pointers */
+        .ptr-label { font-size: 12px; font-weight: bold; text-anchor: middle; fill: white; font-family: monospace; }
+        .ptr-arrow { stroke: white; stroke-width: 2px; fill: none; marker-end: url(#arrow-white); }
+        
+        /* Row Labels */
+        .row-label { font-size: 12px; fill: #94a3b8; text-anchor: start; font-weight: bold; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row label { color: #94a3b8; font-size: 0.9rem; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -53,24 +72,43 @@
                 <div class="viz-title">Merge Two Sorted Lists</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>List 1:</label>
-                        <input type="text" id="l1Input" value="1,2,7">
-                        <label>List 2:</label>
-                        <input type="text" id="l2Input" value="1,3,4">
-                        <button onclick="runVisualizer()">合併</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">List 1:</label>
+                            <input type="text" id="l1Input" value="1, 2, 4">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">List 2:</label>
+                            <input type="text" id="l2Input" value="1, 3, 4">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Merge</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <defs>
-                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L9,3 z" fill="#64748b" />
-                            </marker>
-                        </defs>
-                        <g id="main-group" transform="translate(50, 50)"></g>
-                        <g id="labels-group" transform="translate(10, 50)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>List 1</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#a855f7"></div>List 2</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Merged</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Scanning</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#64748b"/>
+                                </marker>
+                                <marker id="arrow-success" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#22c55e"/>
+                                </marker>
+                                <marker id="arrow-white" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="white"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -89,12 +127,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -108,21 +146,21 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'ListNode* mergeTwoLists(list1, list2) {', id: 0 },
-            { line: '    ListNode dummy;', id: 1 },
+            { line: 'ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {', id: 0 },
+            { line: '    ListNode dummy(0);', id: 1 },
             { line: '    ListNode* tail = &dummy;', id: 2 },
-            { line: '    while(list1 && list2) {', id: 3 },
-            { line: '        if(list1->val < list2->val) {', id: 4 },
-            { line: '            tail->next = list1;', id: 5 },
-            { line: '            list1 = list1->next;', id: 6 },
+            { line: '    while (l1 && l2) {', id: 3 },
+            { line: '        if (l1->val < l2->val) {', id: 4 },
+            { line: '            tail->next = l1;', id: 5 },
+            { line: '            l1 = l1->next;', id: 6 },
             { line: '        } else {', id: 7 },
-            { line: '            tail->next = list2;', id: 8 },
-            { line: '            list2 = list2->next;', id: 9 },
+            { line: '            tail->next = l2;', id: 8 },
+            { line: '            l2 = l2->next;', id: 9 },
             { line: '        }', id: 10 },
             { line: '        tail = tail->next;', id: 11 },
             { line: '    }', id: 12 },
-            { line: '    if(list1) tail->next = list1;', id: 13 },
-            { line: '    if(list2) tail->next = list2;', id: 14 },
+            { line: '    if (l1) tail->next = l1;', id: 13 },
+            { line: '    if (l2) tail->next = l2;', id: 14 },
             { line: '    return dummy.next;', id: 15 },
             { line: '}', id: 16 }
         ];
@@ -132,227 +170,346 @@
         function simulate(arr1, arr2) {
             const steps = [];
             
-            // Build initial nodes with positions
-            // L1 row: y=50
-            // L2 row: y=150
-            // Result row: y=250 (conceptually)
-            // But we will move nodes to result
+            // Build Nodes
+            // We need unique IDs across lists. 
+            // Lets prefix: l1_0, l1_1... l2_0...
             
-            // Give unique IDs
-            const nodes1 = arr1.map((v, i) => ({id: `l1-${i}`, val: v, type: 'l1', idx: i}));
-            const nodes2 = arr2.map((v, i) => ({id: `l2-${i}`, val: v, type: 'l2', idx: i}));
+            const nodes = [];
+            const l1Nodes = arr1.map((v, i) => ({id: `l1_${i}`, val: v, type: 'l1', next: (i<arr1.length-1 ? `l1_${i+1}` : null), row: 0, col: i}));
+            const l2Nodes = arr2.map((v, i) => ({id: `l2_${i}`, val: v, type: 'l2', next: (i<arr2.length-1 ? `l2_${i+1}` : null), row: 1, col: i}));
             
-            let p1 = 0, p2 = 0;
-            const merged = []; // List of IDs in merged order
+            // Add dummy node
+            const dummy = {id: 'dummy', val: 'D', type: 'dummy', next: null, row: 2, col: -1}; // Merged row starts at 2
             
-            const pushState = (msg, hl, activeIds=[], explanation=null) => {
-                steps.push({
-                    nodes1: JSON.parse(JSON.stringify(nodes1)),
-                    nodes2: JSON.parse(JSON.stringify(nodes2)), // Include nodes2
-                    p1, p2, merged: [...merged],
-                    msg, highlightLines: hl,
-                    activeIds,
-                    explanation
-                });
+            nodes.push(dummy, ...l1Nodes, ...l2Nodes);
+            
+            let l1 = l1Nodes.length > 0 ? l1Nodes[0].id : null;
+            let l2 = l2Nodes.length > 0 ? l2Nodes[0].id : null;
+            let tail = dummy.id;
+            
+            // Helper to take snapshot
+            const snap = (nodes, pL1, pL2, pTail) => {
+                return {
+                    nodes: JSON.parse(JSON.stringify(nodes)),
+                    pointers: { l1: pL1, l2: pL2, tail: pTail }
+                };
             };
 
-            // Init
-            pushState("Init: Dummy node prepared", [1, 2], [], {
-                title: '初始化',
-                text: '建立 Dummy 節點作為結果鏈表的開頭。Tail 指標指向 Dummy。',
-                formula: 'tail = &dummy'
+            steps.push({
+                ...snap(nodes, l1, l2, tail),
+                msg: "Init Dummy Node. tail = &dummy",
+                highlightLines: [0, 1, 2],
+                explanation: {
+                    title: "初始化",
+                    text: "建立 Dummy 節點作為合併鏈表的頭。tail 指針初始指向 Dummy。",
+                    formula: "tail = dummy"
+                }
             });
 
-            while(p1 < nodes1.length && p2 < nodes2.length) {
-                const n1 = nodes1[p1];
-                const n2 = nodes2[p2];
+            let mergedCount = 0;
+
+            while (l1 && l2) {
+                // Determine values
+                const n1 = nodes.find(n => n.id === l1);
+                const n2 = nodes.find(n => n.id === l2);
                 
-                pushState(`Compare: ${n1.val} vs ${n2.val}`, [3, 4], [n1.id, n2.id], {
-                    title: '比較節點值',
-                    text: `比較 List1 當前節點 (${n1.val}) 與 List2 當前節點 (${n2.val})。`,
-                    formula: `list1->val (${n1.val}) ${n1.val < n2.val ? '<' : '>='} list2->val (${n2.val})`
+                steps.push({
+                    ...snap(nodes, l1, l2, tail),
+                    msg: `Compare l1(${n1.val}) vs l2(${n2.val})`,
+                    highlightLines: [3, 4],
+                    explanation: {
+                        title: "比較節點值",
+                        text: `比較 l1 (${n1.val}) 和 l2 (${n2.val}) 的大小。`,
+                        formula: `${n1.val} < ${n2.val} ?`
+                    }
                 });
 
+                let chosenId;
                 if (n1.val < n2.val) {
-                    merged.push(n1.id);
-                    pushState(`Append List1 Node (${n1.val})`, [5, 6], [n1.id], {
-                        title: '連接較小值 (List1)',
-                        text: `因為 ${n1.val} < ${n2.val}，所以將 List1 的節點接到 result 鏈表後面。<br>Tail 移動到此節點。List1 指標前進。`,
-                        formula: 'tail->next = list1; list1 = list1->next'
+                    chosenId = l1;
+                    
+                    // Logic: tail->next = l1
+                    const tNode = nodes.find(n => n.id === tail);
+                    tNode.next = l1;
+                    
+                    // Move chosen node to merged row (visual)
+                    const cNode = nodes.find(n => n.id === l1);
+                    cNode.row = 2; // merged row
+                    cNode.col = mergedCount; 
+                    cNode.type = 'merged';
+                    mergedCount++;
+                    l1 = cNode.next; // Advance l1 logic
+                    
+                    // Note: In visual, cNode.next physically still points to old L1 remainder.
+                    // But conceptually l1 ptr moves.
+                    
+                    steps.push({
+                        ...snap(nodes, l1, l2, tail),
+                        msg: `l1 smaller. tail->next = l1 (${n1.val}). Advance l1.`,
+                        highlightLines: [5, 6],
+                        explanation: {
+                            title: "連接較小節點 (L1)",
+                            text: `L1 的值較小，將其接在 tail 後面，並將 L1 指針後移。`,
+                            formula: "tail->next = l1; l1 = l1->next"
+                        }
                     });
-                    p1++;
                 } else {
-                    merged.push(n2.id);
-                    pushState(`Append List2 Node (${n2.val})`, [8, 9], [n2.id], {
-                        title: '連接較小值 (List2)',
-                        text: `因為 ${n2.val} <= ${n1.val}，所以將 List2 的節點接到 result 鏈表後面。<br>Tail 移動到此節點。List2 指標前進。`,
-                        formula: 'tail->next = list2; list2 = list2->next'
+                    chosenId = l2;
+                    
+                    const tNode = nodes.find(n => n.id === tail);
+                    tNode.next = l2;
+                    
+                    const cNode = nodes.find(n => n.id === l2);
+                    cNode.row = 2;
+                    cNode.col = mergedCount;
+                    cNode.type = 'merged';
+                    mergedCount++;
+                    l2 = cNode.next;
+                    
+                    steps.push({
+                        ...snap(nodes, l1, l2, tail),
+                        msg: `l2 smaller/equal. tail->next = l2 (${n2.val}). Advance l2.`,
+                        highlightLines: [7, 8, 9],
+                        explanation: {
+                            title: "連接較小節點 (L2)",
+                            text: `L2 的值較小或相等，將其接在 tail 後面，並將 L2 指針後移。`,
+                            formula: "tail->next = l2; l2 = l2->next"
+                        }
                     });
-                    p2++;
                 }
                 
-                pushState("Tail advanced", [11], merged.length > 0 ? [merged[merged.length-1]] : [], {
-                    title: '更新 Tail',
-                    text: 'Tail 指針現在指向剛加入的節點，準備連接下一個。',
-                    formula: 'tail = tail->next'
+                tail = chosenId;
+                steps.push({
+                    ...snap(nodes, l1, l2, tail),
+                    msg: "Advance tail",
+                    highlightLines: [11],
+                    explanation: {
+                        title: "移動 Tail",
+                        text: "Tail 指針移動到剛加入的節點。",
+                        formula: "tail = tail->next"
+                    }
                 });
             }
-
-            // Remainder
-            if(p1 < nodes1.length) {
-                // Add all rest
-                const rest = nodes1.slice(p1).map(n=>n.id);
-                merged.push(...rest);
-                pushState("Append remaining List1", [13], rest, {
-                    title: '連接剩餘 List1',
-                    text: 'List2 已空，將 List1 剩餘所有節點直接接到 Tail 後面。',
-                    formula: 'tail->next = list1'
+            
+            // Remaining
+            if (l1) {
+                const tNode = nodes.find(n => n.id === tail);
+                tNode.next = l1;
+                
+                // Move rest of l1 to merged row?
+                // Visual polish: traverse rest and move them?
+                // Or just link. Let's move them for visual consistency.
+                let runner = l1;
+                while(runner) {
+                    const rNode = nodes.find(n => n.id === runner);
+                    rNode.row = 2;
+                    rNode.col = mergedCount++;
+                    rNode.type = 'merged';
+                    runner = rNode.next;
+                }
+                
+                steps.push({
+                    ...snap(nodes, null, l2, tail), // l1 effectively merged
+                    msg: "Connect remaining L1 nodes.",
+                    highlightLines: [13],
+                    explanation: {
+                        title: "連接剩餘 L1",
+                        text: "L1 還有剩餘節點，直接全部接在 tail 後面。",
+                        formula: "tail->next = l1"
+                    }
                 });
-            } else if (p2 < nodes2.length) {
-                const rest = nodes2.slice(p2).map(n=>n.id);
-                merged.push(...rest);
-                pushState("Append remaining List2", [14], rest, {
-                    title: '連接剩餘 List2',
-                    text: 'List1 已空，將 List2 剩餘所有節點直接接到 Tail 後面。',
-                    formula: 'tail->next = list2'
+            } else if (l2) {
+                const tNode = nodes.find(n => n.id === tail);
+                tNode.next = l2;
+                
+                let runner = l2;
+                while(runner) {
+                    const rNode = nodes.find(n => n.id === runner);
+                    rNode.row = 2;
+                    rNode.col = mergedCount++;
+                    rNode.type = 'merged';
+                    runner = rNode.next;
+                }
+                
+                steps.push({
+                    ...snap(nodes, l1, null, tail),
+                    msg: "Connect remaining L2 nodes.",
+                    highlightLines: [14],
+                    explanation: {
+                        title: "連接剩餘 L2",
+                        text: "L2 還有剩餘節點，直接全部接在 tail 後面。",
+                        formula: "tail->next = l2"
+                    }
                 });
             }
-
-            pushState("Done", [15], merged, {
-                title: '完成',
-                text: '合併完成。返回 Dummy.next 作為新鏈表的頭。',
-                formula: 'return dummy.next'
+            
+            steps.push({
+                ...snap(nodes, l1, l2, tail),
+                final: true,
+                msg: "Done. Return dummy.next",
+                highlightLines: [15],
+                explanation: {
+                    title: "完成",
+                    text: "合併完成，返回 Dummy 節點的下一個節點作為新鏈表的頭。",
+                    formula: "return dummy.next"
+                }
             });
 
             return steps;
         }
 
+        // --- Render ---
         const svg = d3.select("#viz-svg");
-        const gMain = d3.select("#main-group");
-        const gLabels = d3.select("#labels-group");
-
-        // Static labels
-        gLabels.append("text").attr("x", 0).attr("y", 0).text("List 1").attr("class", "label-text").attr("fill", "#3b82f6");
-        gLabels.append("text").attr("x", 0).attr("y", 100).text("List 2").attr("class", "label-text").attr("fill", "#a855f7");
-        gLabels.append("text").attr("x", 0).attr("y", 200).text("Merged").attr("class", "label-text").attr("fill", "#22c55e");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-
-            // Compute Node Positions based on state
-            // merged: list of IDs
-            // nodes1 & nodes2 are static lists, but we need to check if they are in merged
             
-            const nodeData = [];
-            const NODE_GAP = 60;
-            const START_X = 80;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
-            // Helper to get node by ID
-            const findNode = (id) => {
-                let n = step.nodes1.find(x=>x.id===id);
-                if(n) return {...n};
-                return step.nodes1.concat(/*dummy*/).find(x=>x.id===id); // wait, logic helper
-                // We don't have explicit step.nodes1/2 updated with positions in step gen
-                // Just use the arrays passed in closure? No, step has them but they don't change props
-            };
+            const nodes = step.nodes;
+            const ptr = step.pointers;
             
-            // Reconstruct all nodes for display
-            // List 1
-            step.nodes1.forEach(n => {
-                const isMerged = step.merged.includes(n.id);
-                if(isMerged) {
-                    const idx = step.merged.indexOf(n.id);
-                    nodeData.push({ ...n, x: START_X + idx * NODE_GAP, y: 200, state: 'merged' });
-                } else {
-                    // Original pos, but maybe shifted if p1 advanced? 
-                    // No, stick to absolute index position for clarity or shift?
-                    // Better to keep them in row
-                    nodeData.push({ ...n, x: START_X + n.idx * NODE_GAP, y: 0, state: 'l1' });
+            // Layout Rows
+            // Row 0: y=100 (L1 origin)
+            // Row 1: y=200 (L2 origin)
+            // Row 2: y=300 (Merged)
+            // But visually, simpler if Merged is middle?
+            // Let's stick to Top/Bottom merging to Bottom or Middle?
+            // Let's do: L1 at Y=100, L2 at Y=200. Merged moves nodes to Y=300.
+            // X positioning based on 'col'.
+            
+            const nodeR = 20;
+            const spacing = 70;
+            const offsetX = 50;
+            
+            // Update node coords
+            nodes.forEach(n => {
+                n.targetX = offsetX + n.col * spacing + (n.type === 'dummy' ? 0 : spacing); // Dummy at start
+                n.targetY = 100 + n.row * 80; 
+                // Row mapping: 0->80, 1->160, 2->240?
+                // n.row was 0(L1), 1(L2), 2(Merged)
+                if (n.row === 0) n.targetY = 100;
+                else if (n.row === 1) n.targetY = 180;
+                else if (n.row === 2) n.targetY = 300;
+            });
+            
+            // Draw Links first
+            const links = [];
+            nodes.forEach(n => {
+                if (n.next) {
+                    const target = nodes.find(tn => tn.id === n.next);
+                    if (target) {
+                        links.push({
+                            s: {x: n.targetX, y: n.targetY},
+                            t: {x: target.targetX, y: target.targetY},
+                            id: `${n.id}-${target.id}`,
+                            isMerged: n.type === 'merged' || n.type === 'dummy'
+                        });
+                    }
                 }
             });
             
-            // List 2
-            step.nodes2.forEach(n => {
-                const isMerged = step.merged.includes(n.id);
-                if(isMerged) {
-                    // Already added? merged list contains ID.
-                    // But we push to nodeData only once? 
-                    // merged contains ID. nodeData needs x,y.
-                    // If we process merged list specifically, we can order them?
-                    // Better: iterate merged list for positions y=200.
-                    // Iterate remaining nodes1 for y=0.
-                    // Iterate remaining nodes2 for y=100.
-                } else {
-                    nodeData.push({ ...n, x: START_X + n.idx * NODE_GAP, y: 100, state: 'l2' });
-                }
-            });
+            const linkSel = svg.selectAll(".link-path").data(links, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
             
-            // Merged Row
-            step.merged.forEach((id, i) => {
-                // Find node in inputs
-                let n = step.nodes1.find(x=>x.id===id) || step.nodes2.find(x=>x.id===id);
-                if(n) {
-                    nodeData.push({ ...n, x: START_X + i * NODE_GAP, y: 200, state: 'merged' });
-                }
-            });
+            linkSel.merge(linkEnter)
+                .transition().duration(500)
+                .attr("d", d => {
+                    return `M${d.s.x+nodeR},${d.s.y} L${d.t.x-nodeR-5},${d.t.y}`;
+                })
+                .attr("class", d => d.isMerged ? "link-path merged" : "link-path");
+            
+            linkSel.exit().remove();
 
-            // Viz
-            const nSel = gMain.selectAll(".node-g").data(nodeData, d => d.id);
-            const nEnter = nSel.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            // Draw Nodes
+            const nodeSel = svg.selectAll(".node-g").data(nodes, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
             
-            const nUpdate = nSel.merge(nEnter).transition().duration(500)
-                .attr("transform", d => `translate(${d.x}, ${d.y})`);
-                
-            nUpdate.select("circle")
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", nodeR);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter);
+            nodeMerge.transition().duration(500)
+                .attr("transform", d => `translate(${d.targetX}, ${d.targetY})`);
+            
+            nodeMerge.select("circle")
                 .attr("class", d => {
                     let c = "node-circle";
-                    if(d.state === 'l1') c += " node-l1";
-                    else if(d.state === 'l2') c += " node-l2";
+                    if (d.type === 'l1') c += " node-l1";
+                    else if (d.type === 'l2') c += " node-l2";
+                    else if (d.type === 'dummy') c += " node-dummy";
                     else c += " node-merged";
                     
-                    if(step.activeIds && step.activeIds.includes(d.id)) {
-                        c += " node-active"; // Highlight comparison
-                    }
+                    if (ptr.l1 === d.id || ptr.l2 === d.id) c += " node-active";
+                    if (ptr.tail === d.id) c += " node-active"; // tail highlight separate?
                     return c;
                 });
             
-            nUpdate.select("text").text(d => d.val);
-            nSel.exit().remove();
+            nodeMerge.select("text").text(d => d.val);
             
-            // Links (merged only?)
-            const links = [];
-            // Merged chain
-            for(let i=0; i<step.merged.length-1; i++) {
-                links.push({s: i, t: i+1}); // visual index in merged row
-            }
-            // What about next pointers in L1/L2?
-            // Visual simplification: show next pointers in L1/L2 until they are merged.
-            // If in L1 row, point to next in L1 row.
-            // ... simple implementation: only merged links for now to show result.
+            nodeSel.exit().remove();
             
-            const lSel = gMain.selectAll(".link").data(links);
-            lSel.enter().append("path").attr("class", "link")
-                .merge(lSel)
-                .transition().duration(500)
-                .attr("d", d => {
-                    const sx = START_X + d.s * NODE_GAP;
-                    const tx = START_X + d.t * NODE_GAP - 25; // Arrow gap
-                    return `M ${sx},200 L ${tx},200`;
+            // Draw Pointers
+            const pointers = [
+                {id: ptr.l1, label: 'l1', yOff: -30},
+                {id: ptr.l2, label: 'l2', yOff: -30},
+                {id: ptr.tail, label: 'tail', yOff: 30}
+            ].filter(p => p.id); // Filter nulls
+            
+            const ptrSel = svg.selectAll(".ptr-g").data(pointers, d => d.label);
+            const ptrEnter = ptrSel.enter().append("g").attr("class", "ptr-g");
+            
+            ptrEnter.append("rect").attr("width", 40).attr("height", 20).attr("x", -20).attr("y", -10).attr("rx", 4).attr("fill", "#64748b");
+            ptrEnter.append("text").attr("class", "ptr-label").attr("dy", 4);
+            ptrEnter.append("path").attr("class", "ptr-arrow").attr("d", "M0,10 L0,20"); 
+            
+            const ptrMerge = ptrSel.merge(ptrEnter);
+            ptrMerge.transition().duration(500)
+                .attr("transform", d => {
+                    const node = nodes.find(n => n.id === d.id);
+                    if (!node) return `translate(0,0)`;
+                    const y = node.targetY + d.yOff + (d.yOff > 0 ? 10 : -10);
+                    return `translate(${node.targetX}, ${y})`;
                 });
-            lSel.exit().remove();
+            
+            ptrMerge.select("text").text(d => d.label);
+            ptrMerge.select("rect").style("fill", d => {
+                if (d.label === 'l1') return "#3b82f6";
+                if (d.label === 'l2') return "#a855f7";
+                return "#22c55e"; // tail
+            });
+            
+            ptrMerge.select("path").attr("d", d => d.yOff < 0 ? "M0,10 L0,25" : "M0,-10 L0,-25").attr("marker-end", "url(#arrow-white)");
+            
+            ptrSel.exit().remove();
+            
+            // Row Labels
+            svg.selectAll(".row-label-text").remove();
+            svg.append("text").attr("x", 10).attr("y", 105).text("List 1").attr("class", "row-label");
+            svg.append("text").attr("x", 10).attr("y", 185).text("List 2").attr("class", "row-label");
+            svg.append("text").attr("x", 10).attr("y", 305).text("Merged").attr("class", "row-label");
         }
 
         function runVisualizer() {
-            const arr1 = document.getElementById('l1Input').value.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
-            const arr2 = document.getElementById('l2Input').value.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+            const l1Raw = document.getElementById('l1Input').value;
+            const l2Raw = document.getElementById('l2Input').value;
+            const l1 = l1Raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            const l2 = l2Raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(simulate(arr1, arr2));
+            viz.setSteps(simulate(l1, l2));
         }
 
         window.addEventListener('load', runVisualizer);

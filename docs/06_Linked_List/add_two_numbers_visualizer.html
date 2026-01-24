@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Two Numbers - D3 精緻視覺化</title>
+    <title>Add Two Numbers - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,41 +13,62 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
             min-height: 500px;
         }
-        
-        #viz-svg { width: 100%; height: 400px; }
 
-        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; stroke: #64748b; }
-        .node-circle.l1 { fill: #3b82f6; stroke: #2563eb; }
-        .node-circle.l2 { fill: #a855f7; stroke: #9333ea; }
-        .node-circle.res { fill: #22c55e; stroke: #16a34a; }
-        .node-circle.carry { fill: #f97316; stroke: #c2410c; stroke-width: 0; }
-        
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-        .carry-text { fill: white; font-size: 10px; font-weight: bold; }
-
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: all 0.5s; opacity: 0.6; }
-        
-        /* Math Panel */
-        .math-box { 
-            background: rgba(15, 23, 42, 0.8); border: 1px solid #475569; border-radius: 8px; 
-            padding: 10px; display: flex; gap: 10px; font-family: monospace; font-size: 1.2em; color: white;
-            align-items: center; justify-content: center; min-width: 200px; min-height: 40px;
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 380px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
-        .digit-l1 { color: #60a5fa; }
-        .digit-l2 { color: #a855f7; }
-        .digit-carry { color: #f97316; }
-        .digit-sum { color: #22c55e; }
+        #viz-svg { width: 100%; height: 100%; }
+
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; r: 20px; }
+        .node-text { fill: white; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        
+        .node-l1 { fill: #1e3a8a; stroke: #3b82f6; } /* Dark Blue */
+        .node-l2 { fill: #581c87; stroke: #a855f7; } /* Dark Purple */
+        .node-res { fill: #14532d; stroke: #22c55e; } /* Dark Green */
+        .node-active { stroke: #fbbf24; stroke-width: 4px; filter: drop-shadow(0 0 5px #fbbf24); }
+
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: all 0.5s; opacity: 0.6; }
+        .link-path.res { stroke: #4ade80; marker-end: url(#arrow-success); }
+
+        /* Carry */
+        .carry-g { transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .carry-bg { fill: #f97316; rx: 10; }
+        .carry-text { fill: white; font-size: 10px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
+
+        /* Math Box */
+        .math-panel { 
+            background: rgba(15, 23, 42, 0.8); border: 1px solid #475569; border-radius: 8px; 
+            padding: 10px 20px; font-family: monospace; font-size: 1.1rem; color: white;
+            display: flex; gap: 8px; align-items: center; justify-content: center;
+        }
+        .val-l1 { color: #60a5fa; font-weight: bold; }
+        .val-l2 { color: #c084fc; font-weight: bold; }
+        .val-carry { color: #f97316; font-weight: bold; }
+        .val-sum { color: #4ade80; font-weight: bold; text-decoration: underline; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 100px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=number] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 100px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -55,31 +76,48 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Add Two Numbers (Reverse Order)</div>
+                <div class="viz-title">Add Two Numbers (Linked List)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Num 1:</label>
-                        <input type="number" id="n1Input" value="342">
-                        <label>Num 2:</label>
-                        <input type="number" id="n2Input" value="465">
-                        <button onclick="runVisualizer()">相加</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Num 1:</label>
+                            <input type="number" id="n1Input" value="342">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Num 2:</label>
+                            <input type="number" id="n2Input" value="465">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Add</button>
+                        </div>
                     </div>
-                    <div style="font-size:0.8rem; color:#64748b; margin-top:5px;">* 輸入 342 代表 2 -> 4 -> 3</div>
+                    <div style="font-size:0.8rem; color:#64748b; margin-top:5px; text-align:center;">
+                        Ex: 342 becomes 2->4->3
+                    </div>
                 </div>
 
                 <div class="visualization-area">
-                    <div class="math-box" id="mathDisplay">
-                        <span style="opacity:0.5">Wait to start...</span>
+                    <div class="math-panel" id="mathDisplay">Ready</div>
+                    
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>List 1</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#a855f7"></div>List 2</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Result</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#f97316"></div>Carry</div>
                     </div>
-                    <svg id="viz-svg">
-                        <defs>
-                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L9,3 z" fill="#64748b" />
-                            </marker>
-                        </defs>
-                        <g id="main-group" transform="translate(50, 50)"></g>
-                        <g id="carry-group" transform="translate(50, 50)"></g>
-                    </svg>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#64748b"/>
+                                </marker>
+                                <marker id="arrow-success" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#22c55e"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -98,12 +136,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -117,234 +155,263 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'ListNode* addTwoNumbers(l1, l2) {', id: 0 },
+            { line: 'ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {', id: 0 },
             { line: '    ListNode dummy(0);', id: 1 },
             { line: '    ListNode* curr = &dummy;', id: 2 },
             { line: '    int carry = 0;', id: 3 },
-            { line: '    while(l1 || l2 || carry) {', id: 4 },
+            { line: '    while (l1 || l2 || carry) {', id: 4 },
             { line: '        int v1 = l1 ? l1->val : 0;', id: 5 },
             { line: '        int v2 = l2 ? l2->val : 0;', id: 6 },
             { line: '        int sum = v1 + v2 + carry;', id: 7 },
             { line: '        carry = sum / 10;', id: 8 },
-            { line: '        curr->next = new ListNode(sum % 10);', id: 9 },
-            { line: '        curr = curr->next;', id: 10 },
-            { line: '        if(l1) l1 = l1->next;', id: 11 },
-            { line: '        if(l2) l2 = l2->next;', id: 12 },
-            { line: '    }', id: 13 },
-            { line: '    return dummy.next;', id: 14 },
-            { line: '}', id: 15 }
+            { line: '        sum = sum % 10;', id: 9 },
+            { line: '        curr->next = new ListNode(sum);', id: 10 },
+            { line: '        curr = curr->next;', id: 11 },
+            { line: '        if (l1) l1 = l1->next;', id: 12 },
+            { line: '        if (l2) l2 = l2->next;', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '    return dummy.next;', id: 15 },
+            { line: '}', id: 16 }
         ];
 
         let viz;
 
-        function simulate(n1Str, n2Str) {
+        function simulate(n1, n2) {
             const steps = [];
-            // Convert numbers to reversed digit arrays
-            // 342 -> [2, 4, 3]
-            const arr1 = n1Str.split('').reverse().map(d=>parseInt(d));
-            const arr2 = n2Str.split('').reverse().map(d=>parseInt(d));
             
-            // Build base nodes
-            const nodes1 = arr1.map((v, i) => ({id: `l1-${i}`, val: v, type: 'l1', idx: i}));
-            const nodes2 = arr2.map((v, i) => ({id: `l2-${i}`, val: v, type: 'l2', idx: i}));
+            // Convert numbers to reversed arrays
+            const arr1 = String(n1).split('').reverse().map(Number);
+            const arr2 = String(n2).split('').reverse().map(Number);
             
-            const resNodes = [];
-            let dummy = {id: 'dummy', val: 0, type: 'dummy'};
-            // Track pointer indices
-            let ptr1 = 0;
-            let ptr2 = 0;
-            let carry = 0;
+            // Build Nodes
+            const nodes1 = arr1.map((v, i) => ({id: `l1_${i}`, val: v, type: 'l1', next: i < arr1.length-1 ? `l1_${i+1}` : null, idx: i}));
+            const nodes2 = arr2.map((v, i) => ({id: `l2_${i}`, val: v, type: 'l2', next: i < arr2.length-1 ? `l2_${i+1}` : null, idx: i}));
+            const resNodes = []; 
             
-            const pushState = (msg, hl, active={v1:0, v2:0, sum:0, carry:0}, explanation=null) => {
-                steps.push({
-                    nodes1: JSON.parse(JSON.stringify(nodes1)),
-                    nodes2: JSON.parse(JSON.stringify(nodes2)),
-                    resNodes: JSON.parse(JSON.stringify(resNodes)),
-                    ptr1, ptr2, carry,
-                    mathState: active,
-                    msg, highlightLines: hl,
-                    explanation
-                });
-            };
-
-            pushState("Init: Pointers at head, carry=0", [1, 2, 3], {v1:0,v2:0,sum:0,carry:0}, {
-                title: '初始化',
-                text: '初始化兩個指針分別指向兩個鏈表的頭部 (個位數)，進位 (carry) 為 0。',
-                formula: 'carry = 0'
+            // Helper
+            const snap = (idx, carry, v1, v2, sum, activeL1, activeL2) => ({
+                l1Nodes: JSON.parse(JSON.stringify(nodes1)),
+                l2Nodes: JSON.parse(JSON.stringify(nodes2)),
+                resNodes: JSON.parse(JSON.stringify(resNodes)),
+                carry,
+                currIdx: idx,
+                math: {v1, v2, c: carry, sum},
+                activeL1, activeL2
             });
 
-            while(ptr1 < nodes1.length || ptr2 < nodes2.length || carry > 0) {
-                const v1 = ptr1 < nodes1.length ? nodes1[ptr1].val : 0;
-                const v2 = ptr2 < nodes2.length ? nodes2[ptr2].val : 0;
+            // Init
+            let carry = 0;
+            // Pointers
+            let p1 = 0; // index
+            let p2 = 0;
+            let pRes = 0;
+            
+            steps.push({
+                ...snap(-1, 0, null, null, null, null, null),
+                msg: "Init Carry = 0, Dummy Head created.",
+                highlightLines: [1, 2, 3],
+                explanation: { title: "初始化", text: "建立 Dummy 節點，初始進位 (carry) 為 0。", formula: "carry = 0" }
+            });
+
+            while (p1 < nodes1.length || p2 < nodes2.length || carry) {
+                const v1 = p1 < nodes1.length ? nodes1[p1].val : 0;
+                const v2 = p2 < nodes2.length ? nodes2[p2].val : 0;
                 
-                pushState(`Read digits: ${v1} and ${v2}`, [5, 6], {v1, v2, sum: '?', carry}, {
-                    title: '讀取位數',
-                    text: `從 L1 讀取 ${v1}，從 L2 讀取 ${v2}。如果鏈表已空則視為 0。`,
-                    formula: `v1=${v1}, v2=${v2}`
+                const l1Id = p1 < nodes1.length ? nodes1[p1].id : null;
+                const l2Id = p2 < nodes2.length ? nodes2[p2].id : null;
+                
+                steps.push({
+                    ...snap(pRes, carry, v1, v2, null, l1Id, l2Id),
+                    msg: `Read v1=${v1}, v2=${v2}`,
+                    highlightLines: [5, 6],
+                    explanation: { title: "讀取數值", text: `讀取 L1 和 L2 當前節點的值。如果鏈表已結束，則視為 0。`, formula: `v1=${v1}, v2=${v2}` }
+                });
+                
+                const sumRaw = v1 + v2 + carry;
+                const newCarry = Math.floor(sumRaw / 10);
+                const digit = sumRaw % 10;
+                
+                steps.push({
+                    ...snap(pRes, carry, v1, v2, sumRaw, l1Id, l2Id),
+                    msg: `Sum = ${v1} + ${v2} + ${carry} = ${sumRaw}`,
+                    highlightLines: [7],
+                    explanation: { title: "計算總和", text: `將兩個數值加上進位。`, formula: `${v1} + ${v2} + ${carry} = ${sumRaw}` }
+                });
+                
+                // Update carry locally for display before push
+                
+                steps.push({
+                    ...snap(pRes, newCarry, v1, v2, sumRaw, l1Id, l2Id),
+                    msg: `New Digit = ${digit}, New Carry = ${newCarry}`,
+                    highlightLines: [8, 9],
+                    explanation: { title: "計算進位與個位", text: `個位數字作為新節點值，十位數字作為新的進位。`, formula: `digit=${digit}, carry=${newCarry}` }
+                });
+                
+                // Add result node
+                const resNode = {
+                    id: `res_${pRes}`, val: digit, type: 'res', 
+                    next: null, idx: pRes
+                };
+                if (pRes > 0) resNodes[pRes-1].next = resNode.id;
+                resNodes.push(resNode);
+                
+                steps.push({
+                    ...snap(pRes, newCarry, v1, v2, sumRaw, l1Id, l2Id),
+                    msg: `Append Node(${digit})`,
+                    highlightLines: [10, 11],
+                    explanation: { title: "新增節點", text: `將數字 ${digit} 加入結果鏈表。`, formula: `curr->next = new(${digit})` }
                 });
 
-                const sum = v1 + v2 + carry;
-                
-                pushState(`Calculate Sum: ${v1} + ${v2} + ${carry} = ${sum}`, [7], {v1, v2, sum, carry}, {
-                    title: '計算總和',
-                    text: `總和 = v1 + v2 + carry。<br>${v1} + ${v2} + ${carry} = ${sum}`,
-                    formula: `sum = ${sum}`
-                });
-
-                const newCarry = Math.floor(sum / 10);
-                const digit = sum % 10;
-                
-                const prevSum = sum;
-                
-                pushState(`New Digit: ${sum}%10 = ${digit}, Carry: ${sum}/10 = ${newCarry}`, [8, 9], {v1, v2, sum: prevSum, carry, digit, newCarry}, {
-                    title: '計算進位與結果位',
-                    text: `結果位 = 總和 % 10 = ${digit}。<br>新進位 = 總和 / 10 = ${newCarry}。`,
-                    formula: `digit=${digit}, carry=${newCarry}`
-                });
-
-                // Add node
-                resNodes.push({id: `res-${resNodes.length}`, val: digit, type: 'res', idx: resNodes.length});
                 carry = newCarry;
+                p1++;
+                p2++;
+                pRes++;
                 
-                pushState(`Append ${digit} to result`, [9, 10], {v1, v2, sum: prevSum, carry, digit, newCarry}, {
-                        title: '添加結果節點',
-                        text: `將 ${digit} 加入結果鏈表，並移動 curr 指針。準備處理下一位。`,
-                        formula: 'curr->next = new Node(sum % 10)'
+                steps.push({
+                    ...snap(pRes, carry, null, null, null, null, null),
+                    msg: "Advance pointers.",
+                    highlightLines: [12, 13],
+                    explanation: { title: "移動指針", text: "移動 L1 和 L2 指針到下一個位置。", formula: "Next" }
                 });
-
-                if(ptr1 < nodes1.length) ptr1++;
-                if(ptr2 < nodes2.length) ptr2++;
             }
-
-            pushState("Done", [14], {v1:0,v2:0,sum:0,carry:0}, {
-                title: '完成',
-                text: '所有位數及進位處理完畢，返回結果鏈表。',
-                formula: 'return dummy.next'
+            
+            steps.push({
+                ...snap(pRes, carry, null, null, null, null, null), // final
+                final: true, msg: "Done. Return result list.",
+                highlightLines: [15],
+                explanation: { title: "完成", text: "所有位數處理完畢。", formula: "Return" }
             });
 
             return steps;
         }
 
+        // --- Render ---
         const svg = d3.select("#viz-svg");
-        const gMain = d3.select("#main-group");
-        const gCarry = d3.select("#carry-group");
+        const width = 600;
+        const height = 380;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
             
-            // Math Display
-            const m = step.mathState;
-            let mathHtml = ``;
-            if (m.sum !== undefined) {
-               mathHtml += `<span class="digit-l1">${m.v1}</span> + <span class="digit-l2">${m.v2}</span>`;
-               if(m.carry !== undefined) mathHtml += ` + <span class="digit-carry">(${m.carry})</span>`;
-               mathHtml += ` = <span class="digit-sum">${m.sum}</span>`;
+            // Math
+            const m = step.math || {};
+            const mathEl = document.getElementById('mathDisplay');
+            if (m.v1 !== undefined && m.sum !== undefined && m.sum !== null) {
+                mathEl.innerHTML = `
+                    <span class="val-l1">${m.v1}</span> + 
+                    <span class="val-l2">${m.v2}</span> + 
+                    <span class="val-carry">(${m.c})</span> = 
+                    <span class="val-sum">${m.sum}</span>
+                `;
+            } else {
+                mathEl.innerHTML = '<span style="opacity:0.5">...</span>';
             }
-            document.getElementById('mathDisplay').innerHTML = mathHtml;
-
-            const SPACING = 70;
-            const START_X = 50;
             
-            const allNodes = [];
-            
-            // Layout L1 (Top)
-            step.nodes1.forEach(n => {
-                allNodes.push({ ...n, x: START_X + n.idx * SPACING, y: 0 });
-            });
-            // Layout L2 (Middle)
-            step.nodes2.forEach(n => {
-                allNodes.push({ ...n, x: START_X + n.idx * SPACING, y: 100 });
-            });
-            // Layout Res (Bottom)
-            step.resNodes.forEach(n => {
-                allNodes.push({ ...n, x: START_X + n.idx * SPACING, y: 200 });
-            });
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
-            // Links (Separate chains)
+            const l1 = step.l1Nodes;
+            const l2 = step.l2Nodes;
+            const res = step.resNodes;
+            
+            // Layout rows
+            // Row 0, 1, 2
+            const startX = 60;
+            const spacing = 80;
+            
+            l1.forEach(n => { n.x = startX + n.idx * spacing; n.y = 80; });
+            l2.forEach(n => { n.x = startX + n.idx * spacing; n.y = 160; });
+            res.forEach(n => { n.x = startX + n.idx * spacing; n.y = 280; }); // Result further down
+            
+            // Combined
+            const allNodes = [...l1, ...l2, ...res];
+            
+            // Links
             const links = [];
-            // L1 chain
-            for(let i=0; i<step.nodes1.length-1; i++) links.push({s: step.nodes1[i].id, t: step.nodes1[i+1].id});
-            for(let i=0; i<step.nodes2.length-1; i++) links.push({s: step.nodes2[i].id, t: step.nodes2[i+1].id});
-            for(let i=0; i<step.resNodes.length-1; i++) links.push({s: step.resNodes[i].id, t: step.resNodes[i+1].id});
-            
-            // Helper map
-            const nodeMap = new Map(allNodes.map(n => [n.id, n]));
-
-            const lSel = gMain.selectAll(".link").data(links);
-            lSel.enter().append("path").attr("class", "link")
-                .merge(lSel)
-                .transition().duration(500)
-                .attr("d", d => {
-                    const s = nodeMap.get(d.s);
-                    const t = nodeMap.get(d.t);
-                    return `M ${s.x},${s.y} L ${t.x},${t.y}`;
-                });
-            lSel.exit().remove();
-
-            // Nodes
-            const nSel = gMain.selectAll(".node-g").data(allNodes, d => d.id);
-            const nEnter = nSel.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-            
-            // Labels for rows
-            if(step.nodes1.length>0 && !window.labelsDrawn) {
-                // Drawing labels dynamically in Enter is tricky if data updates.
-                // Just keep static if possible.
-            }
-
-            const nUpdate = nSel.merge(nEnter).transition().duration(500)
-                .attr("transform", d => `translate(${d.x}, ${d.y})`);
-                
-            nUpdate.select("circle").attr("class", d => {
-                let c = "node-circle";
-                if(d.type === 'l1') c+= " l1";
-                if(d.type === 'l2') c+= " l2";
-                if(d.type === 'res') c+= " res";
-                
-                // Highlight active processing
-                if((d.type==='l1' && d.idx === step.ptr1) || (d.type==='l2' && d.idx === step.ptr2)) {
-                    // Could add highlight class...
+            allNodes.forEach(n => {
+                if (n.next) {
+                    const t = allNodes.find(x => x.id === n.next);
+                    if (t) {
+                        links.push({s: {x:n.x, y:n.y}, t: {x:t.x, y:t.y}, id: `${n.id}-${t.id}`, type: n.type});
+                    }
                 }
-                return c;
-            })
-            // Highlight stroke width for active
-            .style("stroke-width", d => {
-               if((d.type==='l1' && d.idx === step.ptr1) || (d.type==='l2' && d.idx === step.ptr2)) return 5;
-               return 3; 
             });
-
-            nUpdate.select("text").text(d => d.val);
-            nSel.exit().remove();
             
-            // Carry Bubble Visualization
-            // Position carry above next calculation point
-            // Next calculation is at max(ptr1, ptr2)
-            const nextIdx = Math.max(step.ptr1, step.ptr2); // rough visual position
-            // But carry propagates to next slot.
-            // step.carry is the carry to be used for [ptr1, ptr2].
-            // Wait, step.carry AFTER calculation (at end of loop) is for next iteration.
+            const linkSel = svg.selectAll(".link-path").data(links, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            linkSel.merge(linkEnter)
+                .transition().duration(500)
+                .attr("d", d => `M${d.s.x+20},${d.s.y} L${d.t.x-20},${d.t.y}`)
+                .attr("class", d => d.type === 'res' ? "link-path res" : "link-path");
+            linkSel.exit().remove();
             
-            // Just draw carry if > 0
-            gCarry.selectAll("*").remove();
-            if(step.carry > 0) {
-                const cx = START_X + nextIdx * SPACING;
-                const cy = -30; // Above L1
-                gCarry.append("circle").attr("cx", cx).attr("cy", cy).attr("r", 12).attr("class", "node-circle carry");
-                gCarry.append("text").attr("x", cx).attr("y", cy).attr("dy", 4).text(step.carry).attr("class", "carry-text").attr("text-anchor", "middle");
-                gCarry.append("text").attr("x", cx).attr("y", cy-15).text("Carry").attr("fill", "#f97316").attr("font-size", "10px").attr("text-anchor", "middle");
-            }
+            // Nodes
+            const nodeSel = svg.selectAll(".node-g").data(allNodes, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 20);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter);
+            nodeMerge.transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            nodeMerge.select("circle")
+                .attr("class", d => {
+                    let c = "node-circle";
+                    if (d.type === 'l1') c += " node-l1";
+                    if (d.type === 'l2') c += " node-l2";
+                    if (d.type === 'res') c += " node-res";
+                    
+                    if (d.id === step.activeL1 || d.id === step.activeL2) c += " node-active";
+                    if (d.type === 'res' && d.idx === step.currIdx - 1) c += " node-active"; // just added
+                    return c;
+                });
+            
+            nodeMerge.select("text").text(d => d.val);
+            nodeSel.exit().remove();
+            
+            // Carry Bubble
+            // Position above current index column
+            const carryData = step.currIdx !== undefined ? [{val: step.carry, idx: step.currIdx}] : [];
+            const carrySel = svg.selectAll(".carry-g").data(carryData);
+            const carryEnter = carrySel.enter().append("g").attr("class", "carry-g");
+            
+            carryEnter.append("rect").attr("class", "carry-bg").attr("width", 30).attr("height", 20).attr("x", -15).attr("y", -10);
+            carryEnter.append("text").attr("class", "carry-text");
+            
+            // Label 'Carry'
+            svg.selectAll(".carry-lbl").remove();
+            svg.append("text").attr("class", "row-label carry-lbl").attr("x", 10).attr("y", 40).text("Carry").attr("fill", "#f97316").attr("font-size", 12);
+            
+            const carryMerge = carrySel.merge(carryEnter);
+            carryMerge.transition().duration(500)
+                .attr("transform", d => `translate(${startX + d.idx * spacing}, 40)`); // y=40 above L1
+            
+            carryMerge.select("text").text(d => d.val);
+            
+            // Row Labels
+            svg.selectAll(".row-lbl").remove();
+            svg.append("text").attr("class", "row-label row-lbl").attr("x", 10).attr("y", 85).text("List 1").attr("fill", "#60a5fa");
+            svg.append("text").attr("class", "row-label row-lbl").attr("x", 10).attr("y", 165).text("List 2").attr("fill", "#c084fc");
+            svg.append("text").attr("class", "row-label row-lbl").attr("x", 10).attr("y", 285).text("Result").attr("fill", "#4ade80");
         }
 
         function runVisualizer() {
-            const v1 = document.getElementById('n1Input').value;
-            const v2 = document.getElementById('n2Input').value;
+            const n1 = parseInt(document.getElementById('n1Input').value);
+            const n2 = parseInt(document.getElementById('n2Input').value);
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(simulate(v1, v2));
+            viz.setSteps(simulate(n1, n2));
         }
 
         window.addEventListener('load', runVisualizer);

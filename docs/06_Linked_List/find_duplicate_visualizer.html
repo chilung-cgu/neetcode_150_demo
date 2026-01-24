@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find Duplicate Number - Floyd's Algo</title>
+    <title>Find Duplicate Number - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,34 +13,50 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
-            min-height: 480px;
+            min-height: 500px;
         }
-        
-        #viz-svg { width: 100%; height: 400px; }
 
-        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; stroke: #64748b; }
-        .node-circle.start { stroke: #3b82f6; }
-        .node-circle.cycle { stroke: #a855f7; fill: rgba(168, 85, 247, 0.1); }
-        .node-circle.found { fill: #22c55e; stroke: #fbbf24; filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.8)); }
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-        .node-idx { fill: #94a3b8; font-size: 10px; text-anchor: middle; }
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; r: 22px; }
+        .node-text { fill: white; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .node-sub { fill: #94a3b8; font-size: 10px; text-anchor: middle; }
 
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); opacity: 0.6; }
-        
+        .node-normal { fill: #334155; stroke: #475569; }
+        .node-met { fill: #f59e0b; stroke: #fff; filter: drop-shadow(0 0 8px #f59e0b); }
+        .node-res { fill: #22c55e; stroke: #fff; filter: drop-shadow(0 0 10px #22c55e); }
+
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: opacity 0.5s; opacity: 0.5; }
+        .link-path:hover { opacity: 1; stroke: #94a3b8; }
+
         /* Pointers */
-        .ptr-slow { fill: #22c55e; stroke: #16a34a; }
-        .ptr-fast { fill: #ef4444; stroke: #b91c1c; }
-        .ptr-label { font-size: 12px; font-weight: bold; text-anchor: middle; fill: white; }
+        .ptr-label { font-size: 12px; font-weight: bold; text-anchor: middle; fill: white; font-family: monospace; }
+        .ptr-arrow { stroke: white; stroke-width: 2px; fill: none; marker-end: url(#arrow-white); }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 200px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 180px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -48,25 +64,39 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Find Duplicate - 視為 Linked List Cycle</div>
+                <div class="viz-title">Find Duplicate Number (Cycle Detection)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Nums:</label>
-                        <input type="text" id="numsInput" value="1,3,4,2,2">
-                        <button onclick="runVisualizer()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Nums:</label>
+                            <input type="text" id="numsInput" value="1, 3, 4, 2, 2">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Find</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <defs>
-                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L9,3 z" fill="#64748b" />
-                            </marker>
-                        </defs>
-                        <g id="main-group" transform="translate(30, 30)"></g>
-                        <g id="overlay-group" transform="translate(30, 30)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Slow</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Fast</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Meeting</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e; border: 2px solid #fff"></div>Result</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="28" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#64748b"/>
+                                </marker>
+                                <marker id="arrow-white" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="white"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -85,12 +115,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -105,276 +135,271 @@
     <script>
         const codeStructure = [
             { line: 'int findDuplicate(vector<int>& nums) {', id: 0 },
-            { line: '    int slow = 0, fast = 0;', id: 1 },
-            { line: '    do {', id: 2 },
-            { line: '        slow = nums[slow];', id: 3 },
-            { line: '        fast = nums[nums[fast]];', id: 4 },
-            { line: '    } while (slow != fast);', id: 5 },
-            { line: '    slow = 0;', id: 6 },
-            { line: '    while (slow != fast) {', id: 7 },
-            { line: '        slow = nums[slow];', id: 8 },
-            { line: '        fast = nums[fast];', id: 9 },
-            { line: '    }', id: 10 },
-            { line: '    return slow;', id: 11 },
-            { line: '}', id: 12 }
+            { line: '    // Phase 1: Cycle Detection', id: 1 },
+            { line: '    int slow = 0, fast = 0;', id: 2 },
+            { line: '    do {', id: 3 },
+            { line: '        slow = nums[slow];', id: 4 },
+            { line: '        fast = nums[nums[fast]];', id: 5 },
+            { line: '    } while (slow != fast);', id: 6 },
+            { line: '    // Phase 2: Find Entry', id: 7 },
+            { line: '    int slow2 = 0;', id: 8 },
+            { line: '    while (slow != slow2) {', id: 9 },
+            { line: '        slow = nums[slow];', id: 10 },
+            { line: '        slow2 = nums[slow2];', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    return slow;', id: 13 },
+            { line: '}', id: 14 }
         ];
 
         let viz;
 
         function simulate(nums) {
             const steps = [];
-            // Build Graph Logic based on indices
-            // Each index i points to nums[i]
-            // We need to trace the path from 0 to identify the Rho shape physically
             
-            const visited = new Set();
-            const path = [];
-            let curr = 0;
-            let cycleEntry = -1;
+            // This is a graph of N+1 nodes (indices 0 to N)
+            // Edges: i -> nums[i]
             
-            // Layout Pre-calculation
-            // Trace full path
-            const nodes = []; 
-            for(let i=0; i<nums.length; i++) nodes.push({id:i, val:i, type:'unused'}); // Default all potential indices
-            
-            while(!visited.has(curr)) {
-                visited.add(curr);
-                path.push(curr);
-                curr = nums[curr];
-            }
-            cycleEntry = curr; // The first repeated node in path traversal
-            
-            // Split path into stem and cycle
-            const entryIndex = path.indexOf(cycleEntry);
-            const stem = path.slice(0, entryIndex);
-            const cycle = path.slice(entryIndex);
-            
-            // Assign Coordinates
-            const SPACING = 60;
-            const RADIUS = 80;
-            
-            // Stem
-            stem.forEach((nodeIdx, i) => {
-                const node = nodes[nodeIdx];
-                node.x = 50 + i * SPACING;
-                node.y = 50;
-                node.type = (i===0) ? 'start' : 'stem';
-            });
-            
-            // Cycle
-            const cx = 50 + stem.length * SPACING + 20;
-            const cy = 160;
-            cycle.forEach((nodeIdx, i) => {
-                const angle = -Math.PI/2 + (2 * Math.PI * i) / cycle.length;
-                const node = nodes[nodeIdx];
-                node.x = cx + Math.cos(angle) * RADIUS;
-                node.y = cy + Math.sin(angle) * RADIUS;
-                node.type = 'cycle';
-            });
-            
-            // Nodes not in path?
-            // Just stack them somewhere
-            let unusedX = 0;
-            nodes.filter(n => n.type === 'unused').forEach(n => {
-                n.x = unusedX * 40 + 50;
-                n.y = 350;
-                unusedX++;
-                n.hidden = true; // Maybe hide them to avoid confusion
+            // Helper
+            const snap = (s, f, s2, phase, msg, hLines, info) => ({
+                slow: s, fast: f, slow2: s2, phase,
+                msg, highlightLines: hLines,
+                explanation: info
             });
 
-            // Links: i -> nums[i]
-            const links = [];
-            nodes.forEach(n => {
-                if(!n.hidden) {
-                    const target = nums[n.id];
-                    // Only draw if target is visible
-                    if (!nodes[target].hidden) {
-                        links.push({source: n.id, target: target});
-                    }
-                }
-            });
-
-            // Init
-            steps.push({
-                nodes: JSON.parse(JSON.stringify(nodes)),
-                links,
-                s: 0, f: 0,
-                msg: "Init: Slow=Fast=0",
-                highlightLines: [1],
-                explanation: {
-                    title: '初始化',
-                    text: '利用陣列值作為指標 (i -> nums[i])，此問題轉化為 Linked List Cycle 檢測。<br>初始化 Slow 和 Fast 指標指向索引 0。',
-                    formula: 'slow = 0, fast = 0'
-                }
-            });
+            let slow = 0;
+            let fast = 0;
+            
+            steps.push(snap(slow, fast, null, 1, "Phase 1: Init slow=0, fast=0", [1, 2], {
+                title: "Phase 1: 初始化",
+                text: "將陣列視為鏈表：Index i 指向 nums[i]。從 Index 0 開始。初始化快慢指針。",
+                formula: "slow=0, fast=0"
+            }));
 
             // Phase 1
-            let slow = 0, fast = 0;
             do {
-                // Move Slow
                 slow = nums[slow];
-                // Move Fast
                 fast = nums[nums[fast]];
                 
-                steps.push({
-                    nodes: JSON.parse(JSON.stringify(nodes)),
-                    links,
-                    s: slow, f: fast,
-                    msg: `Phase 1: Slow->${slow}, Fast->${fast}`,
-                    highlightLines: [4, 5, 6],
-                    explanation: {
-                        title: '第一階段：尋找相遇點',
-                        text: `Slow 走一步 (nums[slow]) 到 ${slow}<br>Fast 走兩步 (nums[nums[fast]]) 到 ${fast}<br>如果 Fast 追上 Slow，代表有環。`,
-                        formula: 'slow = nums[slow]; fast = nums[nums[fast]]'
-                    }
-                });
-            } while (slow !== fast);
-
-            steps.push({
-                nodes: JSON.parse(JSON.stringify(nodes)),
-                links,
-                s: slow, f: fast,
-                msg: "相遇! 進入 Phase 2",
-                highlightLines: [6],
-                explanation: {
-                    title: '相遇！',
-                    text: `Slow 和 Fast 在索引 ${slow} 相遇。此時確認有環。<br>根據 Floyd Cycle 演算法，從相遇點和起點同時出發，會在環的入口相遇。`,
-                    formula: 'slow == fast'
-                }
-            });
+                steps.push(snap(slow, fast, null, 1, `Slow -> ${slow}, Fast -> ${fast}`, [4, 5], {
+                    title: "移動指針",
+                    text: `slow = nums[slow] (走1步)<br>fast = nums[nums[fast]] (走2步)`,
+                    formula: "Move pointers"
+                }));
+                
+            } while (slow !== fast); // Visualization might differ from code structure slightly to show check
+            
+            steps.push(snap(slow, fast, null, 1, "Slow == Fast! Cycle Detected.", [6], {
+                title: "相遇",
+                text: "快慢指針相遇，確認存在環。根據 Floyd 算法，相遇點並不一定是環的起點 (重複數)。",
+                formula: "slow == fast"
+            }));
 
             // Phase 2
-            slow = 0;
-            steps.push({
-                nodes: JSON.parse(JSON.stringify(nodes)),
-                links,
-                s: slow, f: fast,
-                msg: "重置 Slow = 0",
-                highlightLines: [7],
-                explanation: {
-                    title: '第二階段：尋找入口',
-                    text: '將 Slow 重置回起點 (0)，Fast 留在相遇點。',
-                    formula: 'slow = 0'
-                }
-            });
+            let slow2 = 0;
+            steps.push(snap(slow, fast, slow2, 2, "Phase 2: Init slow2=0. Keep slow at meeting point.", [7, 8], {
+                title: "Phase 2: 尋找入口",
+                text: "新增一個慢指針 slow2 從起點 (0) 開始。原 slow 保持在相遇點。兩者同時以 1 步速度前進。",
+                formula: "slow2=0"
+            }));
 
-            while (slow !== fast) {
+            while (slow !== slow2) {
                 slow = nums[slow];
-                fast = nums[fast]; // Fast moves 1 step now
+                slow2 = nums[slow2];
                 
-                steps.push({
-                    nodes: JSON.parse(JSON.stringify(nodes)),
-                    links,
-                    s: slow, f: fast,
-                    msg: `Phase 2: Slow->${slow}, Fast->${fast} (各走一步)`,
-                    highlightLines: [8, 9],
-                    explanation: {
-                        title: '同步前進',
-                        text: `Slow 走一步 -> ${slow}<br>Fast 走一步 -> ${fast}<br>兩者速度相同，必在環入口相遇。`,
-                        formula: 'slow = nums[slow]; fast = nums[fast]'
-                    }
-                });
+                steps.push(snap(slow, fast, slow2, 2, `Slow -> ${slow}, Slow2 -> ${slow2}`, [10, 11], {
+                    title: "同步前進",
+                    text: "slow 和 slow2 各走一步。",
+                    formula: "slow=nums[slow], slow2=nums[slow2]"
+                }));
             }
-
-            steps.push({
-                nodes: JSON.parse(JSON.stringify(nodes)),
-                links,
-                s: slow, f: fast,
-                found: slow,
-                msg: `找到重複值 (Cycle Entry): ${slow}`,
-                highlightLines: [11],
-                final: true,
-                explanation: {
-                    title: '找到重複數',
-                    text: `Slow 和 Fast 在索引 ${slow} 相遇，這就是環的入口，也就是重複的數字！`,
-                    formula: `return ${slow}`
-                }
-            });
+            
+            steps.push(snap(slow, fast, slow2, 3, `Met at ${slow}. Duplicate Found!`, [13], {
+                title: "找到重複數",
+                text: `兩者相遇的點 ${slow} 即為環的入口，也就是重複的數字。`,
+                formula: `return ${slow}`
+            }));
 
             return steps;
         }
 
+        // --- Render ---
         const svg = d3.select("#viz-svg");
-        const gMain = d3.select("#main-group");
-        const gOverlay = d3.select("#overlay-group");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
+            // Draw Graph
+            // Need force simulation or fixed layout?
+            // Fixed layout based on cycle structure is cleaner.
+            // Analyze graph structure from global 'currentNums'
+            
+            const raw = document.getElementById('numsInput').value;
+            const nums = raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            
+            // Build graph stats
+            // Find cycle path
+            const visited = new Array(nums.length).fill(-1);
+            let curr = 0;
+            let path = [];
+            let cycleStart = -1;
+            
+            for(let i=0; i<=nums.length; i++) {
+                if (visited[curr] !== -1) {
+                    cycleStart = curr;
+                    break;
+                }
+                visited[curr] = i;
+                path.push(curr);
+                curr = nums[curr];
+            }
+            
+            // Split path into Stem and Loop
+            const stem = [];
+            const loop = [];
+            let inLoop = false;
+            for(let n of path) {
+                if(n === cycleStart) inLoop = true;
+                if(!inLoop) stem.push(n);
+                else loop.push(n);
+            }
+            // And nodes not in main path? Ignored for visualization usually as problem guarantees all reachable from 0? 
+            // Problem says 0 is not in nums values, so 0 is roots.
+            
+            // Layout
+            const spacing = 60;
+            const startX = 50;
+            const startY = 200;
+            
+            const positions = {};
+            
+            // Stem
+            stem.forEach((id, i) => {
+                positions[id] = {x: startX + i*spacing, y: startY};
+            });
+            
+            // Loop (Circle)
+            const loopRadius = Math.max(60, loop.length * 20);
+            const cx = startX + stem.length*spacing + loopRadius; 
+            const cy = startY;
+            
+            loop.forEach((id, i) => {
+                // Arrange so cycleStart is at left (PI)
+                const angle = Math.PI - (i * (2*Math.PI / loop.length));
+                positions[id] = {
+                    x: cx + loopRadius * Math.cos(angle) - loopRadius, // shift left to touch stem
+                    y: cy + loopRadius * Math.sin(angle)
+                };
+            });
+            // Fix shift: cycleStart (loop[0]) needs to be at stem end.
+            // My math above puts loop[0] at (cx - R - R, cy) which is (startX + stemLen*sp - R, cy)
+            // Wait, circle Left is (cx - R). 
+            // My cx def: startX + stemLen*spacing + R. So Left is startX + stemLen*s. Correct.
+            
+            // Unreachable nodes? (Not possible given constraints/problem type usually, but robust)
+            // Just place them grid
+            
+            const nodeData = nums.map((v, i) => ({id: i, next: v, x: positions[i]?.x||0, y:positions[i]?.y||0}));
+            
             // Links
-            // Need coords from nodes
-            const nodeMap = new Map(step.nodes.map(n=>[n.id, n]));
-            const linkData = step.links.map(l => ({
-                s: nodeMap.get(l.source), t: nodeMap.get(l.target)
-            })).filter(d => d.s && d.t); // safety
-
-            const lSel = gMain.selectAll(".link").data(linkData);
-            lSel.enter().append("path").attr("class", "link")
-                .merge(lSel)
-                .transition().duration(500)
+            const links = nodeData.map(n => ({s: n, t: nodeData.find(x=>x.id===n.next)}));
+            
+            const linkSel = svg.selectAll(".link-path").data(links, d => d.s.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            linkSel.merge(linkEnter).transition().duration(500)
                 .attr("d", d => {
-                    // Straight or Curved?
-                    return `M ${d.s.x},${d.s.y} L ${d.t.x},${d.t.y}`; 
-                    // Simple L for now, graph layout handles cycle shape nicely
+                     // Check self loop or back loop
+                     if(!d.t) return "";
+                     if(d.s.id === d.t.id) return `M${d.s.x},${d.s.y-22} C${d.s.x-30},${d.s.y-80} ${d.s.x+30},${d.s.y-80} ${d.s.x},${d.s.y-22}`;
+                     return `M${d.s.x},${d.s.y} L${d.t.x},${d.t.y}`;
                 });
-            lSel.exit().remove();
-
+            linkSel.exit().remove();
+            
             // Nodes
-            const nodes = gMain.selectAll(".node-g").data(step.nodes.filter(n=>!n.hidden), d=>d.id);
-            const nEnter = nodes.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 18).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-            nEnter.append("text").attr("class", "node-idx").attr("dy", 28);
-
-            const nUpdate = nodes.merge(nEnter)
-                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            const nodeSel = svg.selectAll(".node-g").data(nodeData, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 20);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            nodeEnter.append("text").attr("class", "node-sub").attr("dy", 35);
             
-            nUpdate.select("circle").attr("class", d => {
-                let c = "node-circle";
-                if(d.type==='start') c += " start";
-                if(d.type==='cycle') c += " cycle";
-                if(step.found !== undefined && d.id === step.found) c += " found";
+            const nodeMerge = nodeSel.merge(nodeEnter).attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            nodeMerge.select("circle").attr("class", d => {
+                let c = "node-circle node-normal";
+                if(step.phase === 3 && (d.id === step.slow || d.id === step.slow2)) c = "node-circle node-res";
+                else if(step.phase === 1 && step.slow === step.fast && step.slow === d.id && step.msg.includes("Detected")) c = "node-circle node-met";
                 return c;
-            })
-            .style("stroke-width", d => (d.id === step.s || d.id === step.f) ? (step.found !== undefined ? 4 : 3) : 2);
-
-            nUpdate.select(".node-text").text(d => d.id); // Show Index as Label? Or Value?
-            // The problem is about finding the duplicate VALUE. 
-            // In this graph conversion, node index i points to nums[i].
-            // The nodes represent the INDICES. The value is the NEXT POINTER.
-            // Wait, actually: index 0 -> value nums[0]. The node IS index 0. The edge goes to node index nums[0].
-            // So the label should remain the Index (which is the value in range [1, n]).
-            // Correct.
-            nUpdate.select(".node-idx").text(d => `nums[${d.id}]`); // Optional
-
-            nodes.exit().remove();
-
+            });
+            nodeMerge.select(".node-text").text(d => d.id); // Show Index
+            nodeMerge.select(".node-sub").text(d => `val:${nums[d.id]}`); // Show Value
+            
+            nodeSel.exit().remove();
+            
             // Pointers
-            const pointers = [
-                {id:'S', idx:step.s, color:'#22c55e', offset:-30},
-                {id:'F', idx:step.f, color:'#ef4444', offset:-50}
-            ];
+            const ptrs = [];
+            if(step.phase === 1 || step.phase === 3) {
+                if(step.slow !== null) ptrs.push({id: step.slow, label: "S", type: 'slow'});
+                if(step.fast !== null) ptrs.push({id: step.fast, label: "F", type: 'fast'});
+            }
+            if(step.phase === 2) {
+                if(step.slow !== null) ptrs.push({id: step.slow, label: "S", type: 'slow'});
+                if(step.slow2 !== null) ptrs.push({id: step.slow2, label: "S2", type: 'fast'}); // Reuse color or add new
+            }
+            if(step.phase === 3) {
+                // S, S2 met
+                 if(step.slow2 !== null && step.phase===3) {
+                     // Filter duplicates visually
+                 }
+            }
             
-            const ptrs = gOverlay.selectAll(".ptr-g").data(pointers, d=>d.id);
-            const pEnter = ptrs.enter().append("g").attr("class", "ptr-g");
-            pEnter.append("path").attr("d", "M0,0 L-6,-10 L6,-10 Z").attr("fill", d=>d.color);
-            pEnter.append("text").attr("class", "ptr-label").attr("y", -15).text(d=>d.id).attr("fill", d=>d.color);
+            // Group positions
+            const stacked = {};
+            ptrs.forEach(p => {
+                if(!stacked[p.id]) stacked[p.id]=[];
+                stacked[p.id].push(p);
+            });
             
-            ptrs.merge(pEnter).transition().duration(400)
-                .attr("transform", d => {
-                    const n = step.nodes[d.idx]; 
-                    if(!n || n.hidden) return `translate(0,0)`; // shouldn't happen
-                    return `translate(${n.x}, ${n.y})`;
-                });
-            ptrs.exit().remove();
+            const flatPtrs = [];
+            Object.keys(stacked).forEach(k => {
+                const node = nodeData.find(n => n.id === parseInt(k));
+                if(node) {
+                    stacked[k].forEach((p, i) => {
+                        flatPtrs.push({
+                            ...p, x: node.x, y: node.y - 30 - i*25
+                        });
+                    });
+                }
+            });
+            
+            const ptrSel = svg.selectAll(".ptr-g").data(flatPtrs, d => d.label);
+            const ptrEnter = ptrSel.enter().append("g").attr("class", "ptr-g");
+            ptrEnter.append("rect").attr("width", 30).attr("height", 20).attr("x", -15).attr("y", -10).attr("rx", 4);
+            ptrEnter.append("text").attr("class", "ptr-label").attr("dy", 4);
+            ptrEnter.append("path").attr("class", "ptr-arrow").attr("d", "M0,10 L0,20").attr("marker-end", "url(#arrow-white)");
+            
+            const ptrMerge = ptrSel.merge(ptrEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+                
+            ptrMerge.select("rect").style("fill", d => (d.label === 'S' || d.label === 'S') ? "#22c55e" : "#ef4444");
+            ptrMerge.select("text").text(d => d.label);
+            
+            ptrSel.exit().remove();
         }
 
         function runVisualizer() {
-            const str = document.getElementById('numsInput').value;
-            const nums = str.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+            const raw = document.getElementById('numsInput').value;
+            const nums = raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            if(nums.length === 0) return;
             
-            if(nums.length < 2) return;
-
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remove Nth Node - D3 精緻視覺化</title>
+    <title>Remove Nth Node - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,24 +13,39 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
             min-height: 400px;
         }
-        
-        #viz-svg { width: 100%; height: 350px; }
 
-        .node-circle { fill: #334155; stroke: #64748b; stroke-width: 3px; transition: all 0.3s; }
-        .node-circle.dummy { stroke-dasharray: 4; fill: #1e293b; }
-        .node-circle.target { stroke: #ef4444; fill: rgba(239, 68, 68, 0.1); }
-        .node-circle.removed { opacity: 0.1; }
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; r: 20px; }
+        .node-text { fill: white; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
         
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: all 0.5s; opacity: 0.6; }
-        .link.bypass { stroke: #22c55e; stroke-width: 3px; }
+        .node-normal { fill: #334155; stroke: #475569; }
+        .node-dummy { fill: #1e293b; stroke: #64748b; stroke-dasharray: 4; }
+        .node-target { fill: #ef4444; stroke: #f87171; pointer-events: none; } /* To be removed */
+        .node-active { stroke: #fbbf24; stroke-width: 4px; filter: drop-shadow(0 0 5px #fbbf24); }
+        .node-removed { opacity: 0.2; }
+
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); transition: all 0.5s; opacity: 0.6; }
+        .link-path.bypass { stroke: #22c55e; marker-end: url(#arrow-success); opacity: 1; stroke-width: 3px; }
 
         /* Pointers */
-        .ptr-label { font-size: 12px; font-weight: bold; text-anchor: middle; fill: white; }
+        .ptr-label { font-size: 12px; font-weight: bold; text-anchor: middle; fill: white; font-family: monospace; }
+        .ptr-arrow { stroke: white; stroke-width: 2px; fill: none; marker-end: url(#arrow-white); }
         
         /* Gap Brace */
         .brace-path { fill: none; stroke: #fbbf24; stroke-width: 2px; stroke-dasharray: 4; }
@@ -38,11 +53,16 @@
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
+        input[type=number] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -53,24 +73,42 @@
                 <div class="viz-title">Remove Nth Node From End</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>List:</label>
-                        <input type="text" id="nodesInput" value="1, 2, 3, 4, 5">
-                        <label>N:</label>
-                        <input type="number" id="nInput" value="2" style="width:50px">
-                        <button onclick="runVisualizer()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Nodes:</label>
+                            <input type="text" id="nodesInput" value="1, 2, 3, 4, 5">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">N:</label>
+                            <input type="number" id="nInput" value="2" min="1">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Remove</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <defs>
-                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L9,3 z" fill="#64748b" />
-                            </marker>
-                        </defs>
-                        <g id="main-group" transform="translate(50, 150)"></g>
-                        <g id="overlay-group" transform="translate(50, 150)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Pointers</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#1e293b; border:1px solid #64748b"></div>Dummy</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Target</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#64748b"/>
+                                </marker>
+                                <marker id="arrow-success" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#22c55e"/>
+                                </marker>
+                                <marker id="arrow-white" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="white"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -89,12 +127,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -108,209 +146,304 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'ListNode* removeNthFromEnd(head, n) {', id: 0 },
+            { line: 'ListNode* removeNthFromEnd(ListNode* head, int n) {', id: 0 },
             { line: '    ListNode dummy(0); dummy.next = head;', id: 1 },
-            { line: '    ListNode *fast = &dummy;', id: 2 },
-            { line: '    ListNode *slow = &dummy;', id: 3 },
-            { line: '    // Move fast n+1 steps', id: 4 },
-            { line: '    for(int i=0; i<=n; i++) fast = fast->next;', id: 5 },
-            { line: '    while(fast) {', id: 6 },
-            { line: '        slow = slow->next;', id: 7 },
+            { line: '    ListNode* fast = &dummy;', id: 2 },
+            { line: '    ListNode* slow = &dummy;', id: 3 },
+            { line: '    for (int i = 0; i <= n; i++) {', id: 4 },
+            { line: '        fast = fast->next;', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    while (fast != nullptr) {', id: 7 },
             { line: '        fast = fast->next;', id: 8 },
-            { line: '    }', id: 9 },
-            { line: '    slow->next = slow->next->next;', id: 10 },
-            { line: '    return dummy.next;', id: 11 },
-            { line: '}', id: 12 }
+            { line: '        slow = slow->next;', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    slow->next = slow->next->next;', id: 11 },
+            { line: '    return dummy.next;', id: 12 },
+            { line: '}', id: 13 }
         ];
 
         let viz;
 
         function simulate(values, n) {
             const steps = [];
-            // Dummy logic: index 0 is dummy. Values from 1..len
-            const nodes = [{id:0, val:'D', type:'dummy'}];
-            values.forEach((v,i) => nodes.push({id:i+1, val:v, type:'normal'}));
             
-            // Linear links
-            let links = [];
-            for(let i=0; i<nodes.length-1; i++) links.push({s:i, t:i+1});
-
-            const pushState = (msg, hl, slowType, fastType, removedId=null, explanation=null) => {
-                steps.push({
-                    nodes: JSON.parse(JSON.stringify(nodes)),
-                    links: JSON.parse(JSON.stringify(links)),
-                    slow: slowType, // index
-                    fast: fastType, // index
-                    removedId,
-                    msg, highlightLines: hl,
-                    explanation
+            // Build Nodes + Dummy
+            const nodes = [{id: -1, val: 'D', type: 'dummy', next: 0}];
+            values.forEach((v, i) => {
+                nodes.push({
+                    id: i, val: v, type: 'normal',
+                    next: i < values.length - 1 ? i+1 : null
                 });
-            };
-
-            // Pointers
-            let slow = 0; // dummy
-            let fast = 0; // dummy
+            });
             
-            pushState("Init: Dummy -> Head", [1, 2, 3], slow, fast, null, {
-                title: '初始化',
-                text: '建立 Dummy 節點指向 Head。初始化 Slow 和 Fast 都指向 Dummy。<br>使用 Dummy 可以簡化刪除 Head 的邊界情況。',
-                formula: 'slow = dummy, fast = dummy'
+            let fast = -1; // &dummy
+            let slow = -1; // &dummy
+            
+            const snap = (nodes, ptrs) => ({
+                nodes: JSON.parse(JSON.stringify(nodes)),
+                pointers: {...ptrs}
             });
 
-            // Move fast N+1
-            // In code: loop 0 to n inclusive (loops n+1 times) to create gap of n+1
-            for(let i=0; i<=n; i++) {
-                if(fast < nodes.length-1) { // safe check
-                    fast++;
-                    pushState(`Fast Move ${i+1}/${n+1}`, [5], slow, fast, null, {
-                        title: '製造間距',
-                        text: `Fast 向前移動，目標是領先 Slow ${n+1} 步。<br>這樣當 Fast 到達末尾 (null) 時，Slow 正好在目標節點的前一個位置。`,
-                        formula: `Gap = ${i+1}`
-                    });
-                } else {
-                    // Fast goes out of bounds (null)
-                    fast = nodes.length; // simulated null index
-                    pushState(`Fast Move ${i+1}/${n+1} (End)`, [5], slow, fast, null, {
-                        title: 'Fast 到達末尾',
-                        text: 'Fast 已經超出鏈表範圍。',
-                        formula: 'fast = null'
-                    });
-                    break;
+            steps.push({
+                ...snap(nodes, {fast, slow}),
+                msg: "Init Dummy(0) -> Head. slow=dummy, fast=dummy.",
+                highlightLines: [0, 1, 2, 3],
+                explanation: {
+                    title: "初始化 Dummy",
+                    text: "使用 Dummy 節點指向 Head，方便處理刪除頭節點的情況。slow 和 fast 都從 dummy 開始。",
+                    formula: "slow=dummy, fast=dummy"
                 }
-            }
-
-            // Move both until fast is null
-            while(fast < nodes.length) {
-                slow++;
-                fast++;
-                pushState("Move both: maintain gap", [7, 8], slow, fast, null, {
-                    title: '同步移動',
-                    text: `Slow 和 Fast 同時前進。<br>保持 ${n+1} 的間距。`,
-                    formula: 'slow++, fast++'
-                });
-            }
-            
-            // Now slow is at (Length - n) position?
-            // Actually target to remove is slow.next
-            // slow index in our array is 'removePrev'
-            
-            const toRemoveIdx = slow + 1;
-            const toRemoveNode = nodes[toRemoveIdx];
-            
-            pushState(`Found remove target: ${toRemoveNode ? toRemoveNode.val : 'null'}`, [9], slow, fast, toRemoveNode ? toRemoveNode.id : null, {
-                title: '定位刪除點',
-                text: `Fast 到達末尾。Slow 停在倒數第 ${n} 個節點的前一個位置。<br>準備刪除 Slow.next。`,
-                formula: `Target = slow->next`
             });
 
-            if(toRemoveNode) {
-                // Re-wire
-                // remove link slow -> toRemove
-                links = links.filter(l => l.s !== slow);
-                // add link slow -> toRemove.next
-                if(toRemoveIdx + 1 < nodes.length) {
-                    links.push({s: slow, t: toRemoveIdx + 1, type: 'bypass'});
+            // Move fast N+1 steps
+            for (let i = 0; i <= n; i++) {
+                const nextNode = nodes.find(x => x.id === fast).next;
+                if (nextNode === null && i < n) {
+                    // N is too large? Constraint says N valid.
+                    // But if N=Sz, we go to null.
                 }
                 
-                pushState("Remove: Bypass target", [10], slow, fast, toRemoveNode.id, {
-                    title: '執行刪除',
-                    text: `將 Slow 的 next 指針繞過目標節點，直接指向目標的下一個節點。<br>目標節點 ${toRemoveNode.val} 已被移出鏈表。`,
-                    formula: 'slow->next = slow->next->next'
+                // Advance fast technically
+                if (nextNode !== null) fast = nextNode;
+                else fast = null; // off the end
+                
+                steps.push({
+                    ...snap(nodes, {fast, slow}),
+                    msg: `Move fast to create gap. Step ${i+1}/${n+1}`,
+                    highlightLines: [4, 5],
+                    explanation: {
+                        title: "建立間距 (Gap)",
+                        text: `讓 fast 先走 ${n+1} 步。這樣當 fast 到達 NULL 時，slow 剛好在倒數第 N+1 個節點 (即要刪除節點的前一個)。`,
+                        formula: `Gap = ${i+1}`
+                    }
                 });
             }
-
-            pushState("Done", [11], slow, fast, toRemoveNode ? toRemoveNode.id : null, {
-                title: '完成',
-                text: '返回 Dummy.next (新的 Head)。',
-                formula: 'return dummy.next'
+            
+            // Move both until fast is null
+            while (fast !== null) {
+                const fNode = nodes.find(x => x.id === fast);
+                const sNode = nodes.find(x => x.id === slow);
+                
+                fast = fNode.next;
+                slow = sNode.next;
+                
+                steps.push({
+                    ...snap(nodes, {fast, slow}),
+                    msg: "Move slow and fast until fast == NULL",
+                    highlightLines: [7, 8, 9],
+                    explanation: {
+                        title: "同步移動",
+                        text: "保持間距不變，同時移動 slow 和 fast，直到 fast 指向 NULL (鏈表末尾)。",
+                        formula: "while fast != null"
+                    }
+                });
+            }
+            
+            // Delete node
+            const sNode = nodes.find(n => n.id === slow);
+            const toDeleteId = sNode.next;
+            
+            // Mark node as removing
+            const toDeleteNode = nodes.find(n => n.id === toDeleteId);
+            if (toDeleteNode) {
+                 toDeleteNode.type = 'target';
+                 sNode.next = toDeleteNode.next; // Bypass
+                 
+                 steps.push({
+                    ...snap(nodes, {fast, slow}),
+                    msg: `Found target! Bypass slow->next.`,
+                    highlightLines: [11],
+                    explanation: {
+                        title: "刪除節點",
+                        text: `slow 現在位於目標節點的前一個位置。將 slow->next 指向 slow->next->next，跳過目標節點。`,
+                        formula: "slow->next = slow->next->next"
+                    }
+                 });
+                 
+                 // Mark as removed
+                 toDeleteNode.type = 'removed';
+                 steps.push({
+                    ...snap(nodes, {fast, slow}),
+                    msg: "Node removed.",
+                    highlightLines: [11],
+                    explanation: {
+                        title: "完成刪除",
+                        text: "節點已從鏈表中移除 (visually grayed out)。",
+                        formula: "delete target"
+                    }
+                 });
+            }
+            
+            steps.push({
+                ...snap(nodes, {}),
+                final: true, msg: "Return dummy.next",
+                highlightLines: [12],
+                explanation: { title: "完成", text: "返回 dummy.next 作為新的頭節點。", formula: "return dummy.next" }
             });
 
             return steps;
         }
 
+        // --- Render ---
         const svg = d3.select("#viz-svg");
-        const gMain = d3.select("#main-group");
-        const gOverlay = d3.select("#overlay-group");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
-            const SPACING = 70;
-            step.nodes.forEach((n, i) => {
-                n.x = i * SPACING;
-                n.y = 0;
+            const nodes = step.nodes;
+            const ptr = step.pointers || {};
+            
+            // Layout: Linear horizontal
+            const spacing = 70;
+            const startX = 50;
+            const centerY = height / 2;
+            
+            // Need index to calculate X, but ids are -1, 0, 1...
+            // Let's traverse to assign positions, since bypass changes topology
+            // Or just keep original positions but gray out?
+            // "Removing" visualization is better if items stay put but link curves around.
+            
+            // Map original indices to x positions
+            nodes.forEach(n => {
+                // map id -1 -> 0 * spacing, id 0 -> 1*spacing...
+                let col = n.id + 1; // dummy is -1
+                n.x = startX + col * spacing;
+                n.y = centerY;
             });
 
             // Links
-            const lSel = gMain.selectAll(".link").data(step.links, d => d.s + "-" + d.t);
-            lSel.enter().append("path").attr("class", "link")
-                .merge(lSel)
+            const links = [];
+            nodes.forEach(n => {
+                if (n.type !== 'removed' && n.next !== null && n.next !== undefined) {
+                    const t = nodes.find(x => x.id === n.next);
+                    if (t) {
+                        links.push({
+                            s: {x: n.x, y: n.y},
+                            t: {x: t.x, y: t.y},
+                            id: `${n.id}-${t.id}`,
+                            isBypass: Math.abs(t.x - n.x) > spacing + 10 // Heuristic for jump
+                        });
+                    }
+                }
+            });
+            
+            const linkSel = svg.selectAll(".link-path").data(links, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            
+            linkSel.merge(linkEnter)
                 .transition().duration(500)
                 .attr("d", d => {
-                    const sx = step.nodes[d.s].x, sy = step.nodes[d.s].y;
-                    const tNode = step.nodes[d.t]; // might be null if bypass to null? no d.t is index
-                    const tx = tNode ? tNode.x : sx + 50; 
-                    const ty = tNode ? tNode.y : sy;
-                    
-                    if(d.type === 'bypass') {
-                        return `M ${sx},${sy-20} Q ${(sx+tx)/2},${sy-60} ${tx},${ty-20}`;
-                    }
-                    return `M ${sx},${sy} L ${tx},${ty}`;
+                     if (d.isBypass) {
+                         // Curve above deleted node
+                         return `M${d.s.x+20},${d.s.y} Q${(d.s.x+d.t.x)/2},${d.s.y-60} ${d.t.x-20},${d.t.y}`;
+                     }
+                     return `M${d.s.x+20},${d.s.y} L${d.t.x-20},${d.t.y}`;
                 })
-                .attr("class", d => d.type === 'bypass' ? "link bypass" : "link");
-            lSel.exit().remove();
-
-            // Nodes
-            const nSel = gMain.selectAll(".node-g").data(step.nodes, d => d.id);
-            const nEnter = nSel.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
+                .attr("class", d => d.isBypass ? "link-path bypass" : "link-path");
+                
+            linkSel.exit().remove();
             
-            const nUpdate = nSel.merge(nEnter).transition().duration(500)
+            // Nodes
+            const nodeSel = svg.selectAll(".node-g").data(nodes, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 20);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter);
+            nodeMerge.transition().duration(500)
                 .attr("transform", d => `translate(${d.x}, ${d.y})`);
                 
-            nUpdate.select("circle").attr("class", d => {
-                let c = "node-circle";
-                if(d.type === 'dummy') c += " dummy";
-                if(d.id === step.removedId) c += " removed"; 
-                // Target highlighting?
-                // If it is next of slow and we are at removal step...
-                return c;
-            });
-            nUpdate.select("text").text(d => d.val);
-            nSel.exit().remove();
-
+            nodeMerge.select("circle")
+                .attr("class", d => {
+                    let c = "node-circle";
+                    if (d.type === 'dummy') c += " node-dummy";
+                    if (d.type === 'target') c += " node-target";
+                    if (d.type === 'removed') c += " node-removed";
+                    else c += " node-normal";
+                    
+                    if (ptr.slow === d.id) c += " node-active";
+                    if (ptr.fast === d.id) c += " node-active";
+                    return c;
+                });
+            
+            nodeMerge.select("text").text(d => d.val);
+            
+            nodeSel.exit().remove();
+            
             // Pointers
-            const ptrs = [];
-            if(step.slow < step.nodes.length) ptrs.push({l:'S', idx:step.slow, c:'#22c55e'});
-            if(step.fast < step.nodes.length) ptrs.push({l:'F', idx:step.fast, c:'#a855f7'});
+            const activePtrs = [];
+            if (ptr.slow !== undefined && ptr.slow !== null) activePtrs.push({id: ptr.slow, label: 'slow', yOff: -30});
+            if (ptr.fast !== undefined && ptr.fast !== null) activePtrs.push({id: ptr.fast, label: 'fast', yOff: 30});
             
-            const pSel = gOverlay.selectAll(".ptr-g").data(ptrs, d => d.l);
-            const pEnter = pSel.enter().append("g").attr("class", "ptr-g");
-            pEnter.append("circle").attr("r", 12).attr("cy", 40).attr("fill", d=>d.c);
-            pEnter.append("text").attr("class", "ptr-label").attr("y", 44).text(d=>d.l);
+            const ptrSel = svg.selectAll(".ptr-g").data(activePtrs, d => d.label);
+            const ptrEnter = ptrSel.enter().append("g").attr("class", "ptr-g");
+            ptrEnter.append("rect").attr("width", 40).attr("height", 20).attr("x", -20).attr("y", -10).attr("rx", 4).attr("fill", "#fbbf24");
+            ptrEnter.append("text").attr("class", "ptr-label").attr("dy", 4);
+            ptrEnter.append("path").attr("class", "ptr-arrow").attr("stroke", "white").attr("stroke-width", 2).attr("marker-end", "url(#arrow-white)");
             
-            const pUpdate = pSel.merge(pEnter).transition().duration(400)
-                .attr("transform", d => `translate(${step.nodes[d.idx].x}, 0)`);
-            pSel.exit().remove();
+            const ptrMerge = ptrSel.merge(ptrEnter);
+            ptrMerge.transition().duration(500)
+                .attr("transform", d => {
+                    // For null fast found
+                    if (d.id === null) { 
+                         // Map to end of list
+                         const maxId = Math.max(...nodes.map(n=>n.id));
+                         const lastNode = nodes.find(n => n.id === maxId);
+                         return `translate(${lastNode.x + 80}, ${lastNode.y + d.yOff + (d.yOff>0?10:-10)})`;
+                    }
+                    const n = nodes.find(x => x.id === d.id);
+                    if(!n) return `translate(0,0)`;
+                    return `translate(${n.x}, ${n.y + d.yOff + (d.yOff>0?10:-10)})`;
+                });
             
-            // Brace to show gap?
-            gOverlay.selectAll(".brace").remove();
-            if(step.fast < step.nodes.length && step.fast > step.slow) {
-                const x1 = step.nodes[step.slow].x;
-                const x2 = step.nodes[step.fast].x;
-                const path = `M ${x1},55 Q ${(x1+x2)/2},75 ${x2},55`;
-                const gBrace = gOverlay.append("g").attr("class", "brace");
-                gBrace.append("path").attr("d", path).attr("class", "brace-path");
-                gBrace.append("text").attr("class", "brace-text")
-                    .attr("x", (x1+x2)/2).attr("y", 70)
-                    .text(`Gap: ${step.fast - step.slow} (Maintain N+1)`);
+            ptrMerge.select("text").text(d => d.label);
+            ptrMerge.select("path")
+                .attr("d", d => d.yOff < 0 ? "M0,10 L0,25" : "M0,-10 L0,-25");
+            
+            ptrSel.exit().remove();
+            
+            // Gap Brace?
+            svg.selectAll(".brace-g").remove();
+            if (ptr.fast !== null && ptr.slow !== null && ptr.slow !== ptr.fast) {
+                // Show gap brace
+                const sNode = nodes.find(n => n.id === ptr.slow);
+                const fNode = nodes.find(n => n.id === ptr.fast);
+                if (sNode && fNode) {
+                    const x1 = sNode.x;
+                    const x2 = fNode.x;
+                    const y = centerY - 50;
+                    
+                    const bg = svg.append("g").attr("class", "brace-g");
+                    bg.append("path").attr("d", `M${x1},${y} Q${(x1+x2)/2},${y-20} ${x2},${y}`)
+                        .attr("class", "brace-path");
+                    bg.append("text").attr("x", (x1+x2)/2).attr("y", y-25)
+                        .attr("class", "brace-text").text(`Gap = ${document.getElementById('nInput').value} + 1`);
+                }
             }
         }
 
         function runVisualizer() {
-            const vals = document.getElementById('nodesInput').value.split(',').map(x=>parseInt(x.trim()));
+            const raw = document.getElementById('nodesInput').value;
+            const vals = raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
             const n = parseInt(document.getElementById('nInput').value);
+            
+            if(vals.length === 0) return;
+            if (n > vals.length || n < 1) {
+                alert(`N must be between 1 and ${vals.length}`);
+                return;
+            }
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LRU Cache - D3 精緻視覺化</title>
+    <title>LRU Cache - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,42 +13,56 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
             min-height: 500px;
         }
-        
-        #viz-svg { width: 100%; height: 400px; }
 
-        /* List Nodes */
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        /* Nodes */
         .node-rect { fill: #1e293b; stroke: #3b82f6; stroke-width: 2px; rx: 8; ry: 8; transition: fill 0.3s; }
-        .node-rect.dummy { fill: #334155; stroke: #64748b; stroke-dasharray: 4; }
-        .node-rect.new { stroke: #22c55e; fill: rgba(34, 197, 94, 0.1); }
-        .node-rect.accessed { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.1); }
-        .node-rect.evicted { stroke: #ef4444; fill: rgba(239, 68, 68, 0.1); stroke-width: 1px; }
+        .node-rect.dummy { fill: #0f172a; stroke: #64748b; stroke-dasharray: 4; }
+        .node-rect.active { stroke: #fbbf24; stroke-width: 3px; filter: drop-shadow(0 0 5px #fbbf24); } /* Accessed */
+        .node-rect.new { stroke: #22c55e; fill: rgba(34, 197, 94, 0.1); } /* New */
+        .node-rect.evicted { stroke: #ef4444; opacity: 0.3; } /* Evicted */
 
-        .node-text { fill: white; font-family: monospace; font-size: 14px; text-anchor: middle; pointer-events: none; }
-        .node-subtext { fill: #94a3b8; font-size: 10px; text-anchor: middle; }
+        .node-text { fill: white; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .node-sub { fill: #94a3b8; font-size: 10px; text-anchor: middle; }
 
         /* Links */
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); }
-        .link.prev { stroke: #475569; stroke-width: 1px; stroke-dasharray: 2; marker-end: none; marker-start: url(#arrow-rev); }
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); opacity: 0.6; transition: all 0.5s; }
+        .link-path.prev { stroke: #475569; stroke-width: 1px; stroke-dasharray: 3; marker-end: none; marker-start: url(#arrow-rev); }
 
         /* Map */
-        .map-box { fill: rgba(30, 41, 59, 0.8); stroke: #a855f7; stroke-width: 1px; rx: 4; }
-        .map-text { fill: #e2e8f0; font-size: 11px; font-family: monospace; }
-        .map-link { fill: none; stroke: #a855f7; stroke-width: 1px; stroke-dasharray: 2; opacity: 0.5; }
+        .map-item { transition: transform 0.5s; }
+        .map-rect { fill: rgba(30, 41, 59, 0.8); stroke: #a855f7; stroke-width: 1px; rx: 4; }
+        .map-text { fill: #e2e8f0; font-size: 12px; font-family: monospace; }
+        .map-link { fill: none; stroke: #a855f7; stroke-width: 1px; stroke-dasharray: 2; opacity: 0.4; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-        .input-row label { font-size: 0.85rem; color: #94a3b8; }
-        .input-row input { padding: 6px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; }
-        .input-row button { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: white; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=number] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
         .btn-put { background: #22c55e; }
-        .btn-get { background: #fbbf24; color: #0f172a !important; }
+        .btn-get { background: #f59e0b; color: #0f172a; }
         .btn-reset { background: #64748b; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -56,42 +70,73 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">LRU Cache (Double Linked List + HashMap)</div>
+                <div class="viz-title">LRU Cache</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Capacity:</label>
-                        <input type="number" id="capInput" value="3" min="1" max="5">
-                        <button class="btn-reset" onclick="resetCache()">Reset</button>
-                    </div>
-                    <div class="input-row">
-                        <label>Key:</label><input type="number" id="keyInput" value="1">
-                        <label>Val:</label><input type="number" id="valInput" value="10">
-                        <button class="btn-put" onclick="doPut()">Put</button>
-                        <button class="btn-get" onclick="doGet()">Get</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Cap:</label>
+                            <input type="number" id="capInput" value="3" min="1" max="5">
+                            <button class="btn-reset" onclick="initCache()">Reset</button>
+                        </div>
+                        <div style="width:10px;"></div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Key:</label>
+                            <input type="number" id="keyInput" value="1">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Val:</label>
+                            <input type="number" id="valInput" value="10">
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn-put" onclick="performOp('put')">Put</button>
+                            <button class="btn-get" onclick="performOp('get')">Get</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <defs>
-                            <marker id="arrow" markerWidth="8" markerHeight="8" refX="18" refY="4" orient="auto">
-                                <path d="M0,0 L0,8 L8,4 z" fill="#64748b" />
-                            </marker>
-                            <marker id="arrow-rev" markerWidth="8" markerHeight="8" refX="0" refY="4" orient="auto">
-                                <path d="M8,0 L8,8 L0,4 z" fill="#475569" />
-                            </marker>
-                        </defs>
-                        <g id="map-group" transform="translate(30, 30)"></g>
-                        <g id="list-group" transform="translate(50, 150)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#0f172a; border:1px dashed #64748b"></div>Dummy (LRU/MRU)</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#1e293b; border:1px solid #3b82f6"></div>Node</div>
+                       <div class="legend-item"><div class="legend-color" style="background:rgba(30,41,59,0.8); border:1px solid #a855f7"></div>Map Entry</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="42" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#64748b"/>
+                                </marker>
+                                <marker id="arrow-rev" viewBox="0 -5 10 10" refX="-32" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M10,-5L0,0L10,5" fill="#475569"/>
+                                </marker>
+                            </defs>
+                            <g id="map-group"></g>
+                            <g id="list-group"></g>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
+                
+                 <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">2x</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -106,323 +151,237 @@
     <script>
         const codeStructure = [
             { line: 'class LRUCache {', id: 0 },
-            { line: '    void put(key, val) {', id: 1 },
-            { line: '        if (map.count(key)) remove(map[key]);', id: 2 },
-            { line: '        map[key] = new Node(key, val);', id: 3 },
-            { line: '        insertAtMRU(map[key]);', id: 4 },
-            { line: '        if (map.size() > cap) {', id: 5 },
-            { line: '            // Remove LRU', id: 6 },
-            { line: '            lru = head->next;', id: 7 },
-            { line: '            remove(lru); map.erase(lru->key);', id: 8 },
-            { line: '        }', id: 9 },
-            { line: '    }', id: 10 },
-            { line: '    int get(key) {', id: 11 },
-            { line: '        if (!map.count(key)) return -1;', id: 12 },
-            { line: '        node = map[key];', id: 13 },
-            { line: '        remove(node); insertAtMRU(node);', id: 14 },
-            { line: '        return node->val;', id: 15 },
-            { line: '    }', id: 16 }
+            { line: '    Node *left, *right;', id: 1 },
+            { line: '    unordered_map<int, Node*> map;', id: 2 },
+            { line: '    int get(int key) {', id: 3 },
+            { line: '        if (exists) { remove(node); insert(node); return val; }', id: 4 },
+            { line: '        return -1;', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    void put(int key, int value) {', id: 7 },
+            { line: '        if (exists) remove(node);', id: 8 },
+            { line: '        map[key] = new Node(k, v); insert(node);', id: 9 },
+            { line: '        if (size > cap) { remove(left->next); map.erase(k); }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '};', id: 12 }
         ];
 
         let viz;
-        let cacheObj = {
-            cap: 3,
-            head: {id:'head', type:'dummy'},
-            tail: {id:'tail', type:'dummy'},
-            map: {}, // key -> node
-            size: 0
-        };
-        // Setup links
-        cacheObj.head.next = cacheObj.tail;
-        cacheObj.tail.prev = cacheObj.head;
-
-        function cloneState() {
-            // Flatten list to array for easy serialization
-            const nodes = [];
-            let curr = cacheObj.head;
-            while(curr) {
-                // Circular ref fix? No, just linear traversal
-                // Store key properties
-                nodes.push({
-                    id: curr.id,
-                    key: curr.key,
-                    val: curr.val,
-                    type: curr.type,
-                    state: curr.state // for visual effects
-                });
-                curr = curr.next;
-            }
-            return {
-                cap: cacheObj.cap,
-                nodes: nodes, // Ordered List state
-                mapKeys: Object.keys(cacheObj.map).map(k=>parseInt(k)), // Just keys for map viz
-                msg: "",
-                highlightLines: []
-            };
-        }
-
-        function createStep(msg, hl, explanation=null) {
-            const state = cloneState();
-            state.msg = msg;
-            state.highlightLines = hl;
-            state.explanation = explanation;
-            return state;
-        }
-
-        // Algo Logic simulation that returns steps
-        // BUT here we have interactive input.
-        // We will run the logic on global `cacheObj` and record steps.
-        // Then play steps.
+        let capacity = 3;
+        let cacheNodes = []; 
+        let cacheMap = {}; 
+        let nextId = 1;
+        const LEFT_ID = 'L';
+        const RIGHT_ID = 'R';
         
-        function runOp(op, key, val) {
-            const steps = [];
+        function initCache() {
+            capacity = parseInt(document.getElementById('capInput').value);
+            cacheNodes = [
+                {id: LEFT_ID, k: 'L', v: 'LRU', type: 'dummy', prev: null, next: RIGHT_ID},
+                {id: RIGHT_ID, k: 'R', v: 'MRU', type: 'dummy', prev: LEFT_ID, next: null}
+            ];
+            cacheMap = {}; 
+            nextId = 1;
             
-            // Initial state snapshot
-            steps.push(createStep(`${op.toUpperCase()} ${key}`, [], {
-                title: `${op.toUpperCase()} 操作`,
-                text: `準備對 Key ${key} 執行 ${op.toUpperCase()} 操作。`,
-                formula: `op = ${op}, key = ${key}`
-            }));
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps([{
+                nodes: JSON.parse(JSON.stringify(cacheNodes)),
+                map: {},
+                msg: `Init LRUCache(Cap=\${capacity}). Left=LRU, Right=MRU.`,
+                highlightLines: [0, 1, 2],
+                explanation: { title: "初始化", text: "建立 Dummy 節點和空 Map。", formula: "size=0" }
+            }]);
+        }
+        
+        function performOp(type) {
+            const key = parseInt(document.getElementById('keyInput').value);
+            const val = parseInt(document.getElementById('valInput').value);
+            const steps = generateOpSteps(type, key, val);
+            viz.appendSteps(steps); 
+        }
 
-            if (op === 'get') {
-                if (key in cacheObj.map) {
-                    const node = cacheObj.map[key];
-                    node.state = 'accessed';
-                    steps.push(createStep(`Key ${key} found! Move to MRU`, [12, 13], {
-                        title: '快取命中 (Cache Hit)',
-                        text: `Key ${key} 存在於 Map 中。取得對應的 Node。`,
-                        formula: `map.count(${key}) == true`
-                    }));
-                    
-                    // Remove
-                    removeNode(node);
-                    insertMRU(node);
-                    
-                    steps.push(createStep(`Moved ${key} to MRU. Return ${node.val}`, [14, 15], {
-                        title: '移動到 MRU',
-                        text: `為了標記最近使用，將 Node 從當前位置移除，並插入到 Tail 之前 (MRU)。`,
-                        formula: 'remove(node); insertAtMRU(node)'
-                    }));
-                    node.state = null; // Clear state
+        function generateOpSteps(type, k, v) {
+            const steps = [];
+            const snap = (msg, lines, expl) => ({
+                nodes: JSON.parse(JSON.stringify(cacheNodes)),
+                map: JSON.parse(JSON.stringify(cacheMap)),
+                activeKey: k,
+                opType: type,
+                msg,
+                highlightLines: lines,
+                explanation: expl
+            });
+
+            if (type === 'get') {
+                steps.push(snap(`GET(\${k})`, [3], { title: "GET", text: `讀取 Key=\${k}。`, formula: `get(\${k})` }));
+                if (k in cacheMap) {
+                    const nodeId = cacheMap[k];
+                    removeNode(nodeId);
+                    insertNode(nodeId);
+                    steps.push(snap(`Hit: Move \${k} to MRU`, [4], { title: "命中", text: "與 Move to Front。", formula: "Hit" }));
                 } else {
-                    steps.push(createStep(`Key ${key} not in cache. Return -1`, [12], {
-                        title: '快取未命中 (Cache Miss)',
-                        text: `Key ${key} 不在 Map 中，返回 -1。`,
-                        formula: `map.count(${key}) == false`
-                    }));
+                    steps.push(snap(`Miss: Key \${k} not found`, [5], { title: "未命中", text: "返回 -1。", formula: "Miss" }));
                 }
-            } else if (op === 'put') {
-                if (key in cacheObj.map) {
-                    const node = cacheObj.map[key];
-                    steps.push(createStep(`Key ${key} 已存在. 更新並移動`, [2], {
-                        title: '更新現有 Key',
-                        text: `Key ${key} 已存在。需要更新值並將其標記為最近使用。`,
-                        formula: `map.count(${key}) == true`
-                    }));
-                    removeNode(node);
-                    node.val = val;
-                    node.state = 'new';
-                    insertMRU(node);
-                    steps.push(createStep(`Updated ${key}:${val} at MRU`, [3, 4], {
-                        title: '移至 MRU 並更新',
-                        text: `將 Node 移至 Tail 前端，更新值為 ${val}。`,
-                        formula: `node->val = ${val}; moveToMRU(node)`
-                    }));
-                    node.state = null;
+            } else if (type === 'put') {
+                steps.push(snap(`PUT(\${k}, \${v})`, [7], { title: "PUT", text: `寫入 Key=\${k}。`, formula: `put(\${k}, \${v})` }));
+                if (k in cacheMap) {
+                    const nodeId = cacheMap[k];
+                    removeNode(nodeId);
+                    const node = cacheNodes.find(n => n.id === nodeId);
+                    node.v = v;
+                    insertNode(nodeId);
+                    steps.push(snap(`Update \${k}, Move to MRU`, [8, 9], { title: "更新", text: "更新值並移至 MRU。", formula: "Update" }));
                 } else {
-                    // New
-                    const node = { id: 'node-'+key, key: key, val: val, type: 'node', state: 'new' };
-                    cacheObj.map[key] = node;
-                    cacheObj.size++;
-                    insertMRU(node);
-                    steps.push(createStep(`Inserted ${key}:${val} at MRU`, [3, 4], {
-                        title: '插入新節點',
-                        text: `建立新節點 [${key}:${val}] 並插入到 MRU 位置。Map 紀錄 key 指向此節點。`,
-                        formula: `map[${key}] = newNode; insertAtMRU(newNode)`
-                    }));
-                    node.state = null;
-
-                    if (cacheObj.size > cacheObj.cap) {
-                        const lru = cacheObj.head.next;
-                        lru.state = 'evicted'; // visual
-                        steps.push(createStep(`Capacity Full! Evicting LRU (Key ${lru.key})`, [5, 6, 7], {
-                            title: '容量已滿！',
-                            text: `目前大小 (${cacheObj.size}) 超過容量 (${cacheObj.cap})。需要移除最久未使用的節點 (LRU)。<br>LRU 位於 Head->next。`,
-                            formula: `size > cap`
-                        }));
-                        
-                        removeNode(lru);
-                        delete cacheObj.map[lru.key];
-                        cacheObj.size--;
-                        
-                        steps.push(createStep(`Evicted ${lru.key}. Size now ${cacheObj.size}`, [8], {
-                            title: '移除 LRU',
-                            text: `移除節點 ${lru.key} 並從 Map 中刪除紀錄。`,
-                            formula: `remove(lru); map.erase(${lru.key})`
-                        }));
+                    const newNodeId = ++nextId;
+                    const newNode = {id: newNodeId, k: k, v: v, type: 'node'};
+                    cacheNodes.push(newNode); 
+                    cacheMap[k] = newNodeId;
+                    insertNode(newNodeId);
+                    steps.push(snap(`Insert [\${k}:\${v}] at MRU`, [9], { title: "插入", text: "插入新節點。", formula: "Insert" }));
+                    
+                    if (Object.keys(cacheMap).length > capacity) {
+                        const lNode = cacheNodes.find(n => n.id === LEFT_ID);
+                        const lruId = lNode.next;
+                        const lruNode = cacheNodes.find(n => n.id === lruId);
+                        removeNode(lruId);
+                        delete cacheMap[lruNode.k];
+                        steps.push(snap(`Evict LRU (\${lruNode.k})`, [10], { title: "淘汰", text: `容量滿，移除 LRU 節點。`, formula: "Evict" }));
                     }
                 }
             }
-            
-            // Final idle state
-            steps.push(createStep("Ready", [], {
-                title: '操作完成',
-                text: '等待下一個指令。',
-                formula: 'Ready'
-            }));
-            
-            viz.setSteps(steps);
+            return steps;
+        }
+        
+        function removeNode(id) {
+            const node = cacheNodes.find(n => n.id === id);
+            const p = cacheNodes.find(n => n.id === node.prev);
+            const n = cacheNodes.find(n => n.id === node.next);
+            p.next = n.id; n.prev = p.id;
+            node.prev = null; node.next = null;
+        }
+        
+        function insertNode(id) {
+            const node = cacheNodes.find(n => n.id === id);
+            const right = cacheNodes.find(n => n.id === RIGHT_ID);
+            const prev = cacheNodes.find(n => n.id === right.prev);
+            prev.next = id; right.prev = id;
+            node.prev = prev.id; node.next = right.id;
         }
 
-        function removeNode(node) {
-            const p = node.prev;
-            const n = node.next;
-            p.next = n;
-            n.prev = p;
-        }
-
-        function insertMRU(node) {
-            const p = cacheObj.tail.prev; // Current MRU
-            const t = cacheObj.tail;
-            
-            p.next = node;
-            node.prev = p;
-            node.next = t;
-            t.prev = node;
-        }
-
-        // Viz
         const svg = d3.select("#viz-svg");
-        const gList = d3.select("#list-group");
-        const gMap = d3.select("#map-group");
-
-        // Add Label
-        gList.append("text").attr("x", 0).attr("y", -30).text("Double Linked List (LRU ↔ MRU)").attr("fill", "#94a3b8").attr("class", "node-subtext");
+        const width = 600; const height = 400;
+        svg.attr("viewBox", `0 0 \${width} \${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">\${step.explanation.title}</div>
+                    <div class="expl-text">\${step.explanation.text}</div>
+                    <div class="expl-formula">\${step.explanation.formula}</div>
+                `;
+            }
 
-            // Render List Nodes
-            // Layout: Linear horizontal. Head left, Tail right.
             const nodes = step.nodes;
-            const NODE_W = 60, NODE_H = 40, GAP = 40;
+            const map = step.map || {};
             
-            nodes.forEach((n, i) => {
-                n.x = i * (NODE_W + GAP);
-                n.y = 0;
+            const orderedIds = [];
+            let curr = LEFT_ID;
+            let safety = 0;
+            while(curr && safety < 100) {
+                orderedIds.push(curr);
+                const n = nodes.find(x => x.id === curr);
+                curr = n ? n.next : null;
+                safety++;
+            }
+            
+            const renderNodes = nodes.filter(n => orderedIds.includes(n.id));
+            const startX = 50; const startY = 250; const spacing = 80;
+            renderNodes.forEach((n, i) => {
+                n.x = startX + i * spacing; n.y = startY;
             });
-
-            // SVG Updates
-            const nodeSel = gList.selectAll(".node-g").data(nodes, d => d.id);
-            const nEnter = nodeSel.enter().append("g").attr("class", "node-g");
             
-            nEnter.append("rect").attr("width", NODE_W).attr("height", NODE_H)
-                .attr("x", -NODE_W/2).attr("y", -NODE_H/2)
-                .attr("class", "node-rect");
+            // Draw
+            const mapG = svg.select("#map-group"); // ensure group exists
+            if (mapG.empty()) svg.append("g").attr("id", "map-group");
+            
+            // Map keys
+            const mapKeys = Object.keys(map);
+            const mapSel = mapG.selectAll(".map-item").data(mapKeys, k => k);
+            const mapEnter = mapSel.enter().append("g").attr("class", "map-item");
+            mapEnter.append("rect").attr("class", "map-rect").attr("width", 50).attr("height", 30);
+            mapEnter.append("text").attr("class", "map-text").attr("x", 25).attr("y", 20).attr("text-anchor", "middle");
+            
+            mapSel.merge(mapEnter).transition().duration(500)
+                .attr("transform", (k, i) => `translate(\${50 + i*80}, 50)`);
                 
-            nEnter.append("text").attr("class", "node-text").attr("dy", 5);
-            nEnter.append("text").attr("class", "node-subtext").attr("dy", -NODE_H/2 - 5); // Label (Head/Tail)
+            mapSel.merge(mapEnter).select("text").text(k => `K:\${k}`);
+            mapSel.exit().remove();
+            
+            // Map Links
+            const mlSel = svg.selectAll(".map-link").data(mapKeys);
+            mlSel.enter().append("path").attr("class", "map-link")
+                 .merge(mlSel).transition().duration(500)
+                 .attr("d", (k, i) => {
+                     const nid = map[k];
+                     const node = renderNodes.find(n => n.id === nid);
+                     if (!node) return "";
+                     const mx = 50 + i*80 + 25; const my = 80;
+                     return `M\${mx},\${my} C\${mx},\${(my+node.y)/2} \${node.x},\${(my+node.y)/2} \${node.x},\${node.y-10}`;
+                 });
+            mlSel.exit().remove();
 
-            const nUpdate = nodeSel.merge(nEnter).transition().duration(300)
-                .attr("transform", d => `translate(${d.x}, 0)`);
-                
-            nUpdate.select("rect").attr("class", d => {
+            // List Nodes
+            let listG = svg.select("#list-group");
+            if (listG.empty()) listG = svg.append("g").attr("id", "list-group");
+
+            const nodeSel = listG.selectAll(".node-g").data(renderNodes, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            nodeEnter.append("rect").attr("class", "node-rect").attr("width", 50).attr("height", 40).attr("x", -25).attr("y", -20);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 0);
+            nodeEnter.append("text").attr("class", "node-sub").attr("dy", 15);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter).transition().duration(500)
+                 .attr("transform", d => `translate(\${d.x}, \${d.y})`);
+                 
+            nodeMerge.select(".node-rect").attr("class", d => {
                 let c = "node-rect";
-                if(d.type === 'dummy') c+= " dummy";
-                if(d.state) c+= " " + d.state;
+                if(d.type === 'dummy') c += " dummy";
+                if(step.activeKey == d.k) c += " active";
                 return c;
-            });
+            })
+            nodeMerge.select(".node-text").text(d => d.type==='dummy' ? d.v : `\${d.k}:\${d.v}`);
             
-            nUpdate.select(".node-text").text(d => d.type==='dummy' ? d.id.toUpperCase() : `K:${d.key}`);
+            nodeSel.exit().remove();
             
             // Links
             const links = [];
-            for(let i=0; i<nodes.length-1; i++) {
-                links.push({s: nodes[i], t: nodes[i+1]});
-            }
-            
-            const linkSel = gList.selectAll(".link").data(links, d => d.s.id+"-"+d.t.id);
-            linkSel.enter().append("path").attr("class", "link")
-                .merge(linkSel)
-                .transition().duration(300)
-                .attr("d", d => {
-                    const sx = d.s.x + NODE_W/2;
-                    const tx = d.t.x - NODE_W/2 - 5;
-                    return `M ${sx},0 L ${tx},0`;
-                });
-            linkSel.exit().remove();
-
-            // Map
-            // Simple row of keys
-            const mapData = step.mapKeys.map((k, i) => ({key: k, i}));
-            const mSel = gMap.selectAll(".map-g").data(mapData, d => d.key);
-            const mEnter = mSel.enter().append("g").attr("class", "map-g");
-            mEnter.append("rect").attr("width", 50).attr("height", 25).attr("class", "map-box");
-            mEnter.append("text").attr("class", "map-text").attr("x", 25).attr("y", 17).attr("text-anchor", "middle");
-            
-            const mUpdate = mSel.merge(mEnter).attr("transform", (d) => `translate(${d.i * 60}, 0)`);
-            mUpdate.select("text").text(d => `K:${d.key}`);
-            
-            mSel.exit().remove();
-            
-            // Map Links (Curved to list nodes)
-            // Need to find node position for key
-            // This is tricky as 'nodes' in step are linear.
-            // visual connections.
-            const mapLinks = [];
-            step.mapKeys.forEach((k, i) => {
-                const targetNode = nodes.find(n => n.key === k && n.type === 'node');
-                if(targetNode) {
-                    mapLinks.push({
-                        kx: i * 60 + 25, ky: 25, // Map box bottom center
-                        nx: targetNode.x, ny: 130 // List node top (relative to map group?)
-                        // List group is at y=150. Map group y=30. Diff = 120.
-                        // List node y=0 inside group.
-                        // Target Y relative to Map group is 120 + targetNode.y - NODE_H/2
-                    });
+            renderNodes.forEach(n => {
+                if(n.next) {
+                   const t = renderNodes.find(x => x.id === n.next);
+                   if (t) links.push({s:n, t:t, id: `next-\${n.id}-\${t.id}`, type:'next'});
+                }
+                if(n.prev) {
+                   const t = renderNodes.find(x => x.id === n.prev);
+                   if (t) links.push({s:n, t:t, id: `prev-\${n.id}-\${t.id}`, type:'prev'});
                 }
             });
             
-            const mlSel = gMap.selectAll(".map-link").data(mapLinks);
-            mlSel.enter().append("path").attr("class", "map-link")
-                .merge(mlSel)
-                .transition().duration(300)
-                .attr("d", d => `M ${d.kx},${d.ky} L ${d.nx},100`); // Simple straight line to expected list Y
-            mlSel.exit().remove();
-        }
-
-        function resetCache() {
-            cacheObj.cap = parseInt(document.getElementById('capInput').value);
-            cacheObj.head.next = cacheObj.tail;
-            cacheObj.tail.prev = cacheObj.head;
-            cacheObj.map = {};
-            cacheObj.size = 0;
+            // Only draw Next links for clarity? Or both?
+            // Drawing both makes it cluttered. Let's draw ONE double arrow or just next line.
+            // Simplified: Draw Next arrows. Prev is implied.
+            const simpleLinks = links.filter(l => l.type === 'next');
             
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: render
-            });
-            viz.setSteps([createStep("Reset", [], {title:'重置', text:'已清空快取', formula:'size=0'})]);
+            const linkSel = listG.selectAll(".link-path").data(simpleLinks, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            linkSel.merge(linkEnter).transition().duration(500)
+                .attr("d", d => `M\${d.s.x+25},\${d.s.y} L\${d.t.x-33},\${d.t.y}`); 
+            linkSel.exit().remove();
         }
 
-        function doPut() {
-            const k = parseInt(document.getElementById('keyInput').value);
-            const v = parseInt(document.getElementById('valInput').value);
-            runOp('put', k, v);
-        }
-        
-        function doGet() {
-            const k = parseInt(document.getElementById('keyInput').value);
-            runOp('get', k, 0);
-        }
-
-        window.addEventListener('load', () => {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: render
-            });
-            resetCache();
-        });
+        window.addEventListener('load', initCache);
     </script>
 </body>
 </html>
