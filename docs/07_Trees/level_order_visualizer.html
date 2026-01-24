@@ -3,185 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Level Order Traversal - 精緻視覺化</title>
+    <title>Binary Tree Level Order Traversal - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
             border-radius: 16px;
-            padding: 30px 20px;
+            padding: 20px;
             margin: 15px 0;
-        }
-
-        .tree-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0;
+            min-height: 500px;
         }
+        
+        #viz-svg { width: 100%; height: 400px; }
 
-        .tree-level {
+        /* Tree Nodes */
+        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; stroke: #64748b; }
+        .node-circle.active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.1); }
+        .node-circle.processed { stroke: #22c55e; fill: rgba(34, 197, 94, 0.1); }
+        .node-circle.in-queue { stroke: #fbbf24; stroke-dasharray: 4; }
+
+        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        
+        .link { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
+
+        /* Queue Visualization */
+        .queue-container {
+            margin-top: 20px;
+            width: 90%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 10px;
             display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 10px 0;
-            padding: 8px 16px;
-            border-radius: 10px;
-            transition: all 0.3s;
-        }
-
-        .tree-level.current {
-            background: rgba(251, 191, 36, 0.15);
-            border: 1px solid rgba(251, 191, 36, 0.3);
-        }
-
-        .tree-level.done {
-            background: rgba(34, 197, 94, 0.1);
-        }
-
-        .level-label {
-            font-size: 0.65rem;
-            font-weight: 600;
-            color: #64748b;
-            margin-right: 10px;
-            display: flex;
+            flex-direction: column;
             align-items: center;
         }
-
-        .node {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.2rem;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #3b82f6, #2563eb);
-            color: white;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-        }
-
-        .node.inqueue {
-            background: linear-gradient(145deg, #fbbf24, #f59e0b);
-            box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
-        }
-
-        .node.visited {
-            background: linear-gradient(145deg, #22c55e, #16a34a);
-            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
-        }
-
-        .node.null {
-            background: transparent;
-            border: 2px dashed #64748b;
-            color: #64748b;
-            font-size: 0.8rem;
-            box-shadow: none;
-        }
-
-        /* Queue 視覺化 */
-        .queue-section {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin: 15px 0;
-        }
-
-        .section-title {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #64748b;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .queue-items {
+        .queue-title { color: #94a3b8; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
+        .queue-box {
             display: flex;
             gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
             min-height: 40px;
-            align-items: center;
+            padding: 5px;
+            border-bottom: 2px solid #64748b; /* Line representing queue floor */
+            width: 100%;
+            justify-content: flex-start;
+            overflow-x: auto;
         }
-
-        .queue-item {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1rem;
+        .q-item {
+            width: 30px; height: 30px;
             border-radius: 50%;
-            background: linear-gradient(145deg, #fbbf24, #f59e0b);
+            background: #fbbf24;
             color: #0f172a;
-            box-shadow: 0 4px 10px rgba(251, 191, 36, 0.3);
-        }
-
-        /* 結果顯示 */
-        .result-section {
-            margin: 15px 0;
-        }
-
-        .result-levels {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .result-level {
-            padding: 8px 15px;
-            background: linear-gradient(145deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1));
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 10px;
-            font-family: 'Consolas', monospace;
+            font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
             font-size: 0.9rem;
-            color: #22c55e;
+            flex-shrink: 0;
+            animation: popIn 0.3s ease-out;
         }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
 
-        /* Step Breakdown */
-        .step-breakdown {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px;
-            padding: 15px 20px;
+        /* Result Visualization */
+        .result-container {
             margin-top: 15px;
-            border-left: 4px solid #3b82f6;
-        }
-
-        .step-breakdown-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
-        .step-breakdown-text { font-size: 0.95rem; color: #e2e8f0; font-family: 'Consolas', monospace; }
-
-        /* 圖例 */
-        .legend-bar {
             display: flex;
-            justify-content: center;
-            gap: 20px;
-            padding: 15px;
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 12px;
-            margin-top: 15px;
             flex-wrap: wrap;
+            gap: 8px;
+            width: 90%;
+            justify-content: center;
+        }
+        .res-level {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22c55e;
+            color: #22c55e;
+            font-family: monospace;
+            font-size: 0.9rem;
         }
 
-        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #94a3b8; }
-        .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
-        .legend-dot.normal { background: linear-gradient(145deg, #3b82f6, #2563eb); }
-        .legend-dot.inqueue { background: linear-gradient(145deg, #fbbf24, #f59e0b); }
-        .legend-dot.visited { background: linear-gradient(145deg, #22c55e, #16a34a); }
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
 
-        /* 自訂輸入 */
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; flex: 1; min-width: 180px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
-
-        .code-line.active { background: rgba(251, 191, 36, 0.15) !important; border-left: 3px solid #fbbf24 !important; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -189,82 +98,60 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Level Order Traversal - BFS 層序遍歷</div>
-
+                <div class="viz-title">Level Order Traversal (BFS)</div>
                 <div class="custom-input-section">
-                    <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
-                        <input type="text" id="customTree" value="3,9,20,null,null,15,7">
-                        <button onclick="runCustomInput()">執行</button>
+                        <label>Tree:</label>
+                        <input type="text" id="treeInput" value="3,9,20,null,null,15,7" placeholder="Level order (null for empty)">
+                        <button onclick="runVisualizer()">Run</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <div class="tree-container" id="treeContainer"></div>
-
-                    <div class="queue-section">
-                        <div class="section-title">Queue</div>
-                        <div class="queue-items" id="queueItems">
-                            <span style="color: #64748b;">空</span>
-                        </div>
+                    <svg id="viz-svg">
+                        <g id="main-group" transform="translate(40, 40)"></g>
+                    </svg>
+                    
+                    <div class="queue-container">
+                        <div class="queue-title">Queue State (FIFO)</div>
+                        <div class="queue-box" id="queueDisplay"></div>
                     </div>
 
-                    <div class="result-section">
-                        <div class="section-title">結果</div>
-                        <div class="result-levels" id="resultLevels">
-                            <span style="color: #64748b;">等待遍歷...</span>
-                        </div>
-                    </div>
-
-                    <div class="legend-bar">
-                        <div class="legend-item"><div class="legend-dot normal"></div>待訪問</div>
-                        <div class="legend-item"><div class="legend-dot inqueue"></div>在 Queue</div>
-                        <div class="legend-item"><div class="legend-dot visited"></div>已訪問</div>
-                    </div>
+                    <div class="result-container" id="resultDisplay"></div>
                 </div>
 
                 <div class="step-breakdown">
-                    <div class="step-breakdown-title">Step Breakdown</div>
-                    <div class="step-breakdown-text" id="stepBreakdown">點擊「下一步」開始</div>
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
             </div>
-
-            <div class="viz-card">
-                <div class="viz-title">演算法說明</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
-
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">BFS (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
@@ -273,191 +160,245 @@
             { line: '    vector<vector<int>> result;', id: 2 },
             { line: '    queue<TreeNode*> q;', id: 3 },
             { line: '    q.push(root);', id: 4 },
-            { line: '', id: 5 },
-            { line: '    while (!q.empty()) {', id: 6 },
-            { line: '        int size = q.size();', id: 7 },
-            { line: '        vector<int> level;', id: 8 },
-            { line: '        for (int i = 0; i < size; i++) {', id: 9 },
-            { line: '            TreeNode* node = q.front(); q.pop();', id: 10 },
-            { line: '            level.push_back(node->val);', id: 11 },
-            { line: '            if (node->left) q.push(node->left);', id: 12 },
-            { line: '            if (node->right) q.push(node->right);', id: 13 },
-            { line: '        }', id: 14 },
-            { line: '        result.push_back(level);', id: 15 },
-            { line: '    }', id: 16 },
-            { line: '    return result;', id: 17 },
-            { line: '}', id: 18 },
+            { line: '    while (!q.empty()) {', id: 5 },
+            { line: '        int size = q.size();', id: 6 },
+            { line: '        vector<int> level;', id: 7 },
+            { line: '        for (int i = 0; i < size; i++) {', id: 8 },
+            { line: '            TreeNode* node = q.front(); q.pop();', id: 9 },
+            { line: '            level.push_back(node->val);', id: 10 },
+            { line: '            if (node->left) q.push(node->left);', id: 11 },
+            { line: '            if (node->right) q.push(node->right);', id: 12 },
+            { line: '        }', id: 13 },
+            { line: '        result.push_back(level);', id: 14 },
+            { line: '    }', id: 15 },
+            { line: '    return result;', id: 16 },
+            { line: '}', id: 17 }
         ];
 
-        let currentTree = [3, 9, 20, null, null, 15, 7];
         let viz;
 
-        function parseTree(input) {
-            return input.split(',').map(x => {
-                const trimmed = x.trim();
-                return trimmed === 'null' || trimmed === '' ? null : parseInt(trimmed);
-            });
+        // Tree Helper
+        function buildTree(arr) {
+            if (!arr || arr.length === 0) return null;
+            const root = { id: 0, val: arr[0], children: [] };
+            const queue = [root];
+            let i = 1;
+            while (i < arr.length) {
+                const parent = queue.shift();
+                if (i < arr.length && arr[i] !== null) {
+                    const left = { id: i, val: arr[i], children: [] };
+                    parent.children[0] = left; 
+                    queue.push(left);
+                }
+                i++;
+                if (i < arr.length && arr[i] !== null) {
+                    const right = { id: i, val: arr[i], children: [] };
+                    parent.children[1] = right;
+                    queue.push(right);
+                }
+                i++;
+            }
+            return root;
         }
 
-        function generateAlgorithmSteps(tree) {
-            const steps = [];
-            const visited = new Set();
-            const result = [];
+        function cleanHierarchy(node) {
+            if(!node) return null;
+            const c = [];
+            if(node.children[0]) c.push(cleanHierarchy(node.children[0]));
+            if(node.children[1]) c.push(cleanHierarchy(node.children[1]));
+            return { ...node, children: c };
+        }
 
-            steps.push({
-                tree: [...tree],
-                queue: tree[0] !== null ? [0] : [],
-                visited: [],
-                currentLevel: -1,
-                result: [],
-                highlightLines: [0, 1, 2, 3, 4],
-                stepText: 'q.push(root)',
-                explanation: {
-                    title: '初始化',
-                    text: `樹：[${tree.filter(x => x !== null).join(', ')}]<br><br>BFS 逐層遍歷，使用 Queue`,
-                    formula: 'queue.push(root)'
-                }
+        function simulate(arr) {
+            const steps = [];
+            const root = buildTree(arr);
+            if(!root) return []; // Empty
+
+            // State to track
+            const queue = [root.id]; // Queue of IDs
+            const visited = []; // Processed IDs
+            const result = []; // Array of Arrays (values)
+            
+            const nodeMap = {}; // id -> val helper
+            const populateMap = (n) => {
+                if(!n) return;
+                nodeMap[n.id] = n.val;
+                if(n.children) n.children.forEach(populateMap);
+            };
+            populateMap(root);
+
+            const pushState = (msg, hl, activeId=null, explanation=null) => {
+                steps.push({
+                    root: cleanHierarchy(root),
+                    queue: [...queue],
+                    visited: [...visited],
+                    result: JSON.parse(JSON.stringify(result)), // deep copy 2d array
+                    activeId,
+                    msg, highlightLines: hl,
+                    explanation,
+                    nodeMap: {...nodeMap} // pass for queue rendering
+                });
+            };
+
+            pushState("Init: Push root to Queue", [0, 1, 2, 3, 4], root.id, {
+                title: '初始化',
+                text: '檢查 root 是否為空。若不為空，建立 `queue` 並將 `root` 加入。',
+                formula: 'q.push(root)'
             });
 
-            let queue = tree[0] !== null ? [0] : [];
-            let levelNum = 0;
-
-            while (queue.length > 0) {
-                const levelSize = queue.length;
+            // Reconstruct logic for simulation (using BFS)
+            // But we need to match code structure exactly: While -> For loop
+            
+            // Re-simulation using a real queue of objects for logic correctness
+            const realQ = [root]; // queue of node objects
+            
+            // Correct the state array 'queue' to follow 'realQ'
+            // 'queue' in pushState is just IDs for visualization
+            
+            while(realQ.length > 0) {
+                const size = realQ.length;
                 const levelVals = [];
-                const newQueue = [];
-
-                for (let i = 0; i < levelSize; i++) {
-                    const nodeIdx = queue[i];
-                    if (tree[nodeIdx] !== null) {
-                        levelVals.push(tree[nodeIdx]);
-                        visited.add(nodeIdx);
-
-                        const leftIdx = 2 * nodeIdx + 1;
-                        const rightIdx = 2 * nodeIdx + 2;
-                        if (leftIdx < tree.length && tree[leftIdx] !== null) {
-                            newQueue.push(leftIdx);
-                        }
-                        if (rightIdx < tree.length && tree[rightIdx] !== null) {
-                            newQueue.push(rightIdx);
-                        }
-                    }
-                }
-
-                result.push([...levelVals]);
-
-                steps.push({
-                    tree: [...tree],
-                    queue: [...newQueue],
-                    visited: [...visited],
-                    currentLevel: levelNum,
-                    result: result.map(l => [...l]),
-                    highlightLines: [6, 7, 8, 9, 10, 11, 12, 13, 15],
-                    stepText: `Level ${levelNum}: [${levelVals.join(', ')}]`,
-                    explanation: {
-                        title: `Level ${levelNum}`,
-                        text: `處理 ${levelSize} 個節點: [${levelVals.join(', ')}]<br>${newQueue.length > 0 ? `加入子節點: [${newQueue.map(i => tree[i]).join(', ')}]` : '無更多子節點'}`,
-                        formula: `result.push([${levelVals.join(', ')}])`
-                    }
+                pushState(`Start Level: Size = ${size}`, [5, 6, 7], null, {
+                    title: '開始新層級',
+                    text: `記錄當前 Queue 長度 (${size})。這決定了我們要處理多少個節點作為同一層。`,
+                    formula: `size = q.size() // ${size}`
                 });
 
-                queue = newQueue;
-                levelNum++;
+                for(let i=0; i<size; i++) {
+                    const node = realQ.shift();
+                    
+                    // Update visualization queue (shift)
+                    queue.shift(); 
+                    
+                    visited.push(node.id); // Mark visited (processed)
+                    levelVals.push(node.val);
+                    
+                    pushState(`Pop ${node.val}, Add to Level`, [9, 10], node.id, {
+                        title: `處理節點 ${node.val}`,
+                        text: `從 Queue 取出 ${node.val}，並將其值加入當前層級列表。`,
+                        formula: 'node = q.front(); q.pop()'
+                    });
+
+                    if(node.children[0]) {
+                        realQ.push(node.children[0]);
+                        queue.push(node.children[0].id);
+                        pushState(`Push Left Child ${node.children[0].val}`, [11], node.children[0].id, {
+                            title: '加入左子節點',
+                            text: `發現左子節點 ${node.children[0].val}，加入 Queue。`,
+                            formula: 'q.push(node->left)'
+                        });
+                    }
+                    if(node.children[1]) {
+                        realQ.push(node.children[1]);
+                        queue.push(node.children[1].id);
+                        pushState(`Push Right Child ${node.children[1].val}`, [12], node.children[1].id, {
+                            title: '加入右子節點',
+                            text: `發現右子節點 ${node.children[1].val}，加入 Queue。`,
+                            formula: 'q.push(node->right)'
+                        });
+                    }
+                }
+                result.push(levelVals);
+                pushState(`Level Done: [${levelVals.join(', ')}]`, [14], null, {
+                    title: '層級完成',
+                    text: `本層所有節點處理完畢，將結果 [${levelVals.join(', ')}] 加入最終列表。`,
+                    formula: 'result.push_back(level)'
+                });
             }
 
-            steps.push({
-                tree: [...tree],
-                queue: [],
-                visited: [...visited],
-                currentLevel: -1,
-                result: result.map(l => [...l]),
-                final: true,
-                highlightLines: [17],
-                stepText: `return [[${result.map(l => l.join(',')).join('], [')}]]`,
-                explanation: {
-                    title: '🎉 遍歷完成！',
-                    text: `結果: [${result.map(l => `[${l.join(',')}]`).join(', ')}]<br><br>共 ${result.length} 層`,
-                    formula: 'Time: O(n), Space: O(n)'
-                }
+            pushState("Done", [16], null, {
+                title: '完成',
+                text: 'Queue 為空，遍歷結束。',
+                formula: 'return result'
             });
 
             return steps;
         }
 
-        function renderStep(step) {
-            const { tree, queue, visited, currentLevel, result } = step;
+        const width = 600;
+        const height = 400;
+        const treeLayout = d3.tree().size([width, height]);
+        const gMain = d3.select("#main-group");
 
-            // 樹
-            const container = document.getElementById('treeContainer');
-            let html = '';
-            let idx = 0;
-            let levelSize = 1;
-            let levelNum = 0;
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
 
-            while (idx < tree.length) {
-                let cls = 'tree-level';
-                if (levelNum === currentLevel) cls += ' current';
-                else if (levelNum < currentLevel || step.final) cls += ' done';
+            const root = d3.hierarchy(step.root);
+            treeLayout(root);
 
-                html += `<div class="${cls}"><span class="level-label">L${levelNum}</span>`;
+            // Links
+            const links = gMain.selectAll(".link").data(root.links(), d => d.source.data.id + "-" + d.target.data.id);
+            links.enter().append("path").attr("class", "link")
+                .merge(links)
+                .transition().duration(500)
+                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
+            links.exit().remove();
 
-                for (let i = 0; i < levelSize && idx < tree.length; i++, idx++) {
-                    const val = tree[idx];
-                    let ncls = 'node';
-                    if (val === null) {
-                        ncls += ' null';
-                        html += `<div class="${ncls}">∅</div>`;
-                    } else {
-                        if (visited?.includes(idx)) ncls += ' visited';
-                        else if (queue?.includes(idx)) ncls += ' inqueue';
-                        html += `<div class="${ncls}">${val}</div>`;
-                    }
-                }
-                html += '</div>';
-                levelSize *= 2;
-                levelNum++;
+            // Nodes
+            const nodes = gMain.selectAll(".node-g").data(root.descendants(), d => d.data.id);
+            const nEnter = nodes.enter().append("g").attr("class", "node-g");
+            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
+            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
+
+            const nUpdate = nodes.merge(nEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+                
+            nUpdate.select("circle").attr("class", d => {
+                let c = "node-circle";
+                if(d.data.id === step.activeId) c += " active";
+                else if(step.visited.includes(d.data.id)) c += " processed";
+                else if(step.queue.includes(d.data.id)) c += " in-queue";
+                return c;
+            })
+            // Increase Queue node highlighting
+            .style("stroke-width", d => step.queue.includes(d.data.id) ? 4 : 3);
+
+            nUpdate.select("text").text(d => d.data.val);
+            nodes.exit().remove();
+
+            // Queue Display
+            const qContainer = document.getElementById('queueDisplay');
+            qContainer.innerHTML = '';
+            if(step.queue.length === 0) {
+                qContainer.innerHTML = '<span style="color:#64748b; font-size: 0.9rem; padding: 5px;">Empty</span>';
+            } else {
+                step.queue.forEach(id => {
+                    const val = step.nodeMap[id];
+                    const div = document.createElement('div');
+                    div.className = 'q-item';
+                    div.textContent = val;
+                    qContainer.appendChild(div);
+                });
             }
 
-            container.innerHTML = html;
-
-            // Queue
-            const queueHtml = queue && queue.length > 0
-                ? queue.map(i => `<div class="queue-item">${tree[i]}</div>`).join('')
-                : '<span style="color: #64748b;">空</span>';
-            document.getElementById('queueItems').innerHTML = queueHtml;
-
-            // 結果
-            const resultHtml = result && result.length > 0
-                ? result.map(l => `<span class="result-level">[${l.join(', ')}]</span>`).join('')
-                : '<span style="color: #64748b;">等待遍歷...</span>';
-            document.getElementById('resultLevels').innerHTML = resultHtml;
-
-            document.getElementById('stepBreakdown').textContent = step.stepText || '';
+            // Result Display
+            const resContainer = document.getElementById('resultDisplay');
+            resContainer.innerHTML = '';
+            step.result.forEach(level => {
+                const div = document.createElement('div');
+                div.className = 'res-level';
+                div.textContent = `[${level.join(', ')}]`;
+                resContainer.appendChild(div);
+            });
         }
 
-        function init(tree = currentTree) {
-            currentTree = tree;
-            const steps = generateAlgorithmSteps(tree);
-
+        function runVisualizer() {
+            const valStr = document.getElementById('treeInput').value;
+            const arr = valStr.split(',').map(x => {
+                const t = x.trim();
+                return t === 'null' || t === '' ? null : parseInt(t);
+            });
+            
+            if(arr.length === 0) return;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => renderStep(step)
+                onStepChange: render
             });
-
-            viz.setSteps(steps);
+            viz.setSteps(simulate(arr));
         }
 
-        function runCustomInput() {
-            const tree = parseTree(document.getElementById('customTree').value);
-            if (tree.length === 0 || tree[0] === null) {
-                alert('請輸入有效的樹');
-                return;
-            }
-            init(tree);
-        }
-
-        function resetVisualization() { init(currentTree); }
-        window.addEventListener('load', () => init());
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

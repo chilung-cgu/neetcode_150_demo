@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Combination Sum (Decision Tree) - 精緻視覺化</title>
+    <title>Combination Sum - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -15,6 +15,7 @@
             flex-direction: column;
             gap: 20px;
             align-items: center;
+            min-height: 600px;
         }
 
         .tree-viewport {
@@ -25,43 +26,41 @@
             overflow: hidden;
             border: 1px solid rgba(148, 163, 184, 0.2);
         }
-        #tree-svg { width: 100%; height: 100%; cursor: move; }
+        #tree-svg { width: 100%; height: 100%; cursor: grab; }
+        #tree-svg:active { cursor: grabbing; }
 
         /* D3 Nodes */
         .node-circle { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; }
-        .node-circle.active { fill: #fbbf24; stroke: #f59e0b; filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6)); }
-        .node-circle.leaf { fill: #22c55e; stroke: #16a34a; } /* Success */
-        .node-circle.fail { fill: #ef4444; stroke: #b91c1c; opacity: 0.8; } /* Pruned */
+        .node-circle.active { fill: #fbbf24; stroke: #fff; stroke-width: 3px; filter: drop-shadow(0 0 10px #fbbf24); }
+        .node-circle.success { fill: #22c55e; stroke: #16a34a; }
+        .node-circle.fail { fill: #ef4444; stroke: #b91c1c; opacity: 0.8; }
         
         .node-text { fill: white; font-family: monospace; font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
         .edge-label { fill: #94a3b8; font-size: 10px; opacity: 0.8; }
         
         .link { fill: none; stroke: #475569; stroke-width: 1.5px; opacity: 0.3; transition: all 0.3s; }
-        .link.active { stroke: #fbbf24; opacity: 1; stroke-width: 2.5px; }
+        .link.active { stroke: #fbbf24; opacity: 1; stroke-width: 3px; }
 
-        /* Results Panel */
+        /* Results */
         .results-panel {
-            width: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 8px;
-            padding: 10px;
-            min-height: 50px;
-            display: flex; flex-wrap: wrap; gap: 8px;
+            width: 100%; background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 15px; border: 1px solid #475569;
         }
+        .results-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #94a3b8; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+        .results-grid { display: flex; flex-wrap: wrap; gap: 8px; min-height: 30px; }
         .res-tag { 
-            padding: 4px 10px; background: rgba(34, 197, 94, 0.15); 
-            border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 4px;
-            color: #4ade80; font-family: monospace; font-size: 0.9rem;
-            animation: popIn 0.3s;
+            padding: 5px 10px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 6px;
+            color: #4ade80; font-family: monospace; font-size: 0.9rem; animation: popIn 0.3s;
         }
+        .res-tag.new { background: #fbbf24; color: #0f172a; border-color: #fbbf24; }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 100px; }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; }
         .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -69,14 +68,14 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Combination Sum (Recursion Tree)</div>
+                <div class="viz-title">Combination Sum (Decision Tree)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
                         <label>Candidates:</label>
                         <input type="text" id="numsInput" value="2, 3, 6, 7">
                         <label>Target:</label>
-                        <input type="number" id="targetInput" value="7" style="width:50px">
-                        <button onclick="runVisualizer()">開始組合</button>
+                        <input type="number" id="targetInput" value="7" style="width:60px">
+                        <button onclick="runVisualizer()">Start</button>
                     </div>
                 </div>
 
@@ -85,7 +84,10 @@
                         <svg id="tree-svg"><g id="zoom-group"></g></svg>
                     </div>
                     
-                    <div class="results-panel" id="resultsDisplay"></div>
+                    <div class="results-panel">
+                        <div class="results-header">Found Combinations</div>
+                        <div class="results-grid" id="resultsDisplay"></div>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -103,8 +105,8 @@
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
-                            <option value="800" selected>1x</option>
-                            <option value="300">1.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
@@ -123,172 +125,201 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'void dfs(i, cur, total) {', id: 0 },
-            { line: '    if (total == target) {', id: 1 },
-            { line: '        res.push_back(cur); return;', id: 2 },
-            { line: '    }', id: 3 },
-            { line: '    if (i >= candidates.size() || total > target) {', id: 4 },
-            { line: '        return;', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    // Include candidates[i]', id: 7 },
-            { line: '    cur.push_back(candidates[i]);', id: 8 },
-            { line: '    dfs(i, cur, total + candidates[i]);', id: 9 },
-            { line: '    cur.pop_back(); // Backtrack', id: 10 },
-            { line: '    // Skip candidates[i]', id: 11 },
-            { line: '    dfs(i + 1, cur, total);', id: 12 },
-            { line: '}', id: 13 }
+            { line: 'vector<vector<int>> combinationSum(candidates, target) {', id: 0 },
+            { line: '    vector<vector<int>> res;', id: 1 },
+            { line: '    vector<int> comb;', id: 2 },
+            { line: '    dfs(0, target);', id: 3 },
+            { line: '    return res;', id: 4 },
+            { line: '    void dfs(int i, int target) {', id: 5 },
+            { line: '        if (target == 0) {', id: 6 },
+            { line: '            res.push_back(comb);', id: 7 },
+            { line: '            return;', id: 8 },
+            { line: '        }', id: 9 },
+            { line: '        if (i >= candidates.size() || target < 0) return;', id: 10 },
+            { line: '        // Include candidates[i]', id: 11 },
+            { line: '        comb.push_back(candidates[i]);', id: 12 },
+            { line: '        dfs(i, target - candidates[i]); // Stay at i', id: 13 },
+            { line: '        comb.pop_back(); // Backtrack', id: 14 },
+            { line: '        // Skip candidates[i]', id: 15 },
+            { line: '        dfs(i + 1, target);', id: 16 },
+            { line: '    }', id: 17 },
+            { line: '}', id: 18 }
         ];
 
         let viz;
-        let candidates = [2, 3, 6, 7];
-        let target = 7;
 
-        function generateSteps(cands, t) {
-            const steps = [];
-            const result = [];
+        // Tree Helper
+        function buildTree(candidates, target, i=0, currentPath=[]) {
+            const currentSum = currentPath.reduce((a,b)=>a+b, 0);
+            const remaining = target - currentSum;
             
-            // Nodes structure for D3
-            let nodes = [{id: 'root', label: '0', sum:0, depth: 0}];
-            let links = [];
-            let idCounter = 0;
-            const newId = () => `n-${++idCounter}`;
+            const node = {
+                id: `node-${i}-${currentPath.join('_')}`,
+                name: remaining === 0 ? "0" : `${remaining}`,
+                comb: [...currentPath],
+                status: remaining === 0 ? 'success' : (remaining < 0 ? 'fail' : 'process'),
+                children: []
+            };
 
-            const pushStep = (msg, hl, activeId) => {
+            // Limit depth to avoid explosion
+            if (remaining > 0 && i < candidates.length && currentPath.length < 10) {
+                // Include Branch
+                const left = buildTree(candidates, target, i, [...currentPath, candidates[i]]);
+                left.edge = `+${candidates[i]}`;
+                node.children.push(left);
+
+                // Skip Branch
+                // Only if we haven't picked this i yet? 
+                // The structure is: at index i, pick candidates[i] OR skip to i+1.
+                const right = buildTree(candidates, target, i + 1, [...currentPath]);
+                right.edge = "Skip";
+                node.children.push(right);
+            }
+            return node;
+        }
+
+        // --- Simulation ---
+        function simulate(candidates, target) {
+            const steps = [];
+            // Pre-build Tree structure for Layout? 
+            // In Combination sum, tree can be infinite theoretically if 0 allowed, but input >= 2.
+            // Still, can be large. We prune branches > target.
+            
+            const staticRoot = buildTree(candidates, target);
+            
+            const pushState = (msg, hl, activeId, currentComb, results) => {
                 steps.push({
-                    nodes: JSON.parse(JSON.stringify(nodes)),
-                    links: JSON.parse(JSON.stringify(links)),
-                    activeId: activeId,
-                    result: JSON.parse(JSON.stringify(result)),
-                    msg: msg,
-                    highlightLines: hl
+                    treeRoot: staticRoot,
+                    activeId,
+                    currentComb: [...currentComb],
+                    results: [...results],
+                    msg, highlightLines: hl
                 });
             };
 
-            pushStep(`Init: Target = ${t}`, [0], 'root');
+            const res = [];
+            const comb = [];
 
-            const dfs = (i, cur, total, parentId) => {
-                if (total === t) {
-                    result.push([...cur]);
-                    const pNode = nodes.find(n=>n.id===parentId);
-                    if(pNode) pNode.status = 'leaf';
-                    pushStep(`找到組合! [${cur.join(', ')}] sum=${total}`, [1, 2, 3], parentId);
+            function dfs(i, currentTarget, pathIdStr) { // Construct ID matching buildTree
+                const nodeId = `node-${i}-${pathIdStr}`;
+                
+                pushState(`DFS(${i}, target=${currentTarget})`, [5], nodeId, comb, res);
+
+                if (currentTarget === 0) {
+                    res.push([...comb]);
+                    pushState(`Found target! Add [${comb.join(',')}]`, [7, 8], nodeId, comb, res);
                     return;
                 }
-                if (i >= cands.length || total > t) {
-                    const pNode = nodes.find(n=>n.id===parentId);
-                    if(pNode) {
-                        pNode.status = 'fail'; // Mark as bad path
-                    }
-                    pushStep(`條件不符: ${total > t ? 'Sum > Target' : 'Index Out'}`, [4, 5, 6], parentId);
+                if (i >= candidates.length || currentTarget < 0) {
+                    pushState(`Backtrack (Invalid or End)`, [10], nodeId, comb, res);
                     return;
                 }
 
-                const val = cands[i];
-
-                // Branch 1: Include (same index i)
-                const leftId = newId();
-                const nextTotal = total + val;
-                nodes.push({id: leftId, label: `+${val}`, sum: nextTotal, depth: nodes.find(n=>n.id===parentId).depth + 1});
-                links.push({source: parentId, target: leftId, label: 'Include'});
+                // Include
+                comb.push(candidates[i]);
+                pushState(`Include ${candidates[i]} (Stay at index ${i})`, [12], nodeId, comb, res);
                 
-                pushStep(`嘗試選擇 ${val} (Sum: ${total} -> ${nextTotal})`, [7, 8, 9], leftId);
-                
-                cur.push(val);
-                dfs(i, cur, total + val, leftId);
-                cur.pop();
+                // Child ID path construction needs to match buildTree logic
+                const nextPathId = pathIdStr ? pathIdStr + "_" + candidates[i] : "" + candidates[i];
+                dfs(i, currentTarget - candidates[i], nextPathId);
 
-                pushStep(`回溯: 撤銷選擇 ${val}，嘗試跳過`, [10, 11], parentId);
+                // Backtrack
+                const popped = comb.pop();
+                pushState(`Backtrack: Pop ${popped}`, [14], nodeId, comb, res);
 
-                // Branch 2: Exclude (next index i+1)
-                const rightId = newId();
-                nodes.push({id: rightId, label: 'Skip', sum: total, depth: nodes.find(n=>n.id===parentId).depth + 1});
-                links.push({source: parentId, target: rightId, label: 'Skip'});
-                
-                pushStep(`跳過 ${val}，考慮下一個候選數`, [12], rightId);
-                
-                dfs(i + 1, cur, total, rightId);
-            };
+                // Skip
+                pushState(`Skip ${candidates[i]} (Move to index ${i+1})`, [16], nodeId, comb, res);
+                dfs(i + 1, currentTarget, pathIdStr); // Skipping doesn't change pathIdStr (comb) but changes index
+            }
 
-            dfs(0, [], 0, 'root');
-            pushStep("搜尋結束", [13], 'root');
+            pushState("Start DFS", [3], staticRoot.id, [], []);
+            dfs(0, target, "");
+            
+            pushState("Done", [4], null, [], res);
             return steps;
         }
 
         // --- Render ---
+        const width = 800, height = 450;
         const svg = d3.select("#tree-svg");
-        const g = d3.select("#zoom-group");
-        const zoom = d3.zoom().on("zoom", (e) => g.attr("transform", e.transform));
+        const gZoom = d3.select("#zoom-group");
+        
+        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
         svg.call(zoom);
+        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 40).scale(0.8));
+
+        const treeLayout = d3.tree().nodeSize([70, 80]);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            document.getElementById('resultsDisplay').innerHTML = step.result.map(r => 
-                `<span class="res-tag">[${r.join(', ')}]</span>`
-            ).join('');
 
-            if(!step.nodes || !step.nodes.length) return;
-
-            // Reconstruct hierarchy
-            const parentMap = {};
-            step.links.forEach(l => parentMap[l.target] = l.source);
-            
-            const root = d3.stratify()
-                .id(d => d.id)
-                .parentId(d => d.id === 'root' ? null : parentMap[d.id])
-                (step.nodes);
-
-            const treeLayout = d3.tree().nodeSize([60, 80]); // Fixed size nodes
+            const root = d3.hierarchy(step.treeRoot);
             treeLayout(root);
-            
-            // Start centered
-            // We need to calculate bounds to centre? 
-            // Or just keep the zoom transform user has
-            
+
             // Links
-            const links = g.selectAll(".link").data(root.links(), d => d.target.id);
-            const lEnter = links.enter().append("path").attr("class", "link");
-            links.merge(lEnter)
-                .attr("class", d => d.target.id === step.activeId ? "link active" : "link")
+            const links = gZoom.selectAll(".link").data(root.links(), d => d.target.data.id);
+            links.enter().append("path").attr("class", "link")
+                .merge(links)
                 .transition().duration(300)
-                .attr("d", d3.linkVertical().x(d=>d.x).y(d=>d.y));
+                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y))
+                .attr("class", d => {
+                    let c = "link";
+                    if(d.target.data.id === step.activeId) c += " active";
+                    return c;
+                });
             links.exit().remove();
-            
+
+            // Edge Labels
+            const labels = gZoom.selectAll(".edge-label").data(root.links(), d => "lbl-"+d.target.data.id);
+            labels.enter().append("text").attr("class", "edge-label")
+                .merge(labels)
+                .transition().duration(300)
+                .attr("x", d => (d.source.x + d.target.x)/2 + (d.target.data.edge==="Skip"?-15:15))
+                .attr("y", d => (d.source.y + d.target.y)/2)
+                .text(d => d.target.data.edge);
+            labels.exit().remove();
+
             // Nodes
-            const nodes = g.selectAll(".node").data(root.descendants(), d => d.id);
-            const nEnter = nodes.enter().append("g").attr("class", "node");
-            nEnter.append("circle").attr("r", 22).attr("class", "node-circle");
+            const nodes = gZoom.selectAll(".node-g").data(root.descendants(), d => d.data.id);
+            const nEnter = nodes.enter().append("g").attr("class", "node-g");
+            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
             nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-            
+
             const nUpdate = nodes.merge(nEnter).transition().duration(300)
-                .attr("transform", d => `translate(${d.x},${d.y})`);
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
             
-            nUpdate.select(".node-circle").attr("class", d => {
+            nUpdate.select("circle").attr("class", d => {
                 let c = "node-circle";
-                if(d.id === step.activeId) c += " active";
-                if(d.data.status === 'leaf') c += " leaf";
-                if(d.data.status === 'fail') c += " fail";
+                if(d.data.id === step.activeId) c += " active";
+                if(d.data.status === 'success') c += " success";
+                else if(d.data.status === 'fail') c += " fail";
                 return c;
             });
-            nUpdate.select(".node-text").text(d => d.data.label);
 
+            nUpdate.select("text").text(d => d.data.name); // rem target
             nodes.exit().remove();
+
+            // Results
+            const resContainer = document.getElementById('resultsDisplay');
+            resContainer.innerHTML = '';
+            step.results.forEach((r, i) => {
+                const tag = document.createElement('div');
+                tag.className = 'res-tag';
+                tag.textContent = `[${r.join(', ')}]`;
+                if(i === step.results.length - 1) tag.classList.add('new');
+                resContainer.appendChild(tag);
+            });
         }
 
         function runVisualizer() {
-            const numStr = document.getElementById('numsInput').value;
-            const t = parseInt(document.getElementById('targetInput').value);
-            const cands = numStr.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            const cands = document.getElementById('numsInput').value.split(',').map(x=>parseInt(x.trim()));
+            const target = parseInt(document.getElementById('targetInput').value);
             
-            if(!cands.length || isNaN(t)) return alert("請輸入有效數字");
-            
-            // Center Graph Initial
-            svg.call(zoom.transform, d3.zoomIdentity.translate(400, 50).scale(0.8));
-
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(generateSteps(cands, t));
+            viz.setSteps(simulate(cands, target));
         }
 
         window.addEventListener('load', runVisualizer);

@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>Task Scheduler - 精緻視覺化</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Scheduler - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,54 +14,65 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+            min-height: 500px;
         }
 
         .dashboard {
-            display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+            display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%;
         }
 
-        /* Heap / Queue Panel */
-        .queue-panel {
-            background: rgba(30, 41, 59, 0.4); border-radius: 12px; padding: 10px;
+        /* Panels */
+        .panel {
+            background: rgba(30, 41, 59, 0.4); border-radius: 12px; padding: 15px;
             border: 1px solid rgba(148, 163, 184, 0.2); width: 250px;
+            display: flex; flex-direction: column; gap: 10px;
         }
-        .panel-title { font-size: 0.9rem; color: #94a3b8; margin-bottom: 8px; font-weight: bold; }
+        .panel-title { font-size: 0.9rem; color: #94a3b8; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid rgba(148, 163, 184, 0.2); padding-bottom: 5px; }
         
-        .task-list { display: flex; flex-direction: column; gap: 5px; }
+        /* Task List Items */
+        .task-list { display: flex; flex-direction: column; gap: 5px; min-height: 150px; }
         .task-item {
-            display: flex; justify-content: space-between; padding: 6px 10px;
-            background: rgba(59, 130, 246, 0.2); border-radius: 6px;
-            color: #e2e8f0; font-family: monospace;
+            display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;
+            background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px;
+            color: #e2e8f0; font-family: monospace; font-weight: bold;
+            transition: all 0.3s;
         }
-        .task-item.cooldown { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .task-item.top { background: rgba(34, 197, 94, 0.2); border-color: rgba(34, 197, 94, 0.5); transform: scale(1.02); }
+        .task-item.wait { background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.3); color: #fbbf24; }
+        
+        .badge {
+            background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; min-width: 20px; text-align: center;
+        }
 
-        /* Timeline Grid */
+        /* Timeline */
         .timeline-panel {
-            flex: 1; min-width: 300px;
+            flex: 1; width: 100%; display: flex; flex-direction: column;
             background: rgba(15, 23, 42, 0.5); border-radius: 12px; padding: 15px;
-            overflow-x: auto;
+            box-sizing: border-box;
         }
         .timeline-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, 40px); gap: 5px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 8px;
+            max-height: 200px; overflow-y: auto;
         }
         .time-slot {
-            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-            background: #334155; border-radius: 6px; font-weight: bold;
-            color: #94a3b8; transition: all 0.3s;
+            height: 40px; display: flex; align-items: center; justify-content: center;
+            background: #334155; border-radius: 6px; font-weight: bold; font-family: monospace;
+            color: #cbd5e1; position: relative; border: 1px solid transparent;
         }
-        .time-slot.active { background: #3b82f6; color: white; transform: scale(1.1); }
-        .time-slot.idle { background: #475569; color: #cbd5e1; opacity: 0.5; border: 1px dashed #94a3b8; }
-        .time-slot.new { animation: popIn 0.3s; }
-
-        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        .time-slot.task { background: #3b82f6; color: white; border-color: #60a5fa; }
+        .time-slot.idle { background: #475569; opacity: 0.6; border: 1px dashed #94a3b8; color: #94a3b8; }
+        .time-slot.current { box-shadow: 0 0 10px #fbbf24; z-index: 10; border-color: #fbbf24; }
+        
+        .time-idx { position: absolute; top: -5px; right: -5px; font-size: 0.6rem; color: #94a3b8; background: #0f172a; padding: 0 2px; border-radius: 4px; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
+        .input-row input[type=number] { width: 60px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -68,31 +80,31 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Task Scheduler (CPU Timeline)</div>
+                <div class="viz-title">Task Scheduler (Max Heap + Queue)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Tasks (e.g. AAABBC):</label>
+                        <label>Tasks:</label>
                         <input type="text" id="tasksInput" value="AAABBB">
-                        <label>N (Cooldown):</label>
-                        <input type="number" id="nInput" value="2" style="width:50px">
-                        <button onclick="runVisualizer()">排程 (Schedule)</button>
+                        <label>N (Chill):</label>
+                        <input type="number" id="nInput" value="2" min="0">
+                        <button onclick="runVisualizer()">Schedule</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
                     <div class="dashboard">
-                        <div class="queue-panel">
-                            <div class="panel-title">Ready Queue (Max Heap)</div>
+                        <div class="panel">
+                            <div class="panel-title">Ready Queue (Heap)</div>
                             <div class="task-list" id="heapList"></div>
                         </div>
-                        <div class="queue-panel">
-                            <div class="panel-title">Cooldown Queue (Wait)</div>
+                        <div class="panel">
+                            <div class="panel-title">Cooldown Queue</div>
                             <div class="task-list" id="waitList"></div>
                         </div>
                     </div>
                     
                     <div class="timeline-panel">
-                        <div class="panel-title">CPU Timeline (Total Time: <span id="timeCount">0</span>)</div>
+                        <div class="panel-title">Time: <span id="timeVal" style="color:#fbbf24">0</span></div>
                         <div class="timeline-grid" id="timelineGrid"></div>
                     </div>
                 </div>
@@ -112,8 +124,8 @@
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
-                            <option value="800" selected>1x</option>
-                            <option value="300">1.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
@@ -132,186 +144,150 @@
     <script>
         const codeStructure = [
             { line: 'int leastInterval(tasks, n) {', id: 0 },
-            { line: '    // Frequency Map & Max Heap', id: 1 },
-            { line: '    priority_queue<int> maxHeap;', id: 2 },
-            { line: '    queue<pair<int, int>> waitQueue; // {rem, time}', id: 3 },
-            { line: '    int time = 0;', id: 4 },
-            { line: '    while (!maxHeap.empty() || !waitQueue.empty()) {', id: 5 },
-            { line: '        time++;', id: 6 },
-            { line: '        if (!maxHeap.empty()) {', id: 7 },
-            { line: '            int rem = maxHeap.top() - 1;', id: 8 },
-            { line: '            maxHeap.pop();', id: 9 },
-            { line: '            if (rem > 0) waitQueue.push({rem, time + n});', id: 10 },
-            { line: '        }', id: 11 },
-            { line: '        if (!waitQueue.empty() && waitQueue.front().time == time) {', id: 12 },
-            { line: '            maxHeap.push(waitQueue.front().cnt);', id: 13 },
-            { line: '            waitQueue.pop();', id: 14 },
-            { line: '        }', id: 15 },
-            { line: '    }', id: 16 },
-            { line: '    return time;', id: 17 },
-            { line: '}', id: 18 }
+            { line: '    priority_queue<int> pq; // Max frequencies', id: 1 },
+            { line: '    queue<pair<int, int>> waitQ; // {cnt, readyTime}', id: 2 },
+            { line: '    int time = 0;', id: 3 },
+            { line: '    while (!pq.empty() || !waitQ.empty()) {', id: 4 },
+            { line: '        time++;', id: 5 },
+            { line: '        if (!pq.empty()) {', id: 6 },
+            { line: '            int cnt = pq.top() - 1; pq.pop();', id: 7 },
+            { line: '            if (cnt > 0) waitQ.push({cnt, time + n});', id: 8 },
+            { line: '        }', id: 9 },
+            { line: '        if (!waitQ.empty() && waitQ.front().time == time)', id: 10 },
+            { line: '            pq.push(waitQ.front()); waitQ.pop();', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    return time;', id: 13 },
+            { line: '}', id: 14 }
         ];
 
         let viz;
 
-        function simulate(tasksStr, n) {
+        function simulate(tasks, n) {
             const steps = [];
-            const counts = {};
-            for(let c of tasksStr) counts[c] = (counts[c]||0)+1;
             
-            // Simulation logic
-            // We need to track actual Task Names for clearer visualization
-            // So heap stores {char, count}
+            // Freq map
+            const map = {};
+            for(let t of tasks) map[t] = (map[t]||0) + 1;
             
-            let heap = Object.entries(counts).map(([k,v]) => ({char:k, cnt:v}));
-            heap.sort((a,b) => b.cnt - a.cnt); // simulate max heap
+            // Initial Heap: Array of {id, count}
+            let pq = Object.entries(map).map(([k,v]) => ({id:k, count:v}));
+            pq.sort((a,b) => b.count - a.count); // Max Heap Sim
             
-            let waitQ = []; // {char, cnt, readyTime}
+            let waitQ = []; // {id, count, readyTime}
             let time = 0;
-            let timeline = [];
+            const timeline = [];
 
-            // Helper to sort heap
-            const reorderHeap = () => heap.sort((a,b) => b.cnt - a.cnt);
+            const pushState = (msg, hl, activeSlot=null) => {
+                steps.push({
+                    pq: [...pq.map(x=>({...x}))], // Deep-ish copy
+                    waitQ: [...waitQ.map(x=>({...x}))],
+                    time,
+                    timeline: [...timeline],
+                    activeSlot, // {type: 'task'|'idle', val: 'A'}
+                    msg, highlightLines: hl
+                });
+            };
 
-            steps.push({
-                heap: JSON.parse(JSON.stringify(heap)),
-                waitQ: [], timeline: [], time: 0,
-                msg: "初始化: 計算頻率，建立 Max Heap",
-                highlightLines: [1, 2]
-            });
+            pushState("Initial State: Build Freq Heap", [1], null);
 
-            while(heap.length > 0 || waitQ.length > 0) {
+            while (pq.length > 0 || waitQ.length > 0) {
                 time++;
-                let currentTask = null;
-                
-                // Check Wait Queue -> Heap
-                // Logic: In loop, we process task then check if waitQ is ready for NEXT time
-                // Or: check waitQ for CURRENT time first?
-                // Standard problem: push to waitQ with `time + n`. It becomes available at `time + n + 1`? 
-                // Wait, if time=1, n=2. Push {rem, 1+2=3}. At time=3, it is NOT ready? Or ready?
-                // Cooldown is n. So interval is n+1. 
-                // e.g. A at 1. Next A at 1 + 2 + 1 = 4. 
-                // WaitQ condition: `waitQ.front().time <= time`? Actually usually we process waitQ first
-                
-                // Let's follow standard simulation:
-                // 1. Check Heap. Pick top.
-                // 2. Put into WaitQ with readyTime
-                // 3. Check WaitQ if anything ready now?
-                
-                // But WaitQ items become ready basically.
-                
-                let processed = false;
-                
-                if (heap.length > 0) {
-                    const task = heap.shift(); // Pop max
-                    currentTask = task.char;
-                    task.cnt--;
-                    timeline.push({val: task.char, t: time});
-                    
-                    steps.push({
-                        heap: JSON.parse(JSON.stringify(heap)),
-                        waitQ: JSON.parse(JSON.stringify(waitQ)),
-                        timeline: [...timeline], time,
-                        msg: `時間 ${time}: 執行任務 ${task.char} (剩餘 ${task.cnt})`,
-                        highlightLines: [7, 8, 9]
-                    });
+                let pushedToWait = null;
+                let active = null;
 
-                    if (task.cnt > 0) {
-                        waitQ.push({ ...task, readyTime: time + n + 1 });
-                        steps.push({
-                            heap: JSON.parse(JSON.stringify(heap)),
-                            waitQ: JSON.parse(JSON.stringify(waitQ)),
-                            timeline: [...timeline], time,
-                            msg: `任務 ${task.char} 進入冷卻 (Ready at ${time + n + 1})`,
-                            highlightLines: [10]
-                        });
+                // Process Heap (Pick Task)
+                if (pq.length > 0) {
+                    // Pop max
+                    const task = pq.shift(); // Remove first sorted (max)
+                    active = {type: 'task', val: task.id};
+                    timeline.push(active);
+                    
+                    const rem = task.count - 1;
+                    if (rem > 0) {
+                        pushedToWait = {id: task.id, count: rem, readyTime: time + n};
                     }
-                    processed = true;
+                    
+                    pushState(`Time ${time}: Exec '${task.id}' (Remaining: ${rem})`, [6, 7], active);
                 } else {
-                    // IDLE
-                    timeline.push({val: 'IDLE', t: time});
-                    steps.push({
-                        heap: JSON.parse(JSON.stringify(heap)),
-                        waitQ: JSON.parse(JSON.stringify(waitQ)),
-                        timeline: [...timeline], time,
-                        msg: `時間 ${time}: Heap 空，執行 IDLE`,
-                        highlightLines: [6] // implicit else
-                    });
+                    active = {type: 'idle', val: 'IDLE'};
+                    timeline.push(active);
+                    pushState(`Time ${time}: CPU Idle (Heap Empty)`, [4], active);
                 }
 
-                // Check WaitQ readiness for NEXT cycle 
-                // Actually if we simulate `time` increment at start of loop:
-                // Check if any `readyTime == time + 1` ? 
-                // The algo usually: check waitq.front().readyTime == time (if checking at start).
-                // My logic: `waitQ.push({rem, time + n + 1})`. This means it can be picked at `time + n + 1`.
-                
-                // We check if waitQ has items ready for NEXT iteration.
-                // But let's check Current logic:
-                // If we check at end of loop, we check `readyTime <= time + 1`?
-                
-                if (waitQ.length > 0 && waitQ[0].readyTime === time + 1) {
+                if (pushedToWait) {
+                    waitQ.push(pushedToWait);
+                    pushState(`Task '${pushedToWait.id}' needs cooldown. Wait until T=${pushedToWait.readyTime+1}`, [8], active);
+                }
+
+                // Check Wait Queue
+                if (waitQ.length > 0 && waitQ[0].readyTime === time) { // Ready at END of 'time' interval or start of next? 
+                    // Problem says cooldown n. If run at t=1, ready at t=1+n+1 = t+n+1?
+                    // Example: A at t=1, n=2. Next valid A is t=4.
+                    // Implementation usually checks strict equality if we increment time first?
+                    // logic: if processed at T, ready at T+n+1.
+                    // waitQ check usually logic: if `waitQ.front().readyTime <= time`. Wait, logic usually increments time first.
+                    // Let's assume standard logic provided in C++ snippet: `if (waitQ.front().time == time)`.
+                    
                     const ready = waitQ.shift();
-                    heap.push({char: ready.char, cnt: ready.cnt});
-                    reorderHeap();
-                    steps.push({
-                        heap: JSON.parse(JSON.stringify(heap)),
-                        waitQ: JSON.parse(JSON.stringify(waitQ)),
-                        timeline: [...timeline], time,
-                        msg: `任務 ${ready.char} 冷卻結束，回到 Heap`,
-                        highlightLines: [12, 13]
-                    });
+                    pq.push({id: ready.id, count: ready.count});
+                    pq.sort((a,b) => b.count - a.count); // Maintain Heap
+                    
+                    pushState(`Task '${ready.id}' cooldown finished. Push back to Ready Queue.`, [10, 11], active);
                 }
             }
             
-            steps.push({
-                heap: [], waitQ: [], timeline: [...timeline], time,
-                msg: `完成！總時間: ${time}`,
-                highlightLines: [17],
-                final: true
-            });
+            pushState(`Finished at Time ${time}`, [13], null);
 
             return steps;
         }
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            document.getElementById('timeCount').textContent = step.time || 0;
+            document.getElementById('timeVal').textContent = step.time;
 
             // Heap
-            document.getElementById('heapList').innerHTML = (step.heap||[]).map(t => 
-                `<div class="task-item"><span>${t.char}</span><span>${t.cnt}</span></div>`
-            ).join('');
+            const heapList = document.getElementById('heapList');
+            heapList.innerHTML = '';
+            step.pq.forEach((t, i) => {
+               const div = document.createElement('div');
+               div.className = i===0 ? 'task-item top' : 'task-item';
+               div.innerHTML = `<span>${t.id}</span><span class="badge">${t.count}</span>`;
+               heapList.appendChild(div);
+            });
 
             // WaitQ
-            document.getElementById('waitList').innerHTML = (step.waitQ||[]).map(t => 
-                `<div class="task-item cooldown"><span>${t.char}</span><span>@ ${t.readyTime}</span></div>`
-            ).join('');
+            const waitList = document.getElementById('waitList');
+            waitList.innerHTML = '';
+            step.waitQ.forEach(t => {
+               const div = document.createElement('div');
+               div.className = 'task-item wait';
+               div.innerHTML = `<span>${t.id}</span><span class="badge">Wait T${t.readyTime+1}</span>`; 
+               waitList.appendChild(div);
+            });
 
             // Timeline
-            const tl = document.getElementById('timelineGrid');
-            tl.innerHTML = (step.timeline||[]).map(slot => {
-                let cls = 'time-slot';
-                if(slot.val === 'IDLE') cls += ' idle';
-                else cls += ' active';
-                return `<div class="${cls}">${slot.val === 'IDLE' ? 'Ø' : slot.val}</div>`;
-            }).join('');
-            
-            // Auto scroll timeline
-            tl.scrollLeft = tl.scrollWidth;
+            const tlGrid = document.getElementById('timelineGrid');
+            tlGrid.innerHTML = '';
+            step.timeline.forEach((slot, i) => {
+                const div = document.createElement('div');
+                div.className = slot.type === 'task' ? 'time-slot task' : 'time-slot idle';
+                if(i === step.timeline.length - 1) div.classList.add('current');
+                div.innerHTML = `${slot.val}<div class="time-idx">${i+1}</div>`;
+                tlGrid.appendChild(div);
+            });
+            // Scroll to end
+            tlGrid.scrollTop = tlGrid.scrollHeight;
         }
 
         function runVisualizer() {
             const raw = document.getElementById('tasksInput').value.toUpperCase();
-            const tasks = raw.replace(/[^A-Z]/g, '');
             const n = parseInt(document.getElementById('nInput').value);
             
-            if(!tasks || isNaN(n)) return alert("請輸入任務 A-Z 和 N");
-
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(simulate(tasks, n));
+            viz.setSteps(simulate(raw.split(''), n));
         }
 
         window.addEventListener('load', runVisualizer);

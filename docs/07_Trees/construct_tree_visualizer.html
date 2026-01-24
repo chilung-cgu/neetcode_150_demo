@@ -3,148 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Construct Binary Tree - 精緻視覺化</title>
+    <title>Construct Binary Tree - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
             border-radius: 16px;
-            padding: 30px 20px;
+            padding: 20px;
             margin: 15px 0;
-        }
-
-        /* 陣列顯示 */
-        .arrays-panel {
-            display: flex;
-            gap: 30px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        .array-box {
-            text-align: center;
-        }
-
-        .array-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #64748b;
-            margin-bottom: 8px;
-        }
-
-        .array-items {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .array-item {
-            width: 35px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            border-radius: 8px;
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-            transition: all 0.3s;
-        }
-
-        .array-item.root {
-            background: linear-gradient(145deg, #fbbf24, #f59e0b);
-            color: #0f172a;
-            transform: scale(1.15);
-        }
-
-        .array-item.left {
-            background: linear-gradient(145deg, #3b82f6, #2563eb);
-            color: white;
-        }
-
-        .array-item.right {
-            background: linear-gradient(145deg, #a855f7, #9333ea);
-            color: white;
-        }
-
-        /* 構造的樹 */
-        .tree-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 20px;
+            min-height: 600px;
         }
+        
+        #viz-svg { width: 100%; height: 400px; }
 
-        .tree-level {
+        /* Tree Nodes */
+        .node-circle { stroke-width: 3px; transition: all 0.5s; fill: #334155; stroke: #64748b; opacity: 0; } /* Hidden by default */
+        .node-circle.visible { opacity: 1; }
+        .node-circle.active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.2); }
+        .node-circle.done { stroke: #22c55e; fill: #1e293b; }
+
+        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; opacity: 0; }
+        .node-text.visible { opacity: 1; }
+        
+        .link { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0; }
+        .link.visible { opacity: 0.6; }
+
+        /* Array Visualization */
+        .arrays-container {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             gap: 15px;
-            margin: 10px 0;
+            margin-bottom: 20px;
+            width: 90%;
         }
-
-        .node {
-            width: 45px;
-            height: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.1rem;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #22c55e, #16a34a);
-            color: white;
-            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        .array-row { display: flex; align-items: center; gap: 10px; justify-content: center; }
+        .array-label { width: 80px; text-align: right; color: #94a3b8; font-size: 0.9rem; font-weight: bold; }
+        .array-bar { display: flex; gap: 5px; }
+        .array-cell {
+            width: 30px; height: 30px;
+            border: 1px solid #475569;
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: monospace; font-size: 0.9rem;
+            color: #cbd5e1;
+            transition: all 0.3s;
         }
-
-        .node.building {
-            background: linear-gradient(145deg, #fbbf24, #f59e0b);
-            box-shadow: 0 0 25px rgba(251, 191, 36, 0.6);
-            transform: scale(1.15);
-        }
+        .array-cell.active-root { background: #fbbf24; color: #0f172a; font-weight: bold; transform: scale(1.1); border-color: #fbbf24; }
+        .array-cell.in-range { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
+        .array-cell.out-range { opacity: 0.3; }
 
         /* Step Breakdown */
-        .step-breakdown {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin-top: 15px;
-            border-left: 4px solid #3b82f6;
-        }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
 
-        .step-breakdown-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
-        .step-breakdown-text { font-size: 0.95rem; color: #e2e8f0; font-family: 'Consolas', monospace; }
-
-        /* 圖例 */
-        .legend-bar {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            padding: 15px;
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 12px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-
-        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #94a3b8; }
-        .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
-        .legend-dot.root { background: linear-gradient(145deg, #fbbf24, #f59e0b); }
-        .legend-dot.left { background: linear-gradient(145deg, #3b82f6, #2563eb); }
-        .legend-dot.right { background: linear-gradient(145deg, #a855f7, #9333ea); }
-
-        /* 自訂輸入 */
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row label { font-size: 0.85rem; width: 50px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; flex: 1; min-width: 100px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
-
-        .code-line.active { background: rgba(251, 191, 36, 0.15) !important; border-left: 3px solid #fbbf24 !important; }
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -152,244 +70,294 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Construct Tree from Preorder & Inorder</div>
-
+                <div class="viz-title">Construct Tree (Preorder + Inorder)</div>
                 <div class="custom-input-section">
-                    <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>前序:</label>
-                        <input type="text" id="customPreorder" value="3,9,20,15,7">
-                    </div>
-                    <div class="input-row">
-                        <label>中序:</label>
-                        <input type="text" id="customInorder" value="9,3,15,20,7">
-                        <button onclick="runCustomInput()">執行</button>
+                        <label>Preorder:</label>
+                        <input type="text" id="preInput" value="3,9,20,15,7">
+                        <label>Inorder:</label>
+                        <input type="text" id="inInput" value="9,3,15,20,7">
+                        <button onclick="runVisualizer()">Build</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <div class="arrays-panel">
-                        <div class="array-box">
-                            <div class="array-label">前序 (根-左-右)</div>
-                            <div class="array-items" id="preorderItems"></div>
+                    <div class="arrays-container">
+                        <div class="array-row">
+                            <div class="array-label">Preorder</div>
+                            <div class="array-bar" id="preDisplay"></div>
                         </div>
-                        <div class="array-box">
-                            <div class="array-label">中序 (左-根-右)</div>
-                            <div class="array-items" id="inorderItems"></div>
+                        <div class="array-row">
+                            <div class="array-label">Inorder</div>
+                            <div class="array-bar" id="inDisplay"></div>
                         </div>
                     </div>
 
-                    <div class="section-title" style="text-align: center; color: #64748b; font-size: 0.75rem; text-transform: uppercase; margin: 15px 0;">構造的樹</div>
-                    <div class="tree-container" id="treeContainer">
-                        <span style="color: #64748b;">等待構造...</span>
-                    </div>
-
-                    <div class="legend-bar">
-                        <div class="legend-item"><div class="legend-dot root"></div>根節點</div>
-                        <div class="legend-item"><div class="legend-dot left"></div>左子樹</div>
-                        <div class="legend-item"><div class="legend-dot right"></div>右子樹</div>
-                    </div>
+                    <svg id="viz-svg">
+                        <g id="main-group" transform="translate(40, 40)"></g>
+                    </svg>
                 </div>
 
                 <div class="step-breakdown">
-                    <div class="step-breakdown-title">Step Breakdown</div>
-                    <div class="step-breakdown-text" id="stepBreakdown">點擊「下一步」開始</div>
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
             </div>
-
-            <div class="viz-card">
-                <div class="viz-title">演算法說明</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
-
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">遞迴構造 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'TreeNode* buildTree(pre, in) {', id: 0 },
-            { line: '    unordered_map<int, int> inMap;', id: 1 },
-            { line: '    for (int i = 0; i < in.size(); i++)', id: 2 },
-            { line: '        inMap[in[i]] = i;', id: 3 },
-            { line: '    return build(pre, 0, n-1, in, 0, n-1, inMap);', id: 4 },
-            { line: '}', id: 5 },
-            { line: '', id: 6 },
-            { line: 'TreeNode* build(pre, pS, pE, in, iS, iE, map) {', id: 7 },
-            { line: '    if (pS > pE) return nullptr;', id: 8 },
-            { line: '    int rootVal = pre[pS];        // 前序第一個=根', id: 9 },
-            { line: '    int rootIdx = map[rootVal];   // 中序位置', id: 10 },
-            { line: '    int leftSize = rootIdx - iS;  // 左子樹大小', id: 11 },
-            { line: '    TreeNode* root = new TreeNode(rootVal);', id: 12 },
-            { line: '    root->left = build(pre, pS+1, pS+leftSize, ...);', id: 13 },
-            { line: '    root->right = build(pre, pS+leftSize+1, pE, ...);', id: 14 },
-            { line: '    return root;', id: 15 },
-            { line: '}', id: 16 },
+            { line: 'TreeNode* buildTree(preorder, inorder) {', id: 0 },
+            { line: '    return build(0, 0, inorder.size()-1);', id: 1 },
+            { line: '}', id: 2 },
+            { line: 'TreeNode* build(preStart, inStart, inEnd) {', id: 3 },
+            { line: '    if (preStart > preEnd || inStart > inEnd) return nullptr;', id: 4 },
+            { line: '    int rootVal = preorder[preStart];', id: 5 },
+            { line: '    TreeNode* root = new TreeNode(rootVal);', id: 6 },
+            { line: '    int inIndex = find(inorder, rootVal);', id: 7 },
+            { line: '    root->left = build(preStart + 1,', id: 8 },
+            { line: '                       inStart, inIndex - 1);', id: 9 },
+            { line: '    root->right = build(preStart + inIndex - inStart + 1,', id: 10 },
+            { line: '                        inIndex + 1, inEnd);', id: 11 },
+            { line: '    return root;', id: 12 },
+            { line: '}', id: 13 }
         ];
 
-        let currentPreorder = [3, 9, 20, 15, 7];
-        let currentInorder = [9, 3, 15, 20, 7];
         let viz;
 
-        function parseArray(input) {
-            return input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+        // We need a helper to build the final tree first to determine layout,
+        // then animate the "creation" of nodes.
+        function buildFinalTree(preorder, inorder) {
+            if (!preorder.length || !inorder.length) return null;
+            
+            const rootVal = preorder[0];
+            const root = { id: rootVal, val: rootVal, children: [] };
+            
+            const mid = inorder.indexOf(rootVal);
+            const leftIn = inorder.slice(0, mid);
+            const rightIn = inorder.slice(mid + 1);
+            
+            const leftPre = preorder.slice(1, 1 + leftIn.length);
+            const rightPre = preorder.slice(1 + leftIn.length);
+            
+            if (leftIn.length) root.children[0] = buildFinalTree(leftPre, leftIn);
+            if (rightIn.length) root.children[1] = buildFinalTree(rightPre, rightIn);
+            
+            return root;
+        }
+        
+        // Clean for D3
+        function cleanHierarchy(node) {
+            if(!node) return null;
+            const c = [];
+            if(node.children[0]) c.push(cleanHierarchy(node.children[0]));
+            if(node.children[1]) c.push(cleanHierarchy(node.children[1]));
+            return { ...node, children: c };
         }
 
-        function generateAlgorithmSteps(preorder, inorder) {
+        function simulate(preorder, inorder) {
             const steps = [];
-            const built = [];
-            const inMap = new Map();
-            inorder.forEach((val, idx) => inMap.set(val, idx));
+            const finalTree = buildFinalTree(preorder, inorder);
+            if(!finalTree) return [];
 
-            steps.push({
-                preorder: [...preorder], inorder: [...inorder],
-                built: [], currentRoot: null,
-                leftPart: [], rightPart: [],
-                highlightLines: [0, 1, 2, 3, 4],
-                stepText: '建立 inMap，開始遞迴',
-                explanation: {
-                    title: '開始構造',
-                    text: `前序: [${preorder.join(', ')}]（根-左-右）<br>中序: [${inorder.join(', ')}]（左-根-右）<br><br>前序第一個 = 根<br>在中序找根 → 分割左右子樹`,
-                    formula: 'preorder[0] = root'
-                }
-            });
+            // Tracking which nodes are created
+            const visibleNodes = []; // ids (vals in this case, assuming unique)
+            
+            // Invert map
+            const inMap = {};
+            inorder.forEach((v, i) => inMap[v] = i);
 
-            function build(pS, pE, iS, iE) {
-                if (pS > pE) return null;
-
-                const rootVal = preorder[pS];
-                const rootIdx = inMap.get(rootVal);
-                const leftSize = rootIdx - iS;
-
-                built.push(rootVal);
-
-                const leftIn = iS < rootIdx ? inorder.slice(iS, rootIdx) : [];
-                const rightIn = rootIdx + 1 <= iE ? inorder.slice(rootIdx + 1, iE + 1) : [];
-
+            const pushState = (msg, hl, activeRootVal, range, explanation=null) => {
                 steps.push({
-                    preorder: [...preorder], inorder: [...inorder],
-                    built: [...built], currentRoot: rootVal,
-                    leftPart: leftIn, rightPart: rightIn,
-                    highlightLines: [9, 10, 11, 12],
-                    stepText: `建立 ${rootVal}，左=${leftIn.length} 右=${rightIn.length}`,
-                    explanation: {
-                        title: `建立節點 ${rootVal}`,
-                        text: `前序範圍: [${pS}, ${pE}]<br>中序範圍: [${iS}, ${iE}]<br>左子樹: [${leftIn.join(', ') || '空'}]（${leftSize} 個）<br>右子樹: [${rightIn.join(', ') || '空'}]`,
-                        formula: `leftSize = ${rootIdx} - ${iS} = ${leftSize}`
-                    }
+                    fullTree: cleanHierarchy(finalTree),
+                    visibleNodes: [...visibleNodes],
+                    preStart: range.preStart,
+                    inStart: range.inStart,
+                    inEnd: range.inEnd,
+                    activeRootVal,
+                    preorder: [...preorder],
+                    inorder: [...inorder],
+                    msg, highlightLines: hl,
+                    explanation
                 });
+            };
 
-                build(pS + 1, pS + leftSize, iS, rootIdx - 1);
-                build(pS + leftSize + 1, pE, rootIdx + 1, iE);
+            let preIndex = 0;
 
+            function recurse(inStart, inEnd) {
+                if (inStart > inEnd) return null;
+
+                const rootVal = preorder[preIndex++];
+                const inIndex = inMap[rootVal];
+                
+                // Visualization before creation
+                pushState(
+                    `Select Root ${rootVal} from Preorder`, 
+                    [5], 
+                    rootVal, 
+                    { preStart: preIndex-1, inStart, inEnd },
+                    {
+                        title: '選擇根節點',
+                        text: `前序遍歷的下一個節點是 ${rootVal}，所以它是當前子樹的根。`,
+                        formula: 'root = preorder[preStart]'
+                    }
+                );
+
+                visibleNodes.push(rootVal); // "Create" node visual
+
+                pushState(
+                    `Find ${rootVal} in Inorder at index ${inIndex}. Split Left/Right.`,
+                    [6, 7],
+                    rootVal,
+                    { preStart: preIndex-1, inStart, inEnd, split: inIndex },
+                    {
+                        title: '分割左右子樹',
+                        text: `在中序遍歷中找到 ${rootVal} (索引 ${inIndex})。<br>左邊 [${inStart}~${inIndex-1}] 是左子樹。<br>右邊 [${inIndex+1}~${inEnd}] 是右子樹。`,
+                        formula: 'inIndex = map[rootVal]'
+                    }
+                );
+
+                recurse(inStart, inIndex - 1);
+                recurse(inIndex + 1, inEnd);
+                
                 return rootVal;
             }
 
-            build(0, preorder.length - 1, 0, inorder.length - 1);
-
-            steps.push({
-                preorder: [...preorder], inorder: [...inorder],
-                built: [...built], final: true,
-                highlightLines: [15],
-                stepText: `構造完成: [${built.join(', ')}]`,
-                explanation: {
-                    title: '🎉 構造完成！',
-                    text: `成功從前序和中序構造二叉樹<br>層序: [${built.join(', ')}]<br><br>Time: O(n), Space: O(n)`,
-                    formula: 'return root'
-                }
+            recurse(0, inorder.length - 1);
+            
+            pushState("Done", [13], null, { preStart:-1, inStart:-1, inEnd:-1 }, {
+                title: '完成',
+                text: '整棵樹構造完畢。',
+                formula: 'return root'
             });
 
             return steps;
         }
 
-        function renderStep(step) {
-            const { preorder, inorder, built, currentRoot, leftPart, rightPart } = step;
+        const width = 600;
+        const height = 400;
+        const treeLayout = d3.tree().size([width, height]);
+        const gMain = d3.select("#main-group");
 
-            // 前序陣列
-            document.getElementById('preorderItems').innerHTML = preorder.map(val => {
-                let cls = 'array-item';
-                if (val === currentRoot) cls += ' root';
-                return `<div class="${cls}">${val}</div>`;
-            }).join('');
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
 
-            // 中序陣列
-            document.getElementById('inorderItems').innerHTML = inorder.map(val => {
-                let cls = 'array-item';
-                if (val === currentRoot) cls += ' root';
-                else if (leftPart?.includes(val)) cls += ' left';
-                else if (rightPart?.includes(val)) cls += ' right';
-                return `<div class="${cls}">${val}</div>`;
-            }).join('');
+            // Render Arrays
+            const renderArray = (arr, containerId, type) => {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+                arr.forEach((val, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'array-cell';
+                    div.textContent = val;
+                    
+                    if (val === step.activeRootVal) div.classList.add('active-root');
+                    
+                    if (type === 'inorder') {
+                        if (idx >= step.inStart && idx <= step.inEnd) {
+                            div.classList.add('in-range');
+                        } else {
+                            div.classList.add('out-range');
+                        }
+                    } else if (type === 'preorder') {
+                        // Just highlight active root basically
+                        if (idx === step.preStart) div.classList.add('active-root');
+                        else if (idx < step.preStart) div.classList.add('out-range'); // processed
+                    }
+                    
+                    container.appendChild(div);
+                });
+            };
+            
+            renderArray(step.preorder, 'preDisplay', 'preorder');
+            renderArray(step.inorder, 'inDisplay', 'inorder');
 
-            // 構造的樹（簡化顯示）
-            if (built && built.length > 0) {
-                document.getElementById('treeContainer').innerHTML = `
-                    <div class="tree-level">${built.map((val, i) => {
-                        let cls = 'node';
-                        if (val === currentRoot && !step.final) cls += ' building';
-                        return `<div class="${cls}">${val}</div>`;
-                    }).join('')}</div>
-                `;
-            } else {
-                document.getElementById('treeContainer').innerHTML = '<span style="color: #64748b;">等待構造...</span>';
-            }
+            // Render Tree
+            const root = d3.hierarchy(step.fullTree);
+            treeLayout(root);
 
-            document.getElementById('stepBreakdown').textContent = step.stepText || '';
-        }
+            // Links
+            const links = gMain.selectAll(".link").data(root.links(), d => d.source.data.id + "-" + d.target.data.id);
+            links.enter().append("path").attr("class", "link")
+                .merge(links)
+                .transition().duration(500)
+                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y))
+                .attr("class", d => {
+                    // Visible if target is created
+                    if (step.visibleNodes.includes(d.target.data.val)) return "link visible";
+                    return "link";
+                });
+            links.exit().remove();
 
-        function init(preorder = currentPreorder, inorder = currentInorder) {
-            currentPreorder = preorder;
-            currentInorder = inorder;
-            const steps = generateAlgorithmSteps(preorder, inorder);
+            // Nodes
+            const nodes = gMain.selectAll(".node-g").data(root.descendants(), d => d.data.val);
+            const nEnter = nodes.enter().append("g").attr("class", "node-g");
+            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
+            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
 
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => renderStep(step)
+            const nUpdate = nodes.merge(nEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            nUpdate.select("circle").attr("class", d => {
+                let c = "node-circle";
+                if (step.visibleNodes.includes(d.data.val)) {
+                    c += " visible";
+                    if (d.data.val === step.activeRootVal) c += " active";
+                    else c += " done";
+                }
+                return c;
             });
 
-            viz.setSteps(steps);
+            nUpdate.select("text")
+                .text(d => d.data.val)
+                .attr("class", d => step.visibleNodes.includes(d.data.val) ? "node-text visible" : "node-text");
+            
+            nodes.exit().remove();
         }
 
-        function runCustomInput() {
-            const pre = parseArray(document.getElementById('customPreorder').value);
-            const ino = parseArray(document.getElementById('customInorder').value);
-            if (pre.length !== ino.length || pre.length === 0) {
-                alert('前序和中序長度必須相同且不為空');
-                return;
-            }
-            init(pre, ino);
+        function runVisualizer() {
+            const preStr = document.getElementById('preInput').value;
+            const inStr = document.getElementById('inInput').value;
+            
+            const pre = preStr.split(',').map(x=>parseInt(x.trim()));
+            const ino = inStr.split(',').map(x=>parseInt(x.trim()));
+            
+            if(pre.length !== ino.length) { alert("Length mismatch"); return; }
+            
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(pre, ino));
         }
 
-        function resetVisualization() { init(currentPreorder, currentInorder); }
-        window.addEventListener('load', () => init());
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

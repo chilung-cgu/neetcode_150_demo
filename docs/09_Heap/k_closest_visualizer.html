@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>K Closest Points (Max Heap) - 精緻視覺化</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K Closest Points (Max Heap) - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,45 +14,49 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+            align-items: center;
+            min-height: 600px;
         }
 
         .dual-view {
-            display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;
+            display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; width: 100%;
         }
 
         .panel {
-            background: rgba(30, 41, 59, 0.4); border-radius: 12px; padding: 10px;
+            background: rgba(30, 41, 59, 0.4); border-radius: 12px; padding: 15px;
             border: 1px solid rgba(148, 163, 184, 0.2);
             display: flex; flex-direction: column; align-items: center;
+            position: relative;
         }
-        .panel-title { font-size: 0.9rem; color: #94a3b8; font-weight: bold; margin-bottom: 10px; }
+        .panel-title { font-size: 0.9rem; color: #94a3b8; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; }
 
         /* Chart View */
-        #chart-svg { width: 300px; height: 300px; background: rgba(0,0,0,0.2); border-radius: 8px; }
-        .point { fill: #94a3b8; transition: all 0.3s; }
-        .point.active { fill: #fbbf24; r: 6; }
-        .point.kept { fill: #22c55e; }
-        .grid-line { stroke: #475569; stroke-width: 1; opacity: 0.3; }
-        .axis { stroke: #cbd5e1; stroke-width: 2; }
+        #chart-svg { width: 350px; height: 350px; background: rgba(0,0,0,0.2); border-radius: 8px; cursor: crosshair; }
+        .point { stroke: #1e293b; stroke-width: 1px; transition: all 0.3s; }
+        .point.normal { fill: #94a3b8; r: 5; }
+        .point.active { fill: #fbbf24; r: 8; stroke: #fff; stroke-width: 2px; filter: drop-shadow(0 0 5px #fbbf24); }
+        .point.kept { fill: #22c55e; r: 6; }
+        .point.rejected { fill: #ef4444; opacity: 0.3; }
+        
+        .axis { stroke: #cbd5e1; stroke-width: 1; opacity: 0.5; }
+        .grid-circle { fill: none; stroke: #475569; stroke-dasharray: 4; opacity: 0.3; }
 
         /* Heap View */
-        #heap-svg { width: 300px; height: 300px; }
-        .node-circle { fill: #3b82f6; stroke: none; transition: all 0.3s; }
-        .node-circle.root { stroke: #ef4444; stroke-width: 3px; } /* Max Heap Root is largest dist */
-        .node-text { fill: white; font-family: monospace; font-size: 10px; pointer-events: none; text-anchor: middle; dominant-baseline: middle; }
-        .link { stroke: #64748b; stroke-width: 2px; opacity: 0.5; }
+        #heap-svg { width: 350px; height: 350px; }
+        .node-circle { fill: #3b82f6; stroke: #1e293b; stroke-width: 2px; transition: all 0.3s; }
+        .node-circle.root { stroke: #ef4444; stroke-width: 3px; }
+        .node-circle.active { fill: #fbbf24; filter: drop-shadow(0 0 5px #fbbf24); }
+        .node-text { fill: white; font-family: monospace; font-size: 10px; pointer-events: none; text-anchor: middle; dominant-baseline: middle; font-weight: bold; }
+        .link { stroke: #64748b; stroke-width: 2px; opacity: 0.4; fill: none; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
+        .input-row input[type=number] { width: 60px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
 
-        .step-breakdown {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px; border-left: 4px solid #3b82f6;
-            padding: 15px 20px;
-        }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -59,26 +64,26 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">K Closest Points (Max Heap)</div>
+                <div class="viz-title">K Closest Points to Origin (Max Heap)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Points (x,y;...):</label>
-                        <input type="text" id="pointsInput" value="1,3; -2,2; 5,8; 0,1">
+                        <label>Points:</label>
+                        <input type="text" id="pointsInput" value="1,3; -2,2; 5,8; 0,1; -1,-1">
                         <label>K:</label>
-                        <input type="number" id="kInput" value="2" style="width:50px">
-                        <button onclick="runVisualizer()">執行</button>
+                        <input type="number" id="kInput" value="2" min="1">
+                        <button onclick="runVisualizer()">Find</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
                     <div class="dual-view">
                         <div class="panel">
-                            <div class="panel-title">2D Plane (距離原點)</div>
+                            <div class="panel-title">2D Plane</div>
                             <svg id="chart-svg">
-                                <!-- Grid -->
-                                <line x1="0" y1="150" x2="300" y2="150" class="axis" />
-                                <line x1="150" y1="0" x2="150" y2="300" class="axis" />
-                                <g id="points-g"></g>
+                                <line x1="0" y1="175" x2="350" y2="175" class="axis" />
+                                <line x1="175" y1="0" x2="175" y2="350" class="axis" />
+                                <circle cx="175" cy="175" r="2" fill="white" />
+                                <g id="chart-g"></g>
                             </svg>
                         </div>
                         <div class="panel">
@@ -129,167 +134,233 @@
             { line: '        int dist = p[0]*p[0] + p[1]*p[1];', id: 3 },
             { line: '        maxHeap.push({dist, i});', id: 4 },
             { line: '        if (maxHeap.size() > k) {', id: 5 },
-            { line: '            maxHeap.pop(); // Remove farthest', id: 6 },
+            { line: '            maxHeap.pop();', id: 6 },
             { line: '        }', id: 7 },
             { line: '    }', id: 8 },
-            { line: '    return all in heap;', id: 9 },
+            { line: '    return ...;', id: 9 },
             { line: '}', id: 10 }
         ];
 
         let viz;
 
+        // Max Heap Logic
+        class MaxHeap {
+            constructor() { this.heap = []; }
+            push(item) {
+                this.heap.push(item);
+                this.bubbleUp(this.heap.length - 1);
+            }
+            pop() {
+                const max = this.heap[0];
+                const last = this.heap.pop();
+                if(this.heap.length > 0) {
+                    this.heap[0] = last;
+                    this.bubbleDown(0);
+                }
+                return max;
+            }
+            peek() { return this.heap[0]; }
+            size() { return this.heap.length; }
+            
+            bubbleUp(idx) {
+                while(idx > 0) {
+                    let p = Math.floor((idx-1)/2);
+                    if(this.heap[idx].dist > this.heap[p].dist) {
+                        [this.heap[idx], this.heap[p]] = [this.heap[p], this.heap[idx]];
+                        idx = p;
+                    } else break;
+                }
+            }
+            bubbleDown(idx) {
+                while(true) {
+                    let l = 2*idx+1, r = 2*idx+2, largest = idx;
+                    if(l < this.heap.length && this.heap[l].dist > this.heap[largest].dist) largest = l;
+                    if(r < this.heap.length && this.heap[r].dist > this.heap[largest].dist) largest = r;
+                    if(largest !== idx) {
+                        [this.heap[idx], this.heap[largest]] = [this.heap[largest], this.heap[idx]];
+                        idx = largest;
+                    } else break;
+                }
+            }
+            toArray() { return [...this.heap]; }
+        }
+
+        // --- Data ---
+        function parsePoints(str) {
+            return str.split(';').map(s => {
+                const parts = s.trim().split(',');
+                return { x: parseInt(parts[0]), y: parseInt(parts[1]) };
+            });
+        }
+
+        // --- Simulation ---
         function simulate(points, k) {
             const steps = [];
-            // Heap stores {dist, index}
-            // Max Heap logic: parent > children
-            let heap = []; 
+            const pq = new MaxHeap();
             
-            const swap = (i, j) => [heap[i], heap[j]] = [heap[j], heap[i]];
-            const siftUp = (i) => {
-                while(i > 0) {
-                    let p = Math.floor((i-1)/2);
-                    if(heap[i].dist > heap[p].dist) { swap(i, p); i=p; } else break;
-                }
-            };
-            const siftDown = (i) => {
-                while(true) {
-                    let l=2*i+1, r=2*i+2, large=i;
-                    if(l<heap.length && heap[l].dist > heap[large].dist) large=l;
-                    if(r<heap.length && heap[r].dist > heap[large].dist) large=r;
-                    if(large!==i) { swap(i, large); i=large; } else break;
-                }
-            };
-            const push = (item) => { heap.push(item); siftUp(heap.length-1); };
-            const pop = () => {
-                if(heap.length===0) return;
-                const top = heap[0];
-                const last = heap.pop();
-                if(heap.length > 0) { heap[0] = last; siftDown(0); }
-                return top;
-            };
-
+            // Initial state
             steps.push({
-                heap: [], allPoints: points, activeP: null,
-                msg: `初始化 K=${k}, 準備處理 ${points.length} 個點`,
+                heap: [],
+                activePoint: null, rejected: [], kept: [],
+                msg: "Start with empty Max Heap (Size 0)",
                 highlightLines: [1]
             });
 
+            const processed = [];
+
             for(let i=0; i<points.length; i++) {
                 const p = points[i];
-                const dist = p[0]*p[0] + p[1]*p[1];
+                const dist = p.x*p.x + p.y*p.y;
+                const item = { dist, p, id: i }; // ID for tracking
                 
+                // Visual Highlight
                 steps.push({
-                    heap: JSON.parse(JSON.stringify(heap)), allPoints: points, activeP: i,
-                    msg: `處理點 [${p[0]}, ${p[1]}]，距離平方=${dist}`,
-                    highlightLines: [2, 3]
+                    heap: pq.toArray(),
+                    activePoint: item, rejected: [], kept: pq.toArray().map(x=>x.id),
+                    msg: `Process (${p.x}, ${p.y}), Dist² = ${dist}`,
+                    highlightLines: [3]
                 });
 
-                push({dist, i, p});
+                pq.push(item);
+                
                 steps.push({
-                    heap: JSON.parse(JSON.stringify(heap)), allPoints: points, activeP: i,
-                    msg: `Push 到 Heap`,
+                    heap: pq.toArray(),
+                    activePoint: item, rejected: [], kept: pq.toArray().map(x=>x.id),
+                    msg: `Push to Heap. Size: ${pq.size()}`,
                     highlightLines: [4]
                 });
 
-                if (heap.length > k) {
-                    const removed = pop();
+                if(pq.size() > k) {
+                    const popped = pq.pop();
                     steps.push({
-                        heap: JSON.parse(JSON.stringify(heap)), allPoints: points, activeP: i,
-                        msg: `Heap size > K，移除最遠點 [${removed.p[0]}, ${removed.p[1]}] (Dist=${removed.dist})`,
+                        heap: pq.toArray(),
+                        activePoint: item, 
+                        rejected: [popped.id], // Highlight who got kicked out
+                        kept: pq.toArray().map(x=>x.id),
+                        msg: `Size > K. Pop Max Dist (${popped.dist}): (${popped.p.x}, ${popped.p.y})`,
                         highlightLines: [6]
+                    });
+                } else {
+                    steps.push({
+                        heap: pq.toArray(),
+                        activePoint: item, rejected: [], kept: pq.toArray().map(x=>x.id),
+                        msg: `Size <= K. Keep point.`,
+                        highlightLines: [7]
                     });
                 }
             }
-
+            
             steps.push({
-                heap: JSON.parse(JSON.stringify(heap)), allPoints: points, activeP: null,
-                msg: `完成！Heap 中剩下的 ${heap.length} 個點即為最近點`,
-                highlightLines: [9],
-                final: true
+                heap: pq.toArray(),
+                activePoint: null, rejected: [], kept: pq.toArray().map(x=>x.id),
+                msg: `Done. K closest points found.`,
+                final: true,
+                highlightLines: [9]
             });
 
             return steps;
         }
 
-        const gPoints = d3.select("#points-g");
-        const gHeap = d3.select("#heap-g").attr("transform", "translate(0, 40)");
+        // --- Render ---
+        const chartW = 350, chartH = 350;
+        const chartSvg = d3.select("#chart-svg");
+        const chartG = d3.select("#chart-g");
+        const chartScale = d3.scaleLinear().domain([-10, 10]).range([0, 350]); // Assume range
+
+        const heapW = 350, heapH = 350;
+        const heapSvg = d3.select("#heap-svg");
+        const heapG = d3.select("#heap-g");
+        
+        // Tree setup
+        const treeLayout = d3.tree().nodeSize([50, 60]);
+        const heapZoom = d3.zoom().on("zoom", (e) => heapG.attr("transform", e.transform));
+        heapSvg.call(heapZoom);
+        heapSvg.call(heapZoom.transform, d3.zoomIdentity.translate(heapW/2, 40).scale(0.8));
+
+        function heapToHierarchy(arr) {
+            if (arr.length === 0) return null;
+            function build(idx) {
+                if (idx >= arr.length) return null;
+                const node = { ...arr[idx], children: [] };
+                const left = build(2 * idx + 1);
+                const right = build(2 * idx + 2);
+                if (left) node.children.push(left);
+                if (right) node.children.push(right);
+                return node;
+            }
+            return build(0);
+        }
+
+        let inputPointsStatic = [];
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
 
-            // Render Chart
-            gPoints.selectAll("*").remove();
-            // Scale logic simple: fixed 300x300, center at 150,150. range -10 to 10 mapped to 0-300
-            const scale = (v) => 150 + v * 15;
+            // Render Chart Points
+            chartG.selectAll("*").remove(); // Simple redraw
             
-            step.allPoints.forEach((p, idx) => {
-                const isActive = step.activeP === idx;
-                const isInHeap = step.heap.some(h => h.i === idx);
+            // Draw Range Circle (Max Dist in Heap)
+            if(step.heap.length > 0) {
+                const maxD = step.heap[0].dist; // Root is max dist (approx)
+                const radius = Math.sqrt(maxD);
+                // Convert radius unit to pixels. domain -10..10 -> 20 units = 350px. 1 unit = 17.5px
+                const rPx = radius * 17.5; 
+                chartG.append("circle")
+                    .attr("cx", 175).attr("cy", 175).attr("r", rPx)
+                    .attr("class", "grid-circle");
+            }
+
+            inputPointsStatic.forEach((p, i) => {
+                const cx = chartScale(p.x);
+                const cy = chartScale(-p.y); // Flip Y for SVG
                 
-                gPoints.append("circle")
-                    .attr("cx", scale(p[0]))
-                    .attr("cy", scale(-p[1])) // y inverted in svg
-                    .attr("r", 4)
-                    .attr("class", `point ${isActive?'active':''} ${isInHeap?'kept':''}`);
+                let cls = "point normal";
+                if(step.activePoint && step.activePoint.id === i) cls += " active";
+                else if(step.kept.includes(i)) cls += " kept";
+                else if(step.rejected.includes(i)) cls += " rejected";
+                
+                chartG.append("circle")
+                    .attr("cx", cx).attr("cy", cy)
+                    .attr("class", cls);
             });
 
             // Render Heap
-            if(step.heap.length === 0) {
-                gHeap.selectAll("*").remove(); return;
+            heapG.selectAll("*").remove();
+            if(step.heap.length > 0) {
+                const root = d3.hierarchy(heapToHierarchy(step.heap));
+                treeLayout(root);
+
+                const links = heapG.selectAll(".link").data(root.links());
+                links.enter().append("path").attr("class", "link")
+                    .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
+
+                const nodes = heapG.selectAll(".node-g").data(root.descendants());
+                const nEnter = nodes.enter().append("g").attr("class", "node-g")
+                    .attr("transform", d => `translate(${d.x}, ${d.y})`);
+                
+                nEnter.append("circle").attr("r", 15).attr("class", d => {
+                    let c = "node-circle";
+                    if(d.depth === 0) c += " root";
+                    if(step.activePoint && d.data.id === step.activePoint.id) c += " active";
+                    return c;
+                });
+                nEnter.append("text").attr("class", "node-text").attr("dy", 1).text(d => `(${d.data.p.x},${d.data.p.y})`);
+                // Distance label
+                nEnter.append("text").attr("class", "node-text").attr("dy", 18).style("font-size", "8px").style("fill", "#fbbf24")
+                    .text(d => `d=${d.data.dist}`);
             }
-            
-            const stratify = (idx) => {
-                if(idx >= step.heap.length) return null;
-                const node = { id: idx, val: step.heap[idx], children: [] };
-                const l = stratify(2*idx+1);
-                const r = stratify(2*idx+2);
-                if(l) node.children.push(l);
-                if(r) node.children.push(r);
-                return node;
-            };
-            const root = d3.hierarchy(stratify(0));
-            const treeLayout = d3.tree().size([280, 220]);
-            treeLayout(root);
-
-            // Links
-            const links = gHeap.selectAll(".link").data(root.links());
-            links.enter().append("path").attr("class", "link")
-                .merge(links).attr("d", d3.linkVertical().x(d=>d.x).y(d=>d.y));
-            links.exit().remove();
-
-            // Nodes
-            const nodes = gHeap.selectAll(".node").data(root.descendants());
-            const nEnter = nodes.enter().append("g").attr("class", "node");
-            nEnter.append("circle").attr("r", 15).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-            
-            const nUpdate = nodes.merge(nEnter).attr("transform", d=>`translate(${d.x},${d.y})`);
-            nUpdate.select(".node-circle").attr("class", d => {
-                let s = "node-circle";
-                if(d.data.id === 0) s += " root";
-                return s;
-            });
-            nUpdate.select(".node-text").text(d => d.data.val.dist);
-            
-            nodes.exit().remove();
         }
 
         function runVisualizer() {
-            const pStr = document.getElementById('pointsInput').value;
+            const raw = document.getElementById('pointsInput').value;
             const k = parseInt(document.getElementById('kInput').value);
+            inputPointsStatic = parsePoints(raw);
             
-            const points = pStr.split(';').map(s => {
-                const parts = s.split(',').map(x=>parseInt(x.trim()));
-                return (parts.length===2 && !isNaN(parts[0])) ? parts : null;
-            }).filter(x=>x);
-            
-            if(points.length===0 || isNaN(k)) return;
-
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(simulate(points, k));
+            viz.setSteps(simulate(inputPointsStatic, k));
         }
 
         window.addEventListener('load', runVisualizer);

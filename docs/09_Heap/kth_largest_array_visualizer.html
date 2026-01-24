@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>Kth Largest Element (QuickSelect) - 精緻視覺化</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kth Largest Element (QuickSelect) - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -14,60 +15,55 @@
             flex-direction: column;
             gap: 20px;
             align-items: center;
+            min-height: 500px;
         }
 
         .array-container {
-            display: flex; gap: 12px; justify-content: center; align-items: flex-end;
-            height: 250px; padding: 20px; width: 100%; position: relative;
-        }
-
-        .bar-group {
-            display: flex; flex-direction: column; align-items: center;
-            width: 50px; position: relative; transition: all 0.4s ease;
+            display: flex; gap: 8px; justify-content: center; align-items: flex-end;
+            height: 300px; width: 100%; padding: 20px; box-sizing: border-box;
+            background: rgba(0,0,0,0.2); border-radius: 12px;
         }
 
         .bar {
-            width: 100%; background: rgba(59, 130, 246, 0.3); border: 2px solid #3b82f6;
-            border-radius: 8px 8px 0 0; transition: all 0.3s;
-            display: flex; align-items: flex-end; justify-content: center;
-            padding-bottom: 5px; color: white; font-weight: bold; font-family: monospace;
+            width: 40px; background: #3b82f6; border-radius: 6px 6px 0 0;
+            transition: height 0.3s, background-color 0.3s;
+            position: relative; display: flex; justify-content: center;
         }
+        .bar-val { margin-top: -25px; color: white; font-weight: bold; font-family: monospace; font-size: 14px; }
+        .bar-idx { position: absolute; bottom: -25px; color: #64748b; font-size: 12px; font-family: monospace;}
 
         /* States */
-        .bar-group.dimmed .bar { opacity: 0.2; border-color: #475569; background: #1e293b; }
-        .bar-group.pivot .bar { background: #fbbf24; border-color: #f59e0b; box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); color: #451a03; }
-        .bar-group.less .bar { background: #3b82f6; border-color: #60a5fa; }
-        .bar-group.greater .bar { background: #8b5cf6; border-color: #a78bfa; }
-        .bar-group.found .bar { background: #22c55e; border-color: #4ade80; box-shadow: 0 0 20px rgba(34, 197, 94, 0.5); transform: scale(1.1); z-index: 10; }
-
-        .idx-label { font-size: 0.7rem; color: #64748b; margin-top: 5px; }
+        .bar.pivot { background: #fbbf24; border: 2px solid #fff; z-index: 10; }
+        .bar.less { background: #ef4444; opacity: 0.8; }
+        .bar.greater { background: #22c55e; opacity: 0.8; }
+        .bar.inactive { opacity: 0.2; } /* Out of range */
+        .bar.sorted { background: #a855f7; } /* Found */
 
         /* Pointers */
         .pointer {
-            position: absolute; font-size: 0.8rem; font-weight: bold;
-            display: flex; flex-direction: column; align-items: center; transition: left 0.3s;
-            width: 50px; /* same as bar width */
-            text-align: center;
+            position: absolute; width: 40px; text-align: center;
+            transition: left 0.3s; font-size: 20px; font-weight: bold;
         }
-        .pointer-p { color: #fbbf24; top: -30px; } /* Store Index */
-        .pointer.scan { bottom: -30px; color: #cbd5e1; } /* Scanner */
+        .ptr-p { bottom: -50px; color: #fbbf24; } /* Pivot store index */
+        .ptr-i { bottom: -50px; color: #cbd5e1; } /* Scan index */
 
+        /* Stats */
         .stats-panel {
-            display: flex; gap: 20px; background: rgba(15, 23, 42, 0.6); padding: 10px 20px; border-radius: 12px;
+            display: flex; gap: 30px;
+            background: rgba(15, 23, 42, 0.6); padding: 10px 20px; border-radius: 20px; border: 1px solid #475569;
         }
-        .stat-item { text-align: center; }
-        .stat-label { font-size: 0.75rem; color: #94a3b8; margin-bottom: 2px; }
-        .stat-val { font-size: 1.1rem; color: #e2e8f0; font-weight: bold; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; font-family: monospace; }
+        .stat-lbl { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
+        .input-row input[type=number] { width: 50px; }
         .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
 
-        .step-breakdown {
-            background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px;
-        }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -78,22 +74,31 @@
                 <div class="viz-title">Kth Largest Element (QuickSelect)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>數組 (CSV):</label>
+                        <label>Array:</label>
                         <input type="text" id="arrInput" value="3,2,1,5,6,4">
                         <label>K:</label>
-                        <input type="number" id="kInput" value="2" style="width:50px">
-                        <button onclick="runVisualizer()">執行</button>
+                        <input type="number" id="kInput" value="2" min="1">
+                        <button onclick="runVisualizer()">Select</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
                     <div class="stats-panel">
-                        <div class="stat-item"><div class="stat-val" id="targetK">2</div><div class="stat-label">K</div></div>
-                        <div class="stat-item"><div class="stat-val" id="targetIdx">4</div><div class="stat-label">Target Index (N-K)</div></div>
-                        <div class="stat-item"><div class="stat-val" id="rangeDisplay">[0, 5]</div><div class="stat-label">Current Range</div></div>
+                        <div class="stat-box">
+                            <div class="stat-lbl">Target K</div>
+                            <div class="stat-val" style="color:#fbbf24" id="statK">2</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-lbl">Target Index (N-K)</div>
+                            <div class="stat-val" style="color:#22c55e" id="statIdx">4</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-lbl">Search Range</div>
+                            <div class="stat-val" id="statRange">[0, 5]</div>
+                        </div>
                     </div>
-                    
-                    <div class="array-container" id="arrayDisplay"></div>
+
+                    <div class="array-container" id="barContainer"></div>
                 </div>
 
                 <div class="step-breakdown">
@@ -121,7 +126,7 @@
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">C++ Code</div>
+                <div class="viz-title">QuickSelect (C++)</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -130,193 +135,146 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int quickSelect(nums, k) {', id: 0 },
-            { line: '    int p = partition(nums, l, r);', id: 1 },
-            { line: '    if (p > k) return quickSelect(l, p - 1);', id: 2 },
-            { line: '    else if (p < k) return quickSelect(p + 1, r);', id: 3 },
-            { line: '    else return nums[p];', id: 4 },
-            { line: '}', id: 5 },
-            { line: 'int partition(nums, l, r) {', id: 6 },
-            { line: '    int pivot = nums[r], p = l;', id: 7 },
-            { line: '    for (int i = l; i < r; i++) {', id: 8 },
-            { line: '        if (nums[i] <= pivot) {', id: 9 },
-            { line: '            swap(nums[i], nums[p]);', id: 10 },
-            { line: '            p++;', id: 11 },
-            { line: '        }', id: 12 },
-            { line: '    }', id: 13 },
-            { line: '    swap(nums[p], nums[r]);', id: 14 },
-            { line: '    return p;', id: 15 },
+            { line: 'int findKthLargest(nums, k) {', id: 0 },
+            { line: '    int target = nums.size() - k;', id: 1 },
+            { line: '    return quickSelect(nums, 0, n-1, target);', id: 2 },
+            { line: '}', id: 3 },
+            { line: 'int quickSelect(nums, l, r, k) {', id: 4 },
+            { line: '    int pivot = nums[r], p = l;', id: 5 },
+            { line: '    for (int i = l; i < r; i++) {', id: 6 },
+            { line: '        if (nums[i] <= pivot) {', id: 7 },
+            { line: '            swap(nums[p], nums[i]);', id: 8 },
+            { line: '            p++;', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    swap(nums[p], nums[r]);', id: 12 },
+            { line: '    if (p > k) return quickSelect(nums, l, p-1, k);', id: 13 },
+            { line: '    if (p < k) return quickSelect(nums, p+1, r, k);', id: 14 },
+            { line: '    return nums[p];', id: 15 },
             { line: '}', id: 16 }
         ];
 
         let viz;
 
-        function simulate(numsInput, k) {
+        function simulate(nums, k) {
             const steps = [];
-            const nums = [...numsInput];
-            // Problem: Find Kth Largest. This corresponds to index N - K in sorted array.
-            const targetIndex = nums.length - k; 
+            const n = nums.length;
+            const targetIdx = n - k;
             
-            steps.push({
-                nums: [...nums],
-                left: 0, right: nums.length - 1,
-                targetIndex: targetIndex,
-                msg: `尋找第 ${k} 大元素 (排序後索引 ${targetIndex})`,
-                highlightLines: [0]
-            });
+            const pushState = (arr, l, r, pivotIdx, pIdx, iIdx, msg, hl, found=null) => {
+                steps.push({
+                    arr: [...arr],
+                    l, r,
+                    pivotIdx, // The original index of pivot (usually r)
+                    pIdx, // pointer p location
+                    iIdx, // current scan i
+                    targetIdx,
+                    found,
+                    msg, highlightLines: hl
+                });
+            };
 
-            const swap = (i, j) => [nums[i], nums[j]] = [nums[j], nums[i]];
+            pushState(nums, 0, n-1, null, null, null, `Find K=${k} Largest => Target Index ${targetIdx} (N-K)`, [1]);
 
             function quickSelect(l, r) {
-                if (l > r) return; // Should not happen if k is valid
-
-                steps.push({
-                    nums: [...nums], l, r, targetIndex,
-                    msg: `Partition 範圍 [${l}, ${r}]`,
-                    highlightLines: [1]
-                });
-
                 const pivot = nums[r];
                 let p = l;
                 
-                steps.push({
-                    nums: [...nums], l, r, pivotIdx: r, p, i: l, targetIndex,
-                    msg: `選擇 Pivot: ${pivot} (Index ${r}), 初始 p = ${l}`,
-                    highlightLines: [7]
-                });
+                pushState(nums, l, r, r, p, l, `Partition [${l}, ${r}]. Pivot = ${pivot} (at ${r})`, [5]);
 
                 for (let i = l; i < r; i++) {
-                    steps.push({
-                        nums: [...nums], l, r, pivotIdx: r, p, i, targetIndex,
-                        msg: `比較 nums[${i}] (${nums[i]}) <= Pivot (${pivot})?`,
-                        highlightLines: [8]
-                    });
-
+                    pushState(nums, l, r, r, p, i, `Check nums[${i}] = ${nums[i]} <= ${pivot}?`, [6, 7]);
+                    
                     if (nums[i] <= pivot) {
-                        swap(i, p);
-                        steps.push({
-                            nums: [...nums], l, r, pivotIdx: r, p, i, targetIndex,
-                            msg: `交換 nums[${i}] 與 nums[${p}] (小於等於 Pivot)`,
-                            highlightLines: [9, 10]
-                        });
+                        if(i !== p) {
+                            [nums[i], nums[p]] = [nums[p], nums[i]];
+                            pushState(nums, l, r, r, p, i, `Swap ${nums[i]} and ${nums[p]}`, [8]);
+                        }
                         p++;
+                        pushState(nums, l, r, r, p, i, `Increment p to ${p}`, [9]);
                     }
                 }
+                
+                [nums[p], nums[r]] = [nums[r], nums[p]];
+                pushState(nums, l, r, p, p, r, `Swap Pivot to final pos p=${p}`, [12]);
 
-                swap(p, r);
-                steps.push({
-                    nums: [...nums], l, r, pivotIdx: p, p: null, i: null, targetIndex,
-                    msg: `將 Pivot 移至正確位置 ${p}`,
-                    highlightLines: [14, 15]
-                });
-
-                if (p > targetIndex) {
-                    steps.push({
-                        nums: [...nums], l, r, pivotIdx: p, targetIndex,
-                        msg: `Pivot Index ${p} > Target ${targetIndex}, 向左尋找`,
-                        highlightLines: [2]
-                    });
-                    quickSelect(l, p - 1);
-                } else if (p < targetIndex) {
-                    steps.push({
-                        nums: [...nums], l, r, pivotIdx: p, targetIndex,
-                        msg: `Pivot Index ${p} < Target ${targetIndex}, 向右尋找`,
-                        highlightLines: [3]
-                    });
-                    quickSelect(p + 1, r);
+                if (p > targetIdx) {
+                    pushState(nums, l, r, p, p, null, `p (${p}) > target (${targetIdx}). Search Left.`, [13]);
+                    return quickSelect(l, p - 1);
+                } else if (p < targetIdx) {
+                    pushState(nums, l, r, p, p, null, `p (${p}) < target (${targetIdx}). Search Right.`, [14]);
+                    return quickSelect(p + 1, r);
                 } else {
-                    steps.push({
-                        nums: [...nums], l, r, pivotIdx: p, found: true, targetIndex,
-                        msg: `Pivot Index ${p} == Target！找到答案: ${nums[p]}`,
-                        highlightLines: [4],
-                        final: true
-                    });
+                    pushState(nums, l, r, p, p, null, `p (${p}) == target! Found ${nums[p]}`, [15], nums[p]);
+                    return nums[p];
                 }
             }
 
-            quickSelect(0, nums.length - 1);
+            const res = quickSelect(0, n - 1);
+            
+            steps.push({
+                arr: [...nums],
+                l: -1, r: -1, pivotIdx: null, pIdx: null, iIdx: null, targetIdx,
+                found: res,
+                msg: `Result: ${res}`,
+                highlightLines: [3]
+            });
+
             return steps;
         }
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            document.getElementById('targetK').textContent = document.getElementById('kInput').value;
-            document.getElementById('targetIdx').textContent = step.targetIndex;
-            document.getElementById('rangeDisplay').textContent = step.l !== undefined ? `[${step.l}, ${step.r}]` : '-';
+            document.getElementById('statK').textContent = document.getElementById('kInput').value;
+            document.getElementById('statIdx').textContent = step.targetIdx;
+            document.getElementById('statRange').textContent = (step.l!==-1) ? `[${step.l}, ${step.r}]` : "Done";
 
-            const container = document.getElementById('arrayDisplay');
+            const container = document.getElementById('barContainer');
             container.innerHTML = '';
             
             // Find max for height scaling
-            const maxVal = Math.max(...step.nums, 1);
-            const heightScale = 150 / maxVal;
+            const maxVal = Math.max(...step.arr);
+            const minVal = Math.min(...step.arr); // For negative handling if needed, though usually pos
+            const range = maxVal - Math.min(0, minVal); // Scale from 0 (or neg min) to max
 
-            step.nums.forEach((val, i) => {
-                const group = document.createElement('div');
-                let cls = 'bar-group';
-                
-                // Dim logic: outside current L, R range?
-                if (step.l !== undefined && (i < step.l || i > step.r)) {
-                    cls += ' dimmed';
-                }
-                
-                // Color logic
-                if (step.pivotIdx === i) cls += ' pivot';
-                if (step.found && i === step.pivotIdx) cls += ' found';
-                // During partition
-                if (step.pivotIdx !== undefined && step.p !== undefined && step.i !== undefined) {
-                    // Left of P is <= pivot (excluding pivot itself which is at r)
-                    if (i >= step.l && i < step.p) cls += ' less';
-                    // Between P and I is > pivot
-                    if (i >= step.p && i < step.i) cls += ' greater';
-                }
-
-                group.className = cls;
-                
-                // Bar
+            step.arr.forEach((val, i) => {
                 const bar = document.createElement('div');
                 bar.className = 'bar';
-                bar.style.height = `${Math.max(val * heightScale, 30)}px`;
-                bar.textContent = val;
                 
-                // Index
-                const idx = document.createElement('div');
-                idx.className = 'idx-label';
-                idx.textContent = i;
-                
-                group.appendChild(bar);
-                group.appendChild(idx);
+                // Height based on value
+                const h = Math.max(20, (val / maxVal) * 200); 
+                bar.style.height = `${h}px`;
+                bar.innerHTML = `<div class="bar-val">${val}</div><div class="bar-idx">${i}</div>`;
 
-                // Pointers
-                if (step.p === i) {
-                    const ptr = document.createElement('div');
-                    ptr.className = 'pointer pointer-p';
-                    ptr.textContent = 'P';
-                    group.appendChild(ptr);
+                if (step.l !== -1) {
+                    // Out of range
+                    if (i < step.l || i > step.r) bar.classList.add('inactive');
+                    
+                    // Pivot
+                    if (i === step.pivotIdx) bar.classList.add('pivot');
+                    
+                    // Partition colors
+                    if (i >= step.l && i < step.pIdx && i !== step.pivotIdx) bar.classList.add('less'); // <= pivot (mostly)
+                    if (i >= step.pIdx && i < (step.iIdx ?? step.r) && i !== step.pivotIdx) bar.classList.add('greater'); // > pivot
                 }
-                if (step.i === i) {
-                    const ptr = document.createElement('div');
-                    ptr.className = 'pointer scan';
-                    ptr.textContent = 'i';
-                    group.appendChild(ptr);
+                
+                if (step.found !== null && val === step.found && i === step.targetIdx) {
+                    bar.classList.add('sorted');
                 }
 
-                container.appendChild(group);
+                container.appendChild(bar);
             });
         }
 
         function runVisualizer() {
-            const arrStr = document.getElementById('arrInput').value;
+            const arr = document.getElementById('arrInput').value.split(',').map(x => parseInt(x.trim()));
             const k = parseInt(document.getElementById('kInput').value);
-            const nums = arrStr.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
             
-            if(nums.length === 0 || isNaN(k) || k < 1 || k > nums.length) return alert('輸入無效');
-
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(simulate(nums, k));
+            viz.setSteps(simulate(arr, k));
         }
 
         window.addEventListener('load', runVisualizer);

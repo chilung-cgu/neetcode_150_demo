@@ -3,281 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copy List with Random Pointer - 精緻視覺化</title>
+    <title>Copy List with Random Pointer - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
             border-radius: 16px;
-            padding: 30px 20px;
+            padding: 20px;
             margin: 15px 0;
-            min-height: 350px;
-        }
-
-        .lists-container {
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-            align-items: center;
-            position: relative;
-        }
-
-        .list-section {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            min-height: 500px;
         }
+        
+        #viz-svg { width: 100%; height: 450px; }
 
-        .list-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            padding: 4px 12px;
-            border-radius: 12px;
-        }
+        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; }
+        .node-circle.original { stroke: #3b82f6; fill: #1e293b; }
+        .node-circle.copy { stroke: #22c55e; fill: #1e293b; }
+        .node-circle.active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.1); }
 
-        .list-label.original {
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-        }
+        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .node-subtext { fill: #94a3b8; font-size: 10px; text-anchor: middle; }
 
-        .list-label.copy {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-        }
+        .link { fill: none; stroke-width: 2px; transition: all 0.5s; opacity: 0.8; }
+        .link.next { stroke: #64748b; marker-end: url(#arrow-next); }
+        .link.random { stroke: #a855f7; stroke-dasharray: 4; marker-end: url(#arrow-random); }
+        .link.map-link { stroke: #fbbf24; stroke-dasharray: 2; opacity: 0.4; }
+        
+        /* Map Entry */
+        .map-box { fill: rgba(30, 41, 59, 0.8); stroke: #475569; rx: 6; }
+        .map-text { fill: #cbd5e1; font-size: 12px; font-family: monospace; text-anchor: middle; }
 
-        .nodes-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            position: relative;
-        }
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
 
-        .node-wrapper {
-            display: flex;
-            align-items: center;
-            position: relative;
-        }
-
-        .node {
-            width: 60px;
-            height: 60px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            border-radius: 50%;
-            color: white;
-            position: relative;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 3px solid transparent;
-        }
-
-        .node.original {
-            background: linear-gradient(145deg, #3b82f6, #2563eb);
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-        }
-
-        .node.copy {
-            background: linear-gradient(145deg, #22c55e, #16a34a);
-            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
-        }
-
-        .node.copy.pending {
-            background: linear-gradient(145deg, #475569, #334155);
-            opacity: 0.5;
-        }
-
-        .node.active {
-            border-color: #fbbf24;
-            box-shadow: 0 0 25px rgba(251, 191, 36, 0.6), 0 0 50px rgba(251, 191, 36, 0.3);
-            transform: scale(1.1);
-        }
-
-        .node .val {
-            font-size: 1.2rem;
-        }
-
-        .node .random-indicator {
-            font-size: 0.6rem;
-            opacity: 0.8;
-            margin-top: 2px;
-        }
-
-        .node-index {
-            position: absolute;
-            top: -18px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.6rem;
-            color: #64748b;
-            font-weight: 600;
-        }
-
-        /* Next 連結箭頭 */
-        .next-link {
-            width: 24px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .next-link svg { width: 24px; height: 20px; }
-
-        /* Random 指標箭頭容器 */
-        .random-arrows-container {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            top: 0;
-            left: 0;
-        }
-
-        /* HashMap 視覺化 */
-        .hashmap-panel {
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin-top: 20px;
-            border: 1px solid rgba(100, 116, 139, 0.3);
-        }
-
-        .hashmap-title {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #64748b;
-            margin-bottom: 10px;
-        }
-
-        .hashmap-entries {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .hashmap-entry {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-family: 'Consolas', monospace;
-            transition: all 0.3s;
-        }
-
-        .hashmap-entry.active {
-            background: rgba(251, 191, 36, 0.2);
-            border: 1px solid #fbbf24;
-        }
-
-        .hashmap-entry .old-node {
-            color: #60a5fa;
-            font-weight: 600;
-        }
-
-        .hashmap-entry .arrow {
-            color: #64748b;
-        }
-
-        .hashmap-entry .new-node {
-            color: #22c55e;
-            font-weight: 600;
-        }
-
-        /* 連線視覺化 */
-        .mapping-line {
-            stroke: rgba(168, 85, 247, 0.4);
-            stroke-width: 2;
-            stroke-dasharray: 4;
-            fill: none;
-        }
-
-        .mapping-line.active {
-            stroke: #fbbf24;
-            stroke-width: 3;
-            stroke-dasharray: none;
-        }
-
-        /* 圖例 */
-        .legend-bar {
-            display: flex;
-            justify-content: center;
-            gap: 25px;
-            padding: 15px;
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 12px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #94a3b8; }
-        .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
-        .legend-dot.original { background: linear-gradient(145deg, #3b82f6, #2563eb); }
-        .legend-dot.copy { background: linear-gradient(145deg, #22c55e, #16a34a); }
-        .legend-line { width: 20px; height: 3px; }
-        .legend-line.next { background: #64748b; }
-        .legend-line.random { background: #a855f7; border-radius: 2px; }
-
-        /* Step Breakdown */
-        .step-breakdown {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin-top: 15px;
-            border-left: 4px solid #3b82f6;
-        }
-
-        .step-breakdown-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 8px; }
-        .step-breakdown-text { font-size: 0.95rem; color: #e2e8f0; font-family: 'Consolas', monospace; line-height: 1.6; }
-
-        /* Phase indicator */
-        .phase-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .phase {
-            padding: 6px 14px;
-            border-radius: 16px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: rgba(100, 116, 139, 0.2);
-            color: #64748b;
-            transition: all 0.3s;
-        }
-
-        .phase.active {
-            background: rgba(59, 130, 246, 0.3);
-            color: #60a5fa;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
-        }
-
-        .phase.done {
-            background: rgba(34, 197, 94, 0.3);
-            color: #22c55e;
-        }
-
-        /* 自訂輸入 */
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row label { min-width: 80px; font-size: 0.85rem; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; flex: 1; min-width: 100px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
-        .input-hint { font-size: 0.75rem; color: var(--viz-text-muted); margin-top: 5px; }
-
-        .code-line.active { background: rgba(251, 191, 36, 0.15) !important; border-left: 3px solid #fbbf24 !important; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -285,323 +50,322 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Copy List with Random Pointer - HashMap 深拷貝</div>
-
+                <div class="viz-title">Copy Random List (HashMap Approach)</div>
                 <div class="custom-input-section">
-                    <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>節點值:</label>
-                        <input type="text" id="customValues" value="7,13,11,10,1">
+                        <label>Values:</label>
+                        <input type="text" id="valsInput" value="7,13,11,10,1">
+                        <label>Randoms (Indices):</label>
+                        <input type="text" id="randsInput" value="null,0,4,2,0">
+                        <button onclick="runVisualizer()">複製</button>
                     </div>
-                    <div class="input-row">
-                        <label>random 指向:</label>
-                        <input type="text" id="customRandoms" value="-1,0,4,2,0">
-                        <button onclick="runCustomInput()">執行</button>
-                    </div>
-                    <div class="input-hint">random: -1 = null, 0~n-1 = 指向該索引的節點</div>
                 </div>
 
                 <div class="visualization-area">
-                    <div class="phase-indicator">
-                        <span class="phase" id="phase1">1. 建立節點</span>
-                        <span class="phase" id="phase2">2. 連接指標</span>
-                    </div>
-
-                    <div class="lists-container" id="listsContainer">
-                        <svg id="mappingSvg" style="position: absolute; width: 100%; height: 100%; pointer-events: none;"></svg>
-                    </div>
-
-                    <div class="hashmap-panel">
-                        <div class="hashmap-title">HashMap: old → new</div>
-                        <div class="hashmap-entries" id="hashmapEntries"></div>
-                    </div>
-
-                    <div class="legend-bar">
-                        <div class="legend-item"><div class="legend-dot original"></div>原始節點</div>
-                        <div class="legend-item"><div class="legend-dot copy"></div>複製節點</div>
-                        <div class="legend-item"><div class="legend-line next"></div>next 指標</div>
-                        <div class="legend-item"><div class="legend-line random" style="background: #a855f7;"></div>random 指標</div>
-                    </div>
+                    <svg id="viz-svg">
+                        <defs>
+                            <marker id="arrow-next" markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto">
+                                <path d="M0,0 L0,6 L9,3 z" fill="#64748b" />
+                            </marker>
+                            <marker id="arrow-random" markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto">
+                                <path d="M0,0 L0,6 L9,3 z" fill="#a855f7" />
+                            </marker>
+                        </defs>
+                        <g id="map-group" transform="translate(50, 20)"></g>
+                        <g id="main-group" transform="translate(50, 150)"></g>
+                    </svg>
                 </div>
 
                 <div class="step-breakdown">
-                    <div class="step-breakdown-title">Step Breakdown</div>
-                    <div class="step-breakdown-text" id="stepBreakdown">點擊「下一步」開始演算法</div>
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
             </div>
-
-            <div class="viz-card">
-                <div class="viz-title">演算法說明</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
-
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">HashMap 解法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'Node* copyRandomList(Node* head) {', id: 0 },
-            { line: '    unordered_map<Node*, Node*> oldToNew;', id: 1 },
-            { line: '', id: 2 },
-            { line: '    // Pass 1: 建立所有新節點', id: 3 },
-            { line: '    Node* curr = head;', id: 4 },
+            { line: '    if (!head) return nullptr;', id: 1 },
+            { line: '    unordered_map<Node*, Node*> map;', id: 2 },
+            { line: '    Node* curr = head;', id: 3 },
+            { line: '    // Phase 1: Copy Nodes', id: 4 },
             { line: '    while (curr) {', id: 5 },
-            { line: '        oldToNew[curr] = new Node(curr->val);', id: 6 },
+            { line: '        map[curr] = new Node(curr->val);', id: 6 },
             { line: '        curr = curr->next;', id: 7 },
             { line: '    }', id: 8 },
-            { line: '', id: 9 },
-            { line: '    // Pass 2: 連接 next 和 random', id: 10 },
-            { line: '    curr = head;', id: 11 },
-            { line: '    while (curr) {', id: 12 },
-            { line: '        oldToNew[curr]->next = oldToNew[curr->next];', id: 13 },
-            { line: '        oldToNew[curr]->random = oldToNew[curr->random];', id: 14 },
-            { line: '        curr = curr->next;', id: 15 },
-            { line: '    }', id: 16 },
-            { line: '    return oldToNew[head];', id: 17 },
-            { line: '}', id: 18 },
+            { line: '    // Phase 2: Connect Pointers', id: 9 },
+            { line: '    curr = head;', id: 10 },
+            { line: '    while (curr) {', id: 11 },
+            { line: '        map[curr]->next = map[curr->next];', id: 12 },
+            { line: '        map[curr]->random = map[curr->random];', id: 13 },
+            { line: '        curr = curr->next;', id: 14 },
+            { line: '    }', id: 15 },
+            { line: '    return map[head];', id: 16 },
+            { line: '}', id: 17 }
         ];
 
-        let currentNodes = [
-            { val: 7, random: null },
-            { val: 13, random: 0 },
-            { val: 11, random: 4 },
-            { val: 10, random: 2 },
-            { val: 1, random: 0 }
-        ];
         let viz;
 
-        function createArrowSVG(color = '#64748b') {
-            return `<svg viewBox="0 0 24 20"><path d="M 2 10 L 18 10" stroke="${color}" stroke-width="2" fill="none"/><polygon points="18,10 12,6 12,14" fill="${color}"/></svg>`;
-        }
-
-        function generateAlgorithmSteps(nodes) {
+        function simulate(values, rands) {
             const steps = [];
-            const n = nodes.length;
+            // Org Links
+            const nodes = values.map((v,i) => ({id: i, val: v, type: 'org'}));
+            let links = [];
+            for(let i=0; i<nodes.length; i++) {
+                if(i < nodes.length-1) links.push({s: i, t: i+1, type: 'next'});
+                if(rands[i] !== null) links.push({s: i, t: rands[i], type: 'random'});
+            }
 
-            // 初始化
-            steps.push({
-                phase: 0,
-                createdCount: 0,
-                connectedCount: 0,
-                currentIdx: -1,
-                highlightLines: [0, 1],
-                stepText: 'oldToNew = {}',
-                explanation: {
-                    title: '初始化 HashMap',
-                    text: `原始鏈表有 ${n} 個節點<br>每個節點有 val, next, random 三個屬性<br><br>HashMap 用來記錄：舊節點 → 新節點`,
-                    formula: 'unordered_map<Node*, Node*> oldToNew'
-                }
+            // State: 
+            // map: { orgId: copyId } (Visual mapping)
+            // copyNodes: array of nodes {id, val, type: 'copy'}
+            // copyLinks: array of links
+            
+            const map = {}; // orgId -> copyNodeObject
+            const copyNodes = [];
+            const copyLinks = [];
+            
+            const pushState = (msg, hl, activeId=null, explanation=null) => {
+                steps.push({
+                    orgNodes: JSON.parse(JSON.stringify(nodes)),
+                    orgLinks: JSON.parse(JSON.stringify(links)),
+                    copyNodes: JSON.parse(JSON.stringify(copyNodes)),
+                    copyLinks: JSON.parse(JSON.stringify(copyLinks)),
+                    map: {...map}, // shallow copy of keys is enough as values are ids
+                    activeId,
+                    msg, highlightLines: hl,
+                    explanation
+                });
+            };
+
+            pushState("Init: HashMap prepared", [1, 2], null, {
+                title: '初始化 Map',
+                text: '準備一個 HashMap 來儲存 `Old Node -> New Node` 的對應關係。',
+                formula: 'map<Node*, Node*>'
             });
 
-            // Pass 1: 建立所有新節點
-            for (let i = 0; i < n; i++) {
+            // Phase 1
+            for(let i=0; i<nodes.length; i++) {
                 const node = nodes[i];
-                const randomTarget = node.random !== null ? nodes[node.random].val : 'null';
-
-                steps.push({
-                    phase: 1,
-                    createdCount: i + 1,
-                    connectedCount: 0,
-                    currentIdx: i,
-                    highlightLines: [5, 6, 7],
-                    stepText: `oldToNew[old_${i}] = new Node(${node.val})`,
-                    explanation: {
-                        title: `Pass 1: 建立節點 ${i}`,
-                        text: `原始節點: val=${node.val}, random→${randomTarget}<br><br>建立複製節點，暫不設定指標<br>加入 HashMap: old_${i} → new_${i}`,
-                        formula: `oldToNew[${node.val}] = new Node(${node.val})`
-                    }
+                pushState(`Phase 1: Copy Node ${node.val}`, [5], node.id, {
+                    title: `訪問 Original Node ${node.val}`,
+                    text: `遍歷原鏈表。當前節點值為 ${node.val}。`,
+                    formula: 'curr = head'
+                });
+                
+                // Create Copy
+                const copyNode = { id: `c-${node.id}`, val: node.val, type: 'copy', orgId: node.id };
+                copyNodes.push(copyNode);
+                map[node.id] = copyNode.id;
+                
+                pushState(`Created Copy ${node.val}, Add to Map`, [6], node.id, {
+                    title: '建立副本',
+                    text: `建立新節點 ${node.val}。並將對應關係存入 Map：Original(${node.id}) -> Copy(${copyNode.id})。`,
+                    formula: 'map[curr] = new Node(curr->val)'
                 });
             }
 
-            // Pass 1 完成
-            steps.push({
-                phase: 1,
-                createdCount: n,
-                connectedCount: 0,
-                currentIdx: -1,
-                pass1Done: true,
-                highlightLines: [8, 10, 11],
-                stepText: 'Pass 1 完成！開始 Pass 2',
-                explanation: {
-                    title: 'Pass 1 完成',
-                    text: `已建立全部 ${n} 個複製節點<br>HashMap 大小 = ${n}<br><br>接下來利用 HashMap 連接 next 和 random`,
-                    formula: 'HashMap ready for pointer lookup'
-                }
+            // Phase 2
+            pushState("Phase 2: Use Map to connect pointers", [10, 11], null, {
+                title: 'Phase 2: 連接指針',
+                text: '再次遍歷原鏈表，利用 Map 查找對應的副本節點，並連接 Next 和 Random 指針。',
+                formula: 'curr = head'
             });
 
-            // Pass 2: 連接指標
-            for (let i = 0; i < n; i++) {
-                const node = nodes[i];
-                const nextIdx = i < n - 1 ? i + 1 : 'null';
-                const nextVal = i < n - 1 ? nodes[i + 1].val : 'null';
-                const randomIdx = node.random;
-                const randomVal = randomIdx !== null ? nodes[randomIdx].val : 'null';
-
-                steps.push({
-                    phase: 2,
-                    createdCount: n,
-                    connectedCount: i + 1,
-                    currentIdx: i,
-                    highlightLines: [12, 13, 14, 15],
-                    stepText: `new_${i}->next = new_${nextIdx}; new_${i}->random = new_${randomIdx !== null ? randomIdx : 'null'}`,
-                    explanation: {
-                        title: `Pass 2: 連接節點 ${i} 的指標`,
-                        text: `<code>oldToNew[old_${i}]->next = oldToNew[old_${nextIdx}]</code><br>→ new_${i}.next = new_${nextIdx} (${nextVal})<br><br><code>oldToNew[old_${i}]->random = oldToNew[old_${randomIdx !== null ? randomIdx : 'null'}]</code><br>→ new_${i}.random = new_${randomIdx !== null ? randomIdx : 'null'} (${randomVal})`,
-                        formula: `next→${nextVal}, random→${randomVal}`
-                    }
+            for(let i=0; i<nodes.length; i++) {
+                const orgId = i;
+                const copyId = map[orgId];
+                
+                pushState(`Connect pointers for Copy ${nodes[i].val}`, [11], orgId, {
+                    title: `處理節點 ${nodes[i].val}`,
+                    text: `取出原節點對應的副本節點，準備設定其 Next 和 Random。`,
+                    formula: 'copy = map[curr]'
                 });
+
+                // Next
+                if(i < nodes.length-1) {
+                    const nextOrgId = i + 1;
+                    const nextCopyId = map[nextOrgId];
+                    copyLinks.push({s: copyId, t: nextCopyId, type: 'next'});
+                    
+                    pushState(`Set Next: Copy(${nodes[i].val}) -> Copy(${nodes[i+1].val})`, [12], orgId, {
+                        title: '連接 Next',
+                        text: `原節點的 Next 是 ${nodes[i+1].val}。透過 Map 找到對應的副本，將當前副本的 Next 指向它。`,
+                        formula: 'map[curr]->next = map[curr->next]'
+                    });
+                }
+
+                // Random
+                if(rands[i] !== null) {
+                    const randOrgId = rands[i];
+                    const randCopyId = map[randOrgId];
+                    copyLinks.push({s: copyId, t: randCopyId, type: 'random'});
+                    
+                    pushState(`Set Random: Copy(${nodes[i].val}) -> Copy(${nodes[rands[i]].val})`, [13], orgId, {
+                        title: '連接 Random',
+                        text: `原節點的 Random 指向 ${nodes[rands[i]].val}。透過 Map 找到對應的副本，連接 Random 指針。`,
+                        formula: 'map[curr]->random = map[curr->random]'
+                    });
+                }
             }
 
-            // 完成
-            steps.push({
-                phase: 3,
-                createdCount: n,
-                connectedCount: n,
-                currentIdx: -1,
-                final: true,
-                highlightLines: [17],
-                stepText: 'return oldToNew[head]',
-                explanation: {
-                    title: '🎉 深拷貝完成！',
-                    text: `成功複製整個鏈表，包含所有 random 指標<br><br>Time: O(n) - 兩次遍歷<br>Space: O(n) - HashMap 空間`,
-                    formula: 'return oldToNew[head]'
-                }
+            pushState("Done", [16], null, {
+                title: '完成',
+                text: '返回複製鏈表的頭節點 (map[head])。',
+                formula: 'return map[head]'
             });
 
             return steps;
         }
 
-        function renderStep(step) {
-            const container = document.getElementById('listsContainer');
-            const n = currentNodes.length;
+        const svg = d3.select("#viz-svg");
+        const gMap = d3.select("#map-group");
+        const gMain = d3.select("#main-group");
 
-            // 更新 Phase indicators
-            ['phase1', 'phase2'].forEach((id, i) => {
-                const el = document.getElementById(id);
-                el.classList.remove('active', 'done');
-                if (step.phase === i + 1) el.classList.add('active');
-                else if (step.phase > i + 1 || step.final) el.classList.add('done');
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+
+            const SPACING = 80;
+            
+            // Layout Original Nodes (Top Row)
+            step.orgNodes.forEach((n, i) => {
+                n.x = i * SPACING;
+                n.y = 0;
+            });
+            
+            // Layout Copy Nodes (Bottom Row)
+            step.copyNodes.forEach((n, i) => {
+                n.x = i * SPACING;
+                n.y = 150;
             });
 
-            let html = '<svg id="mappingSvg" style="position: absolute; width: 100%; height: 100%; pointer-events: none;"></svg>';
-
-            // 原始鏈表
-            html += '<div class="list-section"><span class="list-label original">Original</span><div class="nodes-row">';
-            currentNodes.forEach((node, i) => {
-                let cls = 'node original';
-                if (step.currentIdx === i) cls += ' active';
-                const randomLabel = node.random !== null ? `↗${node.random}` : '↗∅';
-
-                html += '<div class="node-wrapper">';
-                html += `<div class="node-index">[${i}]</div>`;
-                html += `<div class="${cls}"><span class="val">${node.val}</span><span class="random-indicator">${randomLabel}</span></div>`;
-                if (i < n - 1) html += `<div class="next-link">${createArrowSVG('#64748b')}</div>`;
-                html += '</div>';
-            });
-            html += '</div></div>';
-
-            // 複製鏈表
-            const showCopy = step.createdCount > 0;
-            if (showCopy) {
-                html += '<div class="list-section"><span class="list-label copy">Copy</span><div class="nodes-row">';
-                for (let i = 0; i < n; i++) {
-                    const node = currentNodes[i];
-                    const isCreated = i < step.createdCount;
-                    const isConnected = step.phase >= 2 && i < step.connectedCount;
-                    let cls = 'node copy';
-                    if (!isCreated) cls += ' pending';
-                    if (step.currentIdx === i && step.phase === 2) cls += ' active';
-
-                    const randomLabel = isConnected && node.random !== null ? `↗${node.random}` : '↗?';
-
-                    html += '<div class="node-wrapper">';
-                    html += `<div class="node-index">[${i}']</div>`;
-                    html += `<div class="${cls}"><span class="val">${isCreated ? node.val + "'" : '?'}</span><span class="random-indicator">${isCreated ? randomLabel : ''}</span></div>`;
-                    if (i < n - 1 && isCreated) {
-                        const nextConnected = isConnected && i + 1 <= step.connectedCount;
-                        html += `<div class="next-link">${createArrowSVG(nextConnected ? '#22c55e' : '#475569')}</div>`;
-                    } else if (i < n - 1) {
-                        html += '<div class="next-link" style="opacity: 0.3;">' + createArrowSVG('#475569') + '</div>';
-                    }
-                    html += '</div>';
+            // Map Visualization
+            // A box above showing Key->Val lines?
+            // Or just draw dashed lines from Top Node to Bottom Node indicating map relationship?
+            // Simple dashed lines are best for "Map" concept in graph viz
+            
+            const mapLinks = [];
+            step.copyNodes.forEach(cn => {
+                const org = step.orgNodes.find(n => n.id === cn.orgId); // orgId stored in copy
+                if(org) {
+                    mapLinks.push({s: org, t: cn});
                 }
-                html += '</div></div>';
-            }
-
-            container.innerHTML = html;
-
-            // 更新 HashMap 顯示
-            let mapHtml = '';
-            for (let i = 0; i < step.createdCount; i++) {
-                const isActive = step.currentIdx === i;
-                mapHtml += `<div class="hashmap-entry ${isActive ? 'active' : ''}">
-                    <span class="old-node">old_${i}</span>
-                    <span class="arrow">→</span>
-                    <span class="new-node">new_${i}</span>
-                </div>`;
-            }
-            document.getElementById('hashmapEntries').innerHTML = mapHtml || '<span style="color: #64748b;">空</span>';
-
-            // Step breakdown
-            document.getElementById('stepBreakdown').innerHTML = step.stepText || '';
-        }
-
-        function init(nodes = currentNodes) {
-            currentNodes = nodes;
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => renderStep(step)
             });
-            viz.setSteps(generateAlgorithmSteps(nodes));
+
+            const mlSel = gMain.selectAll(".link-map").data(mapLinks);
+            mlSel.enter().append("path").attr("class", "link map-link")
+                .merge(mlSel)
+                .transition().duration(500)
+                .attr("d", d => `M ${d.s.x},${d.s.y+20} L ${d.t.x},${d.t.y-20}`);
+            mlSel.exit().remove();
+
+            // Render Links (Org and Copy)
+            const allLinks = [
+                ...step.orgLinks.map(l => ({...l, srcNodes: step.orgNodes})),
+                ...step.copyLinks.map(l => ({...l, srcNodes: step.copyNodes}))
+            ];
+            
+            // Need to map IDs to coords. copy IDs are strings "c-X".
+            // Helper
+            const getNode = (list, id) => list.find(n => n.id === id);
+
+            const lSel = gMain.selectAll(".link-graph").data(allLinks, d => d.s + "-" + d.t + "-" + (d.srcNodes === step.copyNodes ? 'c' : 'o'));
+            const lEnter = lSel.enter().append("path").attr("class", d => "link " + d.type);
+            
+            lSel.merge(lEnter).transition().duration(500)
+                .attr("class", d => "link-graph link " + d.type)
+                .attr("d", d => {
+                    const s = getNode(d.srcNodes, d.s);
+                    const t = getNode(d.srcNodes, d.t);
+                    if(!s || !t) return "";
+                    
+                    if(d.type === 'next') {
+                        return `M ${s.x+15},${s.y} L ${t.x-15},${t.y}`;
+                    } else {
+                        // Random curve
+                        // Curve up for original, down for copy?
+                        // Or simple curve
+                        const dir = (d.srcNodes === step.orgNodes) ? -1 : 1;
+                        const h = 40 * dir;
+                        return `M ${s.x},${s.y} Q ${(s.x+t.x)/2},${s.y+h} ${t.x},${t.y}`;
+                    }
+                });
+            lSel.exit().remove();
+
+            // Nodes
+            const allNodes = [...step.orgNodes, ...step.copyNodes];
+            const nSel = gMain.selectAll(".node-g").data(allNodes, d => d.id);
+            const nEnter = nSel.enter().append("g").attr("class", "node-g");
+            nEnter.append("circle").attr("r", 15).attr("class", "node-circle");
+            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            if(step.activeId !== null) nEnter.append("text").attr("class", "node-subtext").attr("dy", 28); // Label?
+
+            const nUpdate = nSel.merge(nEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            nUpdate.select("circle").attr("class", d => {
+                let c = "node-circle";
+                if(d.type === 'org') c += " original";
+                if(d.type === 'copy') c += " copy";
+                if(d.id === step.activeId) c += " active";
+                return c;
+            });
+            nUpdate.select(".node-text").text(d => d.val);
+            
+            nSel.exit().remove();
         }
 
-        function runCustomInput() {
-            const values = document.getElementById('customValues').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x));
-            const randoms = document.getElementById('customRandoms').value.split(',').map(s => parseInt(s.trim()));
-
-            if (values.length < 1 || values.length > 8) {
-                alert('請輸入 1-8 個節點');
+        function runVisualizer() {
+            const vStr = document.getElementById('valsInput').value;
+            const rStr = document.getElementById('randsInput').value;
+            
+            const vals = vStr.split(',').map(x=>parseInt(x.trim()));
+            const rands = rStr.split(',').map(x => {
+                const t = x.trim();
+                return (t==='null'||t==='') ? null : parseInt(t);
+            });
+            
+            // Validate length
+            if(vals.length !== rands.length) {
+                alert("Values and Randoms length mismatch");
                 return;
             }
 
-            const nodes = values.map((val, i) => ({
-                val,
-                random: randoms[i] >= 0 && randoms[i] < values.length ? randoms[i] : null
-            }));
-            init(nodes);
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(vals, rands));
         }
 
-        function resetVisualization() { init(currentNodes); }
-        window.addEventListener('load', () => init());
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

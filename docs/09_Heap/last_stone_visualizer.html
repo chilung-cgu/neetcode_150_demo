@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>Last Stone Weight (Max Heap) - 精緻視覺化</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Last Stone Weight (Max Heap) - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,65 +14,60 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+            align-items: center;
+            min-height: 600px;
         }
 
         .dual-view {
-            display: flex; flex-direction: column; align-items: center; gap: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%;
         }
 
+        /* Heap Tree */
         .tree-panel {
-            width: 100%; height: 320px;
+            width: 100%; height: 350px;
             background: rgba(30, 41, 59, 0.3);
             border-radius: 12px;
             position: relative;
         }
         #tree-svg { width: 100%; height: 100%; }
 
-        .array-view {
-            display: flex; gap: 6px; padding: 15px;
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 8px;
-            flex-wrap: wrap; justify-content: center;
-        }
-        .array-item {
-            width: 40px; height: 40px;
-            display: flex; align-items: center; justify-content: center;
-            background: #3b82f6; color: white;
-            border-radius: 50%; /* Stones are round */
-            font-weight: bold; position: relative;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            transition: all 0.3s;
-        }
-        .array-item.active { background: #fbbf24; transform: scale(1.2); z-index: 10; }
-        .array-item.second { background: #f59e0b; }
-        
+        /* Smash Zone */
         .smash-zone {
-            height: 80px; display: flex; align-items: center; justify-content: center; gap: 40px;
+            height: 120px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 60px;
             background: rgba(255,255,255,0.05); border-radius: 12px;
-            margin-top: 10px; position: relative;
+            position: relative;
         }
+        .vs-label { font-size: 2rem; font-weight: 900; color: #ef4444; font-style: italic; }
+        
         .stone-slot {
-            width: 50px; height: 50px; border: 2px dashed #64748b; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; color: #64748b;
+            width: 70px; height: 70px; border: 2px dashed #475569; border-radius: 50%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #64748b; font-size: 0.8rem; position: relative;
         }
         
         .stone-anim {
-            width: 50px; height: 50px; background: #fbbf24; border-radius: 50%;
+            width: 70px; height: 70px; background: #fbbf24; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-weight: bold; color: black; box-shadow: 0 0 10px #fbbf24;
+            font-weight: 800; font-size: 1.5rem; color: #0f172a;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+            transition: all 0.3s;
         }
+        .stone-anim.broken { opacity: 0.3; transform: scale(0.8); filter: grayscale(1); }
+        .stone-anim.result { background: #22c55e; box-shadow: 0 0 20px #22c55e; color: white; }
+
+        /* D3 Nodes */
+        .node-circle { fill: #3b82f6; stroke: #1e293b; stroke-width: 3px; transition: fill 0.3s; }
+        .node-circle.root { stroke: #fbbf24; stroke-width: 4px; }
+        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .link { stroke: #64748b; stroke-width: 2px; opacity: 0.4; fill: none; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
 
-        .step-breakdown {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px; border-left: 4px solid #3b82f6;
-            padding: 15px 20px;
-        }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -82,24 +78,23 @@
                 <div class="viz-title">Last Stone Weight (Max Heap)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>石頭重量:</label>
-                        <input type="text" id="numsInput" value="2, 7, 4, 1, 8, 1">
-                        <button onclick="runVisualizer()">粉碎 (Smash)!</button>
+                        <label>Stones:</label>
+                        <input type="text" id="stonesInput" value="2, 7, 4, 1, 8, 1">
+                        <button onclick="runVisualizer()">Smash!</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <div class="dual-view">
-                        <div class="array-view" id="arrayDisplay"></div>
-                        <div class="tree-panel">
-                            <svg id="tree-svg"><g id="tree-g"></g></svg>
-                        </div>
+                    <div class="smash-zone">
+                        <div class="stone-slot" id="slotY"><span style="margin-bottom:5px;">Max (Y)</span></div>
+                        <div class="vs-label">VS</div>
+                        <div class="stone-slot" id="slotX"><span style="margin-bottom:5px;">2nd Max (X)</span></div>
                     </div>
-                    
-                    <div class="smash-zone" id="smashZone">
-                        <div class="stone-slot" id="slot1">Y</div>
-                        <div style="font-size:2rem;">💥</div>
-                        <div class="stone-slot" id="slot2">X</div>
+
+                    <div class="tree-panel">
+                        <svg id="tree-svg">
+                            <g id="tree-main"></g>
+                        </svg>
                     </div>
                 </div>
 
@@ -143,191 +138,220 @@
             { line: '    while (pq.size() > 1) {', id: 2 },
             { line: '        int y = pq.top(); pq.pop();', id: 3 },
             { line: '        int x = pq.top(); pq.pop();', id: 4 },
-            { line: '        if (x != y) pq.push(y - x);', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    return pq.empty() ? 0 : pq.top();', id: 7 },
-            { line: '}', id: 8 }
+            { line: '        if (x != y) {', id: 5 },
+            { line: '            pq.push(y - x);', id: 6 },
+            { line: '        }', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return pq.empty() ? 0 : pq.top();', id: 9 },
+            { line: '}', id: 10 }
         ];
 
         let viz;
 
-        function simulateMaxHeap(initialStones) {
-            const steps = [];
-            let heap = []; // Max Heap array representation
+        // --- Helper ---
+        function heapToHierarchy(arr) {
+            if (arr.length === 0) return null;
+            function build(idx) {
+                if (idx >= arr.length) return null;
+                const node = { id: idx, val: arr[idx], children: [] };
+                const left = build(2 * idx + 1);
+                const right = build(2 * idx + 2);
+                if (left) node.children.push(left);
+                if (right) node.children.push(right);
+                return node;
+            }
+            return build(0);
+        }
 
-            // Heap Utils
-            const swap = (i, j) => [heap[i], heap[j]] = [heap[j], heap[i]];
-            const siftUp = (i) => {
-                while(i > 0) {
-                    let p = Math.floor((i-1)/2);
-                    if(heap[i] > heap[p]) { swap(i, p); i=p; } else break;
+        // --- Simulation ---
+        // Basic Max Heap Implementation for Simulation
+        class MaxHeap {
+            constructor(arr) {
+                this.heap = [];
+                if(arr) arr.forEach(x => this.push(x));
+            }
+            push(val) {
+                this.heap.push(val);
+                this.bubbleUp(this.heap.length - 1);
+            }
+            pop() {
+                if(this.heap.length === 0) return null;
+                const max = this.heap[0];
+                const last = this.heap.pop();
+                if(this.heap.length > 0) {
+                    this.heap[0] = last;
+                    this.bubbleDown(0);
                 }
-            };
-            const siftDown = (i) => {
+                return max;
+            }
+            bubbleUp(idx) {
+                while(idx > 0) {
+                    let p = Math.floor((idx-1)/2);
+                    if(this.heap[idx] > this.heap[p]) {
+                        [this.heap[idx], this.heap[p]] = [this.heap[p], this.heap[idx]];
+                        idx = p;
+                    } else break;
+                }
+            }
+            bubbleDown(idx) {
                 while(true) {
-                    let l=2*i+1, r=2*i+2, large=i;
-                    if(l<heap.length && heap[l]>heap[large]) large=l;
-                    if(r<heap.length && heap[r]>heap[large]) large=r;
-                    if(large!==i) { swap(i, large); i=large; } else break;
+                    let l = 2*idx+1, r = 2*idx+2, largest = idx;
+                    if(l < this.heap.length && this.heap[l] > this.heap[largest]) largest = l;
+                    if(r < this.heap.length && this.heap[r] > this.heap[largest]) largest = r;
+                    if(largest !== idx) {
+                        [this.heap[idx], this.heap[largest]] = [this.heap[largest], this.heap[idx]];
+                        idx = largest;
+                    } else break;
                 }
-            };
-            const push = (val) => { heap.push(val); siftUp(heap.length-1); };
-            const pop = () => {
-                if(heap.length===0) return null;
-                const top = heap[0];
-                const last = heap.pop();
-                if(heap.length > 0) { heap[0] = last; siftDown(0); }
-                return top;
-            };
+            }
+            toArray() { return [...this.heap]; }
+            size() { return this.heap.length; }
+        }
 
-            // Build Heap
-            for(let s of initialStones) push(s); // Naive build
-            // Better: Floyd's build, but for simulation let's assume valid heap start
-            // Actually, let's just make it a valid heap instantly for step 0
+        function simulate(stones) {
+            const steps = [];
+            const pq = new MaxHeap(stones); // Init heap
             
-            // Re-build manually for correct initial state
-            heap = [...initialStones];
-            for(let i=Math.floor(heap.length/2)-1; i>=0; i--) siftDown(i);
-
+            // For animation, we need intermediate heap states.
+            // But implementing full heap visual steps (swap by swap) inside this loop is complex.
+            // We will simplify: Show "Pop Y" -> Heap State Update -> "Pop X" -> Heap State Update.
+            // We assume instant heapify for visual clarity unless we really want swap steps. 
+            // "Instant heapify" is acceptable if we focus on the logic Y vs X.
+            
             steps.push({
-                heap: [...heap], 
-                highlightLines: [1], 
-                msg: `初始化 Max Heap: [${heap.join(', ')}]`,
-                y: null, x: null
+                heap: pq.toArray(),
+                y: null, x: null, result: null,
+                msg: "Init Max Heap",
+                highlightLines: [1]
             });
 
-            while(heap.length > 1) {
+            while(pq.size() > 1) {
+                // Peek Y
+                const y = pq.heap[0];
                 steps.push({
-                    heap: [...heap],
-                    highlightLines: [2],
-                    msg: `Heap 大小 > 1，繼續粉碎`
+                    heap: pq.toArray(),
+                    y: y, x: null, result: null,
+                    msg: `Pop Max (Y = ${y})`,
+                    highlightLines: [3]
                 });
-
-                // Pop Y
-                const y = heap[0];
-                const lastY = heap.pop();
-                if(heap.length > 0) { heap[0] = lastY; siftDown(0); } else { /* heap empty */ }
                 
-                steps.push({
-                    heap: [...heap],
-                    y: y, x: null,
-                    highlightLines: [3],
-                    msg: `取出最重石頭 Y = ${y}`
-                });
-
-                // Pop X
-                const x = heap[0];
-                const lastX = heap.pop();
-                if(heap.length > 0) { heap[0] = lastX; siftDown(0); }
+                // Actual pop logic (simplified visual)
+                pq.pop(); // Remove Y
                 
+                // Peek X
+                const x = pq.heap[0]; // Next max
                 steps.push({
-                    heap: [...heap],
-                    y: y, x: x,
-                    highlightLines: [4],
-                    msg: `取出次重石頭 X = ${x}`
+                    heap: pq.toArray(),
+                    y: y, x: x, result: null,
+                    msg: `Pop 2nd Max (X = ${x})`,
+                    highlightLines: [4]
                 });
-
-                // Smash
+                
+                pq.pop(); // Remove X
+                
+                // Clash
+                let diff = y - x;
+                steps.push({
+                    heap: pq.toArray(), // Both removed
+                    y: y, x: x, result: diff,
+                    msg: `Clash! ${y} - ${x} = ${diff}`,
+                    highlightLines: [5]
+                });
+                
                 if (x !== y) {
-                    const remain = y - x;
-                    push(remain);
+                    pq.push(diff);
                     steps.push({
-                        heap: [...heap],
-                        y: y, x: x, smash: true,
-                        highlightLines: [5],
-                        msg: `X != Y, 粉碎！放回 ${y} - ${x} = ${remain}`
+                        heap: pq.toArray(),
+                        y: y, x: x, result: diff,
+                        msg: `Push diff (${diff}) back`,
+                        highlightLines: [6]
                     });
                 } else {
                     steps.push({
-                        heap: [...heap],
-                        y: y, x: x, smash: true,
-                        highlightLines: [5],
-                        msg: `X == Y, 兩者皆粉碎，不放回`
+                        heap: pq.toArray(),
+                        y: y, x: x, result: 0,
+                        msg: `Both destroyed (${y} == ${x})`,
+                        highlightLines: [5] // else condition implied
                     });
                 }
             }
-
+            
+            const final = pq.size() === 0 ? 0 : pq.heap[0];
             steps.push({
-                heap: [...heap],
-                highlightLines: [7],
-                msg: `剩下的石頭重量: ${heap.length ? heap[0] : 0}`,
-                done: true
+                heap: pq.toArray(),
+                y: null, x: null, result: final,
+                msg: `Final Result: ${final}`,
+                highlightLines: [9]
             });
 
             return steps;
         }
 
+        // --- Render ---
+        const width = 600, height = 350;
         const svg = d3.select("#tree-svg");
-        const gTree = d3.select("#tree-g").attr("transform", "translate(0, 40)");
+        const gMain = d3.select("#tree-main");
+        const zoom = d3.zoom().on("zoom", (e) => gMain.attr("transform", e.transform));
+        svg.call(zoom);
+        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 40).scale(1));
+
+        const treeLayout = d3.tree().nodeSize([50, 60]);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+
+            // Render Stones in Slot
+            const slotY = document.getElementById('slotY');
+            const slotX = document.getElementById('slotX');
             
-            // Render Smash Zone
-            const s1 = document.getElementById('slot1');
-            const s2 = document.getElementById('slot2');
-            s1.innerHTML = step.y !== null && step.y !== undefined ? `<div class="stone-anim" style="transform:scale(1.2)">${step.y}</div>` : 'Y';
-            s2.innerHTML = step.x !== null && step.x !== undefined ? `<div class="stone-anim">${step.x}</div>` : 'X';
-
-            // Render Array
-            const arrC = document.getElementById('arrayDisplay');
-            arrC.innerHTML = step.heap.map((v, i) => 
-                `<div class="array-item">${v}</div>`
-            ).join('');
-
-            // Render Tree
-            if(step.heap.length === 0) {
-                gTree.selectAll("*").remove();
-                return;
+            // Clear but keep labels
+            slotY.innerHTML = '<span style="margin-bottom:5px; font-size:0.8rem; color:#94a3b8">Max (Y)</span>';
+            slotX.innerHTML = '<span style="margin-bottom:5px; font-size:0.8rem; color:#94a3b8">2nd Max (X)</span>';
+            
+            if(step.y !== null) {
+                const stone = document.createElement('div');
+                stone.className = 'stone-anim';
+                stone.textContent = step.y;
+                slotY.appendChild(stone);
+            }
+            if(step.x !== null) {
+                const stone = document.createElement('div');
+                stone.className = 'stone-anim';
+                stone.textContent = step.x;
+                // If destroyed
+                if(step.result === 0 && step.msg.includes('destroyed')) {
+                    stone.classList.add('broken');
+                    if(slotY.lastChild) slotY.lastChild.classList.add('broken');
+                }
+                slotX.appendChild(stone);
             }
             
-            const stratify = (idx) => {
-                if(idx >= step.heap.length) return null;
-                const node = { id: idx, val: step.heap[idx], children: [] };
-                const l = stratify(2*idx+1);
-                const r = stratify(2*idx+2);
-                if(l) node.children.push(l);
-                if(r) node.children.push(r);
-                return node;
-            };
-            
-            const root = d3.hierarchy(stratify(0));
-            const treeLayout = d3.tree().size([document.querySelector('.tree-panel').clientWidth, 220]);
-            treeLayout(root);
+            // Render Heap
+            gMain.selectAll("*").remove();
+            if(step.heap.length > 0) {
+                const root = d3.hierarchy(heapToHierarchy(step.heap));
+                treeLayout(root);
 
-            const links = gTree.selectAll(".link").data(root.links(), d=>d.target.data.id);
-            links.enter().append("path").attr("class", "link")
-                .merge(links)
-                .transition().duration(200)
-                .attr("d", d3.linkVertical().x(d=>d.x).y(d=>d.y))
-                .style("stroke", "#cbd5e1").style("fill", "none");
-            links.exit().remove();
+                const links = gMain.selectAll(".link").data(root.links());
+                links.enter().append("path").attr("class", "link")
+                    .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
 
-            const nodes = gTree.selectAll(".node-g").data(root.descendants(), d=>d.data.id);
-            const nEnter = nodes.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 18).attr("fill", "#3b82f6");
-            nEnter.append("text").attr("fill", "white").attr("dy", 5).attr("text-anchor", "middle").style("font-weight", "bold");
-            
-            const nUpdate = nodes.merge(nEnter)
-                .transition().duration(200)
-                .attr("transform", d=>`translate(${d.x},${d.y})`);
-            
-            nUpdate.select("circle"); 
-            nUpdate.select("text").text(d=>d.data.val);
-            
-            nodes.exit().remove();
+                const nodes = gMain.selectAll(".node-g").data(root.descendants());
+                const nEnter = nodes.enter().append("g").attr("class", "node-g")
+                    .attr("transform", d => `translate(${d.x}, ${d.y})`);
+                
+                nEnter.append("circle").attr("r", 20).attr("class", d => d.depth === 0 ? "node-circle root" : "node-circle");
+                nEnter.append("text").attr("class", "node-text").attr("dy", 1).text(d => d.data.val);
+            }
         }
 
         function runVisualizer() {
-            const val = document.getElementById('numsInput').value;
-            const nums = val.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
-            if(!nums.length) return;
-            
+            const arr = document.getElementById('stonesInput').value.split(',').map(x => parseInt(x.trim()));
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(simulateMaxHeap(nums));
+            viz.setSteps(simulate(arr));
         }
 
         window.addEventListener('load', runVisualizer);

@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>Find Median (Two Heaps) - 精緻視覺化</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Median (Two Heaps) - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -14,71 +15,43 @@
             flex-direction: column;
             gap: 20px;
             align-items: center;
+            min-height: 600px;
         }
 
-        /* Scale Visual */
-        .scale-container {
-            width: 500px; height: 300px; position: relative; margin-top: 30px;
-        }
+        /* Balance Scale Visual */
+        #scale-svg { width: 600px; height: 350px; cursor: grab; }
         
-        .scale-bar {
-            width: 400px; height: 8px; background: #64748b; border-radius: 4px;
-            position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        .scale-bar { stroke: #64748b; stroke-width: 8px; stroke-linecap: round; transition: all 0.5s ease-out; }
+        .scale-pivot { fill: #94a3b8; }
+        .bucket-rope { stroke: #94a3b8; stroke-width: 2px; }
         
-        .scale-pivot {
-            width: 0; height: 0; 
-            border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 40px solid #94a3b8;
-            position: absolute; top: 56px; left: 50%; transform: translateX(-50%);
-        }
-
-        .heap-bucket {
-            width: 140px; min-height: 120px;
-            background: rgba(30, 41, 59, 0.6); border: 2px solid #475569;
-            border-radius: 0 0 50px 50px;
-            position: absolute; top: 18px; /* hang from bar */
-            display: flex; flex-direction: column-reverse; align-items: center; padding: 10px; gap: 5px;
-            transition: all 0.5s;
-        }
-        .bucket-left { left: 0; border-top: 4px solid #3b82f6; } /* Max Heap */
-        .bucket-right { right: 0; border-top: 4px solid #a855f7; } /* Min Heap */
+        .heap-container-g { transition: transform 0.5s ease-out; }
         
-        .bucket-rope {
-            width: 2px; height: 50px; background: #94a3b8; position: absolute; top: -50px; left: 50%;
-        }
+        /* Elements */
+        .node-circle { stroke-width: 2px; transition: all 0.3s; }
+        .node-circle.max { fill: #3b82f6; stroke: #1e293b; } /* Left: Small Half (Max Heap) */
+        .node-circle.min { fill: #a855f7; stroke: #1e293b; } /* Right: Large Half (Min Heap) */
+        .node-circle.new { animation: popIn 0.4s; stroke: #fbbf24; stroke-width: 4px; }
+        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 12px; pointer-events: none; text-anchor: middle; dominant-baseline: middle; }
 
-        .element {
-            width: 36px; height: 36px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; color: white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            animation: dropIn 0.4s;
-        }
-        .element.small { background: #3b82f6; }
-        .element.large { background: #a855f7; }
-        .element.top { border: 2px solid #fbbf24; z-index: 10; transform: scale(1.1); }
-
-        @keyframes dropIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        .scale-label {
-            position: absolute; top: -30px; width: 100%; text-align: center; color: #cbd5e1; font-weight: bold; font-size: 0.9rem;
-        }
+        @keyframes popIn { from { r: 0; } to { r: 18; } }
 
         /* Stats */
-        .median-display {
-            font-size: 2rem; font-weight: bold; color: #22c55e;
-            text-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
-            margin-bottom: 10px;
+        .stats-panel {
+            display: flex; gap: 40px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px;
         }
-
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 2rem; font-weight: bold; color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+        
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 80px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 100px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -86,33 +59,48 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Find Median (Two Heaps)</div>
+                <div class="viz-title">Find Median (Two Heaps Balance)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>添加數字:</label>
+                        <label>Add Number:</label>
                         <input type="number" id="numInput" value="5">
-                        <button onclick="handleAdd()">Add</button>
-                        <button onclick="resetViz()" style="background:var(--viz-error)">Reset</button>
+                        <button onclick="runAdd()">Add</button>
+                        <button onclick="resetViz()" style="background:#ef4444;">Reset</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <div>當前中位數 (Median)</div>
-                    <div class="median-display" id="medianText">-</div>
-
-                    <div class="scale-container">
-                        <div class="scale-bar" id="scaleBar">
-                            <div class="heap-bucket bucket-left" id="maxHeap">
-                                <div class="bucket-rope"></div>
-                                <div class="scale-label">Max Heap (Smaller Half)</div>
-                            </div>
-                            <div class="heap-bucket bucket-right" id="minHeap">
-                                <div class="bucket-rope"></div>
-                                <div class="scale-label">Min Heap (Larger Half)</div>
-                            </div>
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Current Median</div>
+                            <div class="stat-val" id="medianDisplay">-</div>
                         </div>
-                        <div class="scale-pivot"></div>
                     </div>
+
+                    <svg id="scale-svg">
+                        <g id="scale-main" transform="translate(300, 50)">
+                            <!-- Pivot -->
+                            <path d="M -20 20 L 20 20 L 0 50 Z" class="scale-pivot" />
+                            <!-- Bar Group (Rotates) -->
+                            <g id="bar-group">
+                                <line x1="-200" y1="0" x2="200" y2="0" class="scale-bar" />
+                                
+                                <!-- Left Bucket (Max Heap) -->
+                                <g transform="translate(-200, 0)">
+                                    <line x1="0" y1="0" x2="0" y2="80" class="bucket-rope" />
+                                    <g id="left-heap-g" transform="translate(0, 80)"></g>
+                                    <text y="-15" text-anchor="middle" fill="#3b82f6" font-size="12" font-weight="bold">Small Half (Max)</text>
+                                </g>
+                                
+                                <!-- Right Bucket (Min Heap) -->
+                                <g transform="translate(200, 0)">
+                                    <line x1="0" y1="0" x2="0" y2="80" class="bucket-rope" />
+                                    <g id="right-heap-g" transform="translate(0, 80)"></g>
+                                    <text y="-15" text-anchor="middle" fill="#a855f7" font-size="12" font-weight="bold">Large Half (Min)</text>
+                                </g>
+                            </g>
+                        </g>
+                    </svg>
                 </div>
 
                 <div class="step-breakdown">
@@ -124,6 +112,15 @@
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
@@ -136,156 +133,184 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'priority_queue<int> maxHeap; // Left', id: 0 },
-            { line: 'priority_queue<int, ..., greater> minHeap; // Right', id: 1 },
+            { line: 'priority_queue<int> small; // Max Heap', id: 0 },
+            { line: 'priority_queue<int, vector<int>, greater<int>> large; // Min Heap', id: 1 },
             { line: 'void addNum(int num) {', id: 2 },
-            { line: '    maxHeap.push(num);', id: 3 },
-            { line: '    minHeap.push(maxHeap.top()); maxHeap.pop();', id: 4 },
-            { line: '    if (maxHeap.size() < minHeap.size()) {', id: 5 },
-            { line: '        maxHeap.push(minHeap.top()); minHeap.pop();', id: 6 },
+            { line: '    small.push(num);', id: 3 },
+            { line: '    // Balance: Move max of small to large', id: 4 },
+            { line: '    if (!small.empty() && !large.empty() && small.top() > large.top()) {', id: 5 },
+            { line: '        large.push(small.top()); small.pop();', id: 6 },
             { line: '    }', id: 7 },
-            { line: '}', id: 8 },
-            { line: 'double findMedian() {', id: 9 },
-            { line: '    return maxHeap.size() > minHeap.size()', id: 10 },
-            { line: '       ? maxHeap.top()', id: 11 },
-            { line: '       : (maxHeap.top() + minHeap.top()) / 2.0;', id: 12 },
-            { line: '}', id: 13 }
+            { line: '    // Size Balance', id: 8 },
+            { line: '    if (small.size() > large.size() + 1) {', id: 9 },
+            { line: '        large.push(small.top()); small.pop();', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    if (large.size() > small.size() + 1) {', id: 12 },
+            { line: '        small.push(large.top()); large.pop();', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '}', id: 15 },
+            { line: 'double findMedian() {', id: 16 },
+            { line: '    if (small.size() > large.size()) return small.top();', id: 17 },
+            { line: '    if (large.size() > small.size()) return large.top();', id: 18 },
+            { line: '    return (small.top() + large.top()) / 2.0;', id: 19 },
+            { line: '}', id: 20 }
         ];
 
         let viz;
-        let leftHeap = []; // Max Heap (simulate sort for viz simplicity? No, heap order matters for 'top')
-        // Actually, for visualization "bucket" view, sorted order or just pile is fine. 
-        // But logic relies on TOP.
-        // We will maintain sorted arrays for the simulator to easily get min/max
-        let rightHeap = []; // Min Heap
+        let small = []; // Max Heap (Simulated sorted array is enough for viz if we only peek top, but let's keep array)
+        let large = []; // Min Heap 
 
-        // Need proper heap Logic?
-        // Let's just use array and sort for simulation simplicity since N is small
-        // Left: Descending (Top is index 0)
-        // Right: Ascending (Top is index 0)
+        // Helper: sort helpers to simulate heap properties
+        const maxSort = (arr) => arr.sort((a,b) => b-a);
+        const minSort = (arr) => arr.sort((a,b) => a-b);
 
-        function simulateAdd(num) {
+        function simulate(num) {
             const steps = [];
             
-            // 1. Always push to MaxHeap first
-            const lClone = [...leftHeap];
-            const rClone = [...rightHeap];
+            // To animate, we need to track state carefully
+            // Instead of full real heap logic, we simulate the 'transfer' logic
+            // Start: Push to Small (arbitrary choice, or push to correct side then balance)
+            // Common algo: Push to small, then pop max from small to large. Then fix sizes.
             
-            lClone.push(num);
-            lClone.sort((a,b)=>b-a); // maintain max heap property simulate
+            // Initial state snapshot
+            const initialSmall = [...small];
+            const initialLarge = [...large];
             
-            steps.push({
-                left: [...lClone], right: [...rClone],
-                msg: `加入 ${num} 到 Max Heap (左)`,
-                highlightLines: [3]
-            });
-
-            // 2. Move Max of Left to Right
-            const maxVal = lClone.shift(); // Top
-            rClone.push(maxVal);
-            rClone.sort((a,b)=>a-b); // maintain min heap
-            
-            steps.push({
-                left: [...lClone], right: [...rClone],
-                msg: `平衡: 將左邊最大值 ${maxVal} 移至右邊`,
-                highlightLines: [4]
-            });
-
-            // 3. Balance Sizes
-            if (lClone.length < rClone.length) {
-                const minVal = rClone.shift(); // Top of right
-                lClone.push(minVal);
-                lClone.sort((a,b)=>b-a);
+            const pushState = (msg, hl, activeVal=null, from=null, to=null) => {
+                // Calculate median for display
+                let med = 0;
+                if(small.length > large.length) med = small[0];
+                else if(large.length > small.length) med = large[0];
+                else if(small.length > 0) med = (small[0] + large[0]) / 2.0;
                 
+                // Tilt angle?
+                let angle = 0;
+                if(small.length > large.length) angle = -10;
+                if(large.length > small.length) angle = 10;
+
                 steps.push({
-                    left: [...lClone], right: [...rClone],
-                    msg: `平衡大小: 左 < 右，將右邊最小值 ${minVal} 移回左邊`,
-                    highlightLines: [5, 6]
+                    small: [...small],
+                    large: [...large],
+                    median: med,
+                    angle,
+                    activeVal,
+                    msg, highlightLines: hl
                 });
+            };
+
+            // 1. Always push to Small first (Max Heap)
+            // Wait, optimized logic: 
+            // If empty, push small.
+            // If num <= small.top, push small. Else push large.
+            // Then balance.
+            
+            // Let's use the standard "Heaps Balance" algo from Neetcode usually:
+            // small.push(val) -> large.push(small.pop()) -> if large > small, small.push(large.pop())
+            // This ensures order.
+            
+            // Step 1: Push to Small
+            small.push(num);
+            maxSort(small);
+            pushState(`Push ${num} to Small Heap`, [3], num);
+
+            // Step 2: Ensure order (Max(Small) <= Min(Large))
+            if(small.length > 0 && large.length > 0 && small[0] > large[0]) {
+                const val = small.shift(); // Remove top
+                large.push(val);
+                minSort(large);
+                pushState(`${val} > ${large[0]} (Min of Large). Move ${val} to Large.`, [5, 6], val);
             }
 
-            // Calculate Median
-            let median;
-            if (lClone.length > rClone.length) median = lClone[0];
-            else median = (lClone[0] + rClone[0]) / 2.0;
+            // Step 3: Balance Sizes
+            if(small.length > large.length + 1) {
+                const val = small.shift();
+                large.push(val);
+                minSort(large);
+                pushState(`Small size > Large + 1. Move ${val} to Large.`, [9, 10], val);
+            }
+            if(large.length > small.length + 1) {
+                const val = large.shift();
+                small.push(val);
+                maxSort(small);
+                pushState(`Large size > Small + 1. Move ${val} to Small.`, [12, 13], val);
+            }
+            
+            pushState(`Balanced. Median = ${steps[steps.length-1].median}`, [16,19]);
 
-            steps.push({
-                left: [...lClone], right: [...rClone],
-                median: median,
-                msg: `計算中位數: ${median}`,
-                highlightLines: [10, 11, 12]
+            return steps;
+        }
+
+        // --- Render ---
+        const svg = d3.select("#scale-svg");
+        // const gBar = d3.select("#bar-group"); // Select inside render
+        
+        function renderHeap(g, data, colorClass) {
+            // Visualize heap as a stack of circles or small tree
+            // Stack is easier for "Bucket" metaphor
+            g.selectAll("*").remove();
+            
+            // Triangle packing or simple stack
+            const r = 18;
+            data.forEach((val, i) => {
+                // Layout: Pyramidal or just vertical stack
+                // Vertical stack downwards from rope end
+                const cx = (i % 2 === 0 ? -10 : 10) * (Math.floor(i/4)+1); // Slight scatter
+                const cy = i * 15; // Overlap
+                
+                g.append("circle")
+                    .attr("cx", cx).attr("cy", cy + 20).attr("r", r)
+                    .attr("class", `node-circle ${colorClass}`)
+                    .classed("new", i === data.length-1); // Highlight last added? Or check activeVal
+                
+                g.append("text")
+                    .attr("x", cx).attr("y", cy + 20)
+                    .attr("class", "node-text")
+                    .attr("dy", 4)
+                    .text(val);
             });
-
-            return { steps, resLeft: lClone, resRight: rClone };
         }
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            if (step.median !== undefined) document.getElementById('medianText').textContent = step.median;
-            
-            // Render Buckets
-            const renderBucket = (id, items, cls) => {
-                const el = document.getElementById(id);
-                // Keep the rope and label, clear elements
-                // Actually easier to just append elements
-                const old = el.querySelectorAll('.element');
-                old.forEach(e => e.remove());
-                
-                items.forEach((val, idx) => {
-                    const d = document.createElement('div');
-                    let c = `element ${cls}`;
-                    if(idx===0) c += ' top'; // visualize top
-                    d.className = c;
-                    d.textContent = val;
-                    el.appendChild(d);
-                });
-            };
+            document.getElementById('medianDisplay').textContent = step.median;
 
-            renderBucket('maxHeap', step.left, 'small'); // small numbers
-            renderBucket('minHeap', step.right, 'large'); // large numbers
+            // Animate Scale
+            d3.select("#bar-group")
+                .transition().duration(500)
+                .attr("transform", `rotate(${step.angle})`);
 
-            // Scale Animation
-            const bar = document.getElementById('scaleBar');
-            const diff = step.left.length - step.right.length;
-            // if diff > 0 (Left heavier), rotate left down (-deg)
-            // if diff < 0 (Right heavier), rotate right down (+deg)
-            // Actually usually |diff| <= 1.
-            
-            let deg = 0;
-            if (diff > 0) deg = -5;
-            else if (diff < 0) deg = 5;
-            
-            bar.style.transform = `translateX(-50%) rotate(${deg}deg)`;
+            renderHeap(d3.select("#left-heap-g"), step.small, "max");
+            renderHeap(d3.select("#right-heap-g"), step.large, "min");
         }
 
-        function handleAdd() {
+        function runAdd() {
             const val = parseInt(document.getElementById('numInput').value);
-            if(isNaN(val)) return;
+            const steps = simulate(val);
+            document.getElementById('numInput').value = Math.floor(Math.random() * 20); // Random next
             
-            const { steps, resLeft, resRight } = simulateAdd(val);
-            leftHeap = resLeft;
-            rightHeap = resRight;
-            
-            viz.setSteps(steps);
-            viz.startAutoPlay();
-        }
-
-        function resetViz() {
-            leftHeap = []; rightHeap = [];
-            viz.setSteps([{left:[], right:[], median:'-', msg:"已重置", highlightLines:[]}]);
-            document.getElementById('medianText').textContent = '-';
-        }
-
-        window.addEventListener('load', () => {
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            // Initial state
-            viz.setSteps([{left:[], right:[], msg:"準備就緒", highlightLines:[]}]);
+            viz.setSteps(steps);
+        }
+
+        function resetViz() {
+            small = [];
+            large = [];
+            runAdd();
+        }
+
+        window.addEventListener('load', () => {
+            // Init with a few
+            small = [3, 2]; // 3 is top
+            large = [5, 6]; // 5 is top (min)
+            // Median 4
+            runAdd();
         });
     </script>
 </body>

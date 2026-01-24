@@ -3,157 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Binary Tree Maximum Path Sum - 精緻視覺化</title>
+    <title>Binary Tree Maximum Path Sum - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
             border-radius: 16px;
-            padding: 30px 20px;
+            padding: 20px;
             margin: 15px 0;
-        }
-
-        .tree-container {
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 550px;
         }
+        
+        #viz-svg { width: 100%; height: 400px; }
 
-        .tree-level {
-            display: flex;
-            justify-content: center;
-            gap: 25px;
-            margin: 15px 0;
-        }
+        /* Tree Nodes */
+        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; stroke: #64748b; }
+        .node-circle.active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.1); }
+        .node-circle.visited { stroke: #22c55e; fill: rgba(34, 197, 94, 0.1); }
+        .node-circle.negative { stroke: #ef4444; } /* Optional: highlight negative values */
 
-        .node-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        
+        .return-val-text { fill: #a855f7; font-size: 11px; font-weight: bold; }
 
-        .node {
-            width: 55px;
-            height: 55px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.3rem;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #3b82f6, #2563eb);
-            color: white;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-        }
+        .link { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
+        .link.path-active { stroke: #fbbf24; stroke-width: 4px; opacity: 1; }
 
-        .node.current {
-            background: linear-gradient(145deg, #fbbf24, #f59e0b);
-            box-shadow: 0 0 25px rgba(251, 191, 36, 0.6);
-            transform: scale(1.15);
-        }
-
-        .node.visited {
-            background: linear-gradient(145deg, #22c55e, #16a34a);
-            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
-        }
-
-        .node.null {
-            background: transparent;
-            border: 2px dashed #64748b;
-            color: #64748b;
-            font-size: 0.8rem;
-            box-shadow: none;
-        }
-
-        .gain-label {
-            font-size: 0.65rem;
-            color: #a855f7;
-            margin-top: 5px;
-            font-family: 'Consolas', monospace;
-            background: rgba(168, 85, 247, 0.2);
-            padding: 2px 6px;
-            border-radius: 6px;
-        }
-
-        /* 公式/當前計算 */
-        .formula-panel {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin: 20px 0;
-            text-align: center;
-            font-family: 'Consolas', monospace;
-        }
-
-        .formula-panel .main-formula {
-            font-size: 1rem;
-            color: #e2e8f0;
-            margin-bottom: 10px;
-        }
-
-        .formula-panel .current-calc {
-            font-size: 0.85rem;
-            color: #fbbf24;
-        }
-
-        /* 狀態面板 */
+        /* State Panel */
         .state-panel {
             display: flex;
-            justify-content: center;
-            gap: 25px;
-            margin: 15px 0;
-        }
-
-        .state-item {
-            text-align: center;
-            padding: 15px 25px;
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px;
-            border: 1px solid rgba(100, 116, 139, 0.3);
-        }
-
-        .state-item .label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
-        .state-item .value { font-size: 2rem; font-weight: 700; color: #22c55e; }
-
-        /* Step Breakdown */
-        .step-breakdown {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin-top: 15px;
-            border-left: 4px solid #3b82f6;
-        }
-
-        .step-breakdown-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
-        .step-breakdown-text { font-size: 0.95rem; color: #e2e8f0; font-family: 'Consolas', monospace; }
-
-        /* 圖例 */
-        .legend-bar {
-            display: flex;
-            justify-content: center;
             gap: 20px;
-            padding: 15px;
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 12px;
             margin-top: 15px;
+            width: 90%;
+            justify-content: center;
             flex-wrap: wrap;
         }
+        .state-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 10px 15px;
+            text-align: center;
+            min-width: 100px;
+        }
+        .state-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+        .state-val { font-size: 1.2rem; font-weight: bold; font-family: monospace; }
+        .val-global { color: #fbbf24; }
+        .val-return { color: #a855f7; }
+        
+        /* Calc Detail */
+        .calc-detail {
+            font-family: monospace; font-size: 0.9rem; color: #cbd5e1; margin-top: 10px;
+            background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 4px;
+        }
 
-        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #94a3b8; }
-        .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
-        .legend-dot.normal { background: linear-gradient(145deg, #3b82f6, #2563eb); }
-        .legend-dot.visited { background: linear-gradient(145deg, #22c55e, #16a34a); }
-        .legend-dot.current { background: linear-gradient(145deg, #fbbf24, #f59e0b); }
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
 
-        /* 自訂輸入 */
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; flex: 1; min-width: 180px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
-
-        .code-line.active { background: rgba(251, 191, 36, 0.15) !important; border-left: 3px solid #fbbf24 !important; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -161,257 +74,293 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Binary Tree Maximum Path Sum - 後序 DFS</div>
-
+                <div class="viz-title">Max Path Sum (DFS Post-Order)</div>
                 <div class="custom-input-section">
-                    <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
-                        <input type="text" id="customTree" value="-10,9,20,null,null,15,7">
-                        <button onclick="runCustomInput()">執行</button>
+                        <label>Tree:</label>
+                        <input type="text" id="treeInput" value="-10,9,20,null,null,15,7" placeholder="Level order">
+                        <button onclick="runVisualizer()">Run</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <div class="tree-container" id="treeContainer"></div>
-
-                    <div class="formula-panel">
-                        <div class="main-formula">pathSum = node + max(0, left) + max(0, right)</div>
-                        <div class="current-calc" id="currentCalc">點擊「下一步」開始</div>
-                    </div>
-
+                    <svg id="viz-svg">
+                        <g id="main-group" transform="translate(40, 40)"></g>
+                        <g id="label-group" transform="translate(40, 40)"></g>
+                    </svg>
+                    
                     <div class="state-panel">
-                        <div class="state-item">
-                            <div class="label">LEFT MAX</div>
-                            <div class="value" id="leftMaxVal" style="color: #60a5fa;">--</div>
+                        <div class="state-card">
+                            <div class="state-label">Global Max</div>
+                            <div class="state-val val-global" id="globalMax">-∞</div>
                         </div>
-                        <div class="state-item">
-                            <div class="label">RIGHT MAX</div>
-                            <div class="value" id="rightMaxVal" style="color: #a855f7;">--</div>
+                        <div class="state-card">
+                            <div class="state-label">Current Node</div>
+                            <div class="state-val" id="currNode" style="color:white;">-</div>
                         </div>
-                        <div class="state-item">
-                            <div class="label">GLOBAL MAX</div>
-                            <div class="value" id="maxSumVal">-∞</div>
+                        <div class="state-card">
+                            <div class="state-label">Return Max</div>
+                            <div class="state-val val-return" id="returnMax">-</div>
                         </div>
                     </div>
-
-                    <div class="legend-bar">
-                        <div class="legend-item"><div class="legend-dot normal"></div>待計算</div>
-                        <div class="legend-item"><div class="legend-dot current"></div>當前節點</div>
-                        <div class="legend-item"><div class="legend-dot visited"></div>已計算</div>
-                    </div>
+                    
+                    <div class="calc-detail" id="calcDetail">Wait...</div>
                 </div>
 
                 <div class="step-breakdown">
-                    <div class="step-breakdown-title">Step Breakdown</div>
-                    <div class="step-breakdown-text" id="stepBreakdown">點擊「下一步」開始</div>
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(h)
-                </div>
             </div>
-
-            <div class="viz-card">
-                <div class="viz-title">演算法說明</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
-
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">後序 DFS (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int maxPathSum(TreeNode* root) {', id: 0 },
+            { line: 'int maxPathSum(root) {', id: 0 },
             { line: '    int maxSum = INT_MIN;', id: 1 },
             { line: '    dfs(root, maxSum);', id: 2 },
             { line: '    return maxSum;', id: 3 },
             { line: '}', id: 4 },
-            { line: '', id: 5 },
-            { line: 'int dfs(TreeNode* node, int& maxSum) {', id: 6 },
-            { line: '    if (!node) return 0;', id: 7 },
-            { line: '    int left = max(0, dfs(node->left, maxSum));', id: 8 },
-            { line: '    int right = max(0, dfs(node->right, maxSum));', id: 9 },
+            { line: 'int dfs(node, &maxSum) {', id: 5 },
+            { line: '    if (!node) return 0;', id: 6 },
+            { line: '    int left = max(0, dfs(node->left));', id: 7 },
+            { line: '    int right = max(0, dfs(node->right));', id: 8 },
+            { line: '    // Current split path', id: 9 },
             { line: '    maxSum = max(maxSum, node->val + left + right);', id: 10 },
-            { line: '    return node->val + max(left, right);', id: 11 },
-            { line: '}', id: 12 },
+            { line: '    // Return single path', id: 11 },
+            { line: '    return node->val + max(left, right);', id: 12 },
+            { line: '}', id: 13 }
         ];
 
-        let currentTree = [-10, 9, 20, null, null, 15, 7];
         let viz;
 
-        function parseTree(input) {
-            return input.split(',').map(x => {
-                const trimmed = x.trim();
-                return trimmed === 'null' || trimmed === '' ? null : parseInt(trimmed);
-            });
+        function buildTree(arr) {
+            if (!arr || arr.length === 0) return null;
+            const root = { id: 0, val: arr[0], children: [] };
+            const queue = [root];
+            let i = 1;
+            while (i < arr.length) {
+                const parent = queue.shift();
+                if (i < arr.length && arr[i] !== null) {
+                    const left = { id: i, val: arr[i], children: [] };
+                    parent.children[0] = left; 
+                    queue.push(left);
+                }
+                i++;
+                if (i < arr.length && arr[i] !== null) {
+                    const right = { id: i, val: arr[i], children: [] };
+                    parent.children[1] = right;
+                    queue.push(right);
+                }
+                i++;
+            }
+            return root;
         }
 
-        function generateAlgorithmSteps(tree) {
-            const steps = [];
-            const gains = new Map();
-            const visited = new Set();
-            let maxSum = -Infinity;
+        function cleanHierarchy(node) {
+            if(!node) return null;
+            const c = [];
+            if(node.children[0]) c.push(cleanHierarchy(node.children[0]));
+            if(node.children[1]) c.push(cleanHierarchy(node.children[1]));
+            return { ...node, children: c };
+        }
 
-            steps.push({
-                tree: [...tree],
-                currentIdx: null, visited: [],
-                gains: new Map(), maxSum: '-∞',
-                calcText: '初始化 maxSum = -∞',
-                highlightLines: [0, 1, 2],
-                stepText: 'maxSum = -∞',
-                explanation: {
-                    title: '開始計算',
-                    text: `樹：[${tree.filter(x => x !== null).join(', ')}]<br><br>後序遍歷：先計算子節點，再計算當前<br>每個節點計算經過它的最大路徑和，並返回單邊最大貢獻`,
-                    formula: 'pathSum = node + left + right'
-                }
+        function simulate(arr) {
+            const steps = [];
+            const root = buildTree(arr);
+            if(!root) return []; 
+
+            let globalMax = -9999;
+            const visited = [];
+            const returnValues = {}; // id -> val
+
+            const pushState = (msg, hl, activeId=null, currentCalcStr="", explanation=null) => {
+                steps.push({
+                    root: cleanHierarchy(root),
+                    globalMax: globalMax === -9999 ? '-∞' : globalMax,
+                    visited: [...visited],
+                    returnValues: {...returnValues},
+                    activeId,
+                    currentCalcStr,
+                    msg, highlightLines: hl,
+                    explanation
+                });
+            };
+
+            pushState("Start DFS", [0, 1, 2], root.id, "Init Global Max = -∞", {
+                title: '開始 DFS',
+                text: '遞迴遍歷每個節點，計算該節點的最大貢獻值 (Max Return)，並同時更新全局最大路徑和 (Global Max)。',
+                formula: 'maxSum = -∞'
             });
 
-            function dfs(idx) {
-                if (idx >= tree.length || tree[idx] === null) return 0;
+            function dfs(node) {
+                if(!node) return 0;
 
-                const leftIdx = 2 * idx + 1;
-                const rightIdx = 2 * idx + 2;
-
-                const leftGain = Math.max(0, dfs(leftIdx));
-                const rightGain = Math.max(0, dfs(rightIdx));
-
-                const val = tree[idx];
-                const pathSum = val + leftGain + rightGain;
-                const gain = val + Math.max(leftGain, rightGain);
-
-                if (pathSum > maxSum) {
-                    maxSum = pathSum;
-                }
-
-                gains.set(idx, gain);
-                visited.add(idx);
-
-                steps.push({
-                    tree: [...tree],
-                    currentIdx: idx, visited: [...visited],
-                    gains: new Map(gains), maxSum,
-                    leftGain, rightGain, val, pathSum, gain,
-                    calcText: `${val} + ${leftGain} + ${rightGain} = ${pathSum}`,
-                    highlightLines: [8, 9, 10, 11],
-                    stepText: `node=${val}: left=${leftGain}, right=${rightGain}, path=${pathSum}`,
-                    explanation: {
-                        title: `計算節點 ${val}`,
-                        text: `左貢獻 = max(0, ${leftGain}) = ${leftGain}<br>右貢獻 = max(0, ${rightGain}) = ${rightGain}<br>經過此節點路徑和 = ${val} + ${leftGain} + ${rightGain} = ${pathSum}<br>返回貢獻 = ${val} + max(${leftGain}, ${rightGain}) = ${gain}`,
-                        formula: `pathSum = ${pathSum}, gain = ${gain}`
-                    }
+                // Pre-visit (Going down)
+                pushState(`Visit ${node.val}, Go Down`, [5, 6], node.id, "", {
+                    title: `訪問節點 ${node.val}`,
+                    text: '向下遞迴左子樹和右子樹。',
+                    formula: 'dfs(left), dfs(right)'
                 });
 
-                return gain;
+                const left = Math.max(0, dfs(node.children[0]));
+                const right = Math.max(0, dfs(node.children[1]));
+
+                // Post-visit (Coming up)
+                const splitPath = node.val + left + right;
+                globalMax = Math.max(globalMax, splitPath);
+                
+                const returnPath = node.val + Math.max(left, right);
+                returnValues[node.id] = returnPath;
+                visited.push(node.id);
+
+                pushState(
+                    `Post-order ${node.val}. L=${left}, R=${right}. Split=${splitPath}`, 
+                    [7, 8, 10, 12], 
+                    node.id, 
+                    `Node(${node.val}) + L(${left}) + R(${right}) = ${splitPath}`,
+                    {
+                        title: `計算節點 ${node.val}`,
+                        text: `左子樹貢獻: ${left} (若負則為0)<br>右子樹貢獻: ${right} (若負則為0)<br>經過此節點的路徑 (Split Path): ${splitPath}<br>返回給父節點的路徑 (Return Path): ${returnPath}`,
+                        formula: `GlobalMax = max(${globalMax}, ${splitPath})`
+                    }
+                );
+
+                return returnPath;
             }
 
-            dfs(0);
+            dfs(root);
 
-            steps.push({
-                tree: [...tree],
-                currentIdx: null, visited: [...visited],
-                gains: new Map(gains), maxSum,
-                calcText: `最大路徑和 = ${maxSum}`,
-                final: true,
-                highlightLines: [3],
-                stepText: `return ${maxSum}`,
-                explanation: {
-                    title: '🎉 計算完成！',
-                    text: `最大路徑和 = ${maxSum}<br><br>Time: O(n), Space: O(h)`,
-                    formula: `return ${maxSum}`
-                }
+            pushState("Done", [3], null, `Final Max = ${globalMax}`, {
+                title: '完成',
+                text: `最大路徑和為 ${globalMax}。`,
+                formula: `return ${globalMax}`
             });
 
             return steps;
         }
 
-        function renderStep(step) {
-            const { tree, currentIdx, visited, gains, maxSum } = step;
+        const width = 600;
+        const height = 400;
+        const treeLayout = d3.tree().size([width, height]);
+        const gMain = d3.select("#main-group");
+        const gLabel = d3.select("#label-group");
 
-            const container = document.getElementById('treeContainer');
-            let html = '';
-            let idx = 0;
-            let levelSize = 1;
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('globalMax').textContent = step.globalMax;
+            document.getElementById('calcDetail').textContent = step.currentCalcStr || '-';
+            
+            // Find current node val
+            let currentVal = '-';
+            let returnVal = '-';
+            
+            // Helper to find val by id in current tree state (not super efficient but tree is small)
+            // Or just use step.activeId if logic is consistent
+            
+            const root = d3.hierarchy(step.root);
+            treeLayout(root);
 
-            while (idx < tree.length) {
-                html += '<div class="tree-level">';
-                for (let i = 0; i < levelSize && idx < tree.length; i++, idx++) {
-                    const val = tree[idx];
-                    let cls = 'node';
-
-                    if (val === null) {
-                        cls += ' null';
-                        html += `<div class="node-wrapper"><div class="${cls}">∅</div></div>`;
-                    } else {
-                        if (currentIdx === idx) cls += ' current';
-                        else if (visited?.includes(idx)) cls += ' visited';
-
-                        const g = gains?.get(idx);
-                        const gainLabel = g !== undefined ? `<span class="gain-label">↑${g}</span>` : '';
-
-                        html += `<div class="node-wrapper"><div class="${cls}">${val}</div>${gainLabel}</div>`;
-                    }
+            // Find data
+            const activeNodeData = root.descendants().find(d => d.data.id === step.activeId);
+            if(activeNodeData) {
+                currentVal = activeNodeData.data.val;
+                if(step.returnValues[step.activeId] !== undefined) {
+                    returnVal = step.returnValues[step.activeId];
                 }
-                html += '</div>';
-                levelSize *= 2;
             }
+            document.getElementById('currNode').textContent = currentVal;
+            document.getElementById('returnMax').textContent = returnVal;
 
-            container.innerHTML = html;
 
-            document.getElementById('currentCalc').textContent = step.calcText || '';
-            document.getElementById('leftMaxVal').textContent = step.leftGain !== undefined ? step.leftGain : '--';
-            document.getElementById('rightMaxVal').textContent = step.rightGain !== undefined ? step.rightGain : '--';
-            document.getElementById('maxSumVal').textContent = maxSum === '-∞' ? '-∞' : maxSum;
-            document.getElementById('stepBreakdown').textContent = step.stepText || '';
+            // Links
+            const links = gMain.selectAll(".link").data(root.links(), d => d.source.data.id + "-" + d.target.data.id);
+            links.enter().append("path").attr("class", "link")
+                .merge(links)
+                .transition().duration(500)
+                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
+            links.exit().remove();
+
+            // Nodes
+            const nodes = gMain.selectAll(".node-g").data(root.descendants(), d => d.data.id);
+            const nEnter = nodes.enter().append("g").attr("class", "node-g");
+            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
+            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
+
+            const nUpdate = nodes.merge(nEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            nUpdate.select("circle").attr("class", d => {
+                let c = "node-circle";
+                if(d.data.id === step.activeId) c += " active";
+                else if(step.visited.includes(d.data.id)) c += " visited";
+                if(d.data.val < 0) c += " negative";
+                return c;
+            })
+            .style("stroke-width", d => (d.data.id === step.activeId) ? 5 : 3);
+
+            nUpdate.select("text").text(d => d.data.val);
+            
+            nodes.exit().remove();
+
+            // Return Labels (Floating above nodes)
+            const labels = gLabel.selectAll(".ret-label").data(
+                root.descendants().filter(d => step.returnValues[d.data.id] !== undefined),
+                d => d.data.id
+            );
+            const lEnter = labels.enter().append("text").attr("class", "ret-label return-val-text").attr("text-anchor", "middle");
+            
+            labels.merge(lEnter).transition().duration(500)
+                .attr("x", d => d.x + 25) // Offset right
+                .attr("y", d => d.y)
+                .text(d => `↑${step.returnValues[d.data.id]}`);
+            
+            labels.exit().remove();
         }
 
-        function init(tree = currentTree) {
-            currentTree = tree;
-            const steps = generateAlgorithmSteps(tree);
-
+        function runVisualizer() {
+            const valStr = document.getElementById('treeInput').value;
+            const arr = valStr.split(',').map(x => {
+                const t = x.trim();
+                return t === 'null' || t === '' ? null : parseInt(t);
+            });
+            
+            if(arr.length === 0) return;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => renderStep(step)
+                onStepChange: render
             });
-
-            viz.setSteps(steps);
+            viz.setSteps(simulate(arr));
         }
 
-        function runCustomInput() {
-            const tree = parseTree(document.getElementById('customTree').value);
-            if (tree.length === 0 || tree[0] === null) {
-                alert('請輸入有效的樹');
-                return;
-            }
-            init(tree);
-        }
-
-        function resetVisualization() { init(currentTree); }
-        window.addEventListener('load', () => init());
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

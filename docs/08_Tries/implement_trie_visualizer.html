@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Implement Trie (Prefix Tree) - 精緻視覺化</title>
+    <title>Implement Trie - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -14,61 +14,41 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 500px;
             overflow: hidden;
         }
-
-        /* SVG Container */
-        #trie-svg {
-            width: 100%; height: 400px;
-            background: transparent;
-            cursor: move;
-        }
+        
+        #viz-svg { width: 100%; height: 400px; cursor: grab; }
+        #viz-svg:active { cursor: grabbing; }
 
         /* Nodes */
-        .node-circle {
-            fill: #3b82f6; stroke: none;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-            transition: fill 0.4s ease, r 0.4s ease;
-        }
+        .node-circle { stroke-width: 2px; transition: all 0.3s; fill: #334155; stroke: #64748b; }
         .node-circle.root { fill: #475569; }
-        .node-circle.is-end { stroke: #22c55e; stroke-width: 3px; }
-        .node-circle.current { fill: #fbbf24; filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6)); }
-        .node-circle.match { fill: #22c55e; }
-        .node-circle.mismatch { fill: #ef4444; }
+        .node-circle.is-end { stroke: #22c55e; stroke-width: 4px; }
+        .node-circle.active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.2); filter: drop-shadow(0 0 5px #fbbf24); }
+        .node-circle.match { stroke: #22c55e; fill: rgba(34, 197, 94, 0.2); }
+        .node-circle.new { animation: popIn 0.4s ease; }
 
-        .node-text {
-            fill: white; font-family: 'Consolas', monospace; font-weight: bold; font-size: 14px;
-            text-anchor: middle; dominant-baseline: middle; pointer-events: none;
-        }
+        @keyframes popIn { from { r: 0; } to { r: 18; } }
 
-        /* Links */
-        .link {
-            stroke: #64748b; stroke-width: 2px; opacity: 0.6;
-            transition: stroke 0.4s ease, stroke-width 0.4s ease;
-        }
+        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        
+        .link { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.3s; opacity: 0.4; }
         .link.active { stroke: #fbbf24; stroke-width: 3px; opacity: 1; }
-        .link.match { stroke: #22c55e; stroke-width: 3px; opacity: 1; }
-
-        /* Operation Tag */
-        .op-tag {
-            background: rgba(30, 41, 59, 0.6); padding: 8px 16px; border-radius: 20px;
-            color: #94a3b8; font-size: 0.9rem; margin-bottom: 10px;
-        }
 
         /* Controls */
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
-        
-        .step-breakdown {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px;
-            padding: 15px 20px;
-            border-left: 4px solid #3b82f6;
-            margin-top: 15px;
-            width: 100%; box-sizing: border-box;
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row button.secondary { background: #64748b; }
+
+        .op-status {
+            margin-bottom: 10px; padding: 5px 15px; border-radius: 20px; 
+            background: rgba(0,0,0,0.3); color: #94a3b8; font-size: 0.9rem; font-family: monospace;
         }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -76,24 +56,22 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Trie (字首樹) 實作</div>
+                <div class="viz-title">Trie (Prefix Tree)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>單詞:</label>
-                        <input type="text" id="wordInput" value="apple" placeholder="輸入單詞" maxlength="8">
-                        <button onclick="handleOp('insert')">插入 (Insert)</button>
-                        <button onclick="handleOp('search')">搜尋 (Search)</button>
-                        <button onclick="handleOp('startsWith')">前綴搜尋 (StartsWith)</button>
-                    </div>
-                    <div class="input-row">
-                        <button onclick="resetTrie()" style="background:var(--viz-error);">重置樹 (Reset)</button>
+                        <label>Word:</label>
+                        <input type="text" id="wordInput" value="apple">
+                        <button onclick="runOp('insert')">Insert</button>
+                        <button onclick="runOp('search')" class="secondary">Search</button>
+                        <button onclick="runOp('startsWith')" class="secondary">StartsWith</button>
+                        <button onclick="resetTrie()" style="background: #ef4444;">Reset</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <div class="op-tag" id="opDisplay">準備就緒</div>
-                    <svg id="trie-svg">
-                        <g id="zoom-layer"></g> <!-- Apply Zoom/Pan here -->
+                    <div class="op-status" id="opStatus">Ready</div>
+                    <svg id="viz-svg">
+                        <g id="main-group"></g>
                     </svg>
                 </div>
 
@@ -117,10 +95,8 @@
                     </div>
                 </div>
             </div>
-            
             <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
-        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
                 <div class="viz-title">C++ Code</div>
@@ -129,261 +105,288 @@
         </div>
     </div>
 
-    <!-- D3.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
-        // Code Structure Definition
         const codeStructure = [
-            { line: 'class TrieNode {', id: 0 },
-            { line: '    TrieNode* children[26];', id: 1 },
-            { line: '    bool isEnd = false;', id: 2 },
-            { line: '};', id: 3 },
-            { line: 'void insert(string word) {', id: 4 },
-            { line: '    TrieNode* curr = root;', id: 5 },
-            { line: '    for (char c : word) {', id: 6 },
-            { line: '        if (!curr->children[c])', id: 7 },
-            { line: '            curr->children[c] = new TrieNode();', id: 8 },
-            { line: '        curr = curr->children[c];', id: 9 },
-            { line: '    }', id: 10 },
-            { line: '    curr->isEnd = true;', id: 11 },
-            { line: '}', id: 12 },
-            { line: 'bool search(string word) {', id: 13 },
-            { line: '    TrieNode* curr = root;', id: 14 },
-            { line: '    for (char c : word) {', id: 15 },
-            { line: '        if (!curr->children[c]) return false;', id: 16 },
-            { line: '        curr = curr->children[c];', id: 17 },
-            { line: '    }', id: 18 },
-            { line: '    return curr->isEnd;', id: 19 },
-            { line: '}', id: 20 },
-            { line: 'bool startsWith(string prefix) {', id: 21 },
-            { line: '    // Same logic but return true', id: 22 },
-            { line: '    return true;', id: 23 },
-            { line: '}', id: 24 }
+            { line: 'class Trie {', id: 0 },
+            { line: '    // TrieNode { children[26], isEnd }', id: 1 },
+            { line: '    void insert(string word) {', id: 2 },
+            { line: '        TrieNode* node = root;', id: 3 },
+            { line: '        for (char c : word) {', id: 4 },
+            { line: '            if (!node->next[c]) node->next[c] = new TrieNode();', id: 5 },
+            { line: '            node = node->next[c];', id: 6 },
+            { line: '        }', id: 7 },
+            { line: '        node->isEnd = true;', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    bool search(string word) {', id: 10 },
+            { line: '        TrieNode* node = root;', id: 11 },
+            { line: '        for (char c : word) {', id: 12 },
+            { line: '            if (!node->next[c]) return false;', id: 13 },
+            { line: '            node = node->next[c];', id: 14 },
+            { line: '        }', id: 15 },
+            { line: '        return node->isEnd;', id: 16 },
+            { line: '    }', id: 17 },
+            { line: '    bool startsWith(string prefix) {', id: 18 },
+            { line: '        // Same loop...', id: 19 },
+            { line: '        return true;', id: 20 },
+            { line: '    }', id: 21 }
         ];
 
-        // --- Trie Logic Management ---
-        let root = { id: 'root', char: '', children: {}, isEnd: false, x: 0, y: 0 };
         let viz;
-        let idCounter = 0;
+        // Global Trie State
+        // Node structure: { id: unique, char: 'a', children: {}, isEnd: false }
+        let nodeIdCounter = 0;
+        let rootNode = { id: nodeIdCounter++, char: '', children: {}, isEnd: false };
 
-        function cloneTrie(node) {
-            const newNode = { ...node, children: {} }; // shallow copy props
-            for (let k in node.children) {
-                newNode.children[k] = cloneTrie(node.children[k]); // deep copy children
-            }
-            return newNode;
+        function deepClone(node) {
+            if(!node) return null;
+            const newChildren = {};
+            Object.keys(node.children).forEach(k => {
+                newChildren[k] = deepClone(node.children[k]);
+            });
+            return { ...node, children: newChildren };
         }
 
-        function generateSteps(startRoot, op, word) {
-            const steps = [];
-            const newRoot = cloneTrie(startRoot); // Simulation on clone
-            
-            // Initial Step
-            steps.push({
-                root: JSON.parse(JSON.stringify(newRoot)), // Deep snapshot
-                activeNodeId: 'root',
-                highlightLines: op === 'insert' ? [4, 5] : op === 'search' ? [13, 14] : [21],
-                msg: `${op === 'insert' ? '插入' : op === 'search' ? '搜尋' : '前綴檢查'}: "${word}"`,
-                opName: op,
-                focusCharIndex: -1
-            });
+        // Helper to convert Trie object to D3 Hierarchy format
+        function toHierarchy(node) {
+            const children = Object.values(node.children).map(toHierarchy);
+            return { 
+                id: node.id, 
+                name: node.char, 
+                isEnd: node.isEnd,
+                children: children.length > 0 ? children : null 
+            };
+        }
 
-            let curr = newRoot;
-            let mismatch = false;
+        function simulate(op, word) {
+            const steps = [];
+            // We work on the GLOBAL state directly for persistence in this app logic?
+            // "AlgorithmVisualizer" usually expects stateless simulation or full snapshots.
+            // We will use snapshots. But we need to persist state between runs.
+            // So: 
+            // 1. Take snapshot of current Global Tree.
+            // 2. Perform operation on snapshot (and record steps).
+            // 3. At end, update Global Tree to match final snapshot.
+            
+            // Wait, if user clicks 'Prev' button, we shouldn't mutate Global Tree back.
+            // Solution: We only update Global Tree when the simulation *completes* or we decide to commit.
+            // Actually, simplest is: Treat `rootNode` as the source of truth *before* the op.
+            // We clone it to `tempRoot`. Simulate on `tempRoot`.
+            // At the end of simulation func, we return steps.
+            // *Crucially*, we need to update `rootNode` for the *next* operation.
+            // So we update `rootNode` immediately after generating steps? 
+            // No, that would break "Reset" if we just stepped forward.
+            // Let's just update `rootNode` at the end of `runOp`.
+            
+            const tempRoot = deepClone(rootNode);
+            // Need to sync ID counter too? ids are unique. 
+            // If we add nodes in tempRoot, they need new IDs. 
+            // We can continue incrementing the global counter. IDs don't need to be reset on clone.
+
+            let curr = tempRoot;
+            let pathIds = [curr.id];
+            
+            const pushState = (msg, hl, activeId=null, status='traverse', explanation=null) => {
+                steps.push({
+                    root: deepClone(tempRoot), // heavy, but trie is small for demo
+                    activeId,
+                    pathIds: [...pathIds],
+                    status, // traverse, match, mismatch, new
+                    msg, highlightLines: hl,
+                    explanation
+                });
+            };
+
+            pushState(`Start ${op} "${word}"`, op==='insert'?[2]:[10], curr.id, 'traverse', {
+                title: '開始操作',
+                text: `從根節點開始。準備處理單詞 "${word}"。`,
+                formula: 'node = root'
+            });
 
             for (let i = 0; i < word.length; i++) {
                 const char = word[i];
-                
-                // Pre-move visual
-                steps.push({
-                    root: JSON.parse(JSON.stringify(newRoot)),
-                    activeNodeId: curr.id,
-                    highlightLines: op === 'insert' ? [6] : [15],
-                    msg: `處理字符: '${char}'`,
-                    opName: op,
-                    focusCharIndex: i
-                });
+                let nextNode = curr.children[char];
 
-                if (!curr.children[char]) {
+                if (!nextNode) {
                     if (op === 'insert') {
-                        // Create
-                        curr.children[char] = { 
-                            id: `node-${++idCounter}`, 
-                            char: char, 
-                            children: {}, 
-                            isEnd: false 
-                        };
-                        steps.push({
-                            root: JSON.parse(JSON.stringify(newRoot)),
-                            activeNodeId: curr.id,
-                            highlightLines: [7, 8],
-                            msg: `路徑不存在，建立新節點 '${char}'`,
-                            opName: op,
-                            focusCharIndex: i
+                        // Create new
+                        const newId = ++nodeIdCounter; // Use global counter
+                        nextNode = { id: newId, char: char, children: {}, isEnd: false };
+                        curr.children[char] = nextNode;
+                        
+                        pathIds.push(newId);
+                        
+                        pushState(`Create node '${char}'`, [5], nextNode.id, 'new', {
+                            title: `建立節點 '${char}'`,
+                            text: `路徑不存在，建立新節點 '${char}'。`,
+                            formula: 'new TrieNode()'
                         });
+                        curr = nextNode;
                     } else {
-                        // Mismatch
-                        mismatch = true;
-                        steps.push({
-                            root: JSON.parse(JSON.stringify(newRoot)),
-                            activeNodeId: curr.id,
-                            highlightLines: [16],
-                            msg: `找不到字符 '${char}'，搜尋失敗`,
-                            opName: op,
-                            mismatchNodeId: curr.id,
-                            focusCharIndex: i
+                        // Search/StartsWith fail
+                        pushState(`Mismatch at '${char}'`, [13], curr.id, 'mismatch', {
+                            title: '找不到路徑',
+                            text: `節點 '${curr.char}' 沒有子節點 '${char}'。匹配失敗。`,
+                            formula: 'return false'
                         });
-                        break;
+                        return { steps, finalRoot: tempRoot, result: false };
                     }
+                } else {
+                    // Exists
+                    pathIds.push(nextNode.id);
+                    curr = nextNode;
+                    pushState(`Move to '${char}'`, op==='insert'?[6]:[14], curr.id, 'traverse', {
+                        title: `移動到 '${char}'`,
+                        text: `子節點 '${char}' 存在，繼續移動。`,
+                        formula: 'node = node->next[c]'
+                    });
                 }
-
-                // Move
-                curr = curr.children[char];
-                steps.push({
-                    root: JSON.parse(JSON.stringify(newRoot)),
-                    activeNodeId: curr.id,
-                    highlightLines: op === 'insert' ? [9] : [17],
-                    msg: `移動到節點 '${char}'`,
-                    opName: op,
-                    focusCharIndex: i
-                });
             }
 
-            // Final Result
+            // End of word
+            let result = true;
             if (op === 'insert') {
                 curr.isEnd = true;
-                steps.push({
-                    root: JSON.parse(JSON.stringify(newRoot)),
-                    activeNodeId: curr.id,
-                    highlightLines: [11, 12],
-                    msg: `標記當前節點為單詞結尾 (isEnd = true)`,
-                    opName: op,
-                    focusCharIndex: word.length
+                pushState(`Mark end of word`, [8], curr.id, 'match', {
+                    title: '標記結束',
+                    text: `單詞插入完成，標記當前節點 '${curr.char || 'root'}' 為單詞結尾 (isEnd = true)。`,
+                    formula: 'node->isEnd = true'
                 });
-            } else if (!mismatch) {
-                // Search or StartsWith success check
-                const success = (op === 'search' ? curr.isEnd : true);
-                steps.push({
-                    root: JSON.parse(JSON.stringify(newRoot)),
-                    activeNodeId: curr.id,
-                    highlightLines: op === 'search' ? [19] : [23],
-                    msg: success ? (op==='search' ? '找到單詞！(isEnd 為真)' : '前綴存在！') : '單詞未找到 (雖然路徑存在，但非結尾)',
-                    opName: op,
-                    resultSuccess: success,
-                    focusCharIndex: word.length
+            } else if (op === 'search') {
+                if (curr.isEnd) {
+                    pushState(`Found word!`, [16], curr.id, 'match', {
+                        title: '搜尋成功',
+                        text: `到達單詞結尾，且該節點標記為 isEnd。`,
+                        formula: 'return true'
+                    });
+                } else {
+                    result = false;
+                    pushState(`Prefix exists, but not word`, [16], curr.id, 'mismatch', {
+                        title: '搜尋失敗',
+                        text: `單詞路徑存在，但該節點不是單詞結尾 (isEnd == false)。`,
+                        formula: 'return false'
+                    });
+                }
+            } else if (op === 'startsWith') {
+                pushState(`Prefix found`, [20], curr.id, 'match', {
+                    title: '前綴匹配成功',
+                    text: `完整前綴路徑存在。`,
+                    formula: 'return true'
                 });
             }
 
-            return { steps, finalRoot: newRoot };
+            return { steps, finalRoot: tempRoot, result };
         }
 
-        // --- D3 Rendering ---
-        const svg = d3.select("#trie-svg");
-        const gLayer = d3.select("#zoom-layer");
-        const zoom = d3.zoom().on("zoom", (e) => gLayer.attr("transform", e.transform));
+        const width = 800;
+        const height = 400;
+        
+        // D3 Setup
+        const svg = d3.select("#viz-svg");
+        const gMain = d3.select("#main-group");
+        
+        // Zoom functionality
+        const zoom = d3.zoom().on("zoom", (e) => gMain.attr("transform", e.transform));
         svg.call(zoom);
+        // Center initial
+        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 50).scale(1));
 
-        let width = 800, height = 400;
+        const treeLayout = d3.tree().nodeSize([50, 60]); // Fixed node size layout
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            if(step.opName) document.getElementById('opDisplay').textContent = 
-                `${step.opName === 'insert' ? '插入' : step.opName === 'search' ? '搜尋' : '前綴'}: ${document.getElementById('wordInput').value}`;
 
-            // Convert Trie to Hierarchy for D3
-            const hierarchyData = d3.hierarchy(step.root, d => Object.values(d.children));
-            const treeLayout = d3.tree().size([width - 100, height - 100]);
-            
-            // Adjust layout spacing
-            treeLayout.nodeSize([50, 60]); 
-            
-            treeLayout(hierarchyData);
+            const root = d3.hierarchy(toHierarchy(step.root));
+            treeLayout(root);
 
-            // Center Root
-            const headerOffset = 50;
-            const xOffset = width/2;
-            
             // Links
-            const links = gLayer.selectAll(".link").data(hierarchyData.links(), d => d.target.data.id);
+            const links = gMain.selectAll(".link").data(root.links(), d => d.target.data.id);
             links.enter().append("path").attr("class", "link")
                 .merge(links)
+                .transition().duration(300)
+                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y))
                 .attr("class", d => {
-                    let cls = "link";
-                    // If target is in active path (simple heuristic: activeNodeId is one of its descendants? No, exact path tracking needed)
-                    // Visualizing "Active Path" in Trie is tricky without full path array in step.
-                    // But activeNodeId gives us the TIP.
-                    // Let's settle for simple logic: Is this link connected to active node or ancestors?
-                    // We can trace up from active node in hierarchy if we find it.
-                    return cls;
-                })
-                .transition().duration(400)
-                .attr("d", d3.linkVertical()
-                    .x(d => d.x + xOffset)
-                    .y(d => d.y + headerOffset)
-                );
+                    if(step.pathIds.includes(d.target.data.id)) return "link active";
+                    return "link";
+                });
             links.exit().remove();
 
             // Nodes
-            const nodes = gLayer.selectAll(".node").data(hierarchyData.descendants(), d => d.data.id);
-            const nodeEnter = nodes.enter().append("g").attr("class", "node");
+            const nodes = gMain.selectAll(".node-g").data(root.descendants(), d => d.data.id);
+            const nEnter = nodes.enter().append("g").attr("class", "node-g");
             
-            nodeEnter.append("circle").attr("r", 20).attr("class", "node-circle");
-            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            nEnter.append("circle").attr("r", 18).attr("class", "node-circle");
+            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
 
-            const nodeUpdate = nodes.merge(nodeEnter).transition().duration(400)
-                .attr("transform", d => `translate(${d.x + xOffset},${d.y + headerOffset})`);
-
-            nodes.select(".node-circle").attr("class", d => {
-                let cls = "node-circle";
-                if (d.data.id === 'root') cls += " root";
-                if (d.data.isEnd) cls += " is-end";
-                if (d.data.id === step.activeNodeId) cls += " current";
-                if (step.mismatchNodeId === d.data.id) cls += " mismatch";
-                if (step.resultSuccess && d.data.id === step.activeNodeId) cls += " match";
-                return cls;
+            const nUpdate = nodes.merge(nEnter).transition().duration(300)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            nUpdate.select("circle").attr("class", d => {
+                let c = "node-circle";
+                if(d.data.id === 0) c += " root"; // Root
+                if(d.data.id === step.activeId) {
+                    if(step.status === 'new') c += " new active";
+                    else if(step.status === 'match') c += " match";
+                    else if(step.status === 'mismatch') c += " mismatch";
+                    else c += " active";
+                }
+                
+                // Keep isEnd style if not holding mismatched focus
+                if(d.data.isEnd) c += " is-end";
+                
+                return c;
             });
 
-            nodes.select(".node-text").text(d => d.data.char);
-            
+            nUpdate.select("text").text(d => d.data.name);
             nodes.exit().remove();
         }
 
-        // --- Interaction ---
-        function handleOp(op) {
-            const word = document.getElementById('wordInput').value.trim().toLowerCase();
-            if (!word || !/^[a-z]+$/.test(word)) return alert("請輸入英文字母 (a-z)");
-
-            const { steps, finalRoot } = generateSteps(root, op, word);
+        async function runOp(op) {
+            const word = document.getElementById('wordInput').value.trim();
+            if(!word) return;
             
-            if (op === 'insert') {
-                root = finalRoot; // Commit change
+            document.getElementById('opStatus').textContent = `${op.toUpperCase()}: ${word}`;
+            
+            const { steps, finalRoot, result } = simulate(op, word);
+            
+            // If insert, commit state
+            if(op === 'insert') {
+                rootNode = finalRoot;
+            } else {
+                // Show result ephemeral
+                setTimeout(() => {
+                    document.getElementById('opStatus').innerHTML += result ? ' <span style="color:#22c55e">TRUE</span>' : ' <span style="color:#ef4444">FALSE</span>';
+                }, steps.length * 1000); 
+                // Approx time, but viz controls speed.
             }
-            
+
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
             viz.setSteps(steps);
         }
 
         function resetTrie() {
-            root = { id: 'root', char: '', children: {}, isEnd: false };
-            idCounter = 0;
-            // Clear visualization
-            svg.selectAll("*").remove(); 
-            // Re-init gLayer
-            svg.append("g").attr("id", "zoom-layer");
-            // Or just init default
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: render
-            });
-            viz.setSteps([{root:root, msg:"已重置", highlightLines:[]}]);
+            rootNode = { id: 0, char: '', children: {}, isEnd: false };
+            nodeIdCounter = 0;
+            runOp('insert'); // Dummy refresh or clear
+            // Actually just construct empty step
+            viz = new AlgorithmVisualizer({ codeLines: codeStructure, onStepChange: render });
+            viz.setSteps([{
+                root: deepClone(rootNode),
+                activeId: null,
+                pathIds: [],
+                msg: "Trie Reset",
+                highlightLines: []
+            }]);
+            document.getElementById('opStatus').textContent = "Ready";
         }
 
         window.addEventListener('load', () => {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: render
-            });
-            handleOp('insert'); // Demo initial insert
+            // Init with apple
+            runOp('insert');
         });
     </script>
 </body>

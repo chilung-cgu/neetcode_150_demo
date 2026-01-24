@@ -3,176 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kth Smallest in BST - 精緻視覺化</title>
+    <title>Kth Smallest in BST - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
             border-radius: 16px;
-            padding: 30px 20px;
+            padding: 20px;
             margin: 15px 0;
-        }
-
-        .tree-container {
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 500px;
         }
+        
+        #viz-svg { width: 100%; height: 400px; }
 
-        .tree-level {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 12px 0;
-        }
+        /* Tree Nodes */
+        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; stroke: #64748b; }
+        .node-circle.active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.1); }
+        .node-circle.visited { stroke: #22c55e; fill: rgba(34, 197, 94, 0.1); }
+        .node-circle.answer { stroke: #a855f7; fill: #a855f7; filter: drop-shadow(0 0 10px #a855f7); }
 
-        .node {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.2rem;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #3b82f6, #2563eb);
-            color: white;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-        }
+        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .node-text.answer { fill: white; }
+        
+        .counter-badge { fill: #f97316; rx: 4; }
+        .counter-text { fill: white; font-size: 10px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
 
-        .node.visited {
-            background: linear-gradient(145deg, #22c55e, #16a34a);
-            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
-        }
+        .link { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
+        .link.path { stroke: #22c55e; stroke-width: 3px; opacity: 1; }
 
-        .node.current {
-            background: linear-gradient(145deg, #fbbf24, #f59e0b);
-            box-shadow: 0 0 25px rgba(251, 191, 36, 0.6);
-            transform: scale(1.15);
-        }
-
-        .node.answer {
-            background: linear-gradient(145deg, #a855f7, #9333ea);
-            box-shadow: 0 0 30px rgba(168, 85, 247, 0.6);
-            transform: scale(1.2);
-        }
-
-        .node.null {
-            background: transparent;
-            border: 2px dashed #64748b;
-            color: #64748b;
-            font-size: 0.8rem;
-            box-shadow: none;
-        }
-
-        /* 中序遍歷顯示 */
-        .inorder-section {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin: 20px 0;
-        }
-
-        .section-title {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #64748b;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .inorder-items {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .inorder-item {
-            width: 35px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            border-radius: 8px;
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-        }
-
-        .inorder-item.visited {
-            background: linear-gradient(145deg, #22c55e, #16a34a);
-            color: white;
-        }
-
-        .inorder-item.answer {
-            background: linear-gradient(145deg, #a855f7, #9333ea);
-            color: white;
-            transform: scale(1.15);
-        }
-
-        /* 狀態面板 */
+        /* State Panel */
         .state-panel {
             display: flex;
-            justify-content: center;
-            gap: 25px;
-            margin: 15px 0;
-        }
-
-        .state-item {
-            text-align: center;
-            padding: 12px 20px;
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px;
-        }
-
-        .state-item .label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
-        .state-item .value { font-size: 1.5rem; font-weight: 700; }
-        .state-item.k .value { color: #fbbf24; }
-        .state-item.result .value { color: #a855f7; }
-
-        /* Step Breakdown */
-        .step-breakdown {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin-top: 15px;
-            border-left: 4px solid #3b82f6;
-        }
-
-        .step-breakdown-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
-        .step-breakdown-text { font-size: 0.95rem; color: #e2e8f0; font-family: 'Consolas', monospace; }
-
-        /* 圖例 */
-        .legend-bar {
-            display: flex;
-            justify-content: center;
             gap: 20px;
-            padding: 15px;
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 12px;
-            margin-top: 15px;
-            flex-wrap: wrap;
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+            border: 1px solid #475569;
         }
+        .state-item { text-align: center; }
+        .state-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+        .state-val { font-size: 1.2rem; font-weight: bold; font-family: monospace; }
+        .val-k { color: #fbbf24; }
+        .val-count { color: #22c55e; }
 
-        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #94a3b8; }
-        .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
-        .legend-dot.normal { background: linear-gradient(145deg, #3b82f6, #2563eb); }
-        .legend-dot.visited { background: linear-gradient(145deg, #22c55e, #16a34a); }
-        .legend-dot.answer { background: linear-gradient(145deg, #a855f7, #9333ea); }
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 200px; }
+        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
 
-        /* 自訂輸入 */
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row label { font-size: 0.85rem; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
-
-        .code-line.active { background: rgba(251, 191, 36, 0.15) !important; border-left: 3px solid #fbbf24 !important; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -180,270 +64,310 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Kth Smallest in BST - 中序遍歷</div>
-
+                <div class="viz-title">Kth Smallest Element (Inorder Traversal)</div>
                 <div class="custom-input-section">
-                    <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
-                        <input type="text" id="customTree" value="3,1,4,null,2" style="flex: 1; min-width: 120px;">
-                        <label>k =</label>
-                        <input type="number" id="customK" value="1" min="1" style="width: 60px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <label>Tree:</label>
+                        <input type="text" id="treeInput" value="3,1,4,null,2" placeholder="Level order">
+                        <label>k:</label>
+                        <input type="number" id="kInput" value="1" style="width: 50px;">
+                        <button onclick="runVisualizer()">Find</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <div class="tree-container" id="treeContainer"></div>
-
-                    <div class="inorder-section">
-                        <div class="section-title">中序遍歷（升序）</div>
-                        <div class="inorder-items" id="inorderItems"></div>
-                    </div>
-
+                    <svg id="viz-svg">
+                        <g id="main-group" transform="translate(40, 40)"></g>
+                        <g id="badge-group" transform="translate(40, 40)"></g>
+                    </svg>
+                    
                     <div class="state-panel">
-                        <div class="state-item k">
-                            <div class="label">K</div>
-                            <div class="value" id="kVal">1</div>
+                        <div class="state-item">
+                            <div class="state-label">Target K</div>
+                            <div class="state-val val-k" id="kDisplay">1</div>
                         </div>
-                        <div class="state-item result">
-                            <div class="label">第 K 小</div>
-                            <div class="value" id="resultVal">?</div>
+                        <div class="state-item">
+                            <div class="state-label">Counter</div>
+                            <div class="state-val val-count" id="countDisplay">0</div>
                         </div>
-                    </div>
-
-                    <div class="legend-bar">
-                        <div class="legend-item"><div class="legend-dot normal"></div>待訪問</div>
-                        <div class="legend-item"><div class="legend-dot visited"></div>已訪問</div>
-                        <div class="legend-item"><div class="legend-dot answer"></div>第 K 小</div>
                     </div>
                 </div>
 
                 <div class="step-breakdown">
-                    <div class="step-breakdown-title">Step Breakdown</div>
-                    <div class="step-breakdown-text" id="stepBreakdown">點擊「下一步」開始</div>
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(H + k)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(H)
-                </div>
             </div>
-
-            <div class="viz-card">
-                <div class="viz-title">演算法說明</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
-
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">中序遍歷 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int kthSmallest(TreeNode* root, int k) {', id: 0 },
-            { line: '    stack<TreeNode*> st;', id: 1 },
-            { line: '    while (root || !st.empty()) {', id: 2 },
-            { line: '        while (root) {', id: 3 },
-            { line: '            st.push(root);', id: 4 },
-            { line: '            root = root->left;', id: 5 },
-            { line: '        }', id: 6 },
-            { line: '        root = st.top(); st.pop();', id: 7 },
-            { line: '        if (--k == 0) return root->val;', id: 8 },
+            { line: 'int kthSmallest(root, k) {', id: 0 },
+            { line: '    stack<TreeNode> st;', id: 1 },
+            { line: '    while(root || !st.empty()) {', id: 2 },
+            { line: '        while(root) {', id: 3 },
+            { line: '            st.push(root); root = root->left;', id: 4 },
+            { line: '        }', id: 5 },
+            { line: '        root = st.pop();', id: 6 },
+            { line: '        k--;', id: 7 },
+            { line: '        if(k == 0) return root->val;', id: 8 },
             { line: '        root = root->right;', id: 9 },
             { line: '    }', id: 10 },
-            { line: '    return -1;', id: 11 },
-            { line: '}', id: 12 },
+            { line: '}', id: 11 }
         ];
 
-        let currentTree = [3, 1, 4, null, 2];
-        let currentK = 1;
         let viz;
 
-        function parseTree(input) {
-            return input.split(',').map(x => {
-                const trimmed = x.trim();
-                return trimmed === 'null' || trimmed === '' ? null : parseInt(trimmed);
-            });
-        }
-
-        function getInorder(tree) {
-            const result = [];
-            function dfs(idx) {
-                if (idx >= tree.length || tree[idx] === null) return;
-                dfs(2 * idx + 1);
-                result.push({ val: tree[idx], idx });
-                dfs(2 * idx + 2);
+        function buildTree(arr) {
+            if (!arr || arr.length === 0) return null;
+            const root = { id: 0, val: arr[0], children: [] };
+            const queue = [root];
+            let i = 1;
+            while (i < arr.length) {
+                const parent = queue.shift();
+                if (i < arr.length && arr[i] !== null) {
+                    const left = { id: i, val: arr[i], children: [] };
+                    parent.children[0] = left; 
+                    queue.push(left);
+                }
+                i++;
+                if (i < arr.length && arr[i] !== null) {
+                    const right = { id: i, val: arr[i], children: [] };
+                    parent.children[1] = right;
+                    queue.push(right);
+                }
+                i++;
             }
-            dfs(0);
-            return result;
+            return root;
         }
 
-        function generateAlgorithmSteps(tree, k) {
+        function cleanHierarchy(node) {
+            if(!node) return null;
+            const c = [];
+            if(node.children[0]) c.push(cleanHierarchy(node.children[0]));
+            if(node.children[1]) c.push(cleanHierarchy(node.children[1]));
+            return { ...node, children: c };
+        }
+
+        function simulate(arr, k) {
             const steps = [];
-            const inorder = getInorder(tree);
-            const visited = [];
-            let answer = null;
+            const root = buildTree(arr);
+            if(!root) return []; 
 
-            steps.push({
-                tree: [...tree], k,
-                visited: [], inorder: inorder.map(n => n.val),
-                currentIdx: null, answer: null,
-                highlightLines: [0, 1, 2],
-                stepText: 'inorder(BST) = 升序',
-                explanation: {
-                    title: '開始搜尋',
-                    text: `BST: [${tree.filter(x => x !== null).join(', ')}], k = ${k}<br><br>BST 中序遍歷 = 升序<br>第 k 個就是第 k 小`,
-                    formula: 'inorder(BST) = sorted'
-                }
+            // State
+            const visited = []; // Inorder processed
+            const traversalPath = []; // For line animation order
+            let count = 0;
+            let resultId = null;
+            const visitOrder = {}; // id -> count
+
+            const pushState = (msg, hl, activeId=null, currentCount=0, explanation=null) => {
+                steps.push({
+                    root: cleanHierarchy(root),
+                    visited: [...visited],
+                    visitOrder: {...visitOrder},
+                    activeId,
+                    currentCount,
+                    targetK: k,
+                    resultId,
+                    msg, highlightLines: hl,
+                    explanation
+                });
+            };
+
+            pushState(`Start Inorder Traversal looking for k=${k}`, [0, 1], root.id, 0, {
+                title: '開始遍歷',
+                text: '使用中序遍歷 (Left -> Root -> Right) 可以按升序訪問 BST 的節點。',
+                formula: 'Inorder = Sorted'
             });
 
-            for (let i = 0; i < inorder.length; i++) {
-                const node = inorder[i];
-                visited.push(node.idx);
+            // Morris/Iterative Simulation logic easier recursion for viz path?
+            // Let's use recursive helper to populate steps
+            
+            let found = false;
 
-                if (i + 1 === k) {
-                    answer = node.val;
-                    steps.push({
-                        tree: [...tree], k,
-                        visited: [...visited], inorder: inorder.map(n => n.val),
-                        currentIdx: node.idx, answer,
-                        highlightLines: [8],
-                        stepText: `第 ${k} 小 = ${answer} 🎉`,
-                        explanation: {
-                            title: `🎉 找到第 ${k} 小！`,
-                            text: `中序第 ${i + 1} 個 = ${node.val}<br>k = 0，找到答案！`,
-                            formula: `return ${answer}`
-                        }
+            function inorder(node) {
+                if(!node || found) return;
+
+                // Push Left
+                if(node.children[0]) {
+                    pushState(`Go Left from ${node.val}`, [3, 4], node.id, count, {
+                        title: '向左走',
+                        text: '優先訪問左子樹 (較小值)。',
+                        formula: 'root = root->left'
                     });
-                    break;
+                    inorder(node.children[0]);
+                }
+                
+                if(found) return;
+
+                // Process Node
+                count++;
+                visited.push(node.id);
+                visitOrder[node.id] = count;
+                
+                if(count === k) {
+                    resultId = node.id;
+                    found = true;
+                    pushState(`Visit ${node.val}: Count = ${count} (Target!)`, [7, 8], node.id, count, {
+                        title: '找到第 K 小元素',
+                        text: `當前計數 ${count} 等於 k (${k})。此節點 (${node.val}) 即為答案。`,
+                        formula: 'if(--k == 0) return val'
+                    });
+                    return;
+                } else {
+                    pushState(`Visit ${node.val}: Count = ${count}`, [6, 7], node.id, count, {
+                        title: `訪問節點 ${node.val}`,
+                        text: `這是第 ${count} 小的元素。目標是第 ${k} 小。`,
+                        formula: 'k--'
+                    });
                 }
 
-                steps.push({
-                    tree: [...tree], k,
-                    visited: [...visited], inorder: inorder.map(n => n.val),
-                    currentIdx: node.idx, answer: null,
-                    count: i + 1,
-                    highlightLines: [7, 8, 9],
-                    stepText: `訪問 ${node.val}（第 ${i + 1} 小）`,
-                    explanation: {
-                        title: `訪問節點 ${node.val}`,
-                        text: `第 ${i + 1} 小 = ${node.val}<br>k = ${k - (i + 1)}，繼續...`,
-                        formula: `count = ${i + 1}`
-                    }
-                });
+                // Push Right
+                if(node.children[1]) {
+                    pushState(`Go Right from ${node.val}`, [9], node.id, count, {
+                        title: '向右走',
+                        text: '訪問右子樹 (較大值)。',
+                        formula: 'root = root->right'
+                    });
+                    inorder(node.children[1]);
+                }
             }
 
-            if (answer !== null) {
-                steps.push({
-                    tree: [...tree], k,
-                    visited: [...visited], inorder: inorder.map(n => n.val),
-                    answer, final: true,
-                    highlightLines: [8],
-                    stepText: `return ${answer}`,
-                    explanation: {
-                        title: '🎉 完成！',
-                        text: `第 ${k} 小元素 = ${answer}<br><br>Time: O(H + k), Space: O(H)`,
-                        formula: `return ${answer}`
-                    }
+            inorder(root);
+
+            if(found) {
+                pushState(`Done. Result: ${count === k ? 'Found' : 'Not Found'}`, [11], resultId, count, {
+                    title: '完成',
+                    text: '已找到目標節點並返回。',
+                    formula: 'Done'
                 });
             }
 
             return steps;
         }
 
-        function renderStep(step) {
-            const { tree, visited, inorder, currentIdx, answer } = step;
+        const width = 600;
+        const height = 400;
+        const treeLayout = d3.tree().size([width, height]); // Keep structure but allow scaling
+        const svg = d3.select("#viz-svg");
+        const gMain = d3.select("#main-group");
+        const gBadge = d3.select("#badge-group");
+        
+        // Add Zoom/Pan
+        const zoom = d3.zoom().on("zoom", (e) => {
+            gMain.attr("transform", e.transform);
+            gBadge.attr("transform", e.transform);
+        });
+        svg.call(zoom);
+        // Initial Center
+        svg.call(zoom.transform, d3.zoomIdentity.translate(40, 40).scale(0.8));
 
-            // 樹
-            const container = document.getElementById('treeContainer');
-            let html = '';
-            let idx = 0;
-            let levelSize = 1;
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('kDisplay').textContent = step.targetK;
+            document.getElementById('countDisplay').textContent = step.currentCount;
 
-            while (idx < tree.length) {
-                html += '<div class="tree-level">';
-                for (let i = 0; i < levelSize && idx < tree.length; i++, idx++) {
-                    const val = tree[idx];
-                    let cls = 'node';
+            const root = d3.hierarchy(step.root);
+            treeLayout(root);
 
-                    if (val === null) {
-                        cls += ' null';
-                        html += `<div class="${cls}">∅</div>`;
-                    } else {
-                        if (val === answer) cls += ' answer';
-                        else if (currentIdx === idx) cls += ' current';
-                        else if (visited?.includes(idx)) cls += ' visited';
-                        html += `<div class="${cls}">${val}</div>`;
-                    }
-                }
-                html += '</div>';
-                levelSize *= 2;
-            }
+            // Links
+            const links = gMain.selectAll(".link").data(root.links(), d => d.source.data.id + "-" + d.target.data.id);
+            links.enter().append("path").attr("class", "link")
+                .merge(links)
+                .transition().duration(500)
+                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
+            links.exit().remove();
 
-            container.innerHTML = html;
+            // Nodes
+            const nodes = gMain.selectAll(".node-g").data(root.descendants(), d => d.data.id);
+            const nEnter = nodes.enter().append("g").attr("class", "node-g");
+            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
+            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
 
-            // 中序
-            document.getElementById('inorderItems').innerHTML = inorder.map((val, i) => {
-                let cls = 'inorder-item';
-                const visitedVals = visited?.map(idx => tree[idx]) || [];
-                if (val === answer) cls += ' answer';
-                else if (visitedVals.includes(val)) cls += ' visited';
-                return `<span class="${cls}">${val}</span>`;
-            }).join('');
+            const nUpdate = nodes.merge(nEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            nUpdate.select("circle").attr("class", d => {
+                let c = "node-circle";
+                if(d.data.id === step.resultId) return "node-circle answer";
+                
+                if(step.visited.includes(d.data.id)) c += " visited";
+                if(d.data.id === step.activeId) c += " active";
+                return c;
+            })
+            .style("stroke-width", d => (d.data.id === step.resultId) ? 0 : 3)
+            .style("r", d => (d.data.id === step.resultId) ? 25 : 20);
 
-            document.getElementById('kVal').textContent = step.k;
-            document.getElementById('resultVal').textContent = answer ?? '?';
-            document.getElementById('stepBreakdown').textContent = step.stepText || '';
+            nUpdate.select(".node-text")
+                .text(d => d.data.val)
+                .attr("class", d => d.data.id === step.resultId ? "node-text answer" : "node-text");
+            
+            nodes.exit().remove();
+
+            // Order Badges (1, 2, 3...)
+            const badges = gBadge.selectAll(".badge-g").data(
+                root.descendants().filter(d => step.visitOrder[d.data.id]),
+                d => d.data.id
+            );
+            
+            const bEnter = badges.enter().append("g").attr("class", "badge-g").attr("opacity", 0);
+            bEnter.append("rect").attr("class", "counter-badge").attr("width", 20).attr("height", 14).attr("x", 12).attr("y", -30);
+            bEnter.append("text").attr("class", "counter-text").attr("x", 22).attr("y", -22);
+
+            const bUpdate = badges.merge(bEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`)
+                .attr("opacity", 1);
+            
+            bUpdate.select("text").text(d => step.visitOrder[d.data.id]);
+            badges.exit().remove();
         }
 
-        function init(tree = currentTree, k = currentK) {
-            currentTree = tree;
-            currentK = k;
-            const steps = generateAlgorithmSteps(tree, k);
-
+        function runVisualizer() {
+            const valStr = document.getElementById('treeInput').value;
+            const k = parseInt(document.getElementById('kInput').value);
+            
+            const arr = valStr.split(',').map(x => {
+                const t = x.trim();
+                return t === 'null' || t === '' ? null : parseInt(t);
+            });
+            
+            if(arr.length === 0) return;
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => renderStep(step)
+                onStepChange: render
             });
-
-            viz.setSteps(steps);
+            viz.setSteps(simulate(arr, k));
         }
 
-        function runCustomInput() {
-            const tree = parseTree(document.getElementById('customTree').value);
-            const k = parseInt(document.getElementById('customK').value);
-            if (tree.length === 0 || tree[0] === null) {
-                alert('請輸入有效的 BST');
-                return;
-            }
-            init(tree, k);
-        }
-
-        function resetVisualization() { init(currentTree, currentK); }
-        window.addEventListener('load', () => init());
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

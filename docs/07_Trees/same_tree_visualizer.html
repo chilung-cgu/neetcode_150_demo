@@ -270,7 +270,7 @@
             { line: '    if (p->val != q->val) return false;', id: 3 },
             { line: '', id: 4 },
             { line: '    return isSameTree(p->left, q->left) &&', id: 5 },
-            { line: '           isSameTree(p->right, q->right);', id: 6 },
+            { line: '    isSameTree(p->right, q->right);', id: 6 },
             { line: '}', id: 7 },
         ];
 
@@ -298,7 +298,7 @@
                 stepText: 'isSameTree(p, q)',
                 explanation: {
                     title: '開始比較',
-                    text: `Tree p: [${treeP.filter(x => x !== null).join(', ')}]<br>Tree q: [${treeQ.filter(x => x !== null).join(', ')}]<br><br>遞迴比較每個對應節點`,
+                    text: `樹 P 與 樹 Q 進行同步遍歷。<br>如果每個對應位置的節點都相同（值相同或都為空），則兩樹相同。`,
                     formula: 'isSameTree(p, q)'
                 }
             });
@@ -311,7 +311,8 @@
                 const pVal = idx < treeP.length ? treeP[idx] : null;
                 const qVal = idx < treeQ.length ? treeQ[idx] : null;
 
-                // Both null - skip silently
+                // Both null - match logic (implicitly) for children of leaves
+                // But for simulation we look at node existence in array
                 if (pVal === null && qVal === null) {
                     return true;
                 }
@@ -326,9 +327,9 @@
                         highlightLines: [2],
                         stepText: `p[${idx}]=${pVal ?? 'null'}, q[${idx}]=${qVal ?? 'null'} → 不同`,
                         explanation: {
-                            title: `❌ 位置 ${idx} 不匹配`,
-                            text: `p = ${pVal ?? 'null'}, q = ${qVal ?? 'null'}<br>一個為空一個非空`,
-                            formula: '!p || !q → return false'
+                            title: `結構不匹配 (節點 ${idx})`,
+                            text: `位置 ${idx} 上，一個節點存在而另一個為空。<br>結構不同，返回 false。`,
+                            formula: '!p || !q => return false'
                         }
                     });
                     return false;
@@ -344,9 +345,9 @@
                         highlightLines: [3],
                         stepText: `${pVal} ≠ ${qVal} → 不同`,
                         explanation: {
-                            title: `❌ 位置 ${idx} 值不同`,
-                            text: `p->val = ${pVal}, q->val = ${qVal}<br>${pVal} ≠ ${qVal}`,
-                            formula: `${pVal} != ${qVal} → return false`
+                            title: `數值不匹配 (節點 ${idx})`,
+                            text: `位置 ${idx} 上，P 的值為 ${pVal}，Q 的值為 ${qVal}。<br>數值不同，返回 false。`,
+                            formula: 'p->val != q->val => return false'
                         }
                     });
                     return false;
@@ -361,9 +362,9 @@
                     highlightLines: [3, 5, 6],
                     stepText: `${pVal} == ${qVal} ✓`,
                     explanation: {
-                        title: `✓ 位置 ${idx} 匹配`,
-                        text: `p->val = q->val = ${pVal}<br>繼續比較子節點`,
-                        formula: `${pVal} == ${qVal} ✓`
+                        title: `匹配成功 (節點 ${idx})`,
+                        text: `位置 ${idx} 上的值相同 (${pVal})。<br>繼續遞迴比較其左子樹與右子樹。`,
+                        formula: 'p->val == q->val'
                     }
                 });
 
@@ -382,10 +383,8 @@
                 highlightLines: result ? [5, 6] : [2, 3],
                 stepText: `return ${result}`,
                 explanation: {
-                    title: result ? '🎉 相同的樹！' : '❌ 不同的樹',
-                    text: result
-                        ? `所有 ${matched.length} 個節點都匹配`
-                        : '發現不匹配的節點',
+                    title: result ? '判定結果：相同' : '判定結果：不同',
+                    text: result ? '所有節點及結構完全一致。' : '發現結構或數值差異。',
                     formula: `return ${result}`
                 }
             });

@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>Design Twitter (Merge K Lists) - 精緻視覺化</title>
+    <title>Design Twitter - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,71 +13,66 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+            min-height: 600px;
         }
 
         .dashboard {
-            display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+            display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%;
         }
 
-        /* User Lists Panel */
-        .users-panel {
-            flex: 1; min-width: 300px;
+        /* Users Panel */
+        .panel {
             background: rgba(30, 41, 59, 0.4); border-radius: 12px; padding: 15px;
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.2); width: 320px;
+            display: flex; flex-direction: column; gap: 10px;
         }
+        .panel-title { font-size: 0.9rem; color: #94a3b8; font-weight: bold; text-transform: uppercase; text-align: center; }
+
+        .user-list { display: flex; flex-direction: column; gap: 8px; }
         .user-row {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+            display: flex; align-items: start; gap: 10px; padding: 8px;
+            background: rgba(59, 130, 246, 0.1); border-radius: 8px;
         }
-        .user-avatar {
-            width: 40px; height: 40px; border-radius: 50%; background: #475569;
-            display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;
-            border: 2px solid #64748b;
+        .avatar {
+            width: 30px; height: 30px; background: #3b82f6; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8rem;
         }
-        .tweet-list {
-            display: flex; gap: 5px; flex-wrap: wrap; align-items: center;
-        }
-        .tweet {
-            padding: 4px 8px; background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6;
-            border-radius: 4px; font-size: 0.8rem; color: #93c5fd;
+        .tweets-preview { flex: 1; display: flex; flex-wrap: wrap; gap: 4px; }
+        .mini-tweet {
+            font-size: 0.7rem; padding: 2px 6px; background: rgba(30, 41, 59, 0.8); border: 1px solid #475569; border-radius: 4px; color: #cbd5e1;
             transition: all 0.3s;
         }
-        .tweet.active { background: #fbbf24; color: #0f172a; transform: scale(1.1); }
-        .tweet.picked { opacity: 0.5; text-decoration: line-through; }
+        .mini-tweet.active { background: #fbbf24; color: #0f172a; border-color: #fbbf24; transform: scale(1.1); }
+        .mini-tweet.picked { opacity: 0.4; text-decoration: line-through; }
 
         /* Heap Panel */
-        .heap-panel {
-            width: 250px;
-            background: rgba(15, 23, 42, 0.5); border-radius: 12px; padding: 10px;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        #heap-svg { width: 100%; height: 200px; }
+        .heap-container { width: 100%; height: 250px; position: relative; }
+        #heap-svg { width: 100%; height: 100%; }
         
-        .node-rect { fill: #3b82f6; stroke: none; rx: 4; }
-        .node-rect.max { fill: #ef4444; }
+        .node-rect { fill: #334155; stroke: #64748b; stroke-width: 2px; }
+        .node-rect.max { fill: #fbbf24; stroke: #fff; } /* Current max */
         .node-text { fill: white; font-size: 10px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .link { stroke: #475569; stroke-width: 1px; }
 
-        /* Feed Screen */
-        .feed-panel {
-            width: 200px; 
-            background: #0f172a; border-radius: 12px; padding: 10px; border: 4px solid #334155;
-            display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto;
+        /* Feed */
+        .feed-container {
+            flex: 1; background: #0f172a; border-radius: 12px; padding: 10px;
+            display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; border: 2px solid #334155;
         }
         .feed-item {
-            background: #1e293b; padding: 8px; border-radius: 6px; border-left: 3px solid #22c55e;
-            font-size: 0.8rem; color: #e2e8f0; animation: slideIn 0.3s;
+            display: flex; gap: 10px; padding: 8px; background: #1e293b; border-radius: 6px; border-left: 3px solid #22c55e;
+            align-items: center; animation: slideIn 0.3s;
         }
+        .feed-time { font-size: 0.7rem; color: #64748b; margin-left: auto; }
         @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; }
+        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 80px; }
         .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
 
-        .viz-title { margin-bottom: 20px; font-size: 1.2rem; font-weight: bold; color: #e2e8f0; border-left: 4px solid #3b82f6; padding-left: 10px; }
-        .section-title { font-size: 0.9rem; color: #94a3b8; font-weight: bold; margin-bottom: 8px; text-align: center; }
-
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px;}
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -85,33 +80,41 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Design Twitter (News Feed)</div>
+                <div class="viz-title">Design Twitter (Merge K Sorted Lists)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
                         <label>User ID:</label>
                         <input type="number" id="uidInput" value="1" min="1" max="3">
-                        <label>Post:</label>
-                        <input type="text" id="tweetInput" value="Hello" style="width:100px">
-                        <button onclick="handlePost()">發布 (Post)</button>
-                        <button onclick="handleGetFeed()" style="background:#22c55e;">獲取 Feed</button>
+                        <label>Post ID:</label>
+                        <input type="number" id="tidInput" value="101" style="width:60px">
+                        <button onclick="doPost()">Post</button>
                     </div>
+                    <div class="input-row" style="margin-top:10px;">
+                        <label>Get Feed for User:</label>
+                        <input type="number" id="feedUidInput" value="1" min="1" max="3">
+                        <button onclick="doGetFeed()" style="background:#22c55e;">Get Feed</button>
+                        <button onclick="resetViz()" style="background:#ef4444;">Reset</button>
+                    </div>
+                    <div style="text-align:center; font-size:0.8rem; color:#64748b; margin-top:5px;">Assuming User 1 follows User 2 & 3.</div>
                 </div>
 
                 <div class="visualization-area">
                     <div class="dashboard">
-                        <div class="users-panel" id="usersPanel">
-                            <div class="section-title">Users & Tweets (Sorted by Time)</div>
-                            <!-- Rendered by JS -->
+                        <div class="panel">
+                            <div class="panel-title">User Tweets (Sorted by Time)</div>
+                            <div class="user-list" id="usersList"></div>
                         </div>
                         
-                        <div class="heap-panel">
-                            <div class="section-title">Max Heap (Sorted by Time)</div>
-                            <svg id="heap-svg"><g id="heap-g"></g></svg>
+                        <div class="panel">
+                            <div class="panel-title">Max Heap (Sorted by Time)</div>
+                            <div class="heap-container">
+                                <svg id="heap-svg"><g id="heap-g"></g></svg>
+                            </div>
                         </div>
                         
-                        <div class="feed-panel" id="feedPanel">
-                            <div class="section-title">News Feed</div>
-                            <!-- Feed Items -->
+                        <div class="panel">
+                            <div class="panel-title">News Feed (Result)</div>
+                            <div class="feed-container" id="feedList"></div>
                         </div>
                     </div>
                 </div>
@@ -125,14 +128,13 @@
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="runSimulation()">↻ 重演 Feed</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
-                            <option value="800" selected>1x</option>
-                            <option value="300">1.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
@@ -150,20 +152,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
+        // Simplified Code for visualization focus
         const codeStructure = [
             { line: 'vector<int> getNewsFeed(userId) {', id: 0 },
-            { line: '    priority_queue<Tweet> maxHeap;', id: 1 },
-            { line: '    for (int followeeId : following[userId]) {', id: 2 },
-            { line: '        if (!tweets[followeeId].empty())', id: 3 },
-            { line: '            maxHeap.push(tweets[followeeId].back());', id: 4 },
-            { line: '    }', id: 5 },
-            { line: '    vector<int> feed;', id: 6 },
-            { line: '    while (!maxHeap.empty() && feed.size() < 10) {', id: 7 },
-            { line: '        Tweet t = maxHeap.top(); maxHeap.pop();', id: 8 },
-            { line: '        feed.push_back(t.id);', id: 9 },
-            { line: '        if (t.prevIndex >= 0) {', id: 10 },
-            { line: '            maxHeap.push(tweets[t.uid][t.prevIndex]);', id: 11 },
-            { line: '        }', id: 12 },
+            { line: '    priority_queue<Tweet> pq;', id: 1 },
+            { line: '    // Push head of tweet list for self + followees', id: 2 },
+            { line: '    for (int uid : followees[userId]) {', id: 3 },
+            { line: '        if (!tweets[uid].empty())', id: 4 },
+            { line: '            pq.push(tweets[uid].back()); // Newest', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    vector<int> feed;', id: 7 },
+            { line: '    while (!pq.empty() && feed.size() < 10) {', id: 8 },
+            { line: '        Tweet t = pq.top(); pq.pop();', id: 9 },
+            { line: '        feed.push_back(t.id);', id: 10 },
+            { line: '        if (t.next_index >= 0) ', id: 11 },
+            { line: '            pq.push(tweets[t.uid][t.next_index]);', id: 12 },
             { line: '    }', id: 13 },
             { line: '    return feed;', id: 14 },
             { line: '}', id: 15 }
@@ -171,214 +174,233 @@
 
         let viz;
         let globalTime = 0;
-        // Data structure
-        const users = {
-            1: { id:1, tweets:[], following: new Set([1, 2, 3]) }, // Assume following all for demo
-            2: { id:2, tweets:[], following: new Set() },
-            3: { id:3, tweets:[], following: new Set() }
+        // Data Model
+        // users: { id: 1, tweets: [{id, time}] }
+        let users = {
+            1: { id:1, tweets: [] },
+            2: { id:2, tweets: [] },
+            3: { id:3, tweets: [] }
         };
+        // Hardcoded follow graph: 1 follows 2, 3. 2 follows none. 3 follows none.
+        // So GetFeed(1) merges 1, 2, 3.
+        const follows = { 1: [1, 2, 3], 2: [2], 3: [3] };
 
-        // Initialize with some data
-        function initData() {
-            addTweet(1, "Post 1");
-            addTweet(2, "Post 2");
-            addTweet(3, "Post 3");
-            addTweet(1, "Post 4");
-            addTweet(2, "Post 5");
+        // Helper: Convert Heap Array to Tree for D3
+        function heapToHierarchy(arr) {
+            if (arr.length === 0) return null;
+            function build(idx) {
+                if (idx >= arr.length) return null;
+                const node = { ...arr[idx], children: [] };
+                const left = build(2 * idx + 1);
+                const right = build(2 * idx + 2);
+                if (left) node.children.push(left);
+                if (right) node.children.push(right);
+                return node;
+            }
+            return build(0);
         }
 
-        function addTweet(uid, text) {
-            globalTime++;
-            if(!users[uid]) users[uid] = {id:uid, tweets:[], following:new Set([uid])};
-            users[uid].tweets.push({ id: globalTime, text, time: globalTime, uid });
-        }
-
-        function handlePost() {
-            const uid = parseInt(document.getElementById('uidInput').value);
-            const text = document.getElementById('tweetInput').value;
-            if(!users[uid]) { alert("User not exist"); return; }
-            addTweet(uid, text || `Post ${globalTime+1}`);
-            renderStatic(); // update UI immediately
-        }
-
-        function renderStatic() {
-            const container = document.getElementById('usersPanel');
-            // Assuming container has title, remove users
-            // Simpler: clear and append
-            let html = '<div class="section-title">Users & Tweets (Sorted by Time)</div>';
-            
-            Object.values(users).forEach(u => {
-                html += `
-                    <div class="user-row">
-                        <div class="user-avatar" style="background:${u.id===1?'#3b82f6':u.id===2?'#a855f7':'#22c55e'}">U${u.id}</div>
-                        <div class="tweet-list">
-                            ${u.tweets.map(t => `<div class="tweet" id="t-${t.id}">T${t.time}</div>`).join('')}
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function handleGetFeed() {
-            runSimulation();
-            viz.startAutoPlay();
-        }
-
-        function generateFeedSteps(userId) {
+        // --- Simulation ---
+        function simulateGetFeed(userId) {
             const steps = [];
+            const followees = follows[userId] || [userId];
             
-            // Build Heap from followers
-            let heap = [];
-            // followers: assume user 1 follows 1, 2, 3
-            const followees = [1, 2, 3];
+            // Build Initial Heap
+            // We need a Max Heap based on Time.
+            // Items in heap: { tweetId, time, uid, nextIdx }
+            
+            const pq = []; // Local simplistic Max Heap array
+            const feed = [];
+            const processedTweets = new Set(); // To mark visually 'picked'
+
+            // Initial Push
+            followees.forEach(uid => {
+                const uTweets = users[uid].tweets;
+                if(uTweets.length > 0) {
+                    const t = uTweets[uTweets.length - 1]; // Newest is at end (or push front? let's assume array push)
+                    // Wait, usually tweets are stored chronological. So newest is last.
+                    // But we traverse backwards? Or we store them reverse?
+                    // Let's assume uTweets[length-1] is newest. Next is length-2.
+                    pq.push({ ...t, uid, idx: uTweets.length - 1 });
+                }
+            });
+            pq.sort((a,b) => b.time - a.time); // Initial sort
+
+            const pushState = (msg, hl, activeTid=null) => {
+                steps.push({
+                    users: JSON.parse(JSON.stringify(users)),
+                    pq: JSON.parse(JSON.stringify(pq)),
+                    feed: [...feed],
+                    processedTweets: new Set(processedTweets), // Set copy? JSON sucks for Set
+                    activeTid,
+                    msg, highlightLines: hl
+                });
+            };
+            
+            // Fix Set serialization for steps
+            // Actually just store array of processed IDs
             
             steps.push({
                 users: JSON.parse(JSON.stringify(users)),
-                heap: [], feed: [],
-                msg: `使用者 1 獲取 Feed: 檢查關注對象 ${followees.join(', ')}`,
-                highlightLines: [2]
+                pq: [...pq], feed: [], processedTweets: [],
+                activeTid: null,
+                msg: `Init Heap with newest tweets from User ${userId} and followees ${followees.join(',')}`,
+                highlightLines: [3, 4, 5]
             });
 
-            for(let fid of followees) {
-                 const u = users[fid];
-                 if(u && u.tweets.length > 0) {
-                     const lastTweet = u.tweets[u.tweets.length-1];
-                     // Store { tweet, index }
-                     heap.push({ ...lastTweet, idx: u.tweets.length-1 });
-                     
-                     steps.push({
-                         users: JSON.parse(JSON.stringify(users)),
-                         heap: JSON.parse(JSON.stringify(heap)), feed: [],
-                         activeT: lastTweet.id,
-                         msg: `將 U${fid} 最新推文 T${lastTweet.time} 加入 Heap`,
-                         highlightLines: [3, 4]
-                     });
-                 }
-            }
-            // Sort heap (max time)
-            heap.sort((a,b) => b.time - a.time);
-
-            while(heap.length > 0 && steps[steps.length-1].feed.length < 10) { // Should use feed.length from last step? No, local var
-                const feed = (steps.length > 0 && steps[steps.length-1].feed) ? [...steps[steps.length-1].feed] : [];
-                if(feed.length >= 10) break;
-
+            while(pq.length > 0 && feed.length < 10) {
                 // Pop Max
-                const top = heap.shift();
+                const top = pq.shift(); // Remove first
                 feed.push(top);
+                const processedList = feed.map(f => f.id);
                 
-                steps.push({
-                    users: JSON.parse(JSON.stringify(users)),
-                    heap: JSON.parse(JSON.stringify(heap)), feed: [...feed],
-                    activeT: top.id, // for highlighting in list
-                    msg: `從 Heap 取出最新 T${top.time} (U${top.uid}) 加入 Feed`,
-                    highlightLines: [8, 9]
-                });
+                pushState(`Pop Tweet ${top.id} (Time ${top.time}) from User ${top.uid}`, [9, 10], top.id);
 
-                // Push next
+                // Push Next
                 if (top.idx > 0) {
                     const nextIdx = top.idx - 1;
                     const nextTweet = users[top.uid].tweets[nextIdx];
-                    heap.push({ ...nextTweet, idx: nextIdx });
-                    heap.sort((a,b) => b.time - a.time); // re-heapify
+                    pq.push({ ...nextTweet, uid: top.uid, idx: nextIdx });
+                    pq.sort((a,b) => b.time - a.time); // Re-sort (simulate heapify)
                     
-                    steps.push({
+                    // We need to update processed list in the state object properly
+                    const currentStep = {
                         users: JSON.parse(JSON.stringify(users)),
-                        heap: JSON.parse(JSON.stringify(heap)), feed: [...feed],
-                        activeT: nextTweet.id,
-                        msg: `將 U${top.uid} 的上一條推文 T${nextTweet.time} 加入 Heap`,
-                        highlightLines: [11]
-                    });
+                        pq: [...pq],
+                        feed: [...feed],
+                        processedTweets: processedList,
+                        activeTid: nextTweet.id, // Highlight the one being pushed
+                        msg: `Push next tweet ${nextTweet.id} from User ${top.uid}`,
+                        highlightLines: [11, 12]
+                    };
+                    steps.push(currentStep);
                 } else {
-                     steps.push({
+                    const currentStep = {
                         users: JSON.parse(JSON.stringify(users)),
-                        heap: JSON.parse(JSON.stringify(heap)), feed: [...feed],
-                        msg: `U${top.uid} 無更多推文`,
-                        highlightLines: [10]
-                    });
+                        pq: [...pq],
+                        feed: [...feed],
+                        processedTweets: processedList,
+                        activeTid: null,
+                        msg: `User ${top.uid} has no more tweets`,
+                        highlightLines: [11]
+                    };
+                    steps.push(currentStep);
                 }
             }
             
-             steps.push({
+            // Final
+            steps.push({
                 users: JSON.parse(JSON.stringify(users)),
-                heap: [], feed: (steps.length>0?steps[steps.length-1].feed:[]),
-                msg: "Feed 生成完畢",
-                highlightLines: [14],
-                final: true
+                pq: [...pq],
+                feed: [...feed],
+                processedTweets: feed.map(f=>f.id),
+                activeTid: null,
+                msg: "Feed Generation Complete",
+                highlightLines: [14]
             });
 
             return steps;
         }
 
         // --- Render ---
-        const gHeap = d3.select("#heap-g");
+        const width = 250, height = 250;
+        const svg = d3.select("#heap-svg");
+        const gMain = d3.select("#heap-g");
+        
+        // Zoom functionality
+        const zoom = d3.zoom().on("zoom", (e) => gMain.attr("transform", e.transform));
+        svg.call(zoom);
+        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 20).scale(0.9));
+
+        const treeLayout = d3.tree().nodeSize([40, 50]);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            
-            // Highlight Tweets in User Lists
-            document.querySelectorAll('.tweet').forEach(el => {
-                el.classList.remove('active');
-                el.classList.remove('picked');
-            });
-            
-            if (step.activeT) {
-                const el = document.getElementById(`t-${step.activeT}`);
-                if(el) el.classList.add('active');
-            }
-            if (step.feed) {
-                step.feed.forEach(t => {
-                   const el = document.getElementById(`t-${t.id}`);
-                   if(el) el.classList.add('picked');
+
+            // Render Users & Tweets
+            const usersList = document.getElementById('usersList');
+            usersList.innerHTML = '';
+            Object.values(step.users).forEach(u => {
+                const row = document.createElement('div');
+                row.className = 'user-row';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar';
+                avatar.textContent = u.id;
+                
+                const preview = document.createElement('div');
+                preview.className = 'tweets-preview';
+                
+                u.tweets.forEach(t => {
+                    const mini = document.createElement('div');
+                    mini.className = 'mini-tweet';
+                    mini.textContent = t.id;
+                    if(t.id === step.activeTid) mini.classList.add('active');
+                    // Check if processed
+                    if(step.processedTweets && step.processedTweets.includes(t.id)) mini.classList.add('picked');
+                    preview.appendChild(mini);
                 });
-            }
+                
+                row.appendChild(avatar);
+                row.appendChild(preview);
+                usersList.appendChild(row);
+            });
 
             // Render Feed
-            const fd = document.getElementById('feedPanel');
-            fd.innerHTML = '<div class="section-title">News Feed</div>' + 
-                (step.feed||[]).map(t => `<div class="feed-item"><strong>U${t.uid}</strong>: T${t.time}</div>`).join('');
+            const feedList = document.getElementById('feedList');
+            feedList.innerHTML = '';
+            step.feed.forEach(f => {
+                const item = document.createElement('div');
+                item.className = 'feed-item';
+                item.innerHTML = `<div><b>U${f.uid}</b>: Tweet ${f.id}</div><div class="feed-time">T=${f.time}</div>`;
+                feedList.appendChild(item);
+            });
 
-            // Render Heap (D3)
-            if(!step.heap || step.heap.length === 0) {
-                gHeap.selectAll("*").remove();
-                return;
+            // Render Heap Tree
+            gMain.selectAll("*").remove();
+            if(step.pq.length > 0) {
+                const root = d3.hierarchy(heapToHierarchy(step.pq));
+                treeLayout(root);
+
+                const links = gMain.selectAll(".link").data(root.links());
+                links.enter().append("path").attr("class", "link")
+                    .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
+
+                const nodes = gMain.selectAll(".node-g").data(root.descendants());
+                const nEnter = nodes.enter().append("g").attr("class", "node-g")
+                    .attr("transform", d => `translate(${d.x}, ${d.y})`);
+                
+                nEnter.append("rect").attr("width", 36).attr("height", 24).attr("x", -18).attr("y", -12)
+                    .attr("class", d => d.depth === 0 ? "node-rect max" : "node-rect");
+                
+                nEnter.append("text").attr("class", "node-text")
+                    .text(d => `T${d.data.id}`);
             }
-            
-            const stratify = (idx) => {
-                if(idx >= step.heap.length) return null;
-                const node = { id: idx, val: step.heap[idx], children: [] };
-                const l = stratify(2*idx+1);
-                const r = stratify(2*idx+2);
-                if(l) node.children.push(l);
-                if(r) node.children.push(r);
-                return node;
-            };
-            const root = d3.hierarchy(stratify(0));
-            const treeLayout = d3.tree().size([200, 150]);
-            treeLayout(root);
-
-            gHeap.attr("transform", "translate(25, 20)");
-
-            const links = gHeap.selectAll(".link").data(root.links());
-            links.enter().append("path").attr("class", "link")
-                .merge(links).attr("d", d3.linkVertical().x(d=>d.x).y(d=>d.y))
-                .style("stroke", "#64748b").style("fill", "none");
-            links.exit().remove();
-
-            const nodes = gHeap.selectAll(".node").data(root.descendants());
-            const nEnter = nodes.enter().append("g").attr("class", "node");
-            nEnter.append("rect").attr("width", 40).attr("height", 24).attr("x", -20).attr("y", -12).attr("class", "node-rect");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-            
-            const nUpdate = nodes.merge(nEnter).attr("transform", d=>`translate(${d.x},${d.y})`);
-            nUpdate.select("rect").attr("class", d => d.data.id === 0 ? "node-rect max" : "node-rect");
-            nUpdate.select("text").text(d => `T${d.data.val.time}`);
-            
-            nodes.exit().remove();
         }
 
-        function runSimulation() {
-            const steps = generateFeedSteps(1); // User 1
+        // --- Actions ---
+        function doPost() {
+            const uid = parseInt(document.getElementById('uidInput').value);
+            const tid = parseInt(document.getElementById('tidInput').value);
+            
+            // Add to state
+            users[uid].tweets.push({ id: tid, time: ++globalTime });
+            document.getElementById('tidInput').value = tid + 1; // Auto increment
+            
+            // Dummy visual update (single step)
+            // Or just re-render current static view?
+            // Let's just create a quick 1-step logic
+            viz = new AlgorithmVisualizer({ codeLines: codeStructure, onStepChange: render });
+            viz.setSteps([{
+                users: JSON.parse(JSON.stringify(users)),
+                pq: [], feed: [], processedTweets: [], msg: `User ${uid} Posted ${tid}`, highlightLines:[]
+            }]);
+        }
+
+        function doGetFeed() {
+            const uid = parseInt(document.getElementById('feedUidInput').value);
+            const steps = simulateGetFeed(uid);
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
@@ -386,11 +408,19 @@
             viz.setSteps(steps);
         }
 
-        window.addEventListener('load', () => {
-            initData();
-            renderStatic();
-            runSimulation();  
-        });
+        function resetViz() {
+            users = { 1: {id:1, tweets:[]}, 2: {id:2, tweets:[]}, 3: {id:3, tweets:[]} };
+            globalTime = 0;
+            // Pre-seed some tweets
+            users[1].tweets.push({id:1, time:++globalTime});
+            users[2].tweets.push({id:2, time:++globalTime});
+            users[3].tweets.push({id:3, time:++globalTime});
+            users[2].tweets.push({id:4, time:++globalTime});
+            
+            doGetFeed();
+        }
+
+        window.addEventListener('load', resetViz);
     </script>
 </body>
 </html>
