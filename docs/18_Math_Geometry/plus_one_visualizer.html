@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plus One - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .stage-viewport {
+            width: 100%; height: 300px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .digit-box { 
+            width: 50px; height: 60px; 
+            border: 2px solid #475569; border-radius: 6px; 
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem; font-weight: bold; color: #cbd5e1;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .digit-box.active { border-color: #fbbf24; background: rgba(251, 191, 36, 0.2); color: #fff; transform: scale(1.1); }
+        .digit-box.carry { border-color: #ef4444; }
+        
+        .carry-indicator {
+            position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
+            color: #ef4444; font-size: 0.8rem; font-weight: bold;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .digit-box.carry .carry-indicator { opacity: 1; }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row input { width: 150px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Plus One</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Digits:</label>
+                            <input type="text" id="digitsInput" value="[1,2,9]">
+                        </div>
+                        <button onclick="runVisualizer()">Add One</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="stats-panel">
+                         <div class="stat-box">
+                            <div class="stat-label">Carry</div>
+                            <div class="stat-val" id="carryDisplay">0</div>
+                        </div>
+                    </div>
+
+                    <div class="stage-viewport" id="arrayContainer"></div>
+                </div>
+
+                <div class="step-breakdown">
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                             <option value="1500">Slow</option>
+                             <option value="1000" selected>Normal</option>
+                             <option value="500">Fast</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'vector<int> plusOne(vector<int>& digits) {', id: 0 },
+            { line: '    int n = digits.size();', id: 1 },
+            { line: '    for (int i = n - 1; i >= 0; i--) {', id: 2 },
+            { line: '        if (digits[i] < 9) {', id: 3 },
+            { line: '            digits[i]++;', id: 4 },
+            { line: '            return digits;', id: 5 },
+            { line: '        }', id: 6 },
+            { line: '        digits[i] = 0;', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    // Overflow case (99...9)', id: 9 },
+            { line: '    digits.insert(digits.begin(), 1);', id: 10 },
+            { line: '    return digits;', id: 11 },
+            { line: '}', id: 12 }
+        ];
+
+        let viz;
+
+        function simulate(digitsInput) {
+            const steps = [];
+            const digits = [...digitsInput];
+            const n = digits.length;
+            
+            steps.push({
+                digits: [...digits], i: -1, carry: 0,
+                msg: "Init. Start from last digit.", highlightLines: [0, 1, 2],
+                explanation: {title: "初始化", text: "從陣列最後一位開始處理進位。", formula: ""}
+            });
+            
+            for(let i=n-1; i>=0; i--) {
+                steps.push({
+                    digits: [...digits], i, carry: 1,
+                    msg: `Process index ${i}. Value ${digits[i]}.`, highlightLines: [3],
+                    explanation: {title: "檢查位數", text: `檢查當前位數 ${digits[i]} 是否小於 9。`, formula: `if (${digits[i]} < 9)`}
+                });
+                
+                if(digits[i] < 9) {
+                    digits[i]++;
+                    steps.push({
+                        digits: [...digits], i, carry: 0, final: true,
+                        msg: `Value < 9. Increment to ${digits[i]} and Return.`, highlightLines: [4, 5],
+                        explanation: {title: "無進位加法", text: "當前位數小於 9，直接加一後返回，不需要再進位。", formula: "return digits"}
+                    });
+                    return steps;
+                }
+                
+                digits[i] = 0;
+                steps.push({
+                    digits: [...digits], i, carry: 1,
+                    msg: `Value is 9. Set to 0. Carry propagates.`, highlightLines: [7],
+                    explanation: {title: "進位", text: "當前位數是 9，加一變 10。設為 0，並將進位傳到下一輪。", formula: "digits[i] = 0"}
+                });
+            }
+            
+            // Overflow
+            digits.unshift(1);
+            steps.push({
+                digits: [...digits], i: -1, carry: 0, final: true, overflow: true,
+                msg: "All digits were 9. Insert 1 at beginning.", highlightLines: [10, 11],
+                explanation: {title: "溢位處理", text: "所有位數都產生進位 (如 999 -> 1000)，在陣列最前方插入 1。", formula: "insert(begin, 1)"}
+            });
+            
+            return steps;
+        }
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('carryDisplay').textContent = step.carry;
+            
+            const container = document.getElementById('arrayContainer');
+            // Rebuild
+            if(container.childElementCount !== step.digits.length) {
+                 container.innerHTML = step.digits.map((d, idx) => `
+                    <div class="digit-box" id="digit-${idx}">
+                        <div class="carry-indicator">+1</div>
+                        <span class="val">${d}</span>
+                    </div>
+                `).join('');
+            }
+            
+            step.digits.forEach((d, idx) => {
+                // Since we might insert at 0, indices shift.
+                // But logic rebuilds if length diff.
+                // If length same, assuming indices map 1:1.
+                // If overflow, we rebuilt.
+                
+                let el = document.getElementById(`digit-${idx}`);
+                // If simulating overflow but using old DOM?
+                // The check above `container.childElementCount !== step.digits.length` handles resize.
+                
+                if(el) {
+                    el.querySelector('.val').textContent = d;
+                    el.className = 'digit-box';
+                    if(step.i === idx) el.classList.add('active');
+                    if(step.i === idx && step.carry) el.classList.add('carry'); // highlight processing
+                    if(step.final && d===1 && step.overflow && idx===0) el.classList.add('active'); // New head
+                }
+            });
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('digitsInput').value;
+            let digits;
+            try {
+                digits = JSON.parse(raw);
+            } catch(e) { alert("Invalid JSON"); return; }
+            if(!Array.isArray(digits)) return;
+
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(digits));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

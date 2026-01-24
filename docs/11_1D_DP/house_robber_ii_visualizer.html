@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>House Robber II - D3 環形視覺化</title>
+    <title>House Robber II (Circular) - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -15,12 +15,12 @@
             flex-direction: column;
             gap: 20px;
             align-items: center;
-            min-height: 500px;
+            min-height: 550px;
         }
 
-        /* SVG */
+        /* D3 Viewport */
         .stage-viewport {
-            width: 100%; height: 400px;
+            width: 100%; height: 450px;
             background: rgba(30, 41, 59, 0.4);
             border-radius: 12px;
             overflow: hidden;
@@ -29,32 +29,40 @@
         }
         #viz-svg { width: 100%; height: 100%; }
 
-        .house-circle { fill: #475569; stroke: #fff; stroke-width: 2px; transition: all 0.5s; cursor: pointer; }
-        .house-circle.active { stroke: #f59e0b; stroke-width: 4px; filter: drop-shadow(0 0 5px #f59e0b); }
-        .house-circle.robbed { fill: #22c55e; }
-        .house-circle.ignored { opacity: 0.2; }
+        .house-rect { fill: #334155; stroke: #475569; stroke-width: 2px; rx: 4; }
+        .house-rect.active { stroke: #fbbf24; stroke-width: 3px; }
+        .house-rect.robbed { fill: rgba(34, 197, 94, 0.2); stroke: #22c55e; }
+        .house-rect.ignored { opacity: 0.1; } /* Ignored by case constraint */
+        .house-rect.skipped { opacity: 0.5; stroke: #ef4444; } /* Skipped by logic */
         
-        .house-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; pointer-events: none; }
+        .value-text { fill: #fff; font-family: monospace; font-size: 14px; text-anchor: middle; font-weight: bold; pointer-events: none; }
         
-        .case-label { font-size: 14px; font-weight: bold; fill: #94a3b8; }
-        .result-text { font-size: 16px; font-weight: bold; fill: #22c55e; }
+        .section-label { fill: #94a3b8; font-size: 14px; font-weight: bold; text-anchor: start; }
+        .money-icon { font-size: 20px; text-anchor: middle; }
 
         /* Stats */
         .stats-panel {
-            display: flex; gap: 30px; justify-content: center; width: 100%;
-            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
         }
-        .stat-box { display: flex; flex-direction: column; align-items: center; }
-        .stat-val { font-size: 1.2rem; font-weight: bold; color: #22c55e; }
-        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #22c55e; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
-        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 200px; }
-        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 200px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -65,32 +73,38 @@
                 <div class="viz-title">House Robber II (Circular)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <div>
-                            <label style="font-size:0.8rem; color:#94a3b8;">House Values:</label>
+                        <div class="input-group">
+                            <label>House Values:</label>
                             <input type="text" id="numsInput" value="2, 3, 2, 5, 4">
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:5px;">
-                            <button onclick="runVisualizer()">Rob</button>
-                        </div>
+                        <button onclick="runVisualizer()">Rob Circular</button>
+                    </div>
+                     <div style="text-align:center; font-size:0.85rem; color:#64748b; margin-top:8px;">
+                        First and Last are adjacent. Split into two linear cases: Ignore Last OR Ignore First.
                     </div>
                 </div>
 
                 <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Robbed</div>
+                       <div class="legend-item"><div class="legend-color" style="background:rgba(148, 163, 184, 0.2)"></div>Excluded (Constraint)</div>
+                    </div>
+
                     <div class="stage-viewport">
                         <svg id="viz-svg"></svg>
                     </div>
                     
                     <div class="stats-panel">
                         <div class="stat-box">
-                            <div class="stat-label">Case 1 (Ignore Last)</div>
+                            <div class="stat-label">Case 1 Max</div>
                             <div class="stat-val" id="case1Display">-</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">Case 2 (Ignore First)</div>
+                            <div class="stat-label">Case 2 Max</div>
                             <div class="stat-val" id="case2Display">-</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">Max Profit</div>
+                            <div class="stat-label">Total Max</div>
                             <div class="stat-val" id="totalDisplay">-</div>
                         </div>
                     </div>
@@ -112,12 +126,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">2x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -133,18 +147,22 @@
         const codeStructure = [
             { line: 'int rob(vector<int>& nums) {', id: 0 },
             { line: '    int n = nums.size();', id: 1 },
-            { line: '    if (n == 1) return nums[0];', id: 2 },
-            { line: '    return max(robRange(0, n-2), robRange(1, n-1));', id: 3 },
-            { line: '}', id: 4 },
-            { line: 'int robRange(start, end) {', id: 5 },
-            { line: '    int prev = 0, curr = 0;', id: 6 },
-            { line: '    for (int i = start; i <= end; i++) {', id: 7 },
-            { line: '        int temp = max(curr, prev + nums[i]);', id: 8 },
-            { line: '        prev = curr;', id: 9 },
-            { line: '        curr = temp;', id: 10 },
-            { line: '    }', id: 11 },
-            { line: '    return curr;', id: 12 },
-            { line: '}', id: 13 }
+            { line: '    if(n == 1) return nums[0];', id: 2 },
+            { line: '    // Split into two cases:', id: 3 },
+            { line: '    // 1. Rob 0 to n-2 (Ignore last)', id: 4 },
+            { line: '    // 2. Rob 1 to n-1 (Ignore first)', id: 5 },
+            { line: '    return max(helper(nums, 0, n-2),', id: 6 },
+            { line: '               helper(nums, 1, n-1));', id: 7 },
+            { line: '}', id: 8 },
+            { line: 'int helper(nums, start, end) {', id: 9 },
+            { line: '    // Standard linear rob logic...', id: 10 },
+            { line: '    int prev2=0, prev1=0;', id: 11 },
+            { line: '    for(i=start...end) {', id: 12 },
+            { line: '        cur = max(prev1, prev2 + nums[i]);', id: 13 },
+            { line: '        prev2 = prev1; prev1 = cur;', id: 14 },
+            { line: '    }', id: 15 },
+            { line: '    return prev1;', id: 16 },
+            { line: '}', id: 17 }
         ];
 
         let viz;
@@ -153,84 +171,125 @@
             const steps = [];
             const n = nums.length;
             
-            // Initial
             steps.push({
-                stage: 'intro',
-                nums,
-                msg: "Circular House Robber: Nums " + nums.join(','),
-                highlightLines: [0, 1]
+                n, nums, 
+                case1: {active: false, dp:[], result:0}, 
+                case2: {active: false, dp:[], result:0},
+                msg: `Init. Houses: ${nums.join(', ')}`, highlightLines: [0, 1],
+                explanation: {title: "初始化", text: "環形房屋問題：首尾相鄰。我們需要考慮兩種線性情況。", formula: ""}
             });
 
-            if (n === 1) {
+            if(n === 0) return steps;
+            if(n === 1) {
                 steps.push({
-                    stage: 'single', nums, result: nums[0],
-                    msg: "Only 1 house. Rob it.", highlightLines: [2]
+                     n, nums, case1: {}, case2: {}, result: nums[0],
+                     msg: "Only 1 house. Rob it.", highlightLines: [2],
+                     explanation: {title: "單一房屋", text: "只有一間房子，直接搶劫。", formula: "return nums[0]"}
                 });
                 return steps;
             }
 
-            // Case 1: 0 to n-2 (Ignore LAST)
-            const c1Start = 0, c1End = n-2;
-            let p1 = 0, c1 = 0;
+            // Case 1: 0 to n-2
+            const c1Start = 0;
+            const c1End = n - 2;
+            const c1Len = c1End - c1Start + 1;
+            steps.push({
+                n, nums,
+                case1: {active: true, range: [c1Start, c1End], dp:[0,0]},
+                case2: {active: false},
+                msg: `Case 1: Rob houses 0 to ${c1End} (Ignore Last)`, highlightLines: [4, 6],
+                explanation: {title: "情況 1", text: "忽略最後一間房子，只考慮從索引 0 到 N-2 的房屋。", formula: "helper(0, n-2)"}
+            });
+
+            // Simulate Helper for Case 1
+            // We'll track simpler DP state for viz: just array of "Robbed?" or just current max
+            // Let's perform logic.
+            let dp1 = [0, 0]; // prev2, prev1
+            // Wait, to visualize correctly I might need full DP array for each case or just current state.
+            // Let's store full logical DP array for Case 1
+            let fullDP1 = new Array(c1Len + 1).fill(0);
             
-            steps.push({
-                stage: 'case1_start', nums, c1Start, c1End,
-                msg: "Case 1: Rob index 0 to N-2 (Ignore Last House)",
-                highlightLines: [3]
-            });
-
-            for (let i = c1Start; i <= c1End; i++) {
-                let temp = Math.max(c1, p1 + nums[i]);
-                steps.push({
-                    stage: 'case1_step', nums, idx: i, current: c1, prev: p1, val: nums[i], temp,
-                    c1Start, c1End,
-                    msg: `C1 House ${i}: max(${c1}, ${p1}+${nums[i]}) = ${temp}`,
-                    highlightLines: [7, 8]
-                });
-                p1 = c1;
-                c1 = temp;
+            // Loop Case 1
+            for(let i=0; i<c1Len; i++) {
+                const houseIdx = c1Start + i;
+                const val = nums[houseIdx];
+                const prev2 = fullDP1[i]; // effectively dp[i]
+                const prev1 = fullDP1[i+1]; // dp[i+1] which is prev max
+                // Logic: dp[k+2] = max(dp[k+1], dp[k] + val)
+                // My indexing:
+                // fullDP1[0] = 0 (before start)
+                // fullDP1[1] = max(0, nums[0]) etc.
+                // Let's stick to standard:
+                // dp[i+2] = max(dp[i+1], dp[i] + nums[idx])
+                
+                if (i===0) fullDP1[1] = val; // Actually logic: prev2=0, prev1=0. i=0: cur=max(0, 0+val)=val. prev2=0, prev1=val.
+                else {
+                    fullDP1[i+1] = Math.max(fullDP1[i], (i>=1 ? fullDP1[i-1] : 0) + val);
+                }
+                // Re-do strictly
             }
-            // Result C1
-            const res1 = c1;
-            steps.push({
-                stage: 'case1_done', nums, res1, c1Start, c1End,
-                msg: `Case 1 Range [0..${n-2}] Max Profit: ${res1}`,
-                highlightLines: [12]
-            });
-
-            // Case 2: 1 to n-1 (Ignore FIRST)
-            const c2Start = 1, c2End = n-1;
-            let p2 = 0, c2 = 0;
+            // Let's run simulation step-by-step
             
-            steps.push({
-                stage: 'case2_start', nums, c2Start, c2End, res1, // keep res1
-                msg: "Case 2: Rob index 1 to N-1 (Ignore First House)",
-                highlightLines: [3]
-            });
-
-            for (let i = c2Start; i <= c2End; i++) {
-                let temp = Math.max(c2, p2 + nums[i]);
+            // Helper function to push steps for a sub-problem
+            function runCase(caseNum, start, end) {
+                let p2 = 0, p1 = 0;
+                
+                // Init Case
                 steps.push({
-                    stage: 'case2_step', nums, idx: i, current: c2, prev: p2, val: nums[i], temp,
-                    res1, c2Start, c2End,
-                    msg: `C2 House ${i}: max(${c2}, ${p2}+${nums[i]}) = ${temp}`,
-                    highlightLines: [7, 8]
+                    n, nums,
+                    case1: caseNum===1 ? {active: true, range:[start, end], p1, p2} : steps[steps.length-1].case1,
+                    case2: caseNum===2 ? {active: true, range:[start, end], p1, p2} : steps[steps.length-1].case2,
+                    msg: `Case ${caseNum}: Start linear scan on range [${start}, ${end}]`, highlightLines: [11],
+                    explanation: {title: `執行 Case ${caseNum}`, text: `對子區間進行動態規劃。`, formula: ""}
                 });
-                p2 = c2;
-                c2 = temp;
+
+                for(let i=start; i<=end; i++) {
+                    let cur = Math.max(p1, p2 + nums[i]);
+                    // Push Step
+                    steps.push({
+                        n, nums,
+                        case1: caseNum===1 ? {active: true, range:[start, end], p1, p2, cur, houseIdx:i} : steps[steps.length-1].case1,
+                        case2: caseNum===2 ? {active: true, range:[start, end], p1, p2, cur, houseIdx:i} : steps[steps.length-1].case2,
+                        msg: `Case ${caseNum}, House ${i} (Val ${nums[i]}): Max(${p1}, ${p2}+${nums[i]}) = ${cur}`,
+                        highlightLines: [13],
+                        explanation: {title: "計算最大值", text: `房屋 ${i}：比較 [跳過] 與 [搶劫] 的收益。`, formula: "max(prev1, prev2+nums[i])"}
+                    });
+                    
+                    p2 = p1;
+                    p1 = cur;
+                    
+                    // Update state
+                    steps.push({
+                        n, nums,
+                        case1: caseNum===1 ? {active: true, range:[start, end], p1, p2, done: i===end} : steps[steps.length-1].case1,
+                        case2: caseNum===2 ? {active: true, range:[start, end], p1, p2, done: i===end} : steps[steps.length-1].case2,
+                        msg: `Case ${caseNum}: Updated max so far: ${p1}`, highlightLines: [14],
+                        explanation: {title: "更新狀態", text: `更新目前的最大累積金額為 ${p1}。`, formula: "prev2=prev1, prev1=cur"}
+                    });
+                }
+                return p1;
             }
-            const res2 = c2;
-            steps.push({
-                stage: 'case2_done', nums, res1, res2, c2Start, c2End,
-                msg: `Case 2 Range [1..${n-1}] Max Profit: ${res2}`,
-                highlightLines: [12]
+
+            const res1 = runCase(1, 0, n-2);
+            // Mark Case 1 done
+             steps.push({
+                n, nums,
+                case1: {active: true, result: res1, done:true},
+                case2: {active: false},
+                msg: `Case 1 Result: ${res1}. Now setup Case 2.`, highlightLines: [6],
+                explanation: {title: "Case 1 完成", text: `情況 1 (忽略最後一間) 的最大金額為 ${res1}。`, formula: ""}
             });
 
-            // Final
-            steps.push({
-                stage: 'final', nums, res1, res2, total: Math.max(res1, res2),
-                msg: `Final Result: max(${res1}, ${res2}) = ${Math.max(res1, res2)}`,
-                highlightLines: [3]
+            const res2 = runCase(2, 1, n-1);
+            
+            const total = Math.max(res1, res2);
+             steps.push({
+                n, nums,
+                case1: {active: true, result: res1, done:true},
+                case2: {active: true, result: res2, done:true},
+                totalResult: total,
+                msg: `Final Result: Max(${res1}, ${res2}) = ${total}`, highlightLines: [7, 8],
+                explanation: {title: "最終比較", text: `比較兩種情況的結果，取較大值 ${total}。`, formula: "return max(res1, res2)"}
             });
 
             return steps;
@@ -239,134 +298,86 @@
         // --- Render ---
         const svg = d3.select("#viz-svg");
         const width = 600;
-        const height = 400;
+        const height = 450;
         svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            document.getElementById('case1Display').textContent = step.res1 !== undefined ? step.res1 : '-';
-            document.getElementById('case2Display').textContent = step.res2 !== undefined ? step.res2 : '-';
-            document.getElementById('totalDisplay').textContent = step.total !== undefined ? step.total : '-';
+            
+            // Helpers
+            const updateStats = (id, val) => {
+                document.getElementById(id).textContent = (val !== undefined) ? val : "-";
+            };
+            
+            updateStats('case1Display', step.case1 ? (step.case1.result || step.case1.p1) : "-");
+            updateStats('case2Display', step.case2 ? (step.case2.result || step.case2.p1) : "-");
+            updateStats('totalDisplay', step.totalResult);
 
-            const nums = step.nums;
-            const n = nums.length;
-            
-            // Layout: 
-            // Intro: Circle
-            // Case 1: Linear strip at top
-            // Case 2: Linear strip at bottom
-            
-            // We animate transition from Circle to Strips?
-            // That's complex. Let's show both strips statically, and highlight active one.
-            // Or show Circular layout on Left, and active Linear analysis on Right.
-            
-            const radius = 80;
-            const cx = 150;
-            const cy = height / 2;
-            
-            // Circle Data
-            const angleStep = (2 * Math.PI) / n;
-            const circleData = nums.map((v, i) => ({
-                i, v,
-                x: cx + radius * Math.cos(i * angleStep - Math.PI/2),
-                y: cy + radius * Math.sin(i * angleStep - Math.PI/2)
-            }));
-
-            // Linear Data (Dynamic position based on stage)
-            // Case 1 strip: center x=400, y=100
-            // Case 2 strip: center x=400, y=300
-            
-            let activeSet = [];
-            let activeY = 0;
-            let startIdx = 0;
-            let endIdx = 0;
-            
-            if (step.stage.startsWith('case1')) {
-                startIdx = 0; endIdx = n-2;
-                activeY = 120;
-            } else if (step.stage.startsWith('case2')) {
-                startIdx = 1; endIdx = n-1;
-                activeY = 280;
-            } else {
-                activeY = null;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
             }
 
-            // Draw Circle Houses
-            const circles = svg.selectAll(".house-circle").data(circleData);
-            const circlesG = circles.enter().append("g").attr("class", "house-g");
+            svg.selectAll("*").remove(); // Clear full (simplified redraw)
+
+            const n = step.nums.length;
+            const margin = {left: 40, right: 20};
+            const w = width - margin.left - margin.right;
+            const rowH = 150;
             
-            circlesG.append("circle").attr("class", "house-circle").attr("r", 20);
-            circlesG.append("text").attr("class", "house-text").attr("dy", 1);
-            
-            const circlesMerge = circles.merge(circlesG);
-            circlesMerge.attr("transform", d => `translate(${d.x}, ${d.y})`);
-            
-            circlesMerge.select(".house-circle")
-                .attr("class", d => {
-                    let c = "house-circle";
-                    // If processing specific cases, dim ignored ones
-                    if (step.stage.startsWith('case1') && d.i === n-1) c += " ignored";
-                    if (step.stage.startsWith('case2') && d.i === 0) c += " ignored";
-                    return c;
+            // Draw Case 1 Row
+            drawRow(1, 50, step.case1);
+            // Draw Case 2 Row
+            drawRow(2, 230, step.case2);
+
+            function drawRow(caseNum, yOffset, state) {
+                if(!state) return;
+                
+                const g = svg.append("g").attr("transform", `translate(${margin.left}, ${yOffset})`);
+                
+                // Label
+                g.append("text").attr("class", "section-label").attr("y", -10).text(`Case ${caseNum}: ${caseNum===1 ? "0 to N-2" : "1 to N-1"}`);
+                
+                const itemW = w / n;
+                const houseW = Math.min(50, itemW - 5);
+                
+                // Draw all houses ghosted
+                step.nums.forEach((val, i) => {
+                    const hg = g.append("g").attr("transform", `translate(${i*itemW}, 0)`);
+                    
+                    // Logic to see if house is included in this case
+                    const excluded = (caseNum===1 && i===n-1) || (caseNum===2 && i===0);
+                    
+                    hg.append("rect")
+                        .attr("width", houseW).attr("height", 50).attr("rx", 4)
+                        .attr("class", excluded ? "house-rect ignored" : "house-rect");
+                        
+                    hg.append("text").attr("class", "value-text").attr("x", houseW/2).attr("y", 30).text(val);
+                    hg.append("text").attr("class", "money-icon").attr("x", houseW/2).attr("y", 10).text("🏠");
+                    
+                    if(excluded) {
+                         hg.append("line").attr("x1",0).attr("y1",0).attr("x2",houseW).attr("y2",50).attr("stroke", "#ef4444").attr("stroke-width", 2);
+                    }
+                    
+                    // Active Highlights
+                    if(state.active && !excluded) {
+                        if(state.houseIdx === i) {
+                            hg.select("rect").attr("class", "house-rect active");
+                        }
+                        // Visualization of 'robbed' in linear scan is tricky without history array in steps.
+                        // We visualized 'current max' in stats.
+                        // Let's just highlight current cursor.
+                    }
                 });
-                
-            circlesMerge.select(".house-text").text(d => d.v);
-            
-            // Draw Linear Progress
-            // We only draw linear strip if activeY is set
-            
-            const linearG = svg.selectAll(".linear-group").data(activeY ? [1] : []);
-            linearG.exit().remove();
-            
-            const linearEnter = linearG.enter().append("g").attr("class", "linear-group");
-            
-            if (activeY) {
-                const lin = linearG.merge(linearEnter);
-                
-                // Extract slice
-                const slice = nums.slice(startIdx, endIdx+1).map((v, i) => ({v, i: startIdx + i}));
-                const stripW = 300;
-                const cellW = stripW / slice.length;
-                const startX = 400 - stripW/2;
-                
-                const cells = lin.selectAll(".cell").data(slice, d => d.i);
-                
-                const cellEnter = cells.enter().append("g").attr("class", "cell");
-                cellEnter.append("rect").attr("width", 40).attr("height", 40).attr("rx", 4).attr("fill", "#334155").attr("stroke", "#fff");
-                cellEnter.append("text").attr("x", 20).attr("y", 25).attr("text-anchor", "middle").attr("fill", "white").style("font-family", "monospace");
-                
-                const cellMerge = cells.merge(cellEnter);
-                cellMerge.transition().duration(300)
-                    .attr("transform", (d, i) => `translate(${startX + i*cellW}, ${activeY})`);
-                
-                cellMerge.select("text").text(d => d.v);
-                
-                cellMerge.select("rect")
-                    .attr("stroke", d => d.i === step.idx ? "#f59e0b" : "#fff")
-                    .attr("stroke-width", d => d.i === step.idx ? 3 : 1)
-                    .attr("fill", d => {
-                        // Visualize Rob/Skip?
-                        // step.idx is current being considered
-                        if (d.i < step.idx) return "#475569"; // past
-                        return "#334155";
-                    });
-                
-                cells.exit().remove();
-                
-                // Add Label
-                let label = lin.selectAll(".group-label").data([1]);
-                label.enter().append("text").attr("class", "group-label").attr("fill", "#fff").attr("text-anchor", "middle")
-                    .merge(label)
-                    .attr("x", 400).attr("y", activeY - 20)
-                    .text(step.stage.startsWith('case1') ? "Case 1: [0...N-2]" : "Case 2: [1...N-1]");
             }
         }
 
         function runVisualizer() {
             const raw = document.getElementById('numsInput').value;
-            const nums = raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
-            if(nums.length === 0) { alert('nums?'); return; }
-            
+            const nums = raw.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render

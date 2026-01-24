@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge Triplets - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
+        }
+
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .triplet-row { transition: opacity 0.5s; }
+        .triplet-bg { fill: #334155; rx: 4; stroke: #475569; }
+        .triplet-bg.valid { stroke: #22c55e; stroke-width: 2px; fill: rgba(34, 197, 94, 0.1); }
+        .triplet-bg.invalid { opacity: 0.3; }
+
+        .val-text { fill: #fff; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; }
+        
+        .axis-label { fill: #94a3b8; font-size: 10px; text-anchor: middle; }
+        
+        .result-box { fill: #1e293b; stroke: #3b82f6; stroke-width: 2px; rx: 4; }
+        .target-box { fill: #1e293b; stroke: #fbbf24; stroke-width: 2px; rx: 4; stroke-dasharray: 4,2; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Merge Triplets to Target</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Triplets:</label>
+                            <input type="text" id="tripletsInput" value="[2,5,3],[1,8,4],[1,7,5]">
+                        </div>
+                        <div class="input-group">
+                            <label>Target:</label>
+                            <input type="text" id="targetInput" value="2,7,5" style="width:100px;">
+                        </div>
+                        <button onclick="runVisualizer()">Merge</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #22c55e"></div>Valid Triplet</div>
+                       <div class="legend-item"><div class="legend-color" style="opacity:0.3; background:#334155;"></div>Invalid (Filtered Out)</div>
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #3b82f6"></div>Accumulated Result</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#22c55e" />
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Target</div>
+                            <div class="stat-val" id="targetDisplay">-</div>
+                        </div>
+                         <div class="stat-box">
+                            <div class="stat-label">Current Merged</div>
+                            <div class="stat-val" id="mergedDisplay">[0, 0, 0]</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Match?</div>
+                            <div class="stat-val" id="resDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool mergeTriplets(vector<vector<int>>& triplets, vector<int>& target) {', id: 0 },
+            { line: '    unordered_set<int> good;', id: 1 },
+            { line: '    for (auto& t : triplets) {', id: 2 },
+            { line: '        if (t[0] > target[0] || t[1] > target[1] || t[2] > target[2])', id: 3 },
+            { line: '            continue;', id: 4 },
+            { line: '        for (int i = 0; i < 3; i++)', id: 5 },
+            { line: '            if (t[i] == target[i]) good.insert(i);', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return good.size() == 3;', id: 8 },
+            { line: '}', id: 9 }
+        ];
+
+        let viz;
+
+        function simulate(triplets, target) {
+            const steps = [];
+            const result = new Set();
+            let currentMerged = [0, 0, 0];
+            
+            steps.push({
+                triplets, target, result: new Set(result), currentMerged: [...currentMerged], i: -1,
+                msg: `Target: [${target}]. Init Empty Set.`, highlightLines: [0, 1],
+                explanation: {title: "初始化", text: "我們需要湊齊目標的三個分量。記錄哪些分量已經達成目標。", formula: "good = {}"}
+            });
+            
+            for(let i=0; i<triplets.length; i++) {
+                const t = triplets[i];
+                
+                // Check if valid
+                const valid = t[0] <= target[0] && t[1] <= target[1] && t[2] <= target[2];
+                
+                if (!valid) {
+                    steps.push({
+                        triplets, target, result: new Set(result), currentMerged: [...currentMerged], i, 
+                        status: 'invalid', t,
+                        msg: `Triplet [${t}]: Invalid (One element > Target). Skip.`, highlightLines: [3, 4],
+                        explanation: {title: "無效 Triplet", text: `因為有元素大於目標值，這個 Triplet 若合併會讓結果超過目標，所以跳過。`, formula: "Continue"}
+                    });
+                    continue;
+                }
+                
+                // If valid, merge
+                const newMatches = [];
+                for(let k=0; k<3; k++) {
+                    currentMerged[k] = Math.max(currentMerged[k], t[k]);
+                    if(t[k] === target[k]) {
+                        result.add(k);
+                        newMatches.push(k);
+                    }
+                }
+                
+                steps.push({
+                    triplets, target, result: new Set(result), currentMerged: [...currentMerged], i,
+                    status: 'valid', t, newMatches,
+                    msg: `Triplet [${t}]: Valid. Merge! Matches found: [${newMatches.join(', ')}].`, highlightLines: [5, 6],
+                    explanation: {title: "有效合併", text: "此 Triplet 所有元素皆 <= 目標。合併它並更新達成的目標分量。", formula: "good.insert(k)"}
+                });
+            }
+            
+            const success = result.size === 3;
+            steps.push({
+                triplets, target, result: new Set(result), currentMerged: [...currentMerged], final: true, success,
+                msg: `Final Result: ${success}. (Matched indices: ${result.size}/3)`, highlightLines: [8],
+                explanation: {title: "完成", text: `是否湊齊三個分量: ${success}。`, formula: `return ${success}`}
+            });
+
+            return steps;
+        }
+
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            document.getElementById('targetDisplay').textContent = JSON.stringify(step.target);
+            document.getElementById('mergedDisplay').textContent = JSON.stringify(step.currentMerged);
+            document.getElementById('resDisplay').textContent = step.success !== undefined ? step.success : "-";
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+            
+            // Layout: Left: List of Triplets. Right: Target & Current Merged.
+            
+            const listStartX = 30;
+            const listY = 50;
+            const rowH = 40;
+            const colW = 40;
+            
+            // Render Triplets List
+            const listG = svg.selectAll(".row-g").data(step.triplets.map((t,i)=>({t,i})));
+            const listEnter = listG.enter().append("g").attr("class", "row-g");
+            
+            // BG
+            listEnter.append("rect").attr("class", "triplet-bg").attr("width", colW*3 + 10).attr("height", rowH - 5);
+            
+            // Values
+            [0, 1, 2].forEach(k => {
+                 listEnter.append("text").attr("class", `val-text idx-${k}`)
+                    .attr("x", 5 + k*colW + colW/2)
+                    .attr("y", (rowH-5)/2);
+            });
+            
+            const listUpdate = listG.merge(listEnter)
+                .attr("transform", d => `translate(${listStartX}, ${listY + d.i*rowH})`);
+                
+            listUpdate.select(".triplet-bg")
+                .attr("class", d => {
+                     let c = "triplet-bg";
+                     if(step.i > d.i) { // Processed
+                         // We need to know if it was valid or invalid from history... simpler: re-check
+                         const valid = d.t[0] <= step.target[0] && d.t[1] <= step.target[1] && d.t[2] <= step.target[2];
+                         if(valid) c += " valid";
+                         else c += " invalid";
+                     } else if(step.i === d.i && !step.final) {
+                         c += " active";
+                         if(step.status === 'valid') c += " valid";
+                         else if(step.status === 'invalid') c += " invalid";
+                     }
+                     return c;
+                });
+                
+            [0, 1, 2].forEach(k => {
+                listUpdate.select(`.idx-${k}`).text(d => d.t[k]);
+            });
+            
+            listG.exit().remove();
+            
+            // Right Side: Target & Result
+            const rightX = 350;
+            const rightY = 100;
+            
+            // Draw Target
+            svg.selectAll(".target-g").remove();
+            const targetG = svg.append("g").attr("transform", `translate(${rightX}, ${rightY})`);
+            targetG.append("text").text("Target").attr("fill","#94a3b8").attr("y", -10).attr("font-size", "12px");
+            targetG.append("rect").attr("class", "target-box").attr("width", colW*3 + 10).attr("height", rowH);
+             [0, 1, 2].forEach(k => {
+                 targetG.append("text").attr("class", "val-text")
+                    .attr("x", 5 + k*colW + colW/2).attr("y", rowH/2).text(step.target[k]);
+            });
+            
+            // Draw Current Merged
+            const mergedY = 200;
+            svg.selectAll(".merged-g").remove();
+            const mergedG = svg.append("g").attr("transform", `translate(${rightX}, ${mergedY})`);
+            mergedG.append("text").text("Current Merged").attr("fill","#94a3b8").attr("y", -10).attr("font-size", "12px");
+            mergedG.append("rect").attr("class", "result-box").attr("width", colW*3 + 10).attr("height", rowH);
+             [0, 1, 2].forEach(k => {
+                 const matched = step.result.has(k);
+                 const val = step.currentMerged[k];
+                 
+                 mergedG.append("text").attr("class", "val-text")
+                    .attr("x", 5 + k*colW + colW/2).attr("y", rowH/2)
+                    .text(val)
+                    .attr("fill", matched ? "#22c55e" : "#fff"); // Highlight matched indices
+                    
+                 // Indicator dot if matched
+                 if(matched) {
+                     mergedG.append("circle").attr("r", 3).attr("fill", "#22c55e")
+                        .attr("cx", 5 + k*colW + colW/2).attr("cy", rowH + 8);
+                 }
+            });
+            
+            // Connection lines from active triplet to result?
+             if(step.status === 'valid' && !step.final) {
+                 const srcY = listY + step.i*rowH + rowH/2;
+                 const srcX = listStartX + colW*3 + 10;
+                 
+                  svg.selectAll(".merge-line").remove();
+                  svg.append("line").attr("class", "merge-line")
+                    .attr("x1", srcX).attr("y1", srcY)
+                    .attr("x2", rightX).attr("y2", mergedY + rowH/2)
+                    .attr("stroke", "#22c55e").attr("stroke-width", 2).attr("stroke-dasharray", "5,5")
+                    .attr("marker-end", "url(#arrow)");
+             } else {
+                  svg.selectAll(".merge-line").remove();
+             }
+        }
+
+        function runVisualizer() {
+            const tripletsRaw = document.getElementById('tripletsInput').value;
+             const targetRaw = document.getElementById('targetInput').value;
+             
+             let triplets, target;
+            try {
+                 if(tripletsRaw.trim().startsWith('[')) {
+                     try { triplets = JSON.parse(tripletsRaw.replace(/'/g, '"')); }
+                     catch(e) { triplets = JSON.parse('[' + tripletsRaw.replace(/'/g, '"') + ']'); }
+                 } else {
+                     triplets = JSON.parse('[' + tripletsRaw.replace(/'/g, '"') + ']');
+                 }
+                 if(!Array.isArray(triplets)) throw "Invalid triplets";
+                 target = targetRaw.split(',').map(Number);
+             } catch(e) {
+                 return; 
+             }
+            
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(triplets, target));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

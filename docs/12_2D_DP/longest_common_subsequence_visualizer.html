@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Common Subsequence - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
+        }
+
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .cell-rect { fill: #334155; stroke: #475569; stroke-width: 1px; rx: 4; }
+        .cell-rect.active { stroke: #fbbf24; stroke-width: 3px; }
+        .cell-rect.match { fill: rgba(34, 197, 94, 0.2); stroke: #22c55e; }
+        .cell-rect.mismatch { fill: #1e293b; }
+
+        .cell-text { fill: #fff; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .axis-label { fill: #94a3b8; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
+        
+        .connector-path { fill: none; stroke: #94a3b8; stroke-width: 2px; marker-end: url(#arrow); opacity: 0.6; }
+        .connector-path.match { stroke: #22c55e; stroke-width: 3px; }
+        .connector-path.max { stroke: #fbbf24; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 100px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Longest Common Subsequence (LCS)</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Text 1:</label>
+                            <input type="text" id="t1Input" value="abcde">
+                        </div>
+                        <div class="input-group">
+                            <label>Text 2:</label>
+                            <input type="text" id="t2Input" value="ace">
+                        </div>
+                        <button onclick="runVisualizer()">Find LCS</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Match (Diagonal)</div>
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #fbbf24"></div>Calculated</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#334155"></div>Mismatch (Max)</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                             <defs>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Char 1</div>
+                            <div class="stat-val" id="c1Display">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Char 2</div>
+                            <div class="stat-val" id="c2Display">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">LCS Length</div>
+                            <div class="stat-val" id="lcsDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown text-white">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int longestCommonSubsequence(string text1, string text2) {', id: 0 },
+            { line: '    int m = text1.size(), n = text2.size();', id: 1 },
+            { line: '    vector<vector<int>> dp(m+1, vector<int>(n+1, 0));', id: 2 },
+            { line: '    for (int i = 1; i <= m; i++) {', id: 3 },
+            { line: '        for (int j = 1; j <= n; j++) {', id: 4 },
+            { line: '            if (text1[i-1] == text2[j-1]) {', id: 5 },
+            { line: '                dp[i][j] = 1 + dp[i-1][j-1];', id: 6 },
+            { line: '            } else {', id: 7 },
+            { line: '                dp[i][j] = max(dp[i-1][j], dp[i][j-1]);', id: 8 },
+            { line: '            }', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return dp[m][n];', id: 12 },
+            { line: '}', id: 13 }
+        ];
+
+        let viz;
+
+        function simulate(t1, t2) {
+            const steps = [];
+            const m = t1.length;
+            const n = t2.length;
+            const dp = Array.from({length: m+1}, () => Array(n+1).fill(0));
+            
+            steps.push({
+                t1, t2, dp: dp.map(r=>[...r]), i: 0, j: 0,
+                msg: `Init ${m+1}x${n+1} DP table with 0.`, highlightLines: [0, 1, 2],
+                explanation: {title: "初始化", text: "DP 表格大小為 (m+1)x(n+1)，代表空字串對比的結果為 0。", formula: "dp[i][j]=0"}
+            });
+            
+            for(let i=1; i<=m; i++) {
+                for(let j=1; j<=n; j++) {
+                    const c1 = t1[i-1];
+                    const c2 = t2[j-1];
+                    let match = c1 === c2;
+                    
+                    steps.push({
+                        t1, t2, dp: dp.map(r=>[...r]), i, j, c1, c2, match, calculating: true,
+                        msg: `Compare '${c1}' vs '${c2}'`, highlightLines: [3, 4, 5],
+                        explanation: {title: `比較字元`, text: `S1[${i-1}]='${c1}' 與 S2[${j-1}]='${c2}' 相同嗎？`, formula: match ? "Yes" : "No"}
+                    });
+                    
+                    if(match) {
+                        const prev = dp[i-1][j-1];
+                        dp[i][j] = 1 + prev;
+                        steps.push({
+                            t1, t2, dp: dp.map(r=>[...r]), i, j, c1, c2, match,
+                            prev, val: dp[i][j],
+                            msg: `Match! dp[${i}][${j}] = 1 + dp[${i-1}][${j-1}](${prev}) = ${dp[i][j]}`, highlightLines: [6],
+                            explanation: {title: "匹配成功", text: `字元相同。LCS 長度 = 左上角值 + 1。`, formula: `dp[${i}][${j}] = 1 + ${prev}`}
+                        });
+                    } else {
+                        const top = dp[i-1][j];
+                        const left = dp[i][j-1];
+                        dp[i][j] = Math.max(top, left);
+                        steps.push({
+                            t1, t2, dp: dp.map(r=>[...r]), i, j, c1, c2, match,
+                            top, left, val: dp[i][j],
+                            msg: `Mismatch. Max(Top: ${top}, Left: ${left}) = ${dp[i][j]}`, highlightLines: [8],
+                            explanation: {title: "不匹配", text: `字元不同。繼承上方或左方的最大值。`, formula: `max(${top}, ${left})`}
+                        });
+                    }
+                }
+            }
+            
+            steps.push({
+                t1, t2, dp: dp.map(r=>[...r]), i: m, j: n, final: true, result: dp[m][n],
+                msg: `Final LCS Length: ${dp[m][n]}`, highlightLines: [12],
+                explanation: {title: "完成", text: `最長公共子序列長度為 ${dp[m][n]}。`, formula: `return ${dp[m][n]}`}
+            });
+
+            return steps;
+        }
+
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            if(step.calculating || step.val !== undefined) {
+                 document.getElementById('c1Display').textContent = step.c1;
+                 document.getElementById('c2Display').textContent = step.c2;
+            } else {
+                 document.getElementById('c1Display').textContent = "-";
+                 document.getElementById('c2Display').textContent = "-";
+            }
+            document.getElementById('lcsDisplay').textContent = step.result || (step.i>0 ? step.dp[step.i][step.j] : "-");
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const m = step.t1.length + 1;
+            const n = step.t2.length + 1;
+            const margin = {top: 40, left: 40, right: 20, bottom: 20};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const cellSize = Math.min(innerW / n, innerH / m, 50);
+            const gridW = n * cellSize;
+            const gridH = m * cellSize;
+            const startX = (width - gridW) / 2 + margin.left/2;
+            const startY = (height - gridH) / 2 + margin.top/2;
+
+            // Axis Labels
+            // Col headers (Text 2)
+            const colLabels = svg.selectAll(".col-label").data(step.t2.split(''));
+            colLabels.enter().append("text").attr("class", "axis-label col-label")
+                .merge(colLabels)
+                .attr("x", (d, i) => startX + (i+1)*cellSize + cellSize/2)
+                .attr("y", startY - 10)
+                .text(d => d);
+            colLabels.exit().remove();
+            
+            // Row headers (Text 1)
+            const rowLabels = svg.selectAll(".row-label").data(step.t1.split(''));
+            rowLabels.enter().append("text").attr("class", "axis-label row-label")
+                .merge(rowLabels)
+                .attr("x", startX - 15)
+                .attr("y", (d, i) => startY + (i+1)*cellSize + cellSize/2)
+                .text(d => d);
+            rowLabels.exit().remove();
+
+            // Grid Cells
+            const cells = [];
+            for(let i=0; i<m; i++) {
+                for(let j=0; j<n; j++) {
+                    cells.push({i, j, val: step.dp[i][j]});
+                }
+            }
+
+            const g = svg.selectAll(".cell-g").data(cells, d => `${d.i}-${d.j}`);
+            const gEnter = g.enter().append("g").attr("class", "cell-g");
+            
+            gEnter.append("rect").attr("class", "cell-rect")
+                .attr("width", cellSize).attr("height", cellSize);
+            
+            gEnter.append("text").attr("class", "cell-text")
+                .attr("x", cellSize/2).attr("y", cellSize/2);
+
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${startX + d.j*cellSize}, ${startY + d.i*cellSize})`);
+            
+            gUpdate.select(".cell-rect").attr("class", d => {
+                let c = "cell-rect";
+                // Active calculation
+                if(d.i === step.i && d.j === step.j && !step.final && d.i>0 && d.j>0) {
+                     c += " active";
+                     if (step.match) c += " match";
+                     else if (step.val !== undefined) c += " mismatch"; // calculated but not matched
+                }
+                return c;
+            });
+            
+            gUpdate.select(".cell-text").text(d => d.val);
+            
+            g.exit().remove();
+            
+            // Connectors
+            const connectors = [];
+            if(step.i > 0 && step.j > 0 && !step.final) {
+                const cx = startX + step.j*cellSize + cellSize/2;
+                const cy = startY + step.i*cellSize + cellSize/2;
+                
+                if (step.match) {
+                    // Diag
+                     connectors.push({
+                        x1: startX + (step.j-1)*cellSize + cellSize/2, 
+                        y1: startY + (step.i-1)*cellSize + cellSize/2,
+                        x2: cx, y2: cy, type: 'match'
+                    });
+                } else if (step.val !== undefined) {
+                    // Max from Top or Left
+                    if (step.top >= step.left) {
+                         connectors.push({
+                            x1: cx, 
+                            y1: startY + (step.i-1)*cellSize + cellSize/2,
+                            x2: cx, y2: cy, type: 'max'
+                        });
+                    }
+                    if (step.left >= step.top) { // if equal, show both? or priority? showing both if equal is safer visualize
+                          connectors.push({
+                            x1: startX + (step.j-1)*cellSize + cellSize/2, 
+                            y1: cy,
+                            x2: cx, y2: cy, type: 'max'
+                        });
+                    }
+                }
+            }
+            
+            const paths = svg.selectAll(".connector-path").data(connectors);
+            paths.enter().append("path").attr("class", "connector-path")
+                .merge(paths)
+                .attr("d", d => `M${d.x1},${d.y1} L${d.x2},${d.y2}`)
+                .attr("class", d => `connector-path ${d.type}`)
+                .style("stroke", d => d.type === 'match' ? "#22c55e" : "#fbbf24");
+            paths.exit().remove();
+        }
+
+        function runVisualizer() {
+            const t1 = document.getElementById('t1Input').value;
+            const t2 = document.getElementById('t2Input').value;
+            if(!t1 || !t2) return;
+
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(t1, t2));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Single Number (XOR) - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .stage-viewport {
+            width: 100%; height: 300px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .bit-row { display: flex; gap: 5px; font-family: monospace; align-items: center; }
+        .bit-box { 
+            width: 40px; height: 50px; 
+            border: 2px solid #475569; border-radius: 6px; 
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem; font-weight: bold; color: #cbd5e1;
+            transition: all 0.3s;
+        }
+        .bit-box.one { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; color: #60a5fa; }
+        .bit-box.zero { background: rgba(30, 41, 59, 0.5); border-color: #475569; color: #94a3b8; }
+        
+        .bit-label { width: 80px; text-align: right; color: #94a3b8; margin-right: 15px; font-size: 0.9rem; }
+        
+        .operator { font-size: 2rem; color: #fbbf24; margin: 5px 0; }
+        
+        .result-box { border-color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row input { width: 250px; text-align: center; }
+        
+        .array-display { 
+            display: flex; gap: 10px; margin-bottom: 20px; 
+            background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;
+        }
+        .arr-item { 
+            padding: 5px 10px; border: 1px solid #475569; border-radius: 4px; color: #cbd5e1;
+            font-family: monospace; 
+        }
+        .arr-item.active { background: #3b82f6; color: #fff; border-color: #60a5fa; transform: scale(1.1); }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Single Number (XOR)</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Nums:</label>
+                            <input type="text" id="numsInput" value="[4,1,2,1,2]">
+                        </div>
+                        <button onclick="runVisualizer()">Find Single</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="array-display" id="arrayDisplay"></div>
+
+                    <div class="stage-viewport">
+                        <!-- Current Accumulator -->
+                        <div class="bit-row" id="accRow">
+                            <div class="bit-label">Result</div>
+                            <!-- bits -->
+                        </div>
+                        
+                        <div class="operator">XOR</div>
+                        
+                        <!-- Operand -->
+                        <div class="bit-row" id="opRow">
+                            <div class="bit-label">Current</div>
+                            <!-- bits -->
+                        </div>
+                        
+                        <div style="height: 2px; width: 300px; background: #475569; margin: 10px 0;"></div>
+                        
+                        <!-- New Result -->
+                        <div class="bit-row" id="newRow">
+                            <div class="bit-label">New Res</div>
+                            <!-- bits -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step-breakdown">
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                             <option value="1500">Slow</option>
+                             <option value="1000" selected>Normal</option>
+                             <option value="500">Fast</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int singleNumber(vector<int>& nums) {', id: 0 },
+            { line: '    int res = 0;', id: 1 },
+            { line: '    for (int n : nums) {', id: 2 },
+            { line: '        res = res ^ n; // XOR', id: 3 },
+            { line: '    }', id: 4 },
+            { line: '    return res;', id: 5 },
+            { line: '}', id: 6 }
+        ];
+
+        let viz;
+
+        function simulate(nums) {
+            const steps = [];
+            let res = 0;
+            
+            steps.push({
+                nums, idx: -1, res, curr: 0,
+                msg: "Init result = 0 (0000).", highlightLines: [0, 1],
+                explanation: {title: "初始化", text: "XOR 初始值設為 0。", formula: "res = 0"}
+            });
+            
+            for(let i=0; i<nums.length; i++) {
+                const n = nums[i];
+                const prevRes = res;
+                const newRes = res ^ n;
+                
+                steps.push({
+                    nums, idx: i, res: prevRes, curr: n, newRes: newRes,
+                    msg: `XOR with ${n} (${n.toString(2)}).`, highlightLines: [2, 3],
+                    explanation: {title: "XOR 運算", text: `將當前結果 ${prevRes} 與 ${n} 進行 XOR。相同位元變 0，不同變 1。`, formula: `${prevRes} ^ ${n} = ${newRes}`}
+                });
+                
+                res = newRes;
+            }
+            
+            steps.push({
+                nums, idx: nums.length, res, curr: 0,
+                final: true,
+                msg: `Final Result: ${res}.`, highlightLines: [5],
+                explanation: {title: "完成", text: `剩下的數字即為只出現一次的數字。`, formula: `return ${res}`}
+            });
+            
+            return steps;
+        }
+
+        function toBinArray(val) {
+            // 4 bits sufficient for example inputs <= 15.
+            // But let's do 6 bits for safety (up to 63).
+            let s = (val >>> 0).toString(2).padStart(6, '0');
+            return s.split('').map(x => x === '1');
+        }
+
+        function renderBits(containerId, val, isResult=false) {
+            const arr = toBinArray(val);
+            const container = document.getElementById(containerId);
+            // remove existing bits only
+            const existing = container.querySelectorAll('.bit-box');
+            if(existing.length !== arr.length) {
+                // Clear and rebuild if length changes (init)
+                // Actually keep label
+                const label = container.querySelector('.bit-label');
+                container.innerHTML = '';
+                container.appendChild(label);
+                
+                arr.forEach(bit => {
+                    const div = document.createElement('div');
+                    div.className = `bit-box ${bit ? 'one' : 'zero'} ${isResult ? 'result-box' : ''}`;
+                    div.textContent = bit ? '1' : '0';
+                    container.appendChild(div);
+                });
+            } else {
+                // Update
+                arr.forEach((bit, i) => {
+                    const div = existing[i];
+                    div.className = `bit-box ${bit ? 'one' : 'zero'} ${isResult ? 'result-box' : ''}`;
+                    div.textContent = bit ? '1' : '0';
+                });
+            }
+        }
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            const arrDiv = document.getElementById('arrayDisplay');
+            arrDiv.innerHTML = step.nums.map((n, i) => 
+                `<div class="arr-item ${step.idx === i ? 'active' : ''}">${n}</div>`
+            ).join('');
+
+            renderBits('accRow', step.res);
+            renderBits('opRow', step.curr);
+            
+            // For new Res, if step has newRes defined, show it. Else show same as res ??
+            // If just finished update, show Result.
+            if(step.newRes !== undefined) renderBits('newRow', step.newRes, true);
+            else renderBits('newRow', step.res, true);
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('numsInput').value;
+            let nums;
+            try {
+                nums = JSON.parse(raw);
+            } catch(e) { alert("Invalid JSON"); return; }
+
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(nums));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Matrix Zeroes - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .grid-container {
+            display: grid;
+            gap: 5px;
+            padding: 10px;
+            border: 2px solid #475569;
+            border-radius: 8px;
+        }
+        
+        .grid-cell { 
+            width: 40px; height: 40px; 
+            border: 1px solid #475569; background: #1e293b;
+            display: flex; justify-content: center; align-items: center;
+            border-radius: 4px; 
+            font-size: 1rem; color: #fff; font-family: monospace;
+            transition: all 0.3s;
+        }
+        .grid-cell.marker { border-color: #fbbf24; background: rgba(251, 191, 36, 0.2); }
+        .grid-cell.zeroed { background: rgba(239, 68, 68, 0.3); border-color: #f87171; color: #f87171; }
+        .grid-cell.original-zero { color: #facc15; font-weight: bold; }
+        .grid-cell.active { transform: scale(1.15); box-shadow: 0 0 10px #3b82f6; z-index: 10; border-color: #3b82f6; }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row textarea { width: 250px; height: 60px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Set Matrix Zeroes (O(1) Space)</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Matrix:</label>
+                            <textarea id="matrixInput">[[1,1,1],[1,0,1],[1,1,1]]</textarea>
+                        </div>
+                        <button onclick="runVisualizer()">Set Zeroes</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="stats-panel">
+                         <div class="stat-box">
+                            <div class="stat-label">Row Zero Flag</div>
+                            <div class="stat-val" id="rowZeroDisp">False</div>
+                        </div>
+                         <div class="stat-box">
+                            <div class="stat-label">Col Zero Flag</div>
+                            <div class="stat-val" id="colZeroDisp">False</div>
+                        </div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <div class="grid-container" id="gridDisplay"></div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                             <option value="1500">Slow</option>
+                             <option value="800" selected>Normal</option>
+                             <option value="300">Fast</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'void setZeroes(vector<vector<int>>& matrix) {', id: 0 },
+            { line: '    // Check first row/col', id: 1 },
+            { line: '    bool rowZero = false, colZero = false;', id: 2 },
+            { line: '    // Use first row/col as markers', id: 3 },
+            { line: '    for (int i=0; i<m; i++) for (int j=0; j<n; j++) {', id: 4 },
+            { line: '        if (matrix[i][j] == 0) {', id: 5 },
+            { line: '            matrix[i][0] = 0; matrix[0][j] = 0;', id: 6 },
+            { line: '            if (i==0) rowZero=true; if (j==0) colZero=true;', id: 7 },
+            { line: '        }', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    // Set zeros based on markers', id: 10 },
+            { line: '    for (int i=1; i<m; i++) for (int j=1; j<n; j++) {', id: 11 },
+            { line: '        if (matrix[i][0] == 0 || matrix[0][j] == 0) matrix[i][j] = 0;', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '    if (colZero) for(int i=0; i<m; i++) matrix[i][0] = 0;', id: 14 },
+            { line: '    if (rowZero) for(int j=0; j<n; j++) matrix[0][j] = 0;', id: 15 },
+            { line: '}', id: 16 }
+        ];
+
+        let viz;
+
+        function simulate(matrixInput) {
+            const steps = [];
+            const matrix = JSON.parse(JSON.stringify(matrixInput));
+            const m = matrix.length;
+            const n = matrix[0].length;
+            
+            // Track original zeroes for viz
+            const originalZeroes = new Set();
+            for(let i=0; i<m; i++) for(let j=0; j<n; j++) if(matrix[i][j]===0) originalZeroes.add(`${i},${j}`);
+            
+            let rowZero = false;
+            let colZero = false;
+            
+            steps.push({
+                matrix: JSON.parse(JSON.stringify(matrix)), originalZeroes: new Set(originalZeroes),
+                rowZero, colZero,
+                msg: "Init. Detecting 0s to mark flags.", highlightLines: [0, 1, 2],
+                explanation: {title: "初始化", text: "使用第一列與第一行作為標記。紀錄是否第一列/行原本就需歸零。", formula: ""}
+            });
+            
+            // Detection Pass
+            for(let i=0; i<m; i++) {
+                for(let j=0; j<n; j++) {
+                    if(matrix[i][j] === 0) {
+                        steps.push({
+                            matrix: JSON.parse(JSON.stringify(matrix)), originalZeroes: new Set(originalZeroes),
+                            rowZero, colZero, curr: {r: i, c: j},
+                            msg: `Found 0 at (${i},${j}). Mark markers.`, highlightLines: [4, 5],
+                            explanation: {title: "發現 0", text: `(${i},${j}) 是 0，因此需標記 matrix[${i}][0] 和 matrix[0][${j}] 為 0。`, formula: ""}
+                        });
+                        
+                        matrix[i][0] = 0;
+                        matrix[0][j] = 0;
+                        if(i === 0) rowZero = true;
+                        if(j === 0) colZero = true;
+                        
+                        steps.push({
+                            matrix: JSON.parse(JSON.stringify(matrix)), originalZeroes: new Set(originalZeroes),
+                            rowZero, colZero, curr: {r: i, c: j},
+                            msg: `Markers set. rowZero=${rowZero}, colZero=${colZero}.`, highlightLines: [6, 7],
+                            explanation: {title: "標記完成", text: "標頭已更新。若該位置在第一列/行，更新對應旗標。", formula: ""}
+                        });
+                    }
+                }
+            }
+            
+            steps.push({
+                matrix: JSON.parse(JSON.stringify(matrix)), originalZeroes: new Set(originalZeroes),
+                rowZero, colZero,
+                msg: `Markers set complete. Propagate to inner matrix.`, highlightLines: [10],
+                explanation: {title: "標記階段結束", text: "開始根據第一列/行的標記，更新內部矩陣 (1..m, 1..n)。", formula: ""}
+            });
+            
+            // Propagate (Inner)
+            for(let i=1; i<m; i++) {
+                for(let j=1; j<n; j++) {
+                    if(matrix[i][0] === 0 || matrix[0][j] === 0) {
+                         steps.push({
+                            matrix: JSON.parse(JSON.stringify(matrix)), originalZeroes: new Set(originalZeroes),
+                            rowZero, colZero, curr: {r: i, c: j},
+                            msg: `(${i},${j}): Marker at Row ${i} or Col ${j} is 0. Set cell to 0.`, highlightLines: [11, 12],
+                            explanation: {title: "填入 0", text: `因為對應的標頭是 0，將 (${i},${j}) 設為 0。`, formula: "matrix[i][j] = 0"}
+                        });
+                        matrix[i][j] = 0;
+                    }
+                }
+            }
+            
+            // Handle First Row/Col
+            if(colZero) {
+                 steps.push({
+                    matrix: JSON.parse(JSON.stringify(matrix)), originalZeroes: new Set(originalZeroes),
+                    rowZero, colZero,
+                    msg: `colZero is True. Set first column to 0.`, highlightLines: [14],
+                    explanation: {title: "處理第一行", text: "colZero 為真，將第一行全設為 0。", formula: ""}
+                });
+                for(let i=0; i<m; i++) matrix[i][0] = 0;
+            }
+            
+            if(rowZero) {
+                 steps.push({
+                    matrix: JSON.parse(JSON.stringify(matrix)), originalZeroes: new Set(originalZeroes),
+                    rowZero, colZero,
+                    msg: `rowZero is True. Set first row to 0.`, highlightLines: [15],
+                    explanation: {title: "處理第一列", text: "rowZero 為真，將第一列全設為 0。", formula: ""}
+                });
+                for(let j=0; j<n; j++) matrix[0][j] = 0;
+            }
+            
+            steps.push({
+                matrix: JSON.parse(JSON.stringify(matrix)), originalZeroes: new Set(originalZeroes),
+                rowZero, colZero, final: true,
+                msg: "Completed.", highlightLines: [16],
+                explanation: {title: "完成", text: "矩陣歸零操作完畢。", formula: ""}
+            });
+            
+            return steps;
+        }
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('rowZeroDisp').textContent = step.rowZero;
+            document.getElementById('colZeroDisp').textContent = step.colZero;
+            
+            const container = document.getElementById('gridDisplay');
+            const m = step.matrix.length;
+            const n = step.matrix[0].length;
+            
+            container.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+            
+            if(container.childElementCount !== m*n) {
+                container.innerHTML = '';
+                for(let i=0; i<m; i++) {
+                    for(let j=0; j<n; j++) {
+                        const div = document.createElement('div');
+                        div.className = 'grid-cell';
+                        div.id = `cell-${i}-${j}`;
+                        container.appendChild(div);
+                    }
+                }
+            }
+            
+            for(let i=0; i<m; i++) {
+                for(let j=0; j<n; j++) {
+                    const div = document.getElementById(`cell-${i}-${j}`);
+                    div.className = 'grid-cell';
+                    div.textContent = step.matrix[i][j];
+                    
+                    if(i === 0 || j === 0) div.classList.add('marker');
+                    if(step.originalZeroes.has(`${i},${j}`)) div.classList.add('original-zero');
+                    if(step.matrix[i][j] === 0 && !step.originalZeroes.has(`${i},${j}`)) div.classList.add('zeroed');
+                    
+                    if(step.curr && step.curr.r === i && step.curr.c === j && !step.final) div.classList.add('active');
+                }
+            }
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('matrixInput').value;
+            let matrix;
+            try {
+                matrix = JSON.parse(raw);
+            } catch(e) { alert("Invalid JSON"); return; }
+            if(!Array.isArray(matrix)) return;
+
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(matrix));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

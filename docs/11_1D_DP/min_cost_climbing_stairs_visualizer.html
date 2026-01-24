@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min Cost Climbing Stairs (1D DP) - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 450px;
+        }
+
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .stair-rect { fill: #334155; stroke: #475569; stroke-width: 2px; transition: fill 0.3s; }
+        .stair-rect.active { fill: #3b82f6; stroke: #60a5fa; filter: drop-shadow(0 0 5px #3b82f6); }
+        .stair-rect.chosen { fill: rgba(34, 197, 94, 0.3); stroke: #22c55e; }
+        .stair-rect.ignored { fill: rgba(148, 163, 184, 0.1); opacity: 0.5; }
+        
+        .stair-text { fill: #fff; font-family: monospace; font-size: 14px; text-anchor: middle; font-weight: bold; pointer-events: none; }
+        .cost-label { fill: #f87171; font-size: 12px; font-weight: bold; text-anchor: middle; }
+        .dp-label { fill: #4ade80; font-size: 12px; font-weight: bold; text-anchor: middle; }
+        
+        .connector-path { fill: none; stroke: #fbbf24; stroke-width: 2px; stroke-dasharray: 4; opacity: 0.7; marker-end: url(#arrow); }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #22c55e; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 140px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Min Cost Climbing Stairs</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Costs (CSV):</label>
+                            <input type="text" id="costInput" value="10, 15, 20">
+                        </div>
+                        <button onclick="runVisualizer()">Calc Min Cost</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Target</div>
+                       <div class="legend-item"><div class="legend-color" style="background:rgba(34, 197, 94, 0.3); border:1px solid #22c55e"></div>Min Source</div>
+                       <div class="legend-item"><div class="legend-color" style="background:rgba(148, 163, 184, 0.2)"></div>Ignored</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24" />
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                         <div class="stat-box">
+                            <div class="stat-label">Min(dp[i-1], dp[i-2])</div>
+                            <div class="stat-val" id="minDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Current Cost</div>
+                            <div class="stat-val" id="costDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Total DP[i]</div>
+                            <div class="stat-val" id="resultDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int minCostClimbingStairs(vector<int>& cost) {', id: 0 },
+            { line: '    int n = cost.size();', id: 1 },
+            { line: '    vector<int> dp(n + 1);', id: 2 },
+            { line: '    // Base cases', id: 3 },
+            { line: '    dp[0] = 0; dp[1] = 0;', id: 4 },
+            { line: '    for (int i = 2; i <= n; i++) {', id: 5 },
+            { line: '        dp[i] = min(dp[i-1] + cost[i-1],', id: 6 },
+            { line: '                    dp[i-2] + cost[i-2]);', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return dp[n];', id: 9 },
+            { line: '}', id: 10 },
+        ];
+        
+        // Note: The logic can vary. Some treat dp[i] as cost to reach step i. 
+        // We can start at 0 or 1 for free? "You can either start from the step with index 0, or the step with index 1."
+        // Meaning to reach step 0 cost is 0? Wait.
+        // Problem: "Pay cost[i] to climb 1 or 2 steps".
+        // LeetCode 746: "Return min cost to reach top of floor". Top is index n.
+        // We can reach 0 or 1 with 0 entry cost? No, paying cost[i] happens when you LEAVE step i.
+        // So cost to reach 0 is 0. Cost to reach 1 is 0. 
+        // Cost to reach 2: min(dp[0]+cost[0], dp[1]+cost[1])
+        // Let's implement this standard DP.
+        
+        let viz;
+
+        function simulate(costs) {
+            const steps = [];
+            const n = costs.length; 
+            const dp = new Array(n + 1).fill(0);
+            
+            // Initial
+            steps.push({
+                n, costs, dp: [...dp], current: 0,
+                msg: "Init DP array size N+1. Start at 0 or 1 for free.", highlightLines: [0, 1, 2, 3, 4],
+                explanation: {title: "初始化", text: "建立 DP 陣列。我們可以免費選擇從索引 0 或 1 開始，因此到達這兩階的初始累積成本為 0 (還沒支付該階的過路費)。", formula: "dp[0]=0, dp[1]=0"}
+            });
+            
+            // Loop from 2 to n.
+            // Target is to reach 'n' (top floor, beyond last index n-1)
+            
+            for (let i = 2; i <= n; i++) {
+                const c1 = dp[i-1] + costs[i-1];
+                const c2 = dp[i-2] + costs[i-2];
+                const best = Math.min(c1, c2);
+                
+                steps.push({
+                    n, costs, dp: [...dp], current: i, calculating: true,
+                    c1, c2, best, 
+                    msg: `Calc step ${i}: Min(from ${i-1} w/ cost ${costs[i-1]}, from ${i-2} w/ cost ${costs[i-2]})`, highlightLines: [5, 6, 7],
+                    explanation: {
+                        title: `計算到達第 ${i} 階`,
+                        text: `比較兩條路徑：\n1. 從 ${i-1} 階來 (累積 ${dp[i-1]} + 花費 ${costs[i-1]} = ${c1})\n2. 從 ${i-2} 階來 (累積 ${dp[i-2]} + 花費 ${costs[i-2]} = ${c2})`,
+                        formula: `min(${c1}, ${c2})`
+                    }
+                });
+                
+                dp[i] = best;
+                
+                steps.push({
+                    n, costs, dp: [...dp], current: i,
+                    c1, c2, best,
+                    msg: `dp[${i}] = ${best}. Chosen path via ${c1 < c2 ? i-1 : i-2}`, highlightLines: [6, 7],
+                    explanation: {title: "更新成本", text: `選擇較小的路徑成本 ${best}。`, formula: `dp[${i}] = ${best}`}
+                });
+            }
+            
+            steps.push({
+                n, costs, dp: [...dp], current: n, result: dp[n], final: true,
+                msg: `Min cost to reach top is ${dp[n]}`, highlightLines: [9],
+                explanation: {title: "完成", text: `到達樓頂的最小花費為 ${dp[n]}。`, formula: "return dp[n]"}
+            });
+
+            return steps;
+        }
+
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            if(step.calculating || step.current >=2) {
+                document.getElementById('minDisplay').textContent = step.best !== undefined ? step.best : "-";
+                // costDisplay... depends on which one chosen. Just show range?
+                // Let's hide specific cost breakdown in small box, explained in Msg
+            } else {
+                 document.getElementById('minDisplay').textContent = "-";
+            }
+            document.getElementById('resultDisplay').textContent = step.dp[step.current] || 0;
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text" style="white-space: pre-wrap;">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const n = step.costs.length; // Top is n (index n)
+            // Stairs from 0 to n. 
+            // 0 is ground, n is top.
+            
+            const margin = {top: 40, right: 30, bottom: 40, left: 30};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const stepW = innerW / (n+1);
+            const stepH = innerH / (n+1);
+            
+            // Data 0..n
+            const stairsData = d3.range(0, n+1);
+
+            const rects = svg.selectAll(".stair-rect").data(stairsData);
+            
+            rects.enter().append("rect")
+                .attr("class", "stair-rect")
+                .merge(rects)
+                .transition().duration(200)
+                .attr("x", d => margin.left + d*stepW)
+                .attr("y", d => margin.top + innerH - d*stepH) // 0 is low
+                .attr("width", stepW - 4)
+                .attr("height", d => Math.max(d*stepH, 10)) // make sure 0 has height
+                .attr("class", d => {
+                    if (d === step.current) return "stair-rect active";
+                    // If calculating, highlight sources and chosen
+                    if (step.calculating) {
+                        const chosen = (step.c1 < step.c2) ? step.current-1 : step.current-2;
+                        if (d === chosen) return "stair-rect chosen";
+                        if (d === step.current-1 || d === step.current-2) return "stair-rect ignored"; // checked but not chosen
+                        // Actually better: 
+                        // if d == step.current-1 or step.current-2:
+                        //   if it's the chosen one -> green (source)
+                        //   other -> gray
+                    }
+                    if (step.best !== undefined && !step.calculating) {
+                         // After calc, show path?
+                    }
+                    return "stair-rect";
+                });
+            rects.exit().remove();
+            
+            // Costs Labels (red) above bar
+            const costs = svg.selectAll(".cost-label").data(step.costs.map((c,i)=>({c,i})));
+            costs.enter().append("text").attr("class", "cost-label")
+                .merge(costs)
+                .attr("x", d => margin.left + d.i*stepW + stepW/2)
+                .attr("y", d => margin.top + innerH - d.i*stepH - 10)
+                .text(d => `Cost: ${d.c}`);
+            costs.exit().remove();
+            
+            // DP Labels (green) inside bar or below text
+            const dps = svg.selectAll(".dp-label").data(step.dp.map((d,i)=>({d,i})));
+            dps.enter().append("text").attr("class", "dp-label")
+                .merge(dps)
+                .attr("x", d => margin.left + d.i*stepW + stepW/2)
+                .attr("y", d => margin.top + innerH - d.i*stepH + 20)
+                .text(d => d.d > 0 || d.i<=1 ? `Min:${d.d}` : "")
+                .attr("fill", d => d.i === step.current ? "#fff" : "#4ade80");
+            dps.exit().remove();
+
+            // Connectors
+            const connectors = [];
+            if(step.calculating) {
+                // From i-1 to i
+                const c1 = step.c1;
+                const c2 = step.c2;
+                const chosen = (c1 < c2) ? step.current-1 : step.current-2;
+                const other = (c1 < c2) ? step.current-2 : step.current-1;
+                
+                connectors.push({from: chosen, to: step.current, type: 'chosen'});
+                connectors.push({from: other, to: step.current, type: 'ignored'});
+            }
+            
+            const paths = svg.selectAll(".connector-path").data(connectors);
+            paths.enter().append("path").attr("class", "connector-path")
+                .merge(paths)
+                .attr("d", d => {
+                     const x1 = margin.left + d.from*stepW + stepW/2;
+                     const y1 = margin.top + innerH - d.from*stepH - 25;
+                     const x2 = margin.left + d.to*stepW + stepW/2;
+                     const y2 = margin.top + innerH - d.to*stepH - 25;
+                     
+                     const cx = (x1+x2)/2;
+                     const cy = Math.min(y1, y2) - 40;
+                     return `M${x1},${y1} Q${cx},${cy} ${x2},${y2}`;
+                })
+                .style("stroke", d => d.type === 'chosen' ? "#22c55e" : "#94a3b8")
+                .style("opacity", d => d.type === 'chosen' ? 1 : 0.3)
+                .style("stroke-width", d => d.type === 'chosen' ? 3 : 1);
+            paths.exit().remove();
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('costInput').value;
+            const costs = raw.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(costs));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

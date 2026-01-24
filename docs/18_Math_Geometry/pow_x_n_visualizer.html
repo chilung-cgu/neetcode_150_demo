@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pow(x, n) - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .var-box {
+            padding: 15px 30px;
+            background: #1e293b; border: 2px solid #475569;
+            border-radius: 8px; text-align: center;
+            transition: all 0.3s;
+        }
+        .var-box.active { border-color: #fbbf24; transform: scale(1.1); box-shadow: 0 0 15px rgba(251, 191, 36, 0.2); }
+        .var-box.result { border-color: #3b82f6; }
+        
+        .var-label { color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; }
+        .var-val { color: #fff; font-size: 1.5rem; font-family: monospace; font-weight: bold; }
+        .var-sub { color: #64748b; font-size: 0.8rem; margin-top: 5px; }
+
+        .arrow { font-size: 2rem; color: #fbbf24; opacity: 0.3; transition: all 0.3s; }
+        .arrow.active { opacity: 1; transform: scale(1.2); }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row input { width: 80px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Pow(x, n) (Binary Exponentiation)</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>x:</label>
+                            <input type="number" id="xInput" value="2">
+                        </div>
+                        <div class="input-group">
+                            <label>n:</label>
+                            <input type="number" id="nInput" value="10">
+                        </div>
+                        <button onclick="runVisualizer()">Calculate</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="stats-panel">
+                         <div class="stat-box">
+                            <div class="stat-label">Binary n</div>
+                            <div class="stat-val" id="binDisplay"></div>
+                        </div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <div class="var-box result" id="boxAns">
+                            <div class="var-label">Result (ans)</div>
+                            <div class="var-val" id="valAns">1</div>
+                        </div>
+                        
+                        <div class="arrow" id="arrowMult">✖</div>
+                        
+                        <div class="var-box" id="boxX">
+                            <div class="var-label">Current Base (x)</div>
+                            <div class="var-val" id="valX">2</div>
+                            <div class="var-sub">x = x * x</div>
+                        </div>
+                        
+                        <div class="arrow" id="arrowN">➡</div>
+                        
+                        <div class="var-box" id="boxN">
+                            <div class="var-label">Exponent (n)</div>
+                            <div class="var-val" id="valN">10</div>
+                            <div class="var-sub">bit check</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                             <option value="1500">Slow</option>
+                             <option value="1000" selected>Normal</option>
+                             <option value="500">Fast</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'double myPow(double x, int n) {', id: 0 },
+            { line: '    long long N = n;', id: 1 },
+            { line: '    if (N < 0) { x = 1/x; N = -N; }', id: 2 },
+            { line: '    double ans = 1;', id: 3 },
+            { line: '    double curr = x;', id: 4 },
+            { line: '    while (N > 0) {', id: 5 },
+            { line: '        if (N % 2 == 1) {', id: 6 },
+            { line: '            ans = ans * curr;', id: 7 },
+            { line: '        }', id: 8 },
+            { line: '        curr = curr * curr;', id: 9 },
+            { line: '        N /= 2;', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return ans;', id: 12 },
+            { line: '}', id: 13 }
+        ];
+
+        let viz;
+
+        function simulate(x, n) {
+            const steps = [];
+            let N = n;
+            let curr = x;
+            let ans = 1;
+            
+            steps.push({
+                curr, N, ans,
+                msg: `Init x=${x}, n=${n}, ans=1.`, highlightLines: [0, 3, 4],
+                explanation: {title: "初始化", text: "設置初始值。若 n 為負數需處理 (此範例假設正數)。", formula: ""}
+            });
+            
+            if (N < 0) {
+                 curr = 1/curr;
+                 N = -N;
+                 steps.push({
+                    curr, N, ans,
+                    msg: `n is negative. Invert x -> ${curr}, N -> ${N}.`, highlightLines: [2],
+                    explanation: {title: "負指數處理", text: "x 取倒數，n 取絕對值。", formula: "x = 1/x; N = -N"}
+                });
+            }
+            
+            while(N > 0) {
+                const isOdd = (N % 2 === 1);
+                
+                steps.push({
+                    curr, N, ans, activeN: true,
+                    msg: `Check N=${N} (Binary ...${N%2}). Odd? ${isOdd}`, highlightLines: [5, 6],
+                    explanation: {title: "檢查 N 的最低位", text: `若 N 是奇數 (二進位末碼為 1)，則需將當前 x 累乘到結果中。`, formula: "if (N % 2 == 1)"}
+                });
+                
+                if (isOdd) {
+                    ans = ans * curr;
+                    steps.push({
+                        curr, N, ans, activeAns: true,
+                        msg: `Odd! ans = ans * curr = ${ans}`, highlightLines: [7],
+                        explanation: {title: "累乘結果", text: "將當前的 base 乘入結果。", formula: "ans *= curr"}
+                    });
+                }
+                
+                curr = curr * curr;
+                N = Math.floor(N / 2);
+                
+                steps.push({
+                    curr, N, ans, activeX: true,
+                    msg: `Square Base: curr = ${curr}. Halve N: ${N}`, highlightLines: [9, 10],
+                    explanation: {title: "平方與右移", text: "Base 自乘 (x -> x^2 -> x^4...)。N 右移一位 (除以 2)。", formula: "curr *= curr; N /= 2"}
+                });
+            }
+            
+            steps.push({
+                curr, N, ans, final: true,
+                msg: `N is 0. Done. Result: ${ans}`, highlightLines: [12],
+                explanation: {title: "完成", text: "計算結束，返回累積結果。", formula: `return ${ans}`}
+            });
+            
+            return steps;
+        }
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('valAns').textContent = parseFloat(step.ans.toPrecision(5));
+            document.getElementById('valX').textContent = parseFloat(step.curr.toPrecision(5));
+            document.getElementById('valN').textContent = step.N;
+            document.getElementById('binDisplay').textContent = (step.N >>> 0).toString(2);
+            
+            // Highlights
+            document.getElementById('boxAns').className = step.activeAns ? 'var-box result active' : 'var-box result';
+            document.getElementById('boxX').className = step.activeX ? 'var-box active' : 'var-box';
+            document.getElementById('boxN').className = step.activeN ? 'var-box active' : 'var-box';
+            
+            document.getElementById('arrowMult').className = step.activeAns ? 'arrow active' : 'arrow';
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+        }
+
+        function runVisualizer() {
+            const x = parseFloat(document.getElementById('xInput').value);
+            const n = parseInt(document.getElementById('nInput').value);
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(x, n));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

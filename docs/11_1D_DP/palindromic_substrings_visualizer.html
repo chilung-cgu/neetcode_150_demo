@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Count Palindromic Substrings - D3 動態視覺化</title>
+    <title>Palindromic Substrings - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -18,9 +18,9 @@
             min-height: 450px;
         }
 
-        /* SVG */
+        /* D3 Viewport */
         .stage-viewport {
-            width: 100%; height: 200px;
+            width: 100%; height: 350px;
             background: rgba(30, 41, 59, 0.4);
             border-radius: 12px;
             overflow: hidden;
@@ -29,42 +29,42 @@
         }
         #viz-svg { width: 100%; height: 100%; }
 
-        .char-group rect { fill: #334155; stroke: #475569; stroke-width: 2px; rx: 4; transition: all 0.2s; }
-        .char-group text { fill: #f8fafc; font-family: monospace; font-size: 18px; font-weight: bold; text-anchor: middle; pointer-events: none; }
+        .char-box { fill: #334155; stroke: #475569; stroke-width: 2px; rx: 4; transition: all 0.2s; }
+        .char-box.center { stroke: #fbbf24; stroke-width: 3px; }
+        .char-box.match { fill: rgba(34, 197, 94, 0.3); stroke: #22c55e; }
+        .char-box.mismatch { fill: rgba(239, 68, 68, 0.2); stroke: #ef4444; }
+
+        .char-text { fill: #fff; font-family: monospace; font-size: 18px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
         
-        .char-group.match rect { fill: #3b82f6; stroke: #60a5fa; }
-        .char-group.mismatch rect { fill: #ef4444; opacity: 0.5; }
-
-        .pointer path { fill: #f59e0b; }
-        .pointer text { fill: #f59e0b; font-size: 12px; text-anchor: middle; }
-
-        /* Log */
-        .log-container {
-            width: 100%; height: 150px;
-            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
-            overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start;
-        }
-        .log-item {
-            padding: 4px 10px; background: rgba(34, 197, 94, 0.2); border: 1px solid var(--viz-success); color: var(--viz-success);
-            border-radius: 6px; font-size: 0.85rem; font-family: monospace; animation: popIn 0.3s;
-        }
-        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+        .pointer { fill: #fff; font-size: 14px; text-anchor: middle; font-weight: bold; }
 
         /* Stats */
         .stats-panel {
-            display: flex; gap: 30px; justify-content: center; width: 100%;
-            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
         }
-        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
-        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* List of found palindromes */
+        .found-list { width: 100%; height: 60px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; padding: 5px; }
+        .found-tag { padding: 2px 8px; background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 4px; font-size: 0.8rem; color: #4ade80; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
-        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 140px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -72,26 +72,26 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Count Palindromic Substrings</div>
+                <div class="viz-title">Palindromic Substrings (Count)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <div>
-                            <label style="font-size:0.8rem; color:#94a3b8;">String:</label>
+                        <div class="input-group">
+                            <label>String (S):</label>
                             <input type="text" id="strInput" value="abc">
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:5px;">
-                            <button onclick="runVisualizer()">Count</button>
-                        </div>
+                        <button onclick="runVisualizer()">Count</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Center</div>
+                       <div class="legend-item"><div class="legend-color" style="border: 2px solid #22c55e"></div>Found Palindrome</div>
+                       <div class="legend-item"><div class="legend-color" style="border: 2px solid #ef4444"></div>Mismatch</div>
+                    </div>
+
                     <div class="stage-viewport">
                         <svg id="viz-svg"></svg>
-                    </div>
-                    
-                    <div class="log-container" id="logDisplay">
-                        <div style="width:100%; text-align:center; color:#64748b; font-size:0.8rem;">Found Palindromes</div>
                     </div>
                     
                     <div class="stats-panel">
@@ -99,6 +99,10 @@
                             <div class="stat-label">Total Count</div>
                             <div class="stat-val" id="countDisplay">0</div>
                         </div>
+                         <div style="flex-grow:1; display:flex; flex-direction:column; align-items:center;">
+                             <div class="stat-label">Found</div>
+                             <div class="found-list" id="foundList"></div>
+                         </div>
                     </div>
                 </div>
 
@@ -118,12 +122,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">2x</option>
+                            <option value="300">1.5x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -138,67 +142,88 @@
     <script>
         const codeStructure = [
             { line: 'int countSubstrings(string s) {', id: 0 },
-            { line: '    int count = 0;', id: 1 },
+            { line: '    int res = 0;', id: 1 },
             { line: '    for (int i = 0; i < s.length(); i++) {', id: 2 },
-            { line: '        count += countPals(i, i); // Odd', id: 3 },
-            { line: '        count += countPals(i, i + 1); // Even', id: 4 },
+            { line: '        res += count(i, i, s); // odd', id: 3 },
+            { line: '        res += count(i, i + 1, s); // even', id: 4 },
             { line: '    }', id: 5 },
-            { line: '    return count;', id: 6 },
+            { line: '    return res;', id: 6 },
             { line: '}', id: 7 },
-            { line: 'int countPals(l, r) {', id: 8 },
+            { line: 'int count(l, r, s) {', id: 8 },
             { line: '    int res = 0;', id: 9 },
-            { line: '    while (l >= 0 && r < n && s[l] == s[r]) {', id: 10 },
-            { line: '        res++; l--; r++;', id: 11 },
-            { line: '    }', id: 12 },
-            { line: '    return res;', id: 13 },
-            { line: '}', id: 14 }
+            { line: '    while(l >= 0 && r < s.len && s[l] == s[r]) {', id: 10 },
+            { line: '        res++;', id: 11 },
+            { line: '        l--; r++;', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '    return res;', id: 14 },
+            { line: '}', id: 15 }
         ];
-
+        
         let viz;
 
         function simulate(s) {
             const steps = [];
-            let totalCount = 0;
-            let found = []; // array of strings
+            const n = s.length;
+            let total = 0;
+            const found = [];
             
             steps.push({
-                idx: -1, s, count: 0, found: [],
-                msg: "Start counting...", highlightLines: [0, 1]
+                s, l:-1, r:-1, count: total, found: [],
+                msg: "Init. Total count = 0.", highlightLines: [0, 1],
+                explanation: {title: "初始化", text: "初始化計數器為 0，準備遍歷所有可能的中心點。", formula: "res=0"}
             });
 
-            for (let i = 0; i < s.length; i++) {
-                expand(i, i, 'Odd');
-                expand(i, i + 1, 'Even');
+            for(let i=0; i<n; i++) {
+                // Odd
+                steps.push({
+                   s, l:i, r:i, count: total, found: [...found],
+                   msg: `Check Odd Centers at ${i}`, highlightLines: [3],
+                   explanation: {title: `奇數中心 i=${i}`, text: "檢查單一字元中心。", formula: "count(i, i)"}
+                });
+                expand(i, i);
+                
+                // Even
+                if(i < n-1) {
+                    steps.push({
+                       s, l:i, r:i+1, count: total, found: [...found],
+                       msg: `Check Even Centers at ${i},${i+1}`, highlightLines: [4],
+                       explanation: {title: `偶數中心 i=${i},${i+1}`, text: "檢查兩個字元中心。", formula: "count(i, i+1)"}
+                    });
+                    expand(i, i+1);
+                }
             }
             
-            function expand(l, r, type) {
-                // Intro
-                steps.push({
-                    idx: i, s, center: [l, r], type, found: [...found], count: totalCount,
-                    msg: `Check center [${l}, ${r}]`, highlightLines: [3, 4]
-                });
+            steps.push({
+                s, l:-1, r:-1, count: total, found: [...found], final: true,
+                msg: `Final Result: ${total} palindromic substrings.`, highlightLines: [6],
+                explanation: {title: "完成", text: `總共找到 ${total} 個回文子串。`, formula: "return res"}
+            });
 
-                while (l >= 0 && r < s.length && s[l] === s[r]) {
-                    totalCount++;
+            function expand(l, r) {
+                while(l >= 0 && r < n && s[l] === s[r]) {
+                    total++;
                     const sub = s.substring(l, r+1);
                     found.push(sub);
                     
                     steps.push({
-                        idx: r, s, center: [l, r], matchRange: [l, r], type,
-                        count: totalCount, found: [...found],
-                        msg: `Match "${sub}". Count++`, highlightLines: [10, 11]
+                        s, l, r, count: total, found: [...found],
+                        match: true,
+                        msg: `Match s[${l}] (${s[l]}) == s[${r}] (${s[r]}). Count++`, highlightLines: [11],
+                        explanation: {title: "匹配", text: `字元相同，找到回文 "${sub}"，計數加 1。`, formula: "res++"}
                     });
                     
-                    l--; r++;
+                    l--;
+                    r++;
                 }
-                
-                // Mismatch step visualization? Optional.
+                if(l >= 0 && r < n) {
+                     steps.push({
+                        s, l, r, count: total, found: [...found],
+                        mismatch: true,
+                        msg: `Mismatch s[${l}] != s[${r}]. Stop expansion.`, highlightLines: [10],
+                        explanation: {title: "不匹配", text: "字元不同，停止擴展。", formula: "break"}
+                    });
+                }
             }
-            
-            steps.push({
-                s, count: totalCount, found: [...found], final: true,
-                msg: `Done. Total: ${totalCount}`, highlightLines: [6]
-            });
 
             return steps;
         }
@@ -206,85 +231,93 @@
         // --- Render ---
         const svg = d3.select("#viz-svg");
         const width = 600;
-        const height = 200;
+        const height = 350;
         svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            document.getElementById('countDisplay').textContent = step.count || 0;
+            document.getElementById('countDisplay').textContent = step.count;
             
-            // Log Display
-            const logContainer = document.getElementById('logDisplay');
-            // Rebuilding innerHTML is easiest for full sync, but we can append if purely additive.
-            // step.found is full list.
-            if (!step.found) {
-                logContainer.innerHTML = '<div style="width:100%; text-align:center; color:#64748b; font-size:0.8rem;">Found Palindromes</div>';
-            } else {
-                // If diff length, rebuild or append
-                // Simple rebuild for correctness on Step Back
-                const items = step.found.map(str => `<div class="log-item">${str}</div>`).join('');
-                logContainer.innerHTML = items;
-                logContainer.scrollTop = logContainer.scrollHeight;
+            // Render Found list
+            const list = document.getElementById('foundList');
+            list.innerHTML = '';
+            step.found.forEach(f => {
+                const tag = document.createElement('div');
+                tag.className = 'found-tag';
+                tag.textContent = f;
+                list.appendChild(tag);
+            });
+            list.scrollTop = list.scrollHeight;
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
             }
 
-            // String Viz
-            const s = step.s;
-            const itemW = 40;
-            const startX = (width - s.length * itemW) / 2;
-            const startY = 80;
+            const n = step.s.length;
+            const margin = {top: 100, left: 40, right: 40};
+            const w = width - margin.left - margin.right;
+            const charSize = Math.min(50, w / n);
+            const gap = 5;
+            const totalW = n * charSize + (n-1)*gap;
+            const startX = (width - totalW) / 2;
 
-            const data = s.split('').map((c, i) => ({c, i}));
-            const groups = svg.selectAll(".char-group").data(data);
-            
-            const enter = groups.enter().append("g").attr("class", "char-group");
-            enter.append("rect").attr("width", itemW-4).attr("height", itemW).attr("rx", 4);
-            enter.append("text").attr("x", itemW/2 - 2).attr("y", itemW/2 + 6);
-            
-            const merge = groups.merge(enter)
-                .attr("transform", (d, i) => `translate(${startX + i*itemW}, ${startY})`);
-            
-            merge.select("text").text(d => d.c);
-            merge.attr("class", d => {
-                let c = "char-group";
-                if(step.matchRange && d.i >= step.matchRange[0] && d.i <= step.matchRange[1]) c += " match";
-                return c;
-            })
-            
-            groups.exit().remove();
+            // Chars data
+            const chars = step.s.split('').map((c, i) => ({c, i}));
 
+            const g = svg.selectAll(".char-g").data(chars);
+            const gEnter = g.enter().append("g").attr("class", "char-g");
+            
+            gEnter.append("rect").attr("class", "char-box")
+                .attr("width", charSize).attr("height", charSize).attr("rx", 6);
+                
+            gEnter.append("text").attr("class", "char-text")
+                .attr("x", charSize/2).attr("y", charSize/2).attr("dy", 1);
+            
+            // Index
+            gEnter.append("text").attr("class", "pointer").attr("y", charSize + 20).attr("x", charSize/2)
+                .attr("fill", "#64748b").text(d => d.i).style("font-size", "10px");
+
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${startX + d.i*(charSize+gap)}, ${margin.top})`);
+            
+            gUpdate.select("rect")
+                .attr("class", d => {
+                    let c = "char-box";
+                    if (step.match) {
+                        if (d.i >= step.l && d.i <= step.r) c += " match";
+                    } else if (step.mismatch) {
+                        if (d.i === step.l || d.i === step.r) c += " mismatch";
+                    }
+                    return c;
+                });
+            
+            gUpdate.select(".char-text").text(d => d.c);
+
+            g.exit().remove();
+            
             // Pointers
             const pointers = [];
-            if (step.matchRange) {
-                if(step.matchRange[0] === step.matchRange[1]) pointers.push({i: step.matchRange[0], label: "L,R"});
-                else {
-                    pointers.push({i: step.matchRange[0], label: "L"});
-                    pointers.push({i: step.matchRange[1], label: "R"});
-                }
-            } else if (step.center) {
-                if(step.center[0] === step.center[1]) pointers.push({i: step.center[0], label: "L,R"});
-                else {
-                    pointers.push({i: step.center[0], label: "L"});
-                    pointers.push({i: step.center[1], label: "R"});
-                }
-            }
+            if(step.l >= 0 && step.l < n) pointers.push({i: step.l, label: "L"});
+            if(step.r >= 0 && step.r < n && step.r !== step.l) pointers.push({i: step.r, label: "R"});
             
-            const ptrSel = svg.selectAll(".pointer").data(pointers, d => d.label);
-            const ptrEnter = ptrSel.enter().append("g").attr("class", "pointer");
-            ptrEnter.append("path").attr("d", "M0,0 L-5,10 L5,10 Z");
-            ptrEnter.append("text").attr("y", 22);
-            
-            const ptrMerge = ptrSel.merge(ptrEnter);
-            ptrMerge.transition().duration(200)
-                .attr("transform", d => `translate(${startX + d.i*itemW + itemW/2 - 2}, ${startY + itemW + 5})`);
-            
-            ptrMerge.select("text").text(d => d.label);
-            
-            ptrSel.exit().remove();
+            const ptrs = svg.selectAll(".ptr-arrow").data(pointers, d => d.label);
+            ptrs.enter().append("text").attr("class", "ptr-arrow pointer")
+                .merge(ptrs)
+                .transition().duration(100)
+                .attr("x", d => startX + d.i*(charSize+gap) + charSize/2)
+                .attr("y", margin.top - 10)
+                .text(d => d.label)
+                .attr("fill", "#fbbf24");
+            ptrs.exit().remove();
         }
 
         function runVisualizer() {
             const s = document.getElementById('strInput').value;
-            if(!s) return;
+             if(!s) return;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render

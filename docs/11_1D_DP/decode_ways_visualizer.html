@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Decode Ways - D3 路徑計數視覺化</title>
+    <title>Decode Ways (1D DP) - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -18,7 +18,7 @@
             min-height: 480px;
         }
 
-        /* SVG */
+        /* D3 Viewport */
         .stage-viewport {
             width: 100%; height: 350px;
             background: rgba(30, 41, 59, 0.4);
@@ -30,38 +30,43 @@
         #viz-svg { width: 100%; height: 100%; }
 
         .node-circle { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; }
-        .node-circle.active { stroke: #f59e0b; stroke-width: 3px; fill: #475569; filter: drop-shadow(0 0 5px #f59e0b); }
-        .node-circle.visited { fill: #22c55e; stroke: #86efac; }
+        .node-circle.active { stroke: #fbbf24; stroke-width: 3px; fill: #475569; filter: drop-shadow(0 0 5px #fbbf24); }
+        .node-circle.visited { fill: #0f172a; stroke: #22c55e; } 
         
         .node-text { fill: #fff; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; pointer-events: none; }
-        .dp-text { fill: #fbbf24; font-size: 12px; text-anchor: middle; pointer-events: none; }
-        
+        .dp-text { fill: #4ade80; font-size: 12px; text-anchor: middle; pointer-events: none; font-weight: bold; }
+        .idx-text { fill: #64748b; font-size: 10px; text-anchor: middle; }
+
         .edge-path { stroke: #94a3b8; stroke-width: 2px; fill: none; opacity: 0.2; marker-end: url(#arrow); transition: all 0.3s; }
-        .edge-path.valid { stroke: #22c55e; opacity: 0.8; stroke-width: 3px; }
-        .edge-path.invalid { stroke: #ef4444; opacity: 0.3; stroke-dasharray: 4; }
-        .edge-path.processing { stroke: #f59e0b; opacity: 1; stroke-width: 3px; filter: drop-shadow(0 0 3px #f59e0b); }
+        .edge-path.valid { stroke: #22c55e; opacity: 1; stroke-width: 3px; }
+        .edge-path.invalid { stroke: #ef4444; opacity: 0.5; stroke-dasharray: 4; }
+        .edge-path.checking { stroke: #fbbf24; opacity: 1; stroke-width: 3px; stroke-dasharray: 4; animation: dash 1s linear infinite; }
         
-        .char-label { fill: #94a3b8; font-family: monospace; font-size: 16px; text-anchor: middle; }
+        @keyframes dash { to { stroke-dashoffset: -20; } }
 
         /* Stats */
         .stats-panel {
-            display: flex; gap: 30px; justify-content: center; width: 100%;
-            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
         }
-        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
-        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #22c55e; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
-        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 140px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
         
-        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .legend-color { width: 12px; height: 12px; border-radius: 2px; border: 1px solid #fff; }
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -69,30 +74,28 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Decode Ways (Path Counting)</div>
+                <div class="viz-title">Decode Ways (1D DP)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <div>
-                            <label style="font-size:0.8rem; color:#94a3b8;">Input String:</label>
-                            <input type="text" id="strInput" value="22610">
+                        <div class="input-group">
+                            <label>String (Numbers):</label>
+                            <input type="text" id="strInput" value="226">
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:5px;">
-                            <button onclick="runVisualizer()">Decode</button>
-                        </div>
+                        <button onclick="runVisualizer()">Decode</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
                     <div class="legend">
                         <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Valid Path</div>
-                        <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Invalid</div>
-                        <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Checking</div>
+                        <div class="legend-item"><div class="legend-color" style="border: 2px dotted #ef4444"></div>Invalid</div>
+                        <div class="legend-item"><div class="legend-color" style="border: 2px dotted #fbbf24"></div>Checking</div>
                     </div>
                     
                     <div class="stage-viewport">
                         <svg id="viz-svg">
                             <defs>
-                                <marker id="arrow" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="22" refY="0" markerWidth="6" markerHeight="6" orient="auto">
                                     <path d="M0,-5L10,0L0,5" fill="#94a3b8"/>
                                 </marker>
                             </defs>
@@ -101,8 +104,16 @@
                     
                     <div class="stats-panel">
                         <div class="stat-box">
-                            <div class="stat-label">Total Ways</div>
-                            <div class="stat-val" id="resultDisplay">-</div>
+                            <div class="stat-label">Single Digit</div>
+                            <div class="stat-val" id="singleDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Two Digits</div>
+                            <div class="stat-val" id="doubleDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Total Ways (dp[i])</div>
+                            <div class="stat-val" id="totalDisplay">-</div>
                         </div>
                     </div>
                 </div>
@@ -123,12 +134,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">2x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -143,17 +154,18 @@
     <script>
         const codeStructure = [
             { line: 'int numDecodings(string s) {', id: 0 },
-            { line: '    int n = s.size();', id: 1 },
-            { line: '    vector<int> dp(n + 1, 0);', id: 2 },
+            { line: '    int n = s.length();', id: 1 },
+            { line: '    vector<int> dp(n + 1);', id: 2 },
             { line: '    dp[0] = 1;', id: 3 },
-            { line: '    for (int i = 1; i <= n; i++) {', id: 4 },
-            { line: '        // 1 digit: s[i-1]', id: 5 },
-            { line: '        if (s[i-1] != \'0\') dp[i] += dp[i-1];', id: 6 },
-            { line: '        // 2 digits: s[i-2...i-1]', id: 7 },
-            { line: '        if (valid(s.substr(i-2, 2))) dp[i] += dp[i-2];', id: 8 },
-            { line: '    }', id: 9 },
-            { line: '    return dp[n];', id: 10 },
-            { line: '}', id: 11 }
+            { line: '    dp[1] = s[0] == \'0\' ? 0 : 1;', id: 4 },
+            { line: '    for (int i = 2; i <= n; i++) {', id: 5 },
+            { line: '        int one = stoi(s.substr(i-1, 1));', id: 6 },
+            { line: '        if (one >= 1 && one <= 9) dp[i] += dp[i-1];', id: 7 },
+            { line: '        int two = stoi(s.substr(i-2, 2));', id: 8 },
+            { line: '        if (two >= 10 && two <= 26) dp[i] += dp[i-2];', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    return dp[n];', id: 11 },
+            { line: '}', id: 12 }
         ];
 
         let viz;
@@ -164,77 +176,67 @@
             const dp = new Array(n + 1).fill(0);
             
             steps.push({
-                idx: 0, dp: [...dp], s,
-                msg: "Init DP array.", highlightLines: [0, 1, 2]
+                s, dp: [...dp], i: 0,
+                msg: "Init dp[0] = 1 (Empty string = 1 way)", highlightLines: [0, 1, 2, 3],
+                explanation: {title: "初始化", text: "dp[0]=1，代表空字串有一種解碼方式 (不做任何事)。", formula: "dp[0]=1"}
             });
-
-            if(s[0] === '0') {
-               // Technically base case logic, but usually loop handles it or explicit check
-               // For visual, start loop and fail.
-            }
-
+            
             dp[0] = 1;
+            
+            // i=1 (first char)
+            const first = parseInt(s[0]);
+            dp[1] = (first >= 1 && first <= 9) ? 1 : 0;
+            
             steps.push({
-                idx: 0, dp: [...dp], s,
-                msg: "dp[0] = 1 (Base case: empty string 1 way)", highlightLines: [3]
+                s, dp: [...dp], i: 1, 
+                msg: `Base dp[1]: '${s[0]}' is ${dp[1]===1 ? 'Valid (1-9)' : 'Invalid (0)'}`, highlightLines: [4],
+                explanation: {title: "基底 dp[1]", text: `檢查第一個數字 '${s[0]}'。${dp[1]?'有效':'無效 (0開頭)'}。`, formula: dp[1] ? "dp[1]=1" : "dp[1]=0"}
             });
 
-            for (let i = 1; i <= n; i++) {
-                // Check One digit
-                const oneDigit = s[i-1];
-                let added1 = 0;
+            for (let i = 2; i <= n; i++) {
+                const oneDigit = parseInt(s.substr(i-1, 1));
+                const twoDigits = parseInt(s.substr(i-2, 2));
                 
                 steps.push({
-                    idx: i, dp: [...dp], s, calculating: true, type: 'one', 
-                    val: oneDigit,
-                    msg: `Check 1 digit '${oneDigit}'`, highlightLines: [6]
+                    s, dp: [...dp], i, checking: true,
+                    oneDigit, twoDigits,
+                    msg: `Check dp[${i}]: 1-digit '${oneDigit}' & 2-digit '${twoDigits}'`, highlightLines: [5],
+                    explanation: {title: `計算 dp[${i}]`, text: `我們分別檢查單位數與雙位數的組合。`, formula: "dp[i] = ?"}
                 });
                 
-                if (oneDigit !== '0') {
-                    added1 = dp[i-1];
-                    dp[i] += added1;
-                    steps.push({
-                        idx: i, dp: [...dp], s, valid: 'one',
-                        msg: `'${oneDigit}' is valid (1-9). +${added1} ways from dp[${i-1}]`, highlightLines: [6]
-                    });
-                } else {
-                    steps.push({
-                        idx: i, dp: [...dp], s, invalid: 'one',
-                        msg: `'${oneDigit}' is invalid (must be 1-9)`, highlightLines: [6]
-                    });
+                let w1 = 0, w2 = 0;
+                
+                // One digit check
+                if (oneDigit >= 1 && oneDigit <= 9) {
+                    w1 = dp[i-1];
+                    dp[i] += w1;
                 }
                 
-                // Check Two digits
-                if (i >= 2) {
-                    const twoDigits = s.substring(i-2, i);
-                    const val = parseInt(twoDigits);
-                    let added2 = 0;
-                    
-                    steps.push({
-                        idx: i, dp: [...dp], s, calculating: true, type: 'two',
-                        val: twoDigits,
-                        msg: `Check 2 digits '${twoDigits}'`, highlightLines: [8]
-                    });
-                    
-                    if (val >= 10 && val <= 26) {
-                        added2 = dp[i-2];
-                        dp[i] += added2;
-                        steps.push({
-                            idx: i, dp: [...dp], s, valid: 'two',
-                            msg: `'${twoDigits}' is valid (10-26). +${added2} ways from dp[${i-2}]`, highlightLines: [8]
-                        });
-                    } else {
-                        steps.push({
-                            idx: i, dp: [...dp], s, invalid: 'two',
-                            msg: `'${twoDigits}' is invalid range.`, highlightLines: [8]
-                        });
-                    }
+                steps.push({
+                    s, dp: [...dp], i, checking: true, step1: true,
+                    oneDigit, twoDigits, w1, valid1: oneDigit >= 1 && oneDigit <= 9,
+                    msg: `1-digit '${oneDigit}' is ${w1>0 || (oneDigit>=1 && oneDigit<=9) ? 'Valid' : 'Invalid'}. +${w1} ways.`, highlightLines: [6, 7],
+                    explanation: {title: "檢查個位數", text: `'${oneDigit}' 是否在 1-9 之間？若是，繼承 dp[i-1] 的方法數。`, formula: oneDigit>=1 && oneDigit<=9 ? `dp[i] += ${w1}` : "Skip"}
+                });
+
+                // Two digits check
+                if (twoDigits >= 10 && twoDigits <= 26) {
+                    w2 = dp[i-2];
+                    dp[i] += w2;
                 }
+                
+                steps.push({
+                    s, dp: [...dp], i, checking: false, step2: true,
+                    oneDigit, twoDigits, w1, w2, valid2: twoDigits >= 10 && twoDigits <= 26,
+                    msg: `2-digit '${twoDigits}' is ${twoDigits>=10 && twoDigits<=26 ? 'Valid' : 'Invalid'}. +${w2} ways. Total dp[${i}]=${dp[i]}`, highlightLines: [8, 9],
+                    explanation: {title: "檢查兩位數", text: `'${twoDigits}' 是否在 10-26 之間？若是，繼承 dp[i-2] 的方法數。`, formula: twoDigits>=10 && twoDigits<=26 ? `dp[i] += ${w2}` : "Skip"}
+                });
             }
             
             steps.push({
-                idx: n, dp: [...dp], s, result: dp[n], final: true,
-                msg: `Finished. Total Ways: ${dp[n]}`, highlightLines: [10]
+                s, dp: [...dp], i: n, final: true,
+                msg: `Final Result: ${dp[n]} ways to decode.`, highlightLines: [11],
+                explanation: {title: "完成", text: `總共有 ${dp[n]} 種解碼方式。`, formula: "return dp[n]"}
             });
 
             return steps;
@@ -248,106 +250,124 @@
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : step.dp[step.dp.length-1] || 0;
+            
+            if(step.checking || step.step1 || step.step2) {
+                document.getElementById('singleDisplay').textContent = step.oneDigit;
+                document.getElementById('doubleDisplay').textContent = step.twoDigits;
+            } else {
+                 document.getElementById('singleDisplay').textContent = "-";
+                 document.getElementById('doubleDisplay').textContent = "-";
+            }
+            document.getElementById('totalDisplay').textContent = step.final ? step.dp[step.s.length] : (step.dp[step.i] || 0);
 
-            const n = step.s.length;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const n = step.s.length; 
+            const margin = {top: 50, left: 40, right: 40};
+            const w = width - margin.left - margin.right;
+            const nodeGap = w / n;
             
-            // Draw Nodes 0 to N arranged horizontally
-            const margin = {top: 100, right: 50, bottom: 50, left: 50};
-            const innerW = width - margin.left - margin.right;
-            const nodeStep = innerW / n;
+            // Draw nodes 0..n
+            // Node i represents state at prefix i
+            const nodes = d3.range(0, n+1);
             
-            // Edges (History of valid moves)
-            // We can infer edges from dp logic in simulation? 
-            // Or just draw arcs based on current step status?
-            // Let's draw node structure.
+            const gNodes = svg.selectAll(".node-g").data(nodes);
+            const gEnter = gNodes.enter().append("g").attr("class", "node-g");
             
-            const nodesData = d3.range(0, n+1);
+            gEnter.append("circle").attr("class", "node-circle").attr("r", 15);
+            gEnter.append("text").attr("class", "node-text").attr("dy", 5);
+            gEnter.append("text").attr("class", "idx-text").attr("dy", 30).text(d => `i=${d}`);
+            gEnter.append("text").attr("class", "dp-text").attr("dy", -25);
             
-            const nodes = svg.selectAll(".node-g").data(nodesData);
-            const nodesEnter = nodes.enter().append("g").attr("class", "node-g");
+            const gUpdate = gNodes.merge(gEnter)
+                .attr("transform", d => `translate(${margin.left + d*nodeGap}, ${height/2})`);
             
-            nodesEnter.append("circle").attr("r", 15).attr("class", "node-circle");
-            nodesEnter.append("text").attr("class", "node-text").attr("dy", 5).text(d => d);
-            nodesEnter.append("text").attr("class", "dp-text").attr("dy", 30).text(d => d === 0 ? "1" : ""); // Initial dp[0]
+            gUpdate.select(".node-circle").attr("class", d => {
+                if (d === step.i) return "node-circle active";
+                if (d < step.i) return "node-circle visited";
+                return "node-circle";
+            });
             
-            const nodesMerge = nodes.merge(nodesEnter)
-                .attr("transform", d => `translate(${margin.left + d*nodeStep}, ${height/2})`);
+            gUpdate.select(".node-text").text(d => d > 0 ? step.s[d-1] : "S"); // Show the char leading to this node? No, usually node i is AFTER char i-1. 
+            // Better: Node 0 is start. Node 1 is after char 0.
+            // Text inside node could be the index?
+            gUpdate.select(".node-text").text(d => d);
             
-            nodesMerge.select(".dp-text").text(d => step.dp[d]);
+            gUpdate.select(".dp-text").text(d => step.dp[d] > 0 ? step.dp[d] : (step.dp[d] === 0 && d <= step.i ? 0 : ""));
             
-            nodesMerge.select(".node-circle")
-                .attr("class", d => {
-                    let c = "node-circle";
-                    if (step.idx === d) c += " active"; // target
-                    if (d < step.idx) c += " visited";
-                    return c;
-                });
+            gNodes.exit().remove();
             
-            nodes.exit().remove();
-            
-            // Draw Chars between nodes
-            // Char s[i] is between node i and i+1
-            const charData = step.s.split('').map((c, i) => ({c, i}));
-            const chars = svg.selectAll(".char-label").data(charData);
-            const charsEnter = chars.enter().append("text").attr("class", "char-label");
-            chars.merge(charsEnter)
-                .attr("x", d => margin.left + d.i*nodeStep + nodeStep/2)
-                .attr("y", height/2 - 30)
+            // Char labels between nodes
+            const chars = step.s.split('').map((c, i) => ({c, i})); // i is between node i and i+1
+            const charLabels = svg.selectAll(".char-label").data(chars);
+            charLabels.enter().append("text").attr("class", "char-label")
+                .merge(charLabels)
+                .attr("x", d => margin.left + d.i*nodeGap + nodeGap/2)
+                .attr("y", height/2 + 5)
                 .text(d => d.c);
-            chars.exit().remove();
+            charLabels.exit().remove();
             
-            // Draw Edges (Active only? or all valid?)
-            // We want to persist valid edges.
-            // But simulation step doesn't store edge list.
-            // Can assume edges exist if dp propagation happened.
-            // Visually showing "Checking" edge is important.
+            // Connectors (Edges)
+            // If processing i, we might have edges from i-1 and i-2
+            const connectors = [];
             
-            const edges = [];
-            
-            // Add checking edge
-            if (step.calculating) {
-                if (step.type === 'one' || step.type === 'one-fail') {
-                    // Edge from i-1 to i
-                    edges.push({source: step.idx-1, target: step.idx, type: 'one', status: 'processing'});
-                } else if (step.type === 'two' || step.type === 'two-fail') {
-                    // Edge from i-2 to i
-                    edges.push({source: step.idx-2, target: step.idx, type: 'two', status: 'processing'});
-                }
-            }
-            if (step.valid) {
-                 if (step.valid === 'one') edges.push({source: step.idx-1, target: step.idx, type: 'one', status: 'valid'});
-                 else edges.push({source: step.idx-2, target: step.idx, type: 'two', status: 'valid'});
-            }
-            if (step.invalid) {
-                 if (step.invalid === 'one') edges.push({source: step.idx-1, target: step.idx, type: 'one', status: 'invalid'});
-                 else edges.push({source: step.idx-2, target: step.idx, type: 'two', status: 'invalid'});
+            if (step.step1 || step.step2 || step.final) {
+                // Visualize connections for ALL processed i?
+                // Or just current? Only current is cleaner for animation.
+                // But we can show established valid paths for i < current.
+                // Let's simplified: If calculate i, show arcs from i-1 and i-2.
             }
             
-            // Persistent valid edges? Simulating full redraw is better if possible.
-            // Simplified: Just show current check.
+            // Helper for current step edges
+            if (step.checking || step.step1 || step.step2) {
+                 const i = step.i;
+                 // 1-digit arc (straight)
+                 connectors.push({
+                     x1: margin.left + (i-1)*nodeGap,
+                     x2: margin.left + i*nodeGap,
+                     type: step.step1 ? (step.valid1 ? 'valid' : 'invalid') : 'checking',
+                     curved: false
+                 });
+                 // 2-digit arc (curved)
+                 if (i >= 2) {
+                     connectors.push({
+                         x1: margin.left + (i-2)*nodeGap,
+                         x2: margin.left + i*nodeGap,
+                         type: step.step2 ? (step.valid2 ? 'valid' : 'invalid') : (step.step1 ? 'checking' : 'checking'), // checking appears after step1
+                         curved: true
+                     });
+                 }
+            }
             
-            // Arc path generator
-            const arcPath = (src, tgt) => {
-                const x1 = margin.left + src * nodeStep;
-                const x2 = margin.left + tgt * nodeStep;
-                const dist = x2 - x1;
-                const h = dist * 0.7; // arc height
-                return `M${x1},${height/2} Q${(x1+x2)/2},${height/2 - h} ${x2},${height/2}`;
-            };
-            
-            const edgeSel = svg.selectAll(".edge-path").data(edges, d => d.type+d.status);
-            edgeSel.enter().append("path").attr("class", "edge-path fade-in")
-                .merge(edgeSel)
-                .attr("d", d => arcPath(d.source, d.target))
-                .attr("class", d => `edge-path ${d.status}`);
-            
-            edgeSel.exit().remove();
+            const paths = svg.selectAll(".edge-path").data(connectors);
+            paths.enter().append("path").attr("class", "edge-path")
+                .merge(paths)
+                .attr("d", d => {
+                    const y = height/2 - 20; // Above nodes
+                    if (d.curved) {
+                        const midX = (d.x1 + d.x2)/2;
+                        const midY = y - 40;
+                        return `M${d.x1},${y+5} Q${midX},${midY} ${d.x2},${y+5}`;
+                    } else {
+                        return `M${d.x1},${y+5} L${d.x2},${y+5}`;
+                    }
+                })
+                .attr("class", d => `edge-path ${d.type}`);
+            paths.exit().remove();
         }
 
         function runVisualizer() {
             const s = document.getElementById('strInput').value;
-            if(!s) return;
+             if(!s) return;
+             // Validate
+             if(/[^0-9]/.test(s)) { alert("Digits only"); return; }
+             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render

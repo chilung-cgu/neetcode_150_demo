@@ -3,341 +3,420 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alien Dictionary - 視覺化</title>
+    <title>Alien Dictionary - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .words-container { 
-            display: flex; flex-direction: column; gap: 8px; align-items: center; 
-            margin: 20px 0; padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px;
-        }
-        .word { font-family: monospace; font-size: 1.2rem; font-weight: bold; transition: all 0.3s; }
-        .word.highlight { color: var(--viz-warning); }
-        .word .char { display: inline-block; padding: 2px 4px; }
-        .word .char.diff { background: var(--viz-warning); color: #0f172a; border-radius: 3px; }
-
-        .comparison-display {
-            text-align: center; margin: 10px 0; padding: 12px;
-            background: var(--viz-bg-secondary); border-radius: 8px;
-            font-size: 0.95rem;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 500px;
         }
 
-        .edges-container { 
-            display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; 
-            margin: 10px 0; min-height: 40px; align-items: center;
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+            display: flex;
         }
-        .edge-item { 
-            padding: 8px 15px; background: var(--viz-primary); color: white; 
-            border-radius: 6px; font-family: monospace; font-size: 1rem;
+        
+        .word-panel {
+            width: 30%; height: 100%;
+            border-right: 1px solid rgba(148, 163, 184, 0.2);
+            padding: 10px;
+            overflow-y: auto;
+            font-family: monospace;
+            background: rgba(0,0,0,0.2);
         }
-        .edge-item.new { animation: pulse 0.5s; }
-        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .graph-panel { width: 70%; height: 100%; position: relative; }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .graph-container {
-            display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 15px 0;
-        }
-        .letter-node {
-            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-            border-radius: 50%; background: var(--viz-primary); color: white; font-weight: bold;
-            font-size: 1.1rem; transition: all 0.3s;
-        }
-        .letter-node.processed { background: var(--viz-success); color: #0f172a; }
+        .word-item { padding: 4px; color: #cbd5e1; font-size: 14px; transition: background 0.3s; }
+        .word-item.active { background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; border-radius: 4px; }
+        .char-span { display: inline-block; width: 10px; text-align: center; }
+        .char-span.diff { color: #fbbf24; font-weight: bold; border-bottom: 2px solid #fbbf24; }
 
-        .result-container { 
-            text-align: center; margin: 15px 0; padding: 15px;
-            background: var(--viz-bg-secondary); border-radius: 8px;
+        .node-circle { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; }
+        .node-circle.active { stroke: #fbbf24; stroke-width: 3px; }
+        .node-circle.sorted { fill: #22c55e; stroke: #10b981; }
+
+        .node-text { fill: #fff; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-weight: bold; }
+        
+        .link-line { stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); opacity: 0.5; }
+        .link-line.new { stroke: #fbbf24; opacity: 1; stroke-width: 3px; }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
         }
-        .result-value { font-size: 1.8rem; font-weight: bold; color: var(--viz-success); letter-spacing: 8px; font-family: monospace; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row input { width: 300px; text-align: center; }
     </style>
 </head>
 <body>
-    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">外星字典 (Alien Dictionary)</div>
+                <div class="viz-title">Alien Dictionary (Graph Build + Topo Sort)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <button onclick="setExample(1)">範例1 (標準)</button>
-                        <button onclick="setExample(2)">範例2 (簡單)</button>
-                        <button onclick="resetVisualization()">↻ 重置</button>
+                        <div class="input-group">
+                            <label>Words:</label>
+                            <input type="text" id="wordsInput" value='["wrt","wrf","er","ett","rftt"]'>
+                        </div>
+                        <button onclick="runVisualizer()">Derive Order</button>
                     </div>
                 </div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">單詞列表（按外星語順序排列）</div>
-                <div class="words-container" id="wordsDisplay"></div>
-                
-                <div class="comparison-display" id="comparisonDisplay"></div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">推導出的順序關係</div>
-                <div class="edges-container" id="edgesDisplay"></div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 15px; font-size: 0.85rem;">字母節點（拓撲排序）</div>
-                <div class="graph-container" id="graphDisplay"></div>
-                
-                <div class="result-container">
-                    <div style="color: var(--viz-text-muted); font-size: 0.85rem; margin-bottom: 5px;">外星語字母順序</div>
-                    <div class="result-value" id="resultDisplay">?</div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:#334155; border:1px solid #475569"></div>Char Node</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Sorted</div>
+                        <div class="legend-item"><div class="legend-color" style="height:2px; width:15px; background:#fbbf24"></div>New Rule</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <div class="word-panel" id="wordListPanel"></div>
+                        <div class="graph-panel">
+                            <svg id="viz-svg">
+                                <defs>
+                                    <marker id="arrow" viewBox="0 0 10 10" refX="20" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+                                    </marker>
+                                </defs>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-panel">
+                         <div class="stat-box">
+                            <div class="stat-label">Result Order</div>
+                            <div class="stat-val" id="resDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="800">2x</option>
+                             <option value="1500">Slow</option>
+                             <option value="1000" selected>Normal</option>
+                             <option value="500">Fast</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(C) C=總字元數
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(1) 最多26字母
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">拓撲排序 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'string alienOrder(vector<string>& words) {', id: 0 },
-            { line: '    // 1. 收集所有字母，建圖', id: 1 },
-            { line: '    unordered_map<char, set<char>> graph;', id: 2 },
-            { line: '    unordered_map<char, int> inDegree;', id: 3 },
-            { line: '    for (string& w : words) for (char c : w) inDegree[c] = 0;', id: 4 },
-            { line: '    // 2. 比較相鄰單詞，推導順序', id: 5 },
-            { line: '    for (int i = 0; i < words.size() - 1; i++) {', id: 6 },
-            { line: '        找第一個不同字母 c1, c2', id: 7 },
-            { line: '        if (!graph[c1].count(c2)) {', id: 8 },
-            { line: '            graph[c1].insert(c2); inDegree[c2]++;', id: 9 },
-            { line: '        }', id: 10 },
-            { line: '    }', id: 11 },
-            { line: '    // 3. 拓撲排序 (BFS)', id: 12 },
-            { line: '    queue<char> q;', id: 13 },
-            { line: '    for (auto& [c, deg] : inDegree) if (deg == 0) q.push(c);', id: 14 },
-            { line: '    string result;', id: 15 },
-            { line: '    while (!q.empty()) { /* 標準拓撲排序 */ }', id: 16 },
-            { line: '    return result.size() == inDegree.size() ? result : "";', id: 17 },
-            { line: '}', id: 18 },
+            { line: '    unordered_map<char, unordered_set<char>> adj;', id: 1 },
+            { line: '    unordered_map<char, int> indegree;', id: 2 },
+            { line: '    // Build Graph', id: 3 },
+            { line: '    for (int i=0; i<words.size()-1; i++) {', id: 4 },
+            { line: '        string w1 = words[i], w2 = words[i+1];', id: 5 },
+            { line: '        if (w1.size() > w2.size() && w1.rfind(w2, 0) == 0) return "";', id: 6 },
+            { line: '        for (int j=0; j<min(w1.size(), w2.size()); j++) {', id: 7 },
+            { line: '            if (w1[j] != w2[j]) {', id: 8 },
+            { line: '                adj[w1[j]].insert(w2[j]);', id: 9 },
+            { line: '                indegree[w2[j]]++;', id: 10 },
+            { line: '                break;', id: 11 },
+            { line: '            }', id: 12 },
+            { line: '        }', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '    // Topological Sort (BFS)', id: 15 },
+            { line: '    queue<char> q; string res;', id: 16 },
+            { line: '    for (auto [c, d] : indegree) if (d == 0) q.push(c);', id: 17 },
+            { line: '    while (!q.empty()) {', id: 18 },
+            { line: '        char u = q.front(); q.pop(); res += u;', id: 19 },
+            { line: '        for (char v : adj[u]) {', id: 20 },
+            { line: '            if (--indegree[v] == 0) q.push(v);', id: 21 },
+            { line: '        }', id: 22 },
+            { line: '    }', id: 23 },
+            { line: '    return res.size() == indegree.size() ? res : "";', id: 24 },
+            { line: '}', id: 25 }
         ];
-        
-        const examples = {
-            1: ['wrt', 'wrf', 'er', 'ett', 'rftt'],
-            2: ['z', 'x', 'z']  // Invalid - cycle detected
-        };
-        
-        let currentWords = examples[1];
 
-        function setExample(n) {
-            currentWords = examples[n];
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(words) {
+        function simulate(words) {
             const steps = [];
             
-            // Collect all unique characters
-            const allChars = new Set();
-            for (const word of words) {
-                for (const c of word) allChars.add(c);
-            }
-            const chars = [...allChars].sort();
+            // Collect all unique chars
+            const uniqueChars = new Set();
+            words.forEach(w => w.split('').forEach(c => uniqueChars.add(c)));
+            const chars = Array.from(uniqueChars);
+            
+            // Build Graph Logic Sim
+            const adj = {};
+            const indegree = {};
+            chars.forEach(c => { adj[c] = new Set(); indegree[c] = 0; });
+            
+            const nodes = chars.map(c => ({id: c}));
+            const edges = [];
+            
+            // Initial Layout setup
+             const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(edges).id(d => d.id).distance(80))
+                .force("charge", d3.forceManyBody().strength(-200))
+                .force("center", d3.forceCenter(0,0))
+                .stop();
+            // Dry run a few ticks? No edges yet, so they just repel and center.
+            // Will update layout as edges are added? Or predefined layout?
+            // Let's update layout each step if edges added, or just update simulation manually.
+            // For stability, run once first with 0 edges.
+            for(let i=0; i<300; i++) simulation.tick();
+            let layout = {};
+            nodes.forEach(d => { layout[d.id] = {x: d.x, y: d.y}; });
             
             steps.push({
-                words, chars, edges: [], processed: [], result: '',
-                highlightLines: [0, 1, 2, 3, 4],
-                explanation: { 
-                    title: '初始化', 
-                    text: `單詞: ${words.join(', ')}<br>字母: ${chars.join(', ')}<br><br>比較相鄰單詞推導順序`,
-                    formula: 'setup'
-                }
+                words, layout, nodes, edges: [], 
+                msg: "Init. Comparing adjacent words to build graph.", highlightLines: [0, 3],
+                explanation: {title: "初始化", text: "收集所有字元。準備兩兩比較單詞以推導順序。", formula: ""}
             });
-
-            // Build graph by comparing adjacent words
-            const edges = [];
-            const graph = {};
-            const inDegree = {};
-            for (const c of chars) {
-                graph[c] = [];
-                inDegree[c] = 0;
-            }
-
-            for (let i = 0; i < words.length - 1; i++) {
-                const w1 = words[i], w2 = words[i + 1];
-                let found = false;
-                let diffIndex = -1;
+            
+            for(let i=0; i<words.length-1; i++) {
+                const w1 = words[i];
+                const w2 = words[i+1];
+                let foundDiff = false;
                 
-                for (let j = 0; j < Math.min(w1.length, w2.length); j++) {
-                    if (w1[j] !== w2[j]) {
-                        const c1 = w1[j], c2 = w2[j];
-                        if (!graph[c1].includes(c2)) {
-                            graph[c1].push(c2);
-                            inDegree[c2]++;
-                            edges.push([c1, c2]);
-                        }
-                        found = true;
-                        diffIndex = j;
+                // Prefix check logic
+                if (w1.length > w2.length && w1.startsWith(w2)) {
+                     steps.push({
+                        words, layout, nodes, edges: [...edges], wIdx: i, error: true,
+                        msg: `Error: "${w1}" prefix of smaller "${w2}". Invalid.`, highlightLines: [6],
+                        explanation: {title: "無效輸入", text: `"${w1}" 比 "${w2}" 長且包含它，但排在前面，違反字典序。`, formula: "return ''"}
+                    });
+                    return steps;
+                }
+                
+                const minLen = Math.min(w1.length, w2.length);
+                let diffIdx = -1;
+                for(let j=0; j<minLen; j++) {
+                    if(w1[j] !== w2[j]) {
+                        diffIdx = j;
+                        const u = w1[j];
+                        const v = w2[j];
                         
-                        steps.push({
-                            words, chars, edges: [...edges], processed: [],
-                            comparing: [i, i + 1], diffIndex,
-                            highlightLines: [6, 7, 8, 9],
-                            explanation: { 
-                                title: `比較 "${w1}" vs "${w2}"`, 
-                                text: `第 ${j} 位不同: ${c1} ≠ ${c2}<br>推導: ${c1} 在 ${c2} 之前`,
-                                formula: `${c1} → ${c2}`
-                            }
-                        });
+                        if(!adj[u].has(v)) {
+                            adj[u].add(v);
+                            indegree[v]++;
+                            edges.push({source: u, target: v});
+                            
+                            // Re-run simulation slightly to adjust
+                            simulation.nodes(nodes);
+                            simulation.force("link").links(edges);
+                            simulation.alpha(0.3).restart(); 
+                            // We can't actually animate D3 force during step loop easily withoutasync.
+                            // We will just re-tick offline for a bit
+                            for(let k=0; k<50; k++) simulation.tick();
+                            nodes.forEach(d => { layout[d.id] = {x: d.x, y: d.y}; }); // Update Layout
+                            
+                             steps.push({
+                                words, layout: {...layout}, nodes, edges: [...edges], 
+                                wIdx: i, diffIdx, newRule: {u, v},
+                                msg: `Compare "${w1}" vs "${w2}". Diff at ${j}: '${u}' -> '${v}'.`, highlightLines: [8, 9, 10],
+                                explanation: {title: "發現規則", text: `首個不同字元是 '${u}' 和 '${v}'，因此 '${u}' 必須排在 '${v}' 前面。`, formula: `adj['${u}'].add('${v}')`}
+                            });
+                        } else {
+                             steps.push({
+                                words, layout: {...layout}, nodes, edges: [...edges], wIdx: i, diffIdx,
+                                msg: `Compare "${w1}" vs "${w2}". Rule '${u}' -> '${v}' already exists.`, highlightLines: [8],
+                                explanation: {title: "已知規則", text: "此規則已存在，跳過。", formula: ""}
+                            });
+                        }
+                        
+                        foundDiff = true;
                         break;
                     }
                 }
                 
-                // Invalid case: w1 is prefix of w2 but longer
-                if (!found && w1.length > w2.length) {
+                if(!foundDiff) {
                     steps.push({
-                        words, chars, edges, processed: [], result: '', invalid: true,
-                        highlightLines: [17],
-                        explanation: { 
-                            title: '無效輸入!', 
-                            text: `"${w1}" 比 "${w2}" 長但是前綴<br>這在任何字典順序中都不可能`,
-                            formula: 'return ""'
-                        }
+                        words, layout: {...layout}, nodes, edges: [...edges], wIdx: i,
+                        msg: `Compare "${w1}" vs "${w2}". No difference (Prefix OK).`, highlightLines: [7],
+                        explanation: {title: "無新規則", text: "兩單詞為前綴關係且順序正確，無新規則。", formula: ""}
                     });
-                    return steps;
                 }
-            }
-
-            // Topological sort
-            const queue = [];
-            for (const c of chars) {
-                if (inDegree[c] === 0) queue.push(c);
             }
             
-            const result = [];
-            const processed = [];
-
+            // Topo Sort
             steps.push({
-                words, chars, edges, processed: [], result: '',
-                highlightLines: [12, 13, 14, 15],
-                explanation: { 
-                    title: '開始拓撲排序', 
-                    text: `入度為 0 的字母: ${queue.join(', ')}<br>這些可以先輸出`,
-                    formula: 'BFS'
-                }
+                words, layout, nodes, edges: [...edges], 
+                msg: "Graph Built. Start Topological Sort.", highlightLines: [15],
+                explanation: {title: "拓撲排序", text: "圖建構完成，開始拓撲排序。", formula: ""}
             });
-
-            while (queue.length > 0) {
-                const c = queue.shift();
-                result.push(c);
-                processed.push(c);
-                
-                for (const next of graph[c]) {
-                    inDegree[next]--;
-                    if (inDegree[next] === 0) {
-                        queue.push(next);
-                    }
-                }
+            
+            const q = [];
+            chars.forEach(c => {
+                 if(indegree[c] === 0) q.push(c);
+            });
+            
+            const res = [];
+            
+            while(q.length > 0) {
+                const u = q.shift();
+                res.push(u);
                 
                 steps.push({
-                    words, chars, edges, processed: [...processed], 
-                    result: result.join(''), currentChar: c,
-                    highlightLines: [16],
-                    explanation: { 
-                        title: `輸出 '${c}'`, 
-                        text: `加入結果: ${result.join('')}`,
-                        formula: `result += '${c}'`
-                    }
+                    words, layout, nodes, edges: [...edges], res: [...res],
+                    curr: u,
+                    msg: `Pop '${u}'. Add to result.`, highlightLines: [19],
+                    explanation: {title: "排序", text: `字元 '${u}' 無入度，加入結果。`, formula: "res += u"}
                 });
-            }
-
-            // Check if all characters are processed (detect cycle)
-            const finalResult = result.length === chars.length ? result.join('') : '';
-            steps.push({
-                words, chars, edges, processed, 
-                result: finalResult, final: true,
-                highlightLines: [17],
-                explanation: { 
-                    title: finalResult ? '完成!' : '檢測到環!', 
-                    text: finalResult 
-                        ? `外星語字母順序: ${finalResult}`
-                        : '存在循環依賴，無有效順序',
-                    formula: finalResult ? `return "${finalResult}"` : 'return ""'
+                
+                const neighbors = Array.from(adj[u]);
+                for(let v of neighbors) {
+                    indegree[v]--;
+                    if(indegree[v] === 0) {
+                        q.push(v);
+                         steps.push({
+                            words, layout, nodes, edges: [...edges], res: [...res],
+                            curr: u, processingNeighbor: v,
+                            msg: `Neighbor '${v}' indegree -> 0. Push to Queue.`, highlightLines: [21],
+                            explanation: {title: "更新鄰居", text: `'${v}' 的依賴已解決，加入佇列。`, formula: "q.push(v)"}
+                        });
+                    }
                 }
+            }
+            
+            const success = res.length === chars.length;
+            steps.push({
+                words, layout, nodes, edges: [...edges], res: [...res], final: true,
+                msg: success ? `Result: ${res.join('')}` : "Cycle detected! Invalid.", highlightLines: [24],
+                explanation: {title: "完成", text: success ? "排序成功。" : "圖中存在環，無法排序。", formula: "return res"}
             });
-
+            
             return steps;
         }
 
-        let viz;
-        function init() {
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const listDiv = document.getElementById('wordListPanel');
+        const width = 400; // Panel is smaller now (70% of total)
+        const height = 400;
+        // Actually we need to respect ViewBox of SVG
+        // Let's get actual dimensions or just set viewBox
+        svg.attr("viewBox", `0 0 400 400`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            if(step.res) document.getElementById('resDisplay').textContent = step.res.join('');
+            
+            // Word List Render
+            let listHtml = '';
+            step.words.forEach((w, idx) => {
+                let html = `<div class="word-item ${step.wIdx === idx ? 'active' : ''}">`;
+                for(let j=0; j<w.length; j++) {
+                     let cls = "char-span";
+                     if(step.wIdx === idx && step.diffIdx === j) cls += " diff";
+                     html += `<span class="${cls}">${w[j]}</span>`;
+                }
+                html += `</div>`;
+                listHtml += html;
+            });
+            listDiv.innerHTML = listHtml;
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const centerX = 200;
+            const centerY = 200;
+            
+            // Force layout positions
+            // Links
+            const paths = svg.selectAll(".link-line").data(step.edges);
+            const pEnter = paths.enter().append("line").attr("class", "link-line");
+            paths.merge(pEnter)
+                .attr("x1", d => centerX + step.layout[d.source.id||d.source].x)
+                .attr("y1", centerY + step.layout[d.source.id||d.source].y)
+                .attr("x2", d => centerX + step.layout[d.target.id||d.target].x)
+                .attr("y2", centerY + step.layout[d.target.id||d.target].y)
+                .attr("class", d => {
+                     if(step.newRule && step.newRule.u === (d.source.id||d.source) && step.newRule.v === (d.target.id||d.target)) return "link-line new";
+                     return "link-line";
+                });
+            paths.exit().remove();
+            
+            // Nodes
+            const g = svg.selectAll(".node-g").data(step.nodes, d=>d.id);
+            const gEnter = g.enter().append("g").attr("class", "node-g");
+            
+            gEnter.append("circle").attr("class", "node-circle").attr("r", 15);
+            gEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${centerX + step.layout[d.id].x}, ${centerY + step.layout[d.id].y})`);
+            
+            gUpdate.select(".node-circle").attr("class", d => {
+                 let c = "node-circle";
+                 if(step.res && step.res.includes(d.id)) c += " sorted";
+                 if(step.curr === d.id && !step.final) c += " active";
+                 return c;
+            });
+            
+            gUpdate.select(".node-text").text(d => d.id);
+            g.exit().remove();
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('wordsInput').value;
+            let words;
+            try {
+                words = JSON.parse(raw);
+            } catch(e) { alert("Invalid JSON"); return; }
+            if(!Array.isArray(words)) return;
+
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Words
-                    const words = step.words || currentWords;
-                    document.getElementById('wordsDisplay').innerHTML = words.map((w, i) => {
-                        let cls = 'word';
-                        if (step.comparing && (step.comparing[0] === i || step.comparing[1] === i)) {
-                            cls += ' highlight';
-                        }
-                        let html = '';
-                        for (let j = 0; j < w.length; j++) {
-                            const charCls = step.diffIndex === j && step.comparing && 
-                                (step.comparing[0] === i || step.comparing[1] === i) ? 'char diff' : 'char';
-                            html += `<span class="${charCls}">${w[j]}</span>`;
-                        }
-                        return `<div class="${cls}">${html}</div>`;
-                    }).join('');
-                    
-                    // Comparison
-                    if (step.comparing) {
-                        document.getElementById('comparisonDisplay').innerHTML = 
-                            `正在比較: <strong>${words[step.comparing[0]]}</strong> vs <strong>${words[step.comparing[1]]}</strong>`;
-                    } else {
-                        document.getElementById('comparisonDisplay').innerHTML = '';
-                    }
-                    
-                    // Edges
-                    const edges = step.edges || [];
-                    document.getElementById('edgesDisplay').innerHTML = 
-                        edges.length > 0 
-                            ? edges.map(e => `<span class="edge-item">${e[0]} → ${e[1]}</span>`).join('')
-                            : '<span style="color: var(--viz-text-muted)">無</span>';
-                    
-                    // Graph nodes
-                    const chars = step.chars || [];
-                    const processed = step.processed || [];
-                    document.getElementById('graphDisplay').innerHTML = 
-                        chars.map(c => {
-                            const cls = processed.includes(c) ? 'letter-node processed' : 'letter-node';
-                            return `<div class="${cls}">${c}</div>`;
-                        }).join('');
-                    
-                    // Result
-                    document.getElementById('resultDisplay').textContent = step.result || '?';
-                    document.getElementById('resultDisplay').style.color = 
-                        step.invalid ? 'var(--viz-error)' : 'var(--viz-success)';
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentWords));
+            viz.setSteps(simulate(words));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

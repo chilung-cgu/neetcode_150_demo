@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cheapest Flights (K Stops) - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 500px;
+        }
+
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        /* Graph Nodes */
+        .node-circle { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; }
+        .node-circle.reached { fill: #3b82f6; stroke: #60a5fa; }
+        .node-circle.src { fill: #22c55e; stroke: #10b981; }
+        .node-circle.dst { fill: #ef4444; stroke: #f87171; }
+        
+        .node-text { fill: #fff; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-weight: bold; }
+        .cost-badge { font-family: monospace; font-size: 10px; fill: #fbbf24; font-weight: bold; }
+        
+        .link-line { stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); opacity: 0.5; }
+        .link-line.highlight { stroke: #fbbf24; opacity: 1; stroke-width: 3px; }
+        .link-label { font-size: 10px; fill: #94a3b8; font-weight: bold; }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row input { width: 300px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Cheapest Flights Within K Stops (Bellman-Ford)</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Flights:</label>
+                            <input type="text" id="flightsInput" value="[[0,1,100],[1,2,100],[0,2,500]]" style="width:200px">
+                        </div>
+                         <div class="input-group">
+                            <label>K:</label>
+                            <input type="number" id="kInput" value="1" style="width:50px">
+                        </div>
+                        <div class="input-group">
+                            <label>Src,Dst:</label>
+                            <input type="text" id="sdInput" value="0,2" style="width:60px">
+                        </div>
+                        <button onclick="runVisualizer()">Find Cheap</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Src</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Dst</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Reached</div>
+                        <div class="legend-item"><div class="legend-color" style="height:2px; width:15px; background:#fbbf24"></div>Active Flight</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                             <defs>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                         <div class="stat-box">
+                            <div class="stat-label">Iteration (Stops)</div>
+                            <div class="stat-val" id="iterDisplay">0</div>
+                        </div>
+                         <div class="stat-box">
+                            <div class="stat-label">Min Cost</div>
+                            <div class="stat-val" id="costDisplay">INF</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                             <option value="1500">Slow</option>
+                             <option value="1000" selected>Normal</option>
+                             <option value="500">Fast</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int findCheapestPrice(int n, vector<vector<int>>& flights, int src, int dst, int k) {', id: 0 },
+            { line: '    vector<int> prices(n, INF);', id: 1 },
+            { line: '    prices[src] = 0;', id: 2 },
+            { line: '    for (int i=0; i <= k; i++) { // k+1 iterations', id: 3 },
+            { line: '        vector<int> tmpPrices = prices;', id: 4 },
+            { line: '        for (auto& f : flights) {', id: 5 },
+            { line: '            int u = f[0], v = f[1], w = f[2];', id: 6 },
+            { line: '            if (prices[u] == INF) continue;', id: 7 },
+            { line: '            if (prices[u] + w < tmpPrices[v]) {', id: 8 },
+            { line: '                tmpPrices[v] = prices[u] + w;', id: 9 },
+            { line: '            }', id: 10 },
+            { line: '        }', id: 11 },
+            { line: '        prices = tmpPrices;', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '    return prices[dst] == INF ? -1 : prices[dst];', id: 14 },
+            { line: '}', id: 15 }
+        ];
+
+        let viz;
+
+        function simulate(flights, src, dst, k) {
+            const steps = [];
+            
+            // Build Graph visuals
+            let maxNode = 0;
+            flights.forEach(f => maxNode = Math.max(maxNode, f[0], f[1]));
+            maxNode = Math.max(maxNode, src, dst);
+            const n = maxNode + 1;
+            
+            const nodes = [];
+            for(let i=0; i<n; i++) nodes.push({id: i});
+            const edges = flights.map(f => ({source: f[0], target: f[1], weight: f[2]}));
+            
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(edges).id(d => d.id).distance(120))
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(0,0))
+                .stop();
+            for (let i = 0; i < 300; ++i) simulation.tick();
+            
+            const layout = {};
+            nodes.forEach(d => { layout[d.id] = {x: d.x, y: d.y}; });
+
+            // Bellman Ford
+            const INF = 999999;
+            let prices = Array(n).fill(INF);
+            prices[src] = 0;
+            
+            steps.push({
+                layout, nodes, edges, prices: [...prices],
+                msg: `Init. Src ${src} cost 0. Max stops = ${k} (Iterations: ${k+1}).`, highlightLines: [0, 1, 2],
+                explanation: {title: "初始化", text: "所有價格設為無限大，起點設為 0。", formula: `prices[src]=0`}
+            });
+            
+            for(let i=0; i<=k; i++) {
+                let tmpPrices = [...prices];
+                steps.push({
+                    layout, nodes, edges, prices: [...prices], iter: i,
+                    msg: `Iteration ${i+1}/${k+1} (Stops count: ${i}). Snapshot current prices.`, highlightLines: [3, 4],
+                    explanation: {title: `第 ${i+1} 輪迭代`, text: "此輪代表經過 i 次轉機 (共 i+1 個航班) 可達的最小花費。", formula: ""}
+                });
+                
+                // Process flights
+                // Visualize one by one or batch? Batch is cleaner for Bellman Ford logic usually, 
+                // but for visualization, showing active updates is nice.
+                
+                let anyUpdate = false;
+                for(let f of flights) {
+                    const u = f[0], v = f[1], w = f[2];
+                    if(prices[u] === INF) continue; // Skip unreachable source
+                    
+                    if(prices[u] + w < tmpPrices[v]) {
+                        tmpPrices[v] = prices[u] + w;
+                        anyUpdate = true;
+                        
+                        steps.push({
+                            layout, nodes, edges, prices: [...tmpPrices], iter: i, // Show updated tmp already?
+                            // Technically we update tmpPrices, but logic says use 'prices' as source.
+                            // Visualizing 'tmpPrices' as current state for NEXT step.
+                            // Let's visualize the update happening.
+                            hlEdge: {source: u, target: v},
+                            msg: `Flight ${u}->${v} (cost ${w}). Cheaper! ${prices[u]} + ${w} < ${prices[v] === INF ? 'INF' : prices[v]}`, highlightLines: [8, 9],
+                            explanation: {title: "更新價格", text: `發現從 ${u} 到 ${v} 更便宜的路徑，更新 ${v} 的價格。`, formula: `tmp[${v}] = ${tmpPrices[v]}`}
+                        });
+                    }
+                }
+                
+                prices = [...tmpPrices];
+                steps.push({
+                    layout, nodes, edges, prices: [...prices], iter: i,
+                    msg: `Iteration ${i+1} complete. Prices updated.`, highlightLines: [12],
+                    explanation: {title: "迭代完成", text: "本輪所有航班檢查完畢，更新全域價格表。", formula: "prices = tmpPrices"}
+                });
+                
+                // Early exit optimization not strictly in K-stops loop unless no change, but loop count is fixed by K usually.
+            }
+            
+            const ans = prices[dst] === INF ? -1 : prices[dst];
+            steps.push({
+                layout, nodes, edges, prices: [...prices], final: true,
+                ans,
+                msg: `Final Cost to ${dst}: ${ans}.`, highlightLines: [14],
+                explanation: {title: "結果", text: ans !== -1 ? `在 ${k} 次轉機內到達 ${dst} 的最低價格為 ${ans}。` : "無法在限制內到達。", formula: `return ${ans}`}
+            });
+            
+            return steps;
+        }
+
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            if(step.iter !== undefined) document.getElementById('iterDisplay').textContent = step.iter;
+            const dst = document.getElementById('sdInput').value.split(',')[1];
+            if(step.prices) {
+                 const val = step.prices[dst];
+                 document.getElementById('costDisplay').textContent = val >= 999999 ? "INF" : val;
+            }
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const centerX = width/2;
+            const centerY = height/2;
+            
+            // Links
+            const paths = svg.selectAll(".link-line").data(step.edges);
+            const pEnter = paths.enter().append("line").attr("class", "link-line");
+            paths.merge(pEnter)
+                .attr("x1", d => centerX + step.layout[d.source].x)
+                .attr("y1", centerY + step.layout[d.source].y)
+                .attr("x2", d => centerX + step.layout[d.target].x)
+                .attr("y2", centerY + step.layout[d.target].y)
+                .attr("class", d => {
+                     if(step.hlEdge && step.hlEdge.source === d.source && step.hlEdge.target === d.target) return "link-line highlight";
+                     return "link-line";
+                });
+            paths.exit().remove();
+            
+            // Link Labels
+             const labels = svg.selectAll(".link-text").data(step.edges);
+            labels.enter().append("text").attr("class", "link-label")
+                .merge(labels)
+                .attr("x", d => centerX + (step.layout[d.source].x + step.layout[d.target].x)/2)
+                .attr("y", d => centerY + (step.layout[d.source].y + step.layout[d.target].y)/2)
+                .text(d => d.weight);
+            labels.exit().remove();
+            
+            // Nodes
+            const g = svg.selectAll(".node-g").data(step.nodes, d=>d.id);
+            const gEnter = g.enter().append("g").attr("class", "node-g");
+            
+            gEnter.append("circle").attr("class", "node-circle").attr("r", 20);
+            gEnter.append("text").attr("class", "node-text").attr("dy", -2);
+            gEnter.append("text").attr("class", "cost-badge").attr("dy", 14);
+            
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${centerX + step.layout[d.id].x}, ${centerY + step.layout[d.id].y})`);
+            
+            const [srcId, dstId] = document.getElementById('sdInput').value.split(',').map(Number);
+            
+            gUpdate.select(".node-circle").attr("class", d => {
+                 let c = "node-circle";
+                 if(d.id === srcId) c += " src";
+                 else if(d.id === dstId) c += " dst";
+                 
+                 // Reached?
+                 if(step.prices && step.prices[d.id] < 999999 && d.id !== srcId && d.id !== dstId) c += " reached";
+                 return c;
+            });
+            
+            gUpdate.select(".node-text").text(d => d.id);
+            gUpdate.select(".cost-badge").text(d => {
+                const val = step.prices ? step.prices[d.id] : 999999;
+                return val >= 999999 ? "∞" : val;
+            });
+            
+            g.exit().remove();
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('flightsInput').value;
+            const k = parseInt(document.getElementById('kInput').value);
+            const [src, dst] = document.getElementById('sdInput').value.split(',').map(Number);
+            
+            let flights;
+            try {
+                flights = JSON.parse(raw);
+            } catch(e) { alert("Invalid JSON"); return; }
+            if(!Array.isArray(flights)) return;
+
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(flights, src, dst, k));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

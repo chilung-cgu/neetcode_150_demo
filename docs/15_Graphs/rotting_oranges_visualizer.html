@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rotting Oranges - D3 精緻視覺化</title>
+    <title>Rotting Oranges - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -15,99 +15,84 @@
             flex-direction: column;
             gap: 20px;
             align-items: center;
-            min-height: 550px;
+            min-height: 500px;
         }
 
-        /* SVG */
-        .grid-viewport {
+        .stage-viewport {
             width: 100%; height: 400px;
             background: rgba(30, 41, 59, 0.4);
             border-radius: 12px;
-            position: relative;
             overflow: hidden;
             border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
-        #viz-svg { width: 100%; height: 100%; cursor: grab; }
-        #viz-svg:active { cursor: grabbing; }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .cell-rect { stroke: #334155; stroke-width: 1px; transition: fill 0.3s; }
-        .cell-rect.empty { fill: #1f2937; }
-        .cell-rect.fresh { fill: #f59e0b; } /* Orange */
-        .cell-rect.rotten { fill: #ef4444; } /* Red */
+        .cell-rect { stroke: #475569; stroke-width: 1px; rx: 4; transition: fill 0.3s; }
+        .cell-rect.empty { fill: #0f172a; }
+        .cell-rect.fresh { fill: #fb923c; } /* Orange */
+        .cell-rect.rotten { fill: #dc2626; } /* Red/Rotten */
+        .cell-rect.active { stroke: #fbbf24; stroke-width: 3px; }
         
-        .cell-text { pointer-events: none; font-size: 20px; text-anchor: middle; dominant-baseline: middle; }
+        .cell-text { fill: #fff; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .cell-icon { font-size: 20px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
 
-        /* Highlight */
-        .highlight-rect { fill: none; stroke: #fff; stroke-width: 2px; filter: drop-shadow(0 0 4px white); }
-
-        /* Stats */
         .stats-panel {
-            display: flex; gap: 30px; justify-content: center; width: 100%;
-            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
         }
-        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
-        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
-        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; height: 80px; resize: none; }
-        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
-
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
-        
-        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .input-row textarea { width: 300px; height: 60px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
-    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Rotting Oranges (Multi-Source BFS)</div>
+                <div class="viz-title">Rotting Oranges (BFS)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <div>
-                            <label style="font-size:0.8rem; color:#94a3b8;">Grid (0=Empty, 1=Fresh, 2=Rotten):</label>
-                            <textarea id="gridInput">2,1,1
-1,1,0
-0,1,1</textarea>
+                        <div class="input-group">
+                            <label>Grid (0/1/2):</label>
+                            <textarea id="gridInput">[[2,1,1],[1,1,0],[0,1,1]]</textarea>
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:5px;">
-                            <button onclick="runVisualizer()">Infect</button>
-                            <button onclick="loadExample(2)" style="background:#475569">Ex 2</button>
-                        </div>
+                        <button onclick="runVisualizer()">Simulate Decay</button>
                     </div>
+                     <div style="font-size:0.8rem; color:#64748b; text-align:center; margin-top:5px;">0: Empty, 1: Fresh 🍊, 2: Rotten 🦠</div>
                 </div>
 
                 <div class="visualization-area">
                     <div class="legend">
-                        <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Fresh</div>
-                        <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Rotten</div>
-                        <div class="legend-item"><div class="legend-color" style="background:#1f2937"></div>Empty</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#fb923c"></div>Fresh 🍊</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#dc2626"></div>Rotten 🦠</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#0f172a; border:1px solid #475569"></div>Empty</div>
+                        <div class="legend-item"><div class="legend-color" style="border:2px solid #fbbf24"></div>Current</div>
                     </div>
-                    
-                    <div class="grid-viewport">
-                        <svg id="viz-svg"><g id="zoom-group"></g></svg>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
                     </div>
                     
                     <div class="stats-panel">
-                        <div class="stat-box">
-                            <div class="stat-label">Time</div>
+                         <div class="stat-box">
+                            <div class="stat-label">Elapsed Time</div>
                             <div class="stat-val" id="timeDisplay">0</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">Fresh Left</div>
+                            <div class="stat-label">Fresh Count</div>
                             <div class="stat-val" id="freshDisplay">0</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="step-breakdown">
-                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
-                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
@@ -119,15 +104,16 @@
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">0.5x</option>
-                            <option value="1000" selected>1x</option>
-                            <option value="300">2x</option>
+                             <option value="1000">Slow</option>
+                             <option value="500" selected>Normal</option>
+                             <option value="200">Fast</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
                 <div class="viz-title">C++ Code</div>
@@ -141,180 +127,212 @@
     <script>
         const codeStructure = [
             { line: 'int orangesRotting(vector<vector<int>>& grid) {', id: 0 },
-            { line: '    // Add all initial rotten oranges to Queue', id: 1 },
+            { line: '    int fresh = 0, time = 0;', id: 1 },
             { line: '    queue<pair<int, int>> q;', id: 2 },
-            { line: '    int fresh = 0;', id: 3 },
-            { line: '    for(cells) { if (grid[i][j]==2) q.push({i,j}); else if (grid[i][j]==1) fresh++; }', id: 4 },
-            { line: '    int minutes = 0;', id: 5 },
-            { line: '    while (!q.empty() && fresh > 0) {', id: 6 },
-            { line: '        int size = q.size();', id: 7 },
-            { line: '        for (int i = 0; i < size; i++) {', id: 8 },
-            { line: '            auto [r, c] = q.front(); q.pop();', id: 9 },
-            { line: '            for (auto d : dirs) {', id: 10 },
-            { line: '                int nr = r+dr, nc = c+dc;', id: 11 },
-            { line: '                if (grid[nr][nc] == 1) {', id: 12 },
-            { line: '                    grid[nr][nc] = 2; fresh--;', id: 13 },
-            { line: '                    q.push({nr, nc});', id: 14 },
-            { line: '                }', id: 15 },
-            { line: '            }', id: 16 },
-            { line: '        }', id: 17 },
-            { line: '        minutes++;', id: 18 },
-            { line: '    }', id: 19 },
-            { line: '    return fresh == 0 ? minutes : -1;', id: 20 },
-            { line: '}', id: 21 }
+            { line: '    // Init queue with rotten oranges', id: 3 },
+            { line: '    for (int i=0; i<m; i++) for(int j=0; j<n; j++) ...', id: 4 },
+            { line: '    while (!q.empty() && fresh > 0) {', id: 5 },
+            { line: '        int size = q.size();', id: 6 },
+            { line: '        for (int i = 0; i < size; i++) {', id: 7 },
+            { line: '            auto [r, c] = q.front(); q.pop();', id: 8 },
+            { line: '            for (auto [dr, dc] : dirs) {', id: 9 },
+            { line: '                int nr = r+dr, nc = c+dc;', id: 10 },
+            { line: '                if (grid[nr][nc] == 1) {', id: 11 },
+            { line: '                    grid[nr][nc] = 2; fresh--;', id: 12 },
+            { line: '                    q.push({nr, nc});', id: 13 },
+            { line: '                }', id: 14 },
+            { line: '            }', id: 15 },
+            { line: '        }', id: 16 },
+            { line: '        time++;', id: 17 },
+            { line: '    }', id: 18 },
+            { line: '    return fresh == 0 ? time : -1;', id: 19 },
+            { line: '}', id: 20 }
         ];
 
         let viz;
 
         function simulate(gridInput) {
             const steps = [];
-            const grid = gridInput.map(r => [...r]);
+            const grid = gridInput.map(row => [...row]);
             const m = grid.length;
             const n = grid[0].length;
             
-            const pushState = (msg, hl, activeCells=[], freshCount=0, mins=0) => {
-                steps.push({
-                    grid: grid.map(r => [...r]),
-                    activeCells,
-                    freshCount,
-                    mins,
-                    msg, highlightLines: hl
-                });
-            };
-
-            const q = [];
             let fresh = 0;
+            const q = [];
             
-            for(let r=0; r<m; r++) for(let c=0; c<n; c++) {
-                if(grid[r][c] === 2) q.push({r,c});
-                if(grid[r][c] === 1) fresh++;
+            steps.push({
+                grid: JSON.parse(JSON.stringify(grid)), fresh, time: 0,
+                msg: "Init. Count fresh, queue rotten.", highlightLines: [0, 1, 2, 3],
+                explanation: {title: "初始化", text: "統計新鮮橘子數量，並將腐爛橘子加入佇列。", formula: ""}
+            });
+            
+            for(let i=0; i<m; i++) {
+                for(let j=0; j<n; j++) {
+                    if(grid[i][j] === 1) fresh++;
+                    else if(grid[i][j] === 2) q.push({r: i, c: j});
+                }
             }
             
-            pushState("Init: Find initial Rotten Oranges", [4], q.map(p=>({...p})), fresh, 0);
-
-            let minutes = 0;
-            const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+            steps.push({
+                grid: JSON.parse(JSON.stringify(grid)), fresh, time: 0,
+                msg: `Init Done. Fresh: ${fresh}, Rotten: ${q.length}`, highlightLines: [4],
+                explanation: {title: "初始化完成", text: `初始狀態：${fresh} 個新鮮橘子，${q.length} 個腐爛橘子。`, formula: ""}
+            });
+            
+            let time = 0;
+            const dirs = [[1,0], [-1,0], [0,1], [0,-1]];
             
             while(q.length > 0 && fresh > 0) {
                 const size = q.length;
-                const newRotten = []; // Visual tracking for this minute
                 
-                // We will visualize 1 minute as one main step, but maybe broken down if needed
-                // Showing level-by-level BFS is standard.
+                steps.push({
+                    grid: JSON.parse(JSON.stringify(grid)), fresh, time,
+                    msg: `Minute ${time}: Processing ${size} rotten oranges.`, highlightLines: [5, 6],
+                    explanation: {title: `第 ${time} 分鐘`, text: "開始處理這一輪的擴散。", formula: ""}
+                });
                 
-                for(let i=0; i<size; i++) {
-                    const {r, c} = q.shift();
+                // BFS Level
+                const currentLevelUpdates = []; // To visualize wave
+                
+                // Process entire level
+                // We split loops to visualize better, or just step per minute?
+                // Step per minute + substeps for individual rotting?
+                // Let's do sub-steps but grouped
+                
+                const nextQ = [];
+                for(let k=0; k<size; k++) {
+                    const curr = q.shift();
+                    const r = curr.r; 
+                    const c = curr.c;
+                    
+                    // We don't visualize pop of each unless we want to be very granular.
+                    // Let's visualize "Rotting neighbors of (r,c)"
                     
                     for(let [dr, dc] of dirs) {
-                        const nr = r+dr, nc = c+dc;
-                        if(nr>=0 && nr<m && nc>=0 && nc<n && grid[nr][nc] === 1) {
+                        const nr = r + dr, nc = c + dc;
+                        if(nr>=0 && nc>=0 && nr<m && nc<n && grid[nr][nc] === 1) {
                             grid[nr][nc] = 2;
                             fresh--;
-                            q.push({r:nr, c:nc});
-                            newRotten.push({r:nr, c:nc});
+                            q.push({r: nr, c: nc}); // To be processed NEXT minute
+                            
+                            steps.push({
+                                grid: JSON.parse(JSON.stringify(grid)), fresh, time, 
+                                i: r, j: c, ni: nr, nj: nc, rotting: true,
+                                msg: `Orange at (${nr},${nc}) rots! Fresh left: ${fresh}`, highlightLines: [11, 12, 13],
+                                explanation: {title: "擴散", text: `(${r},${c}) 的鄰居 (${nr},${nc}) 被感染腐爛。`, formula: "fresh--"}
+                            });
                         }
                     }
                 }
                 
-                if(newRotten.length > 0) { // Only increment if we infected someone
-                    minutes++;
-                    pushState(`Minute ${minutes}: ${newRotten.length} oranges infected`, [18], newRotten, fresh, minutes);
-                } else {
-                    // Queue might not be empty but fresh is 0, handled by loop condition
-                }
+                // Note: Standard BFS uses ONE queue and consumes 'size' elements.
+                // My JS logic q.push adds to END, so loop 'size' times correctly processes current level.
+                // The newly added ones are at end.
+                
+                time++;
+                steps.push({
+                    grid: JSON.parse(JSON.stringify(grid)), fresh, time,
+                    msg: `Minute ${time-1} complete. Time -> ${time}`, highlightLines: [17],
+                    explanation: {title: "時間推進", text: "一分鐘過去。", formula: "time++"}
+                });
             }
             
-            if(fresh > 0) {
-                pushState("Impossible! Fresh oranges remain isolated.", [20], [], fresh, -1);
-            } else {
-                pushState(`Done. All rotten in ${minutes} minutes.`, [20], [], 0, minutes);
-            }
-
+            const result = fresh === 0 ? time : -1;
+            steps.push({
+                grid: JSON.parse(JSON.stringify(grid)), fresh, time, final: true,
+                msg: `Final: ${result === -1 ? 'Impossible to rot all' : 'All rotten in ' + time + ' mins'}`, highlightLines: [19],
+                explanation: {title: "結束", text: fresh === 0 ? `所有橘子都爛了，耗時 ${time} 分鐘。` : "還有新鮮橘子倖存 (-1)。", formula: `return ${result}`}
+            });
+            
             return steps;
         }
 
         // --- Render ---
         const svg = d3.select("#viz-svg");
-        const gZoom = d3.select("#zoom-group");
-        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
-        svg.call(zoom);
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            document.getElementById('timeDisplay').textContent = step.mins;
-            document.getElementById('freshDisplay').textContent = step.freshCount;
+            if(step.time !== undefined) document.getElementById('timeDisplay').textContent = step.time;
+            if(step.fresh !== undefined) document.getElementById('freshDisplay').textContent = step.fresh;
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
             const grid = step.grid;
             const m = grid.length;
             const n = grid[0].length;
-            const cellSize = 50;
+            
+            const margin = {top: 20, left: 20, right: 20, bottom: 20};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const cellSize = Math.min(innerW / n, innerH / m, 50);
+            const gridW = n * cellSize;
+            const gridH = m * cellSize;
+            const startX = (width - gridW) / 2;
+            const startY = (height - gridH) / 2;
 
             const cells = [];
-            for(let r=0; r<m; r++) for(let c=0; c<n; c++) cells.push({r, c, val: grid[r][c]});
+            for(let i=0; i<m; i++) {
+                for(let j=0; j<n; j++) {
+                    cells.push({i, j, val: grid[i][j]});
+                }
+            }
 
-            const rects = gZoom.selectAll(".cell-rect").data(cells, d => `${d.r},${d.c}`);
-            rects.enter().append("rect")
-                .attr("class", "cell-rect")
-                .attr("x", d => d.c * cellSize).attr("y", d => d.r * cellSize)
-                .attr("width", cellSize).attr("height", cellSize)
-                .merge(rects)
-                .attr("class", d => {
-                    let c = "cell-rect";
-                    if(d.val === 0) c += " empty";
-                    else if(d.val === 1) c += " fresh";
-                    else if(d.val === 2) c += " rotten";
-                    return c;
-                });
-            rects.exit().remove();
+            const g = svg.selectAll(".cell-g").data(cells, d => `${d.i}-${d.j}`);
+            const gEnter = g.enter().append("g").attr("class", "cell-g");
 
-            // Text / Emoji
-            const texts = gZoom.selectAll(".cell-text").data(cells, d => `${d.r},${d.c}`);
-            texts.enter().append("text").attr("class", "cell-text")
-                .attr("x", d => d.c * cellSize + cellSize/2).attr("y", d => d.r * cellSize + cellSize/2)
-                .merge(texts)
-                .text(d => {
-                    if(d.val === 1) return "🍊";
-                    if(d.val === 2) return "🦠";
-                    return "";
-                });
-            texts.exit().remove();
+            gEnter.append("rect").attr("class", "cell-rect")
+                .attr("width", cellSize).attr("height", cellSize);
+                
+            gEnter.append("text").attr("class", "cell-icon")
+                .attr("x", cellSize/2).attr("y", cellSize/2);
 
-            // Highlight Active (Just Rotten) relative to THIS step
-            const highlights = gZoom.selectAll(".highlight-rect").data(step.activeCells, d => `${d.r},${d.c}`);
-            highlights.enter().append("rect")
-                .attr("class", "highlight-rect")
-                .attr("width", cellSize).attr("height", cellSize)
-                .merge(highlights)
-                .attr("x", d => d.c * cellSize).attr("y", d => d.r * cellSize);
-            highlights.exit().remove();
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${startX + d.j*cellSize}, ${startY + d.i*cellSize})`);
+
+            gUpdate.select(".cell-rect").attr("class", d => {
+                 let c = "cell-rect";
+                 if(d.val === 1) c += " fresh";
+                 else if(d.val === 2) c += " rotten";
+                 else if(d.val === 0) c += " empty";
+                 
+                 // Highlight source or target
+                 if(step.i === d.i && step.j === d.j && !step.final) c += " active";
+                 if(step.ni === d.i && step.nj === d.j) c += " active"; 
+                 return c;
+            });
+            
+            gUpdate.select(".cell-icon").text(d => {
+                 if(d.val === 1) return "🍊";
+                 if(d.val === 2) return "🦠";
+                 return "";
+            });
+
+            g.exit().remove();
         }
 
         function runVisualizer() {
             const raw = document.getElementById('gridInput').value;
-            const grid = raw.split('\n').map(l => l.split(',').map(x => parseInt(x.trim())));
-            
-            // Fit
-            const cellSize = 50;
-            const w = grid[0].length * cellSize;
-            const h = grid.length * cellSize;
-            const scale = Math.min(1, 400 / Math.max(w, h));
-            const tx = (svg.node().clientWidth - w*scale)/2;
-            const ty = (svg.node().clientHeight - h*scale)/2;
-            svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+            let grid;
+            try {
+                grid = JSON.parse(raw);
+            } catch(e) { alert("Invalid JSON"); return; }
+            if(!Array.isArray(grid)) return;
 
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
             viz.setSteps(simulate(grid));
-        }
-
-        const examples = {
-            2: "2,1,1\n0,1,1\n1,0,1"
-        };
-        function loadExample(n) {
-            document.getElementById('gridInput').value = examples[n];
-            runVisualizer();
         }
 
         window.addEventListener('load', runVisualizer);

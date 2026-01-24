@@ -3,31 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gas Station - 視覺化</title>
+    <title>Gas Station - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .stations-container { display: flex; gap: 8px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
-        .station { 
-            width: 60px; padding: 10px; text-align: center; border-radius: 8px; 
-            background: var(--viz-bg-secondary); transition: all 0.3s; border: 2px solid transparent;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
         }
-        .station .idx { font-weight: bold; font-size: 1.1rem; }
-        .station .gas { font-size: 0.8rem; color: var(--viz-success); }
-        .station .cost { font-size: 0.8rem; color: var(--viz-error); }
-        .station.current { background: var(--viz-warning); color: #0f172a; border-color: white; }
-        .station.start { border-color: var(--viz-success); }
-        .station.visited { background: var(--viz-success); color: #0f172a; }
-        .station.failed { background: var(--viz-error); color: white; }
 
-        .tank-display { 
-            text-align: center; font-size: 1.2rem; margin: 15px 0; padding: 15px; 
-            background: var(--viz-bg-secondary); border-radius: 8px;
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .station-circle { fill: #334155; stroke: #475569; stroke-width: 2px; }
+        .station-circle.start { fill: #22c55e; stroke: #fff; }
+        .station-circle.current { stroke: #fbbf24; stroke-width: 3px; }
+        .station-circle.visited { fill: #3b82f6; }
+
+        .station-text { fill: #fff; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .cost-label { fill: #ef4444; font-size: 10px; text-anchor: middle; font-weight: bold; }
+        .gain-label { fill: #22c55e; font-size: 10px; text-anchor: middle; font-weight: bold; }
+        
+        .tank-bar-bg { fill: #334155; rx: 4; }
+        .tank-bar-fill { fill: #fbbf24; rx: 4; transition: width 0.3s; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -35,175 +69,257 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">加油站 (Gas Station)</div>
+                <div class="viz-title">Gas Station (Greedy)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>油量 (gas):</label>
-                        <input type="text" id="gasInput" value="1, 2, 3, 4, 5" style="width: 150px;">
-                        <label>消耗 (cost):</label>
-                        <input type="text" id="costInput" value="3, 4, 5, 1, 2" style="width: 150px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div class="input-group">
+                            <label>Gas:</label>
+                            <input type="text" id="gasInput" value="1, 2, 3, 4, 5">
+                        </div>
+                        <div class="input-group">
+                            <label>Cost:</label>
+                            <input type="text" id="costInput" value="3, 4, 5, 1, 2">
+                        </div>
+                        <button onclick="runVisualizer()">Try Drive</button>
                     </div>
                 </div>
-                
-                <div class="stations-container" id="stationsDisplay"></div>
-                <div class="tank-display">油箱: <span id="tankDisplay" style="color: var(--viz-success); font-weight: bold;">0</span></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Start Point</div>
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #fbbf24"></div>Current Station</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Total Gas</div>
+                            <div class="stat-val" id="totalDisplay">0</div>
+                        </div>
+                         <div class="stat-box">
+                            <div class="stat-label">Current Tank</div>
+                            <div class="stat-val" id="tankDisplay">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Start Start</div>
+                            <div class="stat-val" id="startDisplay">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">起點</div><div class="state-value" id="startDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {', id: 0 },
-            { line: '    int total = 0, tank = 0, start = 0;', id: 1 },
-            { line: '    for (int i = 0; i < gas.size(); i++) {', id: 2 },
-            { line: '        int diff = gas[i] - cost[i];', id: 3 },
-            { line: '        total += diff;', id: 4 },
-            { line: '        tank += diff;', id: 5 },
-            { line: '        if (tank < 0) {', id: 6 },
-            { line: '            start = i + 1;', id: 7 },
-            { line: '            tank = 0;', id: 8 },
+            { line: '    if (sum(gas) < sum(cost)) return -1;', id: 1 },
+            { line: '    int total = 0;', id: 2 },
+            { line: '    int start = 0;', id: 3 },
+            { line: '    for (int i = 0; i < gas.size(); i++) {', id: 4 },
+            { line: '        total += (gas[i] - cost[i]);', id: 5 },
+            { line: '        if (total < 0) {', id: 6 },
+            { line: '            total = 0;', id: 7 },
+            { line: '            start = i + 1;', id: 8 },
             { line: '        }', id: 9 },
             { line: '    }', id: 10 },
-            { line: '    return total >= 0 ? start : -1;', id: 11 },
-            { line: '}', id: 12 },
+            { line: '    return start;', id: 11 },
+            { line: '}', id: 12 }
         ];
-        
-        let currentGas = [1, 2, 3, 4, 5];
-        let currentCost = [3, 4, 5, 1, 2];
 
-        function runCustomInput() {
-            const gasStr = document.getElementById('gasInput').value;
-            const costStr = document.getElementById('costInput').value;
-            const gasArr = gasStr.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            const costArr = costStr.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            
-            if (gasArr.length !== costArr.length || gasArr.length < 2 || gasArr.length > 8) {
-                alert('gas 和 cost 長度必須相同 (2-8)');
-                return;
-            }
-            currentGas = gasArr;
-            currentCost = costArr;
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(gas, cost) {
+        function simulate(gas, cost) {
             const steps = [];
-            let total = 0, tank = 0, start = 0;
-            const failedStations = [];
+            const totalGas = gas.reduce((a, b) => a + b, 0);
+            const totalCost = cost.reduce((a, b) => a + b, 0);
             
             steps.push({
-                current: -1, start: 0, tank: 0, visited: [], failedStations: [],
-                highlightLines: [0, 1],
-                explanation: { title: '初始化', text: `Gas:  [${gas.join(', ')}]<br>Cost: [${cost.join(', ')}]<br><br>若從 A 無法到 B，則 A~B 間都無法到 B`, formula: 'setup' }
+                gas, cost, totalGas, totalCost, i: -1, start: 0, tank: 0,
+                msg: `Sum(Gas)=${totalGas}, Sum(Cost)=${totalCost}.`, highlightLines: [0, 1],
+                explanation: {title: "總量檢查", text: "如果所有油量總和小於總消耗，不可能跑完一圈。", formula: "sum(gas) < sum(cost)"}
             });
-
-            for (let i = 0; i < gas.length; i++) {
+            
+            if (totalGas < totalCost) {
+                steps.push({
+                    gas, cost, final: true, result: -1,
+                    msg: `Total Gas < Total Cost. Impossible.`, highlightLines: [1],
+                    explanation: {title: "無解", text: "總油量不足，返回 -1。", formula: "return -1"}
+                });
+                return steps;
+            }
+            
+            let tank = 0;
+            let start = 0;
+            
+            for(let i=0; i<gas.length; i++) {
                 const diff = gas[i] - cost[i];
-                total += diff;
+                const oldTank = tank;
                 tank += diff;
                 
+                steps.push({
+                    gas, cost, i, start, tank, diff,
+                    msg: `Station ${i}: Gain ${gas[i]}, Cost ${cost[i]} (Net ${diff}). Tank: ${oldTank} -> ${tank}`, highlightLines: [4, 5],
+                    explanation: {title: `站點 ${i}`, text: `在站點 ${i} 加油 ${gas[i]} 並消耗 ${cost[i]} 前往下一站。`, formula: `tank += ${diff}`}
+                });
+                
                 if (tank < 0) {
-                    failedStations.push(i);
                     steps.push({
-                        current: i, start, tank, visited: [], failedStations: [...failedStations], failed: true,
-                        highlightLines: [6, 7, 8],
-                        explanation: { 
-                            title: `站 ${i}: 失敗!`, 
-                            text: `gas=${gas[i]}, cost=${cost[i]}<br>tank=${tank} < 0<br>從站 ${i+1} 重新開始`,
-                            formula: `tank = ${tank}`
-                        }
+                        gas, cost, i, start, tank, reset: true,
+                        msg: `Tank < 0. Can't reach next station from ${start}. Reset start to ${i+1}.`, highlightLines: [6, 7, 8],
+                        explanation: {title: "油量不足", text: `當前路徑無法延續。起點 ${start} 到 ${i} 都無法作為起點。重設起點為 ${i+1}。`, formula: "start = i + 1"}
                     });
-                    start = i + 1;
                     tank = 0;
-                } else {
-                    const visited = [];
-                    for (let j = start; j <= i; j++) visited.push(j);
-                    
-                    steps.push({
-                        current: i, start, tank, visited, failedStations: [...failedStations],
-                        highlightLines: [3, 4, 5],
-                        explanation: { 
-                            title: `站 ${i}: 成功`, 
-                            text: `gas=${gas[i]}, cost=${cost[i]}<br>tank=${tank}`,
-                            formula: `tank += ${diff} = ${tank}`
-                        }
-                    });
+                    start = i + 1;
                 }
             }
-
-            const result = total >= 0 ? start : -1;
+            
             steps.push({
-                current: -1, start, tank, result, final: true,
-                visited: result >= 0 ? Array.from({ length: gas.length }, (_, i) => i) : [],
-                failedStations,
-                highlightLines: [11],
-                explanation: { title: '完成!', text: result >= 0 ? `從站 ${result} 開始可以繞一圈` : '無法完成環路', formula: `return ${result}` }
+                gas, cost, i: gas.length, start, tank, final: true, result: start,
+                msg: `Completed loop check. Valid Start: ${start}`, highlightLines: [11],
+                explanation: {title: "完成", text: `找到有效起點 ${start}。`, formula: `return ${start}`}
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            document.getElementById('totalDisplay').textContent = step.totalGas !== undefined ? step.totalGas : "-";
+            document.getElementById('tankDisplay').textContent = step.tank !== undefined ? step.tank : "-";
+            document.getElementById('startDisplay').textContent = step.start !== undefined ? step.start : "-";
+            if(step.final) document.getElementById('resDisplay').textContent = step.result;
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const N = step.gas.length;
+            const radius = 100;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            // Draw Circular Path
+            const angleStep = (2 * Math.PI) / N;
+            
+            // Stations
+            const stationData = step.gas.map((g, i) => {
+                const angle = i * angleStep - Math.PI / 2; // Start from top
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+                return {x, y, i, gas: g, cost: step.cost[i]};
+            });
+            
+            // Edges (Arcs)
+            // Just draw line for now or donut segment
+            // Simple approach: lines connecting stations
+            const lineGen = d3.line().x(d=>d.x).y(d=>d.y).curve(d3.curveLinearClosed);
+            
+            svg.selectAll(".bg-circle").remove();
+            svg.append("path").attr("d", lineGen(stationData))
+                .attr("fill", "none").attr("stroke", "#475569").attr("stroke-width", 2).attr("class", "bg-circle");
+                
+            const g = svg.selectAll(".station-g").data(stationData);
+            const gEnter = g.enter().append("g").attr("class", "station-g");
+            gEnter.append("circle").attr("class", "station-circle").attr("r", 20);
+            gEnter.append("text").attr("class", "station-text").attr("dy", 1);
+            gEnter.append("text").attr("class", "gain-label").attr("dy", -25);
+            gEnter.append("text").attr("class", "cost-label").attr("dy", 35);
+            
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+                
+            gUpdate.select(".station-circle").attr("class", d => {
+                let c = "station-circle";
+                if(d.i === step.start) c += " start";
+                if(step.i === d.i && !step.final) c += " current";
+                return c;
+            });
+            
+            gUpdate.select(".station-text").text(d => `S${d.i}`);
+            gUpdate.select(".gain-label").text(d => `+${d.gas}`);
+            gUpdate.select(".cost-label").text(d => `-${d.cost}`);
+            
+            g.exit().remove();
+            
+            // Tank Indicator (Center)
+            svg.selectAll(".tank-group").remove();
+            const tankG = svg.append("g").attr("class", "tank-group").attr("transform", `translate(${centerX}, ${centerY})`);
+            
+            tankG.append("text").text("Tank").attr("fill", "#94a3b8").attr("dy", -20).attr("text-anchor", "middle").attr("font-size", "12px");
+            tankG.append("rect").attr("x", -40).attr("y", -10).attr("width", 80).attr("height", 20).attr("class", "tank-bar-bg");
+            
+            // Fill based on tank value (clamped somewhat)
+            // Max arbitrary?? Let's say max visually is 10
+            const tankW = Math.max(0, Math.min(80, (step.tank / 10) * 80));
+            if(step.tank !== undefined) {
+                 tankG.append("rect").attr("x", -40).attr("y", -10).attr("width", tankW).attr("height", 20).attr("class", "tank-bar-fill")
+                    .attr("fill", step.tank < 0 ? "#ef4444" : "#fbbf24");
+                 tankG.append("text").text(step.tank).attr("fill", "#0f172a").attr("dy", 5).attr("text-anchor", "middle").attr("font-weight", "bold").attr("font-size", "12px");
+            }
+        }
+
+        function runVisualizer() {
+            const gasRaw = document.getElementById('gasInput').value;
+            const costRaw = document.getElementById('costInput').value;
+             const gas = gasRaw.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+             const cost = costRaw.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+             
+             if(!gas.length || gas.length !== cost.length) return;
+             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    let html = '';
-                    for (let i = 0; i < currentGas.length; i++) {
-                        let cls = 'station';
-                        if (i === step.current) cls += step.failed ? ' failed' : ' current';
-                        if (i === step.start) cls += ' start';
-                        if (step.visited?.includes(i)) cls += ' visited';
-                        
-                        html += `<div class="${cls}">
-                            <div class="idx">${i}</div>
-                            <div class="gas">+${currentGas[i]}</div>
-                            <div class="cost">-${currentCost[i]}</div>
-                        </div>`;
-                    }
-                    document.getElementById('stationsDisplay').innerHTML = html;
-                    
-                    document.getElementById('tankDisplay').textContent = Math.max(0, step.tank ?? 0);
-                    document.getElementById('startDisplay').textContent = step.result !== undefined ? step.result : step.start ?? '-';
-                    document.getElementById('startDisplay').style.color = step.result === -1 ? 'var(--viz-error)' : 'var(--viz-success)';
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentGas, currentCost));
+            viz.setSteps(simulate(gas, cost));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

@@ -3,26 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Burst Balloons - 視覺化</title>
+    <title>Burst Balloons - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
+        }
 
-        .balloons-container { display: flex; gap: 10px; justify-content: center; margin: 25px 0; align-items: flex-end; min-height: 100px; }
-        .balloon { 
-            width: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: all 0.3s;
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
-        .balloon-body {
-            width: 50px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 1.2rem; color: white;
+        #viz-svg { width: 100%; height: 100%; }
+
+        .balloon-circle { stroke: #fff; stroke-width: 2px; }
+        .balloon-circle.active { stroke: #fbbf24; stroke-width: 4px; filter: drop-shadow(0 0 5px #fbbf24); }
+        .balloon-circle.burst { opacity: 0.3; } /* Virtual burst for sub-problem */
+        
+        .balloon-text { fill: #fff; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .balloon-idx { fill: #94a3b8; font-size: 10px; text-anchor: middle; }
+
+        .cell-rect { fill: #334155; stroke: #475569; stroke-width: 1px; rx: 4; }
+        .cell-rect.active { stroke: #fbbf24; stroke-width: 3px; }
+        .cell-rect.computed { fill: rgba(59, 130, 246, 0.2); stroke: #3b82f6; }
+
+        .cell-text { fill: #fff; font-family: monospace; font-size: 12px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        
+        .interval-bracket { fill: none; stroke: #fbbf24; stroke-width: 2px; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
         }
-        .balloon-string { width: 2px; height: 15px; background: #888; }
-        .balloon.burst { opacity: 0.2; transform: scale(0.7); }
-        .balloon.current .balloon-body { box-shadow: 0 0 15px white; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -30,178 +72,309 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">戳氣球 (Burst Balloons)</div>
+                <div class="viz-title">Burst Balloons (Interval DP)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>氣球數值 (nums):</label>
-                        <input type="text" id="numsInput" value="3, 1, 5, 8" style="width: 150px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div class="input-group">
+                            <label>Nums:</label>
+                            <input type="text" id="numsInput" value="3, 1, 5, 8">
+                        </div>
+                        <button onclick="runVisualizer()">Max Coins</button>
                     </div>
                 </div>
-                
-                <div class="balloons-container" id="balloonsDisplay"></div>
-                
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #fbbf24"></div>Current Range</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Last Burst (Pivot)</div>
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #3b82f6"></div>Computed Sub-problem</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Range</div>
+                            <div class="stat-val" id="rangeDisplay">-</div>
+                        </div>
+                         <div class="stat-box">
+                            <div class="stat-label">Last Burst</div>
+                            <div class="stat-val" id="pivotDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Max Coins (Range)</div>
+                            <div class="stat-val" id="coinsDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n³)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n²)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">累計金幣</div><div class="state-value" id="coinsDisplay">0</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'int maxCoins(vector<int>& nums) {', id: 0 },
-            { line: '    nums.insert(nums.begin(), 1);', id: 1 },
-            { line: '    nums.push_back(1);', id: 2 },
-            { line: '    int n = nums.size();', id: 3 },
-            { line: '    vector<vector<int>> dp(n, vector<int>(n, 0));', id: 4 },
-            { line: '    for (int len = 2; len < n; len++) {', id: 5 },
-            { line: '        for (int i = 0; i < n - len; i++) {', id: 6 },
-            { line: '            int j = i + len;', id: 7 },
-            { line: '            for (int k = i + 1; k < j; k++) {', id: 8 },
+            { line: '    int n = nums.size();', id: 1 },
+            { line: '    nums.insert(nums.begin(), 1);', id: 2 },
+            { line: '    nums.push_back(1);', id: 3 },
+            { line: '    vector<vector<int>> dp(n+2, vector<int>(n+2, 0));', id: 4 },
+            { line: '    for (int len = 1; len <= n; len++) {', id: 5 },
+            { line: '        for (int i = 1; i <= n - len + 1; i++) {', id: 6 },
+            { line: '            int j = i + len - 1;', id: 7 },
+            { line: '            for (int k = i; k <= j; k++) {', id: 8 },
             { line: '                dp[i][j] = max(dp[i][j],', id: 9 },
-            { line: '                    dp[i][k] + dp[k][j] + nums[i]*nums[k]*nums[j]);', id: 10 },
+            { line: '                    dp[i][k-1] + dp[k+1][j] + nums[i-1]*nums[k]*nums[j+1]);', id: 10 },
             { line: '            }', id: 11 },
             { line: '        }', id: 12 },
             { line: '    }', id: 13 },
-            { line: '    return dp[0][n-1];', id: 14 },
-            { line: '}', id: 15 },
+            { line: '    return dp[1][n];', id: 14 },
+            { line: '}', id: 15 }
         ];
-        
-        let currentNums = [3, 1, 5, 8];
-        const colors = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
 
-        function runCustomInput() {
-            const str = document.getElementById('numsInput').value;
-            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            if (arr.length < 1 || arr.length > 6) {
-                alert('請輸入 1-6 個數字');
-                return;
-            }
-            currentNums = arr;
-            init();
-        }
+        let viz;
 
-        // Very simplified: just show a greedy-ish order for demo
-        // Real optimal requires interval DP, too complex to visually backtrack
-        function generateAlgorithmSteps(nums) {
+        function simulate(nums) {
             const steps = [];
-            const n = nums.length;
+            const originalN = nums.length;
             
-            // Extended array
-            const ext = [1, ...nums, 1];
+            // Add padding
+            const padded = [1, ...nums, 1];
+            const N = padded.length;
+            const dp = Array.from({length: N}, () => Array(N).fill(0));
             
             steps.push({
-                burst: [], coins: 0, current: null,
-                highlightLines: [0, 1, 2, 3, 4],
-                explanation: { title: '初始化', text: `Nums: [${nums.join(', ')}]<br>添加虛擬邊界: [1, ${nums.join(', ')}, 1]`, formula: 'setup' }
+                nums: padded, dp: dp.map(r=>[...r]), i: -1, j: -1,
+                msg: `Add boundary 1s: [${padded.join(', ')}]`, highlightLines: [0, 1, 2, 3],
+                explanation: {title: "初始化", text: "兩端加入虛擬氣球 (值為 1)。", formula: "padded = [1, nums, 1]"}
             });
-
-            // Simulate a specific burst order for visualization (not optimal but demonstrative)
-            // For [3,1,5,8], optimal is: burst 1, then 5, then 3, then 8 = 167
-            // We'll just burst from smallest to show the process
-            let remaining = [...nums];
-            let coins = 0;
-            const burstOrder = [];
             
-            // Simple greedy for demo: burst smallest first (not optimal)
-            while (remaining.length > 0) {
-                // Find index to burst (smallest)
-                let minIdx = 0;
-                for (let i = 1; i < remaining.length; i++) {
-                    if (remaining[i] < remaining[minIdx]) minIdx = i;
-                }
-                
-                const burstVal = remaining[minIdx];
-                const left = minIdx > 0 ? remaining[minIdx - 1] : 1;
-                const right = minIdx < remaining.length - 1 ? remaining[minIdx + 1] : 1;
-                const gain = left * burstVal * right;
-                coins += gain;
-                
-                const origIdx = nums.indexOf(burstVal);
-                // Mark as burst globally
-                const globalIdx = nums.findIndex((v, i) => v === burstVal && !burstOrder.includes(i));
-                burstOrder.push(globalIdx);
-                
-                remaining.splice(minIdx, 1);
-                
-                steps.push({
-                    burst: [...burstOrder], coins, current: globalIdx,
-                    highlightLines: [9, 10],
-                    explanation: { 
-                        title: `戳破氣球 ${burstVal}`, 
-                        text: `${left} × ${burstVal} × ${right} = ${gain}<br>累計: ${coins}`,
-                        formula: `+${gain}`
+            // Interval DP
+            // len goes from 1 to originalN
+            for(let len=1; len <= originalN; len++) {
+                for(let i=1; i <= originalN - len + 1; i++) {
+                    const j = i + len - 1;
+                    
+                    let maxVal = 0;
+                    let bestK = -1;
+                    
+                    for(let k=i; k <= j; k++) {
+                        // k is the LAST balloon to burst in range [i, j]
+                        // Left part: dp[i][k-1]
+                        // Right part: dp[k+1][j]
+                        // Burst k gain: padded[i-1] * padded[k] * padded[j+1]
+                        // Note: i-1 is left boundary of range, j+1 is right boundary
+                        
+                        const coins = dp[i][k-1] + dp[k+1][j] + padded[i-1] * padded[k] * padded[j+1];
+                        
+                        steps.push({
+                            nums: padded, dp: dp.map(r=>[...r]), i, j, k,
+                            len, checking: true,
+                            tempCoins: coins, currentMax: maxVal,
+                            msg: `Range [${i},${j}]. Try Last Burst k=${k} (${padded[k]}). Gain: ${coins}`, highlightLines: [8, 9, 10],
+                            explanation: {
+                                title: `嘗試 k=${k} (最後戳)`, 
+                                text: `左邊子區間 [${i},${k-1}] + 右邊子區間 [${k+1},${j}] + 最後戳 k (邊界 ${padded[i-1]}, ${padded[j+1]})`, 
+                                formula: `${dp[i][k-1]} + ${dp[k+1][j]} + ${padded[i-1]}*${padded[k]}*${padded[j+1]} = ${coins}`
+                            }
+                        });
+                        
+                        if (coins > maxVal) {
+                            maxVal = coins;
+                            bestK = k;
+                        }
                     }
-                });
+                    dp[i][j] = maxVal;
+                    
+                     steps.push({
+                        nums: padded, dp: dp.map(r=>[...r]), i, j, k: bestK,
+                        len, finalK: true,
+                        maxVal,
+                        msg: `Range [${i},${j}] Max Coins: ${maxVal} (Best k=${bestK})`, highlightLines: [11],
+                         explanation: {title: `區間 [${i}, ${j}] 完成`, text: `此區間最大收益記為 ${maxVal}。`, formula: `dp[${i}][${j}] = ${maxVal}`}
+                    });
+                }
             }
-
-            // Note: This greedy approach may not give optimal answer
-            // For demo purposes, show actual optimal if we have standard example
-            let actualMax = coins;
-            if (nums.join(',') === '3,1,5,8') {
-                actualMax = 167;
-            }
-
+            
             steps.push({
-                burst: burstOrder, coins: actualMax, final: true,
-                highlightLines: [14],
-                explanation: { title: '完成', text: `最大金幣: ${actualMax}`, formula: `return ${actualMax}` }
+                nums: padded, dp: dp.map(r=>[...r]), i: 1, j: originalN, final: true, result: dp[1][originalN],
+                msg: `Final Result: ${dp[1][originalN]}`, highlightLines: [14],
+                explanation: {title: "完成", text: `最大總收益為 ${dp[1][originalN]}。`, formula: `return ${dp[1][originalN]}`}
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+        
+        const colors = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            if(step.i !== undefined && step.i >= 0) {
+                 document.getElementById('rangeDisplay').textContent = `[${step.i}, ${step.j}]`;
+                 document.getElementById('pivotDisplay').textContent = `k=${step.k} (${step.nums[step.k]})`;
+                 document.getElementById('coinsDisplay').textContent = step.checking ? step.tempCoins : step.maxVal;
+            } else {
+                 document.getElementById('rangeDisplay').textContent = "-";
+                 document.getElementById('pivotDisplay').textContent = "-";
+                 document.getElementById('coinsDisplay').textContent = step.final ? step.result : "-";
+            }
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            // Draw Balloons at top
+            const N = step.nums.length;
+            const margin = {top: 20, left: 30, right: 30};
+            const bRadius = 15;
+            const bSpacing = 40;
+            const bStartX = (width - N*bSpacing)/2 + bSpacing/2;
+            const bY = 50;
+            
+            const bGroup = svg.selectAll(".b-group").data(step.nums.map((v,i)=>({v,i})));
+            const bEnter = bGroup.enter().append("g").attr("class", "b-group");
+            bEnter.append("circle").attr("class", "balloon-circle").attr("r", bRadius);
+            bEnter.append("text").attr("class", "balloon-text").attr("dy", 1);
+            bEnter.append("text").attr("class", "balloon-idx").attr("dy", 28);
+            
+            const bUpdate = bGroup.merge(bEnter)
+                .attr("transform", d => `translate(${bStartX + d.i*bSpacing}, ${bY})`);
+                
+            bUpdate.select("circle")
+                .attr("fill", (d, i) => i===0 || i===N-1 ? "#64748b" : colors[(i-1)%colors.length])
+                .attr("class", d => {
+                    let c = "balloon-circle";
+                    // Only active range balloons are 'active'?
+                    // But interval DP calculates subproblems.
+                    // The 'pivot' k is remaining. Others in range are handled by subproblems.
+                    if (d.i === step.k && (step.checking || step.finalK)) c += " active";
+                    return c;
+                });
+                
+            bUpdate.select(".balloon-text").text(d => d.v);
+            bUpdate.select(".balloon-idx").text(d => d.i);
+            
+            bGroup.exit().remove();
+            
+            // Draw Bracket for Range
+            svg.selectAll(".range-bracket").remove();
+            if (step.i !== undefined && step.i >= 0 && !step.final) {
+                const x1 = bStartX + step.i*bSpacing - bSpacing/2;
+                const x2 = bStartX + step.j*bSpacing + bSpacing/2;
+                const y = bY + 35;
+                const bracketPath = `M${x1},${y} L${x1},${y+10} L${x2},${y+10} L${x2},${y}`;
+                svg.append("path").attr("class", "range-bracket")
+                    .attr("d", bracketPath).attr("fill", "none")
+                    .attr("stroke", "#fbbf24").attr("stroke-width", 2);
+            }
+            
+            // Draw DP Matrix (Lower half)
+            const matrixSize = N; // N x N
+            const mMargin = {top: 100, left: 50, right: 50, bottom: 20};
+            const innerW = width - mMargin.left - mMargin.right;
+            const innerH = height - mMargin.top - mMargin.bottom;
+            const cellSize = Math.min(innerW / matrixSize, innerH / matrixSize, 35);
+            const mStartX = (width - matrixSize*cellSize)/2; 
+            const mStartY = 120;
+            
+            // Cells
+             const cells = [];
+            for(let i=1; i<matrixSize-1; i++) {
+                for(let j=1; j<matrixSize-1; j++) {
+                    // Only upper triangular relevant for intervals [i,j] where i<=j
+                    if (i <= j) {
+                        cells.push({i, j, val: step.dp[i][j]});
+                    }
+                }
+            }
+            
+            const g = svg.selectAll(".cell-g").data(cells, d => `${d.i}-${d.j}`);
+            const gEnter = g.enter().append("g").attr("class", "cell-g");
+             gEnter.append("rect").attr("class", "cell-rect").attr("width", cellSize).attr("height", cellSize);
+            gEnter.append("text").attr("class", "cell-text").attr("x", cellSize/2).attr("y", cellSize/2);
+            
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${mStartX + d.j*cellSize}, ${mStartY + d.i*cellSize})`);
+             
+             gUpdate.select(".cell-rect").attr("class", d => {
+                 let c = "cell-rect";
+                 if(d.val > 0) c += " computed";
+                 if(step.i === d.i && step.j === d.j && !step.final) c += " active";
+                 
+                 // Highlight dependencies? k-1 and k+1
+                 // Left: dp[i][k-1], Right: dp[k+1][j]
+                 if(step.checking && step.k !== undefined) {
+                     if (d.i === step.i && d.j === step.k-1) c += " computed"; // Actually already styled
+                     if (d.i === step.k+1 && d.j === step.j) c += " computed";
+                 }
+                 
+                 return c;
+             });
+             
+             gUpdate.select(".cell-text").text(d => d.val > 0 ? d.val : "");
+             g.exit().remove();
+             
+             // Row/Col labels (indices)
+             // Simple indices 1..N-2 on axes?
+             // Not strictly necessary but helpful.
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('numsInput').value;
+             const nums = raw.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+             if(!nums.length) return;
+             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    document.getElementById('balloonsDisplay').innerHTML = currentNums.map((n, i) => {
-                        let cls = 'balloon';
-                        if (step.burst?.includes(i)) cls += ' burst';
-                        if (step.current === i) cls += ' current';
-                        const color = colors[i % colors.length];
-                        return `<div class="${cls}">
-                            <div class="balloon-body" style="background:${color}">${n}</div>
-                            <div class="balloon-string"></div>
-                        </div>`;
-                    }).join('');
-                    
-                    document.getElementById('coinsDisplay').textContent = step.coins ?? 0;
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentNums));
+            viz.setSteps(simulate(nums));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

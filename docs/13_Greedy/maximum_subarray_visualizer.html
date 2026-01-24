@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximum Subarray - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
+        }
+
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .bar-rect { fill: #334155; rx: 4; transition: fill 0.3s; }
+        .bar-rect.current { fill: #fbbf24; }
+        .bar-rect.subarray { fill: #3b82f6; stroke: #60a5fa; stroke-width: 2px; }
+        .bar-rect.discarded { opacity: 0.3; }
+
+        .line-marker { stroke: #22c55e; stroke-width: 3px; stroke-dasharray: 5,5; opacity: 0; transition: opacity 0.3s; }
+        .line-marker.visible { opacity: 1; }
+        
+        .axis-text { fill: #94a3b8; font-size: 12px; font-family: monospace; text-anchor: middle; }
+        .val-text { fill: #fff; font-size: 12px; font-weight: bold; text-anchor: middle; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Maximum Subarray (Kadane's Algorithm)</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Nums:</label>
+                            <input type="text" id="numsInput" value="-2, 1, -3, 4, -1, 2, 1, -5, 4">
+                        </div>
+                        <button onclick="runVisualizer()">Find Max</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Current Element</div>
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #3b82f6;"></div>Current Subarray</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Current Sum</div>
+                            <div class="stat-val" id="currSumDisplay">-</div>
+                        </div>
+                         <div class="stat-box">
+                            <div class="stat-label">Action</div>
+                            <div class="stat-val" id="actionDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Max Sum</div>
+                            <div class="stat-val" id="maxSumDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int maxSubArray(vector<int>& nums) {', id: 0 },
+            { line: '    int maxSub = nums[0];', id: 1 },
+            { line: '    int curSum = 0;', id: 2 },
+            { line: '    for (int n : nums) {', id: 3 },
+            { line: '        if (curSum < 0)', id: 4 },
+            { line: '            curSum = 0;', id: 5 },
+            { line: '        curSum += n;', id: 6 },
+            { line: '        maxSub = max(maxSub, curSum);', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return maxSub;', id: 9 },
+            { line: '}', id: 10 }
+        ];
+
+        let viz;
+
+        function simulate(nums) {
+            const steps = [];
+            
+            let maxSub = nums[0];
+            let curSum = 0;
+            
+            steps.push({
+                nums, i: -1, curSum, maxSub,
+                msg: `Init maxSub=${maxSub}, curSum=0.`, highlightLines: [0, 1, 2],
+                explanation: {title: "初始化", text: "設定初始最大和為第一個元素，當前和為 0。", formula: `maxSub=${maxSub}, curSum=0`}
+            });
+            
+            let startIdx = 0; // tracking for visual (start of current subarray)
+            
+            for(let i=0; i<nums.length; i++) {
+                const n = nums[i];
+                let reset = false;
+                
+                if(curSum < 0) {
+                     curSum = 0;
+                     reset = true;
+                     startIdx = i; // Reset start index to current
+                     
+                     steps.push({
+                         nums, i, n, curSum, maxSub, reset: true, startIdx,
+                         msg: `curSum < 0. Reset curSum to 0. Discard prefix.`, highlightLines: [4, 5],
+                         explanation: {title: "重置", text: "當前累積和為負數，對後續無益，捨棄之前的子陣列。", formula: "curSum = 0"}
+                     });
+                }
+                
+                curSum += n;
+                let updatedMax = false;
+                if(curSum > maxSub) {
+                    maxSub = curSum;
+                    updatedMax = true;
+                }
+                
+                steps.push({
+                    nums, i, n, curSum, maxSub, reset, startIdx, updatedMax,
+                    msg: `Add ${n}. curSum=${curSum}. Max=${maxSub}`, highlightLines: [6, 7],
+                    explanation: {title: `加入元素 ${n}`, text: `curSum 更新為 ${curSum}。<br>${updatedMax ? "發現新的最大子陣列！" : "維持目前最大值。"}`, formula: `curSum += ${n}`}
+                });
+            }
+            
+            steps.push({
+                nums, i: nums.length, final: true, result: maxSub,
+                msg: `Final Result: ${maxSub}`, highlightLines: [9],
+                explanation: {title: "完成", text: `最大子陣列和為 ${maxSub}。`, formula: `return ${maxSub}`}
+            });
+
+            return steps;
+        }
+
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            if(step.i >= 0 && !step.final) {
+                 document.getElementById('currSumDisplay').textContent = step.curSum;
+                 document.getElementById('actionDisplay').textContent = step.reset ? "Reset" : "Add";
+                 document.getElementById('maxSumDisplay').textContent = step.maxSub;
+            } else {
+                 document.getElementById('currSumDisplay').textContent = "-";
+                 document.getElementById('actionDisplay').textContent = "-";
+                 document.getElementById('maxSumDisplay').textContent = step.final ? step.result : "-";
+            }
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const N = step.nums.length;
+            const barW = (width - 60) / N;
+            const maxVal = Math.max(...step.nums.map(Math.abs));
+            const scaleY = d3.scaleLinear().domain([0, maxVal]).range([0, 100]); // Max height 100
+            
+            const startX = 30;
+            const baselineY = height / 2;
+            
+            const g = svg.selectAll(".bar-g").data(step.nums.map((v,i) => ({v, i})));
+            const gEnter = g.enter().append("g").attr("class", "bar-g");
+            gEnter.append("rect").attr("class", "bar-rect").attr("width", barW - 5);
+            gEnter.append("text").attr("class", "val-text").attr("x", (barW-5)/2);
+            gEnter.append("text").attr("class", "axis-text").attr("x", (barW-5)/2).attr("y", 15);
+            
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${startX + d.i * barW}, ${baselineY})`);
+                
+            gUpdate.select("rect")
+                .attr("height", d => scaleY(Math.abs(d.v)))
+                .attr("y", d => d.v >= 0 ? -scaleY(d.v) : 0) // Up if positive, down if negative (SVG y increases down)
+                .attr("class", d => {
+                    let c = "bar-rect";
+                    if(step.i === d.i && !step.final) c += " current";
+                    // If part of current subarray
+                    if(step.startIdx !== undefined && d.i >= step.startIdx && d.i <= step.i && !step.final) c += " subarray";
+                    if(step.startIdx !== undefined && d.i < step.startIdx && !step.final) c += " discarded";
+                    return c;
+                });
+                
+            gUpdate.select(".val-text")
+                .text(d => d.v)
+                .attr("y", d => d.v >= 0 ? -scaleY(d.v) - 5 : scaleY(Math.abs(d.v)) + 12);
+                
+            gUpdate.select(".axis-text").text(d => d.i);
+            
+            g.exit().remove();
+            
+            // Baseline 
+            svg.selectAll(".baseline").remove();
+            svg.append("line").attr("class", "baseline")
+                .attr("x1", 0).attr("x2", width).attr("y1", baselineY).attr("y2", baselineY)
+                .attr("stroke", "#64748b").attr("stroke-width", 1);
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('numsInput').value;
+             const nums = raw.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+             if(!nums.length) return;
+             
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(nums));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

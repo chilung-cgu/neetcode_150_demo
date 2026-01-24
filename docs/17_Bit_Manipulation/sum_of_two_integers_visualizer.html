@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sum of Two Integers (Bitwise) - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .bit-row { display: flex; gap: 5px; font-family: monospace; align-items: center; }
+        .bit-box { 
+            width: 30px; height: 40px; 
+            border: 2px solid #475569; border-radius: 4px; 
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.2rem; font-weight: bold; color: #cbd5e1;
+            transition: all 0.3s;
+        }
+        .bit-box.one { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; color: #60a5fa; }
+        .bit-box.zero { background: rgba(30, 41, 59, 0.5); border-color: #475569; color: #94a3b8; }
+        
+        .bit-label { width: 60px; text-align: right; color: #94a3b8; margin-right: 15px; font-size: 0.9rem; }
+        .val-label { width: 60px; text-align: left; color: #fbbf24; margin-left: 15px; font-size: 0.9rem; font-family: monospace}
+
+        .operator { font-size: 1.2rem; color: #fbbf24; margin: 2px 0; }
+        .result-box { border-color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
+        .carry-box { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row input { width: 80px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Sum of Two Integers (Bitwise)</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>a:</label>
+                            <input type="number" id="aInput" value="9">
+                        </div>
+                        <div class="input-group">
+                            <label>b:</label>
+                            <input type="number" id="bInput" value="11">
+                        </div>
+                        <button onclick="runVisualizer()">Add</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="stats-panel">
+                         <div class="stat-box">
+                            <div class="stat-label">Iteration</div>
+                            <div class="stat-val" id="iterDisplay">0</div>
+                        </div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <div class="bit-row" id="aRow">
+                            <div class="bit-label">a</div>
+                            <!-- bits -->
+                            <div class="val-label" id="aVal"></div>
+                        </div>
+                        
+                        <div class="bit-row" id="bRow">
+                            <div class="bit-label">b</div>
+                            <!-- bits -->
+                            <div class="val-label" id="bVal"></div>
+                        </div>
+                        
+                        <div style="height: 2px; width: 300px; background: #475569; margin: 5px 0;"></div>
+                        
+                        <div class="bit-row" id="xorRow">
+                            <div class="bit-label">Sum (XOR)</div>
+                            <!-- bits -->
+                            <div class="val-label" id="xorVal"></div>
+                        </div>
+                        
+                        <div class="bit-row" id="andRow">
+                            <div class="bit-label">Carry</div>
+                            <!-- bits -->
+                            <div class="val-label" id="andVal"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                             <option value="1500">Slow</option>
+                             <option value="1000" selected>Normal</option>
+                             <option value="500">Fast</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int getSum(int a, int b) {', id: 0 },
+            { line: '    while (b != 0) {', id: 1 },
+            { line: '        int sum = a ^ b; // add without carry', id: 2 },
+            { line: '        int carry = (a & b) << 1; // carry', id: 3 },
+            { line: '        a = sum;', id: 4 },
+            { line: '        b = carry;', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return a;', id: 7 },
+            { line: '}', id: 8 }
+        ];
+
+        let viz;
+
+        function simulate(a, b) {
+            const steps = [];
+            let iter = 0;
+            
+            steps.push({
+                a, b, sum: 0, carry: 0, iter,
+                msg: `Init a=${a}, b=${b}.`, highlightLines: [0, 1],
+                explanation: {title: "初始化", text: "準備進行位元加法。b 為進位值。", formula: ""}
+            });
+            
+            while(b !== 0) {
+                iter++;
+                const sum = a ^ b;
+                const carry = (a & b) << 1;
+                
+                steps.push({
+                    a, b, sum, carry, iter,
+                    msg: `Iter ${iter}. Calc SUM (XOR) and CARRY (AND<<1).`, highlightLines: [2, 3],
+                    explanation: {title: "半加器運算", text: `Sum = a ^ b (不進位加法)\nCarry = (a & b) << 1 (進位)`, formula: `Sum=${sum}, Carry=${carry}`}
+                });
+                
+                a = sum;
+                b = carry;
+                
+                steps.push({
+                    a, b, sum: 0, carry: 0, iter,
+                    update: true,
+                    msg: `Update a = Sum, b = Carry.`, highlightLines: [4, 5],
+                    explanation: {title: "更新狀態", text: "將 Sum 賦值給 a，Carry 賦值給 b，準備下一輪與進位相加。", formula: "a=sum; b=carry"}
+                });
+            }
+            
+            steps.push({
+                 a, b, sum: 0, carry: 0, iter, final: true,
+                 msg: `b (carry) is 0. Result is a=${a}.`, highlightLines: [7],
+                 explanation: {title: "完成", text: "進位 b 為 0，運算結束。a 即為總和。", formula: `return ${a}`}
+            });
+            
+            return steps;
+        }
+
+        function toBinArray(val) {
+            // Need signed representation or just 8-10 bits?
+            // Input small numbers, use 8 bits or dynamic.
+            // Support negative logic (two's complement) visually?
+            // JS integers are 32 bit signed.
+            // Let's stick to positive for cleaner viz, or show as 32 bit for negative.
+            // Example uses 9 and 11.
+            let s = (val >>> 0).toString(2);
+            // Pad to length 8 for consistency unless large
+            const len = Math.max(8, s.length);
+            s = s.padStart(len, '0');
+            // If very long, limit?
+            if(s.length > 12) s = s.substr(s.length-12); // Show last 12 bits
+            
+            return s.split('').map(x => x === '1');
+        }
+
+        function renderBits(containerId, val, labelId, isCarry=false) {
+            const arr = toBinArray(val);
+            const container = document.getElementById(containerId);
+            const label = container.querySelector('.bit-label');
+            const valLabel = container.querySelector('.val-label');
+            
+            container.innerHTML = '';
+            container.appendChild(label);
+            
+            arr.forEach(bit => {
+                const div = document.createElement('div');
+                div.className = `bit-box ${bit ? 'one' : 'zero'}`;
+                if(isCarry) div.classList.add('carry-box');
+                else if (containerId === 'xorRow') div.classList.add('result-box');
+                
+                div.textContent = bit ? '1' : '0';
+                container.appendChild(div);
+            });
+            
+            container.appendChild(valLabel);
+            if(valLabel) valLabel.textContent = val;
+        }
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('iterDisplay').textContent = step.iter;
+            
+            renderBits('aRow', step.a, 'aVal');
+            renderBits('bRow', step.b, 'bVal');
+            
+            if(step.update) {
+                // Update step, hide XOR/AND rows or show updated?
+                // Logic says a/b are updated.
+                // Reset XOR/AND display or show blank
+                renderBits('xorRow', 0, 'xorVal'); // show 0 or hidden?
+                 document.getElementById('xorRow').style.opacity = '0.3';
+                 document.getElementById('andRow').style.opacity = '0.3';
+            } else if (!step.final && step.iter > 0) {
+                 // Calculating step
+                 document.getElementById('xorRow').style.opacity = '1';
+                 document.getElementById('andRow').style.opacity = '1';
+                 renderBits('xorRow', step.sum, 'xorVal');
+                 renderBits('andRow', step.carry, 'andVal', true);
+            } else {
+                 document.getElementById('xorRow').style.opacity = '0';
+                 document.getElementById('andRow').style.opacity = '0';
+            }
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+        }
+
+        function runVisualizer() {
+            const a = parseInt(document.getElementById('aInput').value);
+            const b = parseInt(document.getElementById('bInput').value);
+            
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(a, b));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

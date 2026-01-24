@@ -3,24 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Rooms - 視覺化</title>
+    <title>Meeting Rooms - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .timeline-container { display: flex; flex-direction: column; gap: 8px; margin: 20px 0; }
-        .meeting { display: flex; align-items: center; gap: 10px; }
-        .meeting-label { width: 60px; font-size: 0.85rem; color: var(--viz-text-muted); }
-        .bar { 
-            height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; 
-            font-family: monospace; font-size: 0.85rem; color: white; font-weight: bold;
-            transition: all 0.3s; border: 2px solid transparent;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
         }
-        .bar.current { border-color: white; }
-        .bar.overlap { background: var(--viz-error) !important; }
+
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .interval-bar { fill: #334155; rx: 4; stroke: #475569; }
+        .interval-bar.current { stroke: #fbbf24; stroke-width: 2px; }
+        .interval-bar.conflict { fill: #ef4444; stroke: #fff; }
+
+        .interval-text { fill: #fff; font-family: monospace; font-size: 10px; text-anchor: middle; pointer-events: none; }
+        
+        .timeline-axis line { stroke: #64748b; }
+        .timeline-axis text { fill: #94a3b8; font-family: monospace; }
+        .timeline-axis path { stroke: #64748b; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -28,166 +67,227 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">會議室 (Meeting Rooms)</div>
+                <div class="viz-title">Meeting Rooms (Can Attend All?)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>會議 (格式: 0,30;5,10;15,20):</label>
-                        <input type="text" id="intervalsInput" value="0,30;5,10;15,20" style="width: 200px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div class="input-group">
+                            <label>Intervals:</label>
+                            <input type="text" id="intervalsInput" value="[0,30],[5,10],[15,20]">
+                        </div>
+                        <button onclick="runVisualizer()">Check</button>
                     </div>
                 </div>
-                
-                <div class="timeline-container" id="timelineDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Current Active</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Conflict</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Result</div>
+                            <div class="stat-val" id="resDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n log n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">可參加全部?</div><div class="state-value" id="resultDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'bool canAttendMeetings(vector<vector<int>>& intervals) {', id: 0 },
             { line: '    sort(intervals.begin(), intervals.end());', id: 1 },
             { line: '    for (int i = 1; i < intervals.size(); i++) {', id: 2 },
-            { line: '        if (intervals[i][0] < intervals[i-1][1])', id: 3 },
+            { line: '        if (intervals[i][0] < intervals[i-1][1]) {', id: 3 },
             { line: '            return false;', id: 4 },
-            { line: '    }', id: 5 },
-            { line: '    return true;', id: 6 },
-            { line: '}', id: 7 },
+            { line: '        }', id: 5 },
+            { line: '    }', id: 6 },
+            { line: '    return true;', id: 7 },
+            { line: '}', id: 8 }
         ];
-        
-        let currentIntervals = [[0, 30], [5, 10], [15, 20]];
-        const colors = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6'];
 
-        function runCustomInput() {
-            const str = document.getElementById('intervalsInput').value;
-            const intervals = str.split(';').map(s => s.split(',').map(x => parseInt(x.trim()))).filter(a => a.length === 2 && !isNaN(a[0]));
-            
-            if (intervals.length < 1 || intervals.length > 6) {
-                alert('請輸入 1-6 個會議');
-                return;
-            }
-            currentIntervals = intervals;
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(intervals) {
+        function simulate(intervalsInput) {
             const steps = [];
-            const sorted = [...intervals].sort((a, b) => a[0] - b[0]);
+            let intervals = intervalsInput.map((x, idx) => ({val: [...x], id: idx, conflict: false}));
             
             steps.push({
-                intervals: sorted.map(iv => [...iv]), compare: [],
-                highlightLines: [0, 1],
-                explanation: { title: '初始化', text: `按開始時間排序<br>檢查相鄰會議是否重疊`, formula: 'sort by start' }
+                intervals: JSON.parse(JSON.stringify(intervals)), i: -1,
+                msg: `Init.`, highlightLines: [0],
+                explanation: {title: "初始化", text: "檢查是否有任何會議重疊。", formula: ""}
             });
-
-            for (let i = 1; i < sorted.length; i++) {
-                const prev = sorted[i - 1];
-                const curr = sorted[i];
-                const overlap = curr[0] < prev[1];
+            
+            intervals.sort((a,b) => a.val[0] - b.val[0]);
+            
+            steps.push({
+                intervals: JSON.parse(JSON.stringify(intervals)), i: -1,
+                msg: `Sorted by Start Time.`, highlightLines: [1],
+                explanation: {title: "排序", text: "按開始時間排序。", formula: "sort(start)"}
+            });
+            
+            for(let i=1; i<intervals.length; i++) {
+                const prev = intervals[i-1];
+                const cur = intervals[i];
                 
-                steps.push({
-                    intervals: sorted.map(iv => [...iv]), compare: [i - 1, i], overlap,
-                    highlightLines: overlap ? [3, 4] : [3],
-                    explanation: { 
-                        title: `比較 [${prev}] 和 [${curr}]`, 
-                        text: overlap 
-                            ? `${curr[0]} < ${prev[1]} → 重疊!<br>無法參加所有會議` 
-                            : `${curr[0]} >= ${prev[1]} → 無重疊`,
-                        formula: overlap ? 'OVERLAP!' : 'OK'
-                    }
-                });
-                
-                if (overlap) {
+                if(cur.val[0] < prev.val[1]) {
+                    cur.conflict = true;
+                    prev.conflict = true;
                     steps.push({
-                        intervals: sorted.map(iv => [...iv]), compare: [i - 1, i], overlap: true, result: false,
-                        highlightLines: [4],
-                        explanation: { title: '結果: 無法參加', text: `有會議重疊`, formula: 'return false' }
+                        intervals: JSON.parse(JSON.stringify(intervals)), i,
+                        msg: `Conflict! [${cur.val}] starts before [${prev.val}] ends. Return False.`, highlightLines: [3, 4],
+                        explanation: {title: "發現重疊", text: "發現衝突，無法參加所有會議。", formula: "return false"},
+                        final: true, result: false
                     });
                     return steps;
+                } else {
+                     steps.push({
+                        intervals: JSON.parse(JSON.stringify(intervals)), i,
+                        msg: `OK. [${cur.val}] starts after [${prev.val}] ends.`, highlightLines: [2],
+                        explanation: {title: "檢查通過", text: "相鄰會議無重疊，繼續檢查。", formula: ""}
+                    });
                 }
             }
-
+            
             steps.push({
-                intervals: sorted.map(iv => [...iv]), result: true, final: true,
-                highlightLines: [6],
-                explanation: { title: '結果: 可以參加', text: `所有會議都無重疊`, formula: 'return true' }
+                intervals: JSON.parse(JSON.stringify(intervals)), final: true, result: true,
+                msg: `No overlaps found. Return True.`, highlightLines: [7],
+                explanation: {title: "完成", text: "所有會議皆不重疊。", formula: "return true"}
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            if(step.result !== undefined) document.getElementById('resDisplay').textContent = step.result ? "True" : "False";
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            // Axis
+             const allPoints = [];
+            step.intervals.forEach(x => { allPoints.push(x.val[0]); allPoints.push(x.val[1]); });
+            const minVal = Math.min(...allPoints, 0);
+            const maxVal = Math.max(...allPoints, 30);
+            
+            const margin = {top: 20, right: 30, bottom: 40, left: 30};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const scaleX = d3.scaleLinear().domain([minVal - 1, maxVal + 1]).range([0, innerW]);
+            
+            const g = svg.selectAll(".main-g").data([0]);
+            const gEnter = g.enter().append("g").attr("class", "main-g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+            const gUpdate = g.merge(gEnter);
+            
+             // Draw Axis
+            const axis = d3.axisBottom(scaleX).ticks(10);
+            gUpdate.select(".axis").remove();
+            gUpdate.append("g").attr("class", "axis timeline-axis")
+                .attr("transform", `translate(0, ${innerH})`)
+                .call(axis);
+                
+            const rowH = 30;
+            const gap = 10;
+            
+            const bars = gUpdate.selectAll(".int-g").data(step.intervals, d => d.id);
+            const barsEnter = bars.enter().append("g").attr("class", "int-g");
+            barsEnter.append("rect").attr("class", "interval-bar").attr("height", rowH).attr("rx", 5);
+            barsEnter.append("text").attr("class", "interval-text").attr("y", rowH/2 + 4);
+            
+            const barsUpdate = bars.merge(barsEnter)
+                 .transition().duration(200)
+                 .attr("transform", (d, i) => `translate(0, ${i * (rowH+gap)})`);
+                 
+            barsUpdate.select("rect")
+                .attr("x", d => scaleX(d.val[0]))
+                .attr("width", d => Math.max(2, scaleX(d.val[1]) - scaleX(d.val[0])))
+                .attr("class", (d, i) => {
+                     let c = "interval-bar";
+                     if(d.conflict) c += " conflict";
+                     if(step.i === i && !step.final) c += " current";
+                     return c;
+                });
+                
+             barsUpdate.select("text")
+                .attr("x", d => (scaleX(d.val[0]) + scaleX(d.val[1]))/2)
+                .text(d => `[${d.val}]`);
+                
+            bars.exit().remove();
+        }
+
+        function runVisualizer() {
+            const intRaw = document.getElementById('intervalsInput').value;
+             
+             let intervals;
+             try {
+                 if(intRaw.trim().startsWith('[')) {
+                     try { intervals = JSON.parse(intRaw.replace(/'/g, '"')); }
+                     catch(e) { intervals = JSON.parse('[' + intRaw.replace(/'/g, '"') + ']'); }
+                 } else {
+                     intervals = JSON.parse('[' + intRaw.replace(/'/g, '"') + ']');
+                 }
+             } catch(e) { return; }
+             
+             if(!Array.isArray(intervals)) return;
+             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    const intervals = step.intervals || currentIntervals;
-                    const maxVal = Math.max(...intervals.flat());
-                    const scale = 300 / maxVal;
-                    
-                    let html = '';
-                    intervals.forEach((int, i) => {
-                        const width = (int[1] - int[0]) * scale;
-                        const left = int[0] * scale;
-                        const highlight = step.compare?.includes(i);
-                        const isOverlap = step.overlap && highlight;
-                        
-                        let cls = 'bar';
-                        if (highlight) cls += ' current';
-                        if (isOverlap) cls += ' overlap';
-                        
-                        html += `<div class="meeting">
-                            <span class="meeting-label">會議 ${i + 1}</span>
-                            <div class="${cls}" style="margin-left:${left}px;width:${width}px;background:${isOverlap ? 'var(--viz-error)' : colors[i % colors.length]}">
-                                [${int[0]}, ${int[1]}]
-                            </div>
-                        </div>`;
-                    });
-                    document.getElementById('timelineDisplay').innerHTML = html;
-                    
-                    if (step.result !== undefined) {
-                        document.getElementById('resultDisplay').textContent = step.result ? 'Yes ✓' : 'No ✗';
-                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
-                    } else {
-                        document.getElementById('resultDisplay').textContent = '-';
-                        document.getElementById('resultDisplay').style.color = 'inherit';
-                    }
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentIntervals));
+            viz.setSteps(simulate(intervals));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

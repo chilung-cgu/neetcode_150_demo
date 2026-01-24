@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Bits - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .stage-viewport {
+            width: 100%; height: 300px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .bit-row { display: flex; gap: 2px; font-family: monospace; align-items: center; }
+        .bit-box { 
+            width: 25px; height: 35px; /* Smaller for 32 bits */
+            border: 1px solid #475569; border-radius: 2px; 
+            display: flex; justify-content: center; align-items: center;
+            font-size: 0.8rem; font-weight: bold; color: #cbd5e1;
+            transition: all 0.2s;
+        }
+        .bit-box.one { background: rgba(59, 130, 246, 0.3); border-color: #3b82f6; color: #fff; }
+        .bit-box.zero { background: rgba(30, 41, 59, 0.5); border-color: #475569; color: #64748b; }
+        .bit-box.target { border-color: #fbbf24; border-width: 2px; }
+        
+        .bit-label { width: 80px; text-align: right; color: #94a3b8; margin-right: 15px; font-size: 0.9rem; }
+        
+        .operator { font-size: 1.5rem; color: #fbbf24; margin: 5px 0; transform: rotate(90deg); }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row input { width: 250px; text-align: center; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Reverse Bits</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Binary (32-bit):</label>
+                            <input type="text" id="binInput" value="00000010100101000001111010011100">
+                        </div>
+                        <button onclick="runVisualizer()">Reverse</button>
+                    </div>
+                    <div style="font-size:0.75rem; text-align:center; color:#64748b; margin-top:5px;">Input must be 32 chars of 0/1. Or shorter (auto-padded).</div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="stats-panel">
+                         <div class="stat-box">
+                            <div class="stat-label">Iteration</div>
+                            <div class="stat-val" id="iterDisplay">0/32</div>
+                        </div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <div class="bit-row" id="nRow">
+                            <div class="bit-label">Input n</div>
+                            <!-- bits -->
+                        </div>
+                        
+                        <div style="font-size: 20px; color: #fbbf24;">⬇</div>
+                        
+                        <div class="bit-row" id="resRow">
+                            <div class="bit-label">Result</div>
+                            <!-- bits -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                             <option value="1500">Slow</option>
+                             <option value="500" selected>Normal</option>
+                             <option value="100">Fast</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'uint32_t reverseBits(uint32_t n) {', id: 0 },
+            { line: '    uint32_t res = 0;', id: 1 },
+            { line: '    for (int i = 0; i < 32; i++) {', id: 2 },
+            { line: '        res = (res << 1) | (n & 1);', id: 3 },
+            { line: '        n >>= 1;', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    return res;', id: 6 },
+            { line: '}', id: 7 }
+        ];
+
+        let viz;
+
+        function simulate(binStr) {
+            const steps = [];
+            // Parse binary string to array of boolean
+            // Assuming Big-Endian for visualization usually?
+            // "0000...101" -> MSB left, LSB right.
+            // But logic n & 1 takes LSB (rightmost).
+            let nBits = binStr.split('').map(x => x === '1');
+            let resBits = Array(32).fill(false);
+            
+            steps.push({
+                nBits: [...nBits], resBits: [...resBits], i: 0,
+                msg: "Init res = 0.", highlightLines: [0, 1],
+                explanation: {title: "初始化", text: "結果變數歸零。", formula: "res = 0"}
+            });
+            
+            for(let i=0; i<32; i++) {
+                // n & 1 means taking Last bit
+                const bit = nBits[31]; // rightmost is LSB
+                
+                // res << 1 means shift everything left 1, then add new bit at right
+                // JS array shift logic
+                // shift left: [1,0,0] -> [0,0,0] (lose MSB) if strictly 32 bit, but here we fill from 0
+                // Correct logic: resBits shift left, insert bit at end.
+                const newRes = [...resBits];
+                newRes.shift(); // remove MSB
+                newRes.push(bit); // append bit at LSB
+                
+                // n >> 1
+                const newN = [...nBits];
+                newN.pop(); // remove LSB
+                newN.unshift(false); // fill MSB with 0
+                
+                steps.push({
+                    nBits: [...nBits], resBits: [...resBits], i,
+                    currBit: bit,
+                    msg: `Iteration ${i+1}. Take LSB ${bit?'1':'0'} from n.`, highlightLines: [3],
+                    explanation: {title: "提取 LSB", text: `取得 n 的最低位元 (${bit?'1':'0'})。`, formula: "bit = n & 1"}
+                });
+                
+                resBits = newRes;
+                nBits = newN;
+                
+                steps.push({
+                    nBits: [...nBits], resBits: [...resBits], i,
+                    msg: `Shift Res Left, Add Bit. Shift N Right.`, highlightLines: [3, 4],
+                    explanation: {title: "位移並添加", text: `res 左移一位並加上該位元。n 右移一位。`, formula: "res <<= 1; n >>= 1"}
+                });
+            }
+            
+            steps.push({
+                nBits: [...nBits], resBits: [...resBits], i: 32, final: true,
+                msg: "Completed. Bits reversed.", highlightLines: [6],
+                explanation: {title: "完成", text: "32 次迴圈結束，位元反轉完成。", formula: "return res"}
+            });
+            
+            return steps;
+        }
+
+        function renderBits(containerId, bits, highlightLSB=false, highlightLastAdded=false) {
+            const container = document.getElementById(containerId);
+            const label = container.querySelector('.bit-label');
+            
+            // Rebuild
+            container.innerHTML = '';
+            container.appendChild(label);
+            
+            bits.forEach((bit, i) => {
+                const div = document.createElement('div');
+                div.className = `bit-box ${bit ? 'one' : 'zero'}`;
+                div.textContent = bit ? '1' : '0';
+                
+                if(highlightLSB && i === 31) div.classList.add('target'); // n's LSB
+                if(highlightLastAdded && i === 31) div.classList.add('target'); // res's LSB
+                
+                container.appendChild(div);
+            });
+        }
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('iterDisplay').textContent = `${step.i}/32`;
+            
+            renderBits('nRow', step.nBits, step.currBit !== undefined, false);
+            renderBits('resRow', step.resBits, false, step.currBit !== undefined);
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+        }
+
+        function runVisualizer() {
+            let val = document.getElementById('binInput').value;
+            // Pad or trim
+            val = val.replace(/[^01]/g, '');
+            if(val.length < 32) val = val.padStart(32, '0');
+            if(val.length > 32) val = val.substr(val.length-32);
+            document.getElementById('binInput').value = val;
+
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(val));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

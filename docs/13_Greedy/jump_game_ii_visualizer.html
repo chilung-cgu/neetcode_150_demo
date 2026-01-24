@@ -3,27 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jump Game II - 視覺化</title>
+    <title>Jump Game II - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .array-container { display: flex; gap: 6px; justify-content: center; margin: 20px 0; overflow-x: auto; padding: 10px; }
-        .element { 
-            width: 50px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s; border: 2px solid transparent;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
         }
-        .element .val { font-weight: bold; font-size: 1.2rem; }
-        .element .idx { font-size: 0.65rem; color: var(--viz-text-muted); }
-        .element.current { background: var(--viz-warning); color: #0f172a; border-color: white; }
-        .element.range { border-color: var(--viz-success); }
-        .element.jumped { background: var(--viz-success); color: #0f172a; }
-        .element.goal { background: linear-gradient(135deg, var(--viz-warning), var(--viz-error)); }
 
-        .range-indicator { text-align: center; color: var(--viz-text-muted); font-size: 0.85rem; margin: 5px 0; min-height: 20px; }
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .idx-box { fill: #334155; stroke: #475569; stroke-width: 2px; rx: 4; }
+        .idx-box.current-range { stroke: #fbbf24; stroke-width: 3px; fill: rgba(251, 191, 36, 0.1); }
+        .idx-box.next-range { stroke: #22c55e; stroke-width: 2px; stroke-dasharray: 4,2; }
+        
+        .idx-text { fill: #fff; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .val-label { fill: #94a3b8; font-size: 10px; text-anchor: middle; }
+        
+        .jump-arc { fill: none; stroke: #3b82f6; stroke-width: 2px; marker-end: url(#arrow); }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 200px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -31,162 +66,275 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">跳躍遊戲 II (Jump Game II)</div>
+                <div class="viz-title">Jump Game II (BFS Approach)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>陣列 (nums):</label>
-                        <input type="text" id="numsInput" value="2, 3, 1, 1, 4" style="width: 200px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div class="input-group">
+                            <label>Nums:</label>
+                            <input type="text" id="numsInput" value="2, 3, 1, 1, 4">
+                        </div>
+                        <button onclick="runVisualizer()">Min Jumps</button>
                     </div>
                 </div>
-                
-                <div class="array-container" id="arrayDisplay"></div>
-                <div class="range-indicator" id="rangeDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #fbbf24"></div>Current Level (l, r)</div>
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #22c55e; border-style:dashed;"></div>Next Farthest (farthest)</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                             <defs>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6" />
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Jumps</div>
+                            <div class="stat-val" id="jumpsDisplay">0</div>
+                        </div>
+                         <div class="stat-box">
+                            <div class="stat-label">Current Range</div>
+                            <div class="stat-val" id="rangeDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Farthest Reach</div>
+                            <div class="stat-val" id="farthestDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">當前範圍</div><div class="state-value" id="curEndDisplay">0</div></div>
-                    <div class="state-item"><div class="state-label">最遠可達</div><div class="state-value" id="farDisplay">0</div></div>
-                    <div class="state-item"><div class="state-label">跳躍次數</div><div class="state-value" id="jumpsDisplay">0</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'int jump(vector<int>& nums) {', id: 0 },
-            { line: '    int jumps = 0, curEnd = 0, farthest = 0;', id: 1 },
-            { line: '    for (int i = 0; i < nums.size() - 1; i++) {', id: 2 },
-            { line: '        farthest = max(farthest, i + nums[i]);', id: 3 },
-            { line: '        if (i == curEnd) {', id: 4 },
-            { line: '            jumps++;', id: 5 },
-            { line: '            curEnd = farthest;', id: 6 },
+            { line: '    int res = 0;', id: 1 },
+            { line: '    int l = 0, r = 0;', id: 2 },
+            { line: '    while (r < nums.size() - 1) {', id: 3 },
+            { line: '        int farthest = 0;', id: 4 },
+            { line: '        for (int i = l; i <= r; i++) {', id: 5 },
+            { line: '            farthest = max(farthest, i + nums[i]);', id: 6 },
             { line: '        }', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '    return jumps;', id: 9 },
-            { line: '}', id: 10 },
+            { line: '        l = r + 1;', id: 8 },
+            { line: '        r = farthest;', id: 9 },
+            { line: '        res++;', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return res;', id: 12 },
+            { line: '}', id: 13 }
         ];
-        
-        let currentNums = [2, 3, 1, 1, 4];
 
-        function runCustomInput() {
-            const str = document.getElementById('numsInput').value;
-            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            if (arr.length < 2 || arr.length > 10) {
-                alert('請輸入 2-10 個數字');
-                return;
-            }
-            currentNums = arr;
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(nums) {
+        function simulate(nums) {
             const steps = [];
-            let jumps = 0, curEnd = 0, farthest = 0;
-            const jumpPoints = [];
+            let res = 0;
+            let l = 0;
+            let r = 0;
             
             steps.push({
-                current: -1, curEnd: 0, farthest: 0, jumps: 0, jumpPoints: [],
-                highlightLines: [0, 1],
-                explanation: { title: '初始化', text: `陣列: [${nums.join(', ')}]<br>貪心: 在當前範圍內找最遠可達`, formula: 'setup' }
+                nums, l, r, res, farthest: 0,
+                msg: `Init: Range [${l}, ${r}]. Jumps: 0.`, highlightLines: [0, 1, 2],
+                explanation: {title: "初始化", text: "從索引 0 開始，當前可到達範圍 [0, 0]。", formula: "l=0, r=0"}
             });
-
-            for (let i = 0; i < nums.length - 1; i++) {
-                farthest = Math.max(farthest, i + nums[i]);
+            
+            while(r < nums.length - 1) {
+                let farthest = 0;
                 
                 steps.push({
-                    current: i, curEnd, farthest, jumps, jumpPoints: [...jumpPoints],
-                    range: [i === 0 ? 0 : jumpPoints.length > 0 ? jumpPoints[jumpPoints.length - 1] + 1 : 0, curEnd],
-                    highlightLines: [2, 3],
-                    explanation: { 
-                        title: `位置 ${i}`, 
-                        text: `farthest = max(${farthest - nums[i]}, ${i}+${nums[i]}) = ${farthest}`,
-                        formula: `farthest = ${farthest}`
-                    }
+                    nums, l, r, res, farthest,
+                    msg: `Explore Range [${l}, ${r}] to find next farthest reach.`, highlightLines: [3, 4, 5],
+                    explanation: {title: `探索範圍 [${l}, ${r}]`, text: "在這個範圍內，尋找可以跳最遠的位置。", formula: "BFS Level"}
                 });
-
-                if (i === curEnd) {
-                    jumps++;
-                    jumpPoints.push(i);
-                    curEnd = farthest;
+                
+                for(let i=l; i<=r; i++) {
+                    const reach = i + nums[i];
+                    farthest = Math.max(farthest, reach);
                     
-                    steps.push({
-                        current: i, curEnd, farthest, jumps, jumpPoints: [...jumpPoints],
-                        range: [jumpPoints.length > 1 ? jumpPoints[jumpPoints.length - 2] + 1 : 0, i],
-                        highlightLines: [4, 5, 6],
-                        explanation: { 
-                            title: `第 ${jumps} 跳!`, 
-                            text: `到達範圍邊界 (i=${i})<br>curEnd = ${curEnd}`,
-                            formula: `jumps = ${jumps}`
-                        }
+                     steps.push({
+                        nums, l, r, res, i, farthest,
+                        reach,
+                        msg: `Check idx ${i} (val ${nums[i]}). Reach ${i}+${nums[i]}=${reach}. Max Farthest: ${farthest}`, highlightLines: [6],
+                        explanation: {title: `檢查索引 ${i}`, text: `計算從 ${i} 能跳到的最遠距離。`, formula: `farthest = max(${farthest}, ${reach})`}
                     });
                 }
+                
+                const oldR = r;
+                l = oldR + 1;
+                r = farthest;
+                res++;
+                
+                steps.push({
+                    nums, l, r, res, farthest, oldR,
+                    msg: `Jump! New Range [${l}, ${r}]. Jumps: ${res}.`, highlightLines: [8, 9, 10], 
+                    explanation: {title: "跳躍", text: `完成一層 BFS。新的範圍是上一層的最遠距離。`, formula: "res++, l=r+1, r=farthest"}
+                });
             }
-
-            steps.push({
-                current: nums.length - 1, curEnd, farthest, jumps, jumpPoints: [...jumpPoints, nums.length - 1], final: true,
-                highlightLines: [9],
-                explanation: { title: '完成!', text: `最少跳躍次數: ${jumps}`, formula: `return ${jumps}` }
+            
+             steps.push({
+                nums, l, r, res, final: true, result: res,
+                msg: `Reached End. Total Jumps: ${res}`, highlightLines: [12],
+                explanation: {title: "完成", text: `到達終點，最少跳躍次數為 ${res}。`, formula: `return ${res}`}
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            document.getElementById('jumpsDisplay').textContent = step.res;
+            if(step.l !== undefined) {
+                 document.getElementById('rangeDisplay').textContent = `[${step.l}, ${step.r}]`;
+                 document.getElementById('farthestDisplay').textContent = step.farthest || "-";
+            } else {
+                 document.getElementById('rangeDisplay').textContent = "-";
+                 document.getElementById('farthestDisplay').textContent = "-";
+            }
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const N = step.nums.length;
+            const barW = (width - 100) / N;
+            const startX = 50;
+            const centerY = height / 2 + 20;
+            
+            const g = svg.selectAll(".idx-g").data(step.nums.map((v,i)=>({v,i})));
+            const gEnter = g.enter().append("g").attr("class", "idx-g");
+            gEnter.append("rect").attr("class", "idx-box").attr("width", barW - 10).attr("height", barW - 10).attr("rx", 5);
+            gEnter.append("text").attr("class", "idx-text").attr("x", (barW-10)/2).attr("y", (barW-10)/2);
+            gEnter.append("text").attr("class", "val-label").attr("x", (barW-10)/2).attr("y", -5);
+            
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${startX + d.i*barW}, ${centerY})`);
+            
+            gUpdate.select("rect").attr("class", d => {
+                let c = "idx-box";
+                if(step.l !== undefined) {
+                    if (d.i >= step.l && d.i <= step.r) c += " current-range";
+                    if (step.farthest !== undefined && d.i === step.farthest) c += " next-range"; // Highlight farthest reachable
+                }
+                
+                // Highlight current checking index
+                if(step.i === d.i && !step.final) c += " active";
+                return c;
+            });
+            
+            gUpdate.select(".idx-text").text(d => d.v);
+            gUpdate.select(".val-label").text(d => `i=${d.i}`);
+            
+            g.exit().remove();
+            
+            // Jumps Arcs
+            // Maybe show an arc from oldR to newR (farthest) ???
+            // Or just a bracket for the Range
+            
+            // Bracket for current range [l, r]
+            svg.selectAll(".range-bracket").remove();
+            if(step.l !== undefined && !step.final) {
+                const x1 = startX + step.l*barW;
+                const x2 = startX + step.r*barW + barW - 10;
+                const y = centerY + barW;
+                
+                const p = `M${x1},${y} L${x1},${y+10} L${x2},${y+10} L${x2},${y}`;
+                
+                svg.append("path").attr("class", "range-bracket")
+                    .attr("d", p)
+                    .attr("fill", "none").attr("stroke", "#fbbf24").attr("stroke-width", 2);
+                
+                svg.append("text").attr("x", (x1+x2)/2).attr("y", y+25)
+                    .attr("fill", "#fbbf24").attr("text-anchor", "middle").attr("font-size", "12px")
+                    .text("Current Level");
+            }
+            
+            // Reach Arc for current scanned item
+             if(step.i !== undefined && !step.final) {
+                const srcX = startX + step.i*barW + (barW-10)/2;
+                const dstIdx = Math.min(step.reach, N-1);
+                const dstX = startX + dstIdx*barW + (barW-10)/2;
+                
+                const midX = (srcX + dstX)/2;
+                const midY = centerY - 50; 
+                
+                const p = d3.path();
+                p.moveTo(srcX, centerY);
+                p.quadraticCurveTo(midX, midY, dstX, centerY);
+                
+                svg.selectAll(".reach-path").remove();
+                svg.append("path").attr("class", "reach-path")
+                    .attr("d", p.toString())
+                    .attr("fill", "none")
+                    .attr("stroke", "#3b82f6")
+                    .attr("stroke-width", 2)
+                    .attr("opacity", 0.5)
+                    .attr("marker-end", "url(#arrow)");
+            } else {
+                svg.selectAll(".reach-path").remove();
+            }
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('numsInput').value;
+             const nums = raw.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+             if(!nums.length) return;
+             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    let html = '';
-                    currentNums.forEach((n, i) => {
-                        let cls = 'element';
-                        if (i === step.current) cls += ' current';
-                        if (step.range && i >= step.range[0] && i <= step.range[1]) cls += ' range';
-                        if (step.jumpPoints?.includes(i)) cls += ' jumped';
-                        if (i === currentNums.length - 1) cls += ' goal';
-                        html += `<div class="${cls}">
-                            <div class="val">${n}</div>
-                            <div class="idx">[${i}]</div>
-                        </div>`;
-                    });
-                    document.getElementById('arrayDisplay').innerHTML = html;
-                    document.getElementById('rangeDisplay').textContent = step.range ? `當前範圍: [${step.range[0]}, ${step.range[1]}]` : '';
-                    document.getElementById('curEndDisplay').textContent = step.curEnd ?? 0;
-                    document.getElementById('farDisplay').textContent = step.farthest ?? 0;
-                    document.getElementById('jumpsDisplay').textContent = step.jumps ?? 0;
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentNums));
+            viz.setSteps(simulate(nums));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

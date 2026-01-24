@@ -3,24 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Rooms II - 視覺化</title>
+    <title>Meeting Rooms II - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .timeline-container { position: relative; min-height: 150px; margin: 20px 0; background: var(--viz-bg-secondary); border-radius: 8px; padding: 15px; }
-        .meeting { 
-            position: absolute; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; 
-            font-size: 0.75rem; font-weight: bold; color: white; transition: all 0.3s; border: 2px solid transparent;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
         }
-        .meeting.current { border-color: white; }
-        .room-label { position: absolute; left: 5px; font-size: 0.7rem; color: var(--viz-text-muted); }
 
-        .heap-container { display: flex; gap: 6px; justify-content: center; margin: 10px 0; padding: 12px; background: var(--viz-bg-secondary); border-radius: 8px; min-height: 40px; align-items: center; }
-        .heap-item { background: var(--viz-warning); color: #0f172a; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .timeline-axis line { stroke: #64748b; }
+        .timeline-axis text { fill: #94a3b8; font-family: monospace; }
+        .timeline-axis path { stroke: #64748b; }
+        
+        .event-line { stroke-width: 2px; stroke-dasharray: 4,2; opacity: 0.6; }
+        .count-line { fill: none; stroke: #3b82f6; stroke-width: 3px; }
+        .count-area { fill: rgba(59, 130, 246, 0.2); }
+        
+        .meeting-bar { fill: #334155; rx: 4; opacity: 0.7; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -28,206 +67,288 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">會議室 II (Meeting Rooms II)</div>
+                <div class="viz-title">Meeting Rooms II (Scan Line)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>會議 (格式: 0,30;5,10;15,20):</label>
-                        <input type="text" id="intervalsInput" value="0,30;5,10;15,20" style="width: 200px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div class="input-group">
+                            <label>Intervals:</label>
+                            <input type="text" id="intervalsInput" value="[0,30],[5,10],[15,20]">
+                        </div>
+                        <button onclick="runVisualizer()">Calculate</button>
                     </div>
                 </div>
-                
-                <div class="timeline-container" id="timelineDisplay"></div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.9rem;">Min Heap (結束時間)</div>
-                <div class="heap-container" id="heapDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Start Event (+1)</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>End Event (-1)</div>
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #3b82f6;"></div>Active Count</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Current Count</div>
+                            <div class="stat-val" id="cntDisplay">0</div>
+                        </div>
+                         <div class="stat-box">
+                            <div class="stat-label">Max Rooms</div>
+                            <div class="stat-val" id="resDisplay">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n log n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">會議室數</div><div class="state-value" id="roomsDisplay">0</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'int minMeetingRooms(vector<vector<int>>& intervals) {', id: 0 },
-            { line: '    sort(intervals.begin(), intervals.end());', id: 1 },
-            { line: '    priority_queue<int, vector<int>, greater<int>> pq;', id: 2 },
-            { line: '    for (auto& i : intervals) {', id: 3 },
-            { line: '        if (!pq.empty() && pq.top() <= i[0]) {', id: 4 },
-            { line: '            pq.pop();', id: 5 },
-            { line: '        }', id: 6 },
-            { line: '        pq.push(i[1]);', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '    return pq.size();', id: 9 },
-            { line: '}', id: 10 },
+            { line: '    vector<int> starts, ends;', id: 1 },
+            { line: '    for (auto& i : intervals) {', id: 2 },
+            { line: '        starts.push_back(i[0]);', id: 3 },
+            { line: '        ends.push_back(i[1]);', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    sort(starts.begin(), starts.end());', id: 6 },
+            { line: '    sort(ends.begin(), ends.end());', id: 7 },
+            { line: '    int res = 0, count = 0;', id: 8 },
+            { line: '    int s = 0, e = 0;', id: 9 },
+            { line: '    while (s < intervals.size()) {', id: 10 },
+            { line: '        if (starts[s] < ends[e]) {', id: 11 },
+            { line: '            s++; count++;', id: 12 },
+            { line: '        } else {', id: 13 },
+            { line: '            e++; count--;', id: 14 },
+            { line: '        }', id: 15 },
+            { line: '        res = max(res, count);', id: 16 },
+            { line: '    }', id: 17 },
+            { line: '    return res;', id: 18 },
+            { line: '}', id: 19 }
         ];
-        
-        let currentMeetings = [[0, 30], [5, 10], [15, 20]];
-        const colors = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-        function runCustomInput() {
-            const str = document.getElementById('intervalsInput').value;
-            const meetings = str.split(';').map(s => s.split(',').map(x => parseInt(x.trim()))).filter(a => a.length === 2 && !isNaN(a[0]));
-            
-            if (meetings.length < 1 || meetings.length > 6) {
-                alert('請輸入 1-6 個會議');
-                return;
-            }
-            currentMeetings = meetings;
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(meetings) {
+        function simulate(intervals) {
             const steps = [];
-            const sorted = [...meetings].sort((a, b) => a[0] - b[0]);
-            const heap = [];
-            const roomAssignments = []; // {meetingIdx, roomIdx}
+            const starts = intervals.map(x=>x[0]).sort((a,b)=>a-b);
+            const ends = intervals.map(x=>x[1]).sort((a,b)=>a-b);
             
             steps.push({
-                heap: [], rooms: 0, assignments: [],
-                highlightLines: [0, 1, 2],
-                explanation: { title: '初始化', text: `按開始時間排序<br>Min Heap 存結束時間<br>Heap size = 需要的會議室數`, formula: 'setup' }
+                intervals, starts, ends, count: 0, res: 0, s: 0, e: 0,
+                msg: `Init. Sorted Starts and Ends separately.`, highlightLines: [0, 1, 2, 3, 4, 5, 6, 7],
+                explanation: {title: "初始化", text: "將所有開始時間和結束時間分別排序，視為時間軸上的事件點。", formula: "Sort(Starts), Sort(Ends)"}
             });
-
-            for (let i = 0; i < sorted.length; i++) {
-                const meeting = sorted[i];
-                let reused = false;
-                let roomIdx = heap.length;
+            
+            let count = 0;
+            let res = 0;
+            let s = 0;
+            let e = 0;
+            const N = intervals.length;
+            
+            while(s < N) {
+                let type = '';
+                let time = 0;
                 
-                // Check if can reuse a room
-                if (heap.length > 0 && heap[0] <= meeting[0]) {
-                    reused = true;
-                    // Find which room to reuse (the one with earliest end time)
-                    const earliest = heap.shift();
-                    roomIdx = roomAssignments.find(a => sorted[a.meetingIdx][1] === earliest && a.roomIdx !== undefined)?.roomIdx ?? 0;
-                    
+                if (starts[s] < ends[e]) {
+                    time = starts[s];
+                    s++;
+                    count++;
+                    type = 'start';
+                     steps.push({
+                        intervals, starts, ends, count, res, s, e, time, type,
+                        msg: `Time ${time}: Start Event. Count++ -> ${count}.`, highlightLines: [11, 12],
+                        explanation: {title: "會議開始", text: `時間 ${time} 有會議開始。佔用一個房間。`, formula: "count++"}
+                    });
+                } else {
+                     time = ends[e];
+                    e++;
+                    count--;
+                    type = 'end';
                     steps.push({
-                        heap: [...heap], rooms: heap.length + 1, assignments: [...roomAssignments],
-                        currentMeeting: i, reusing: true,
-                        highlightLines: [4, 5],
-                        explanation: { 
-                            title: `[${meeting}] - 復用會議室`, 
-                            text: `Heap top=${earliest} <= ${meeting[0]}<br>可以復用！pop(${earliest})`,
-                            formula: `${earliest} <= ${meeting[0]}`
-                        }
+                        intervals, starts, ends, count, res, s, e, time, type,
+                        msg: `Time ${time}: End Event. Count-- -> ${count}.`, highlightLines: [13, 14],
+                        explanation: {title: "會議結束", text: `時間 ${time} 有會議結束。釋放一個房間。`, formula: "count--"}
                     });
                 }
                 
-                // Add to heap
-                heap.push(meeting[1]);
-                heap.sort((a, b) => a - b);
-                
-                if (reused) {
-                    roomAssignments.push({ meetingIdx: i, roomIdx });
-                } else {
-                    roomAssignments.push({ meetingIdx: i, roomIdx: roomAssignments.length === 0 ? 0 : Math.max(...roomAssignments.map(a => a.roomIdx)) + 1 });
-                }
-                
-                if (!reused) {
-                    steps.push({
-                        heap: [...heap], rooms: heap.length, assignments: [...roomAssignments],
-                        currentMeeting: i,
-                        highlightLines: [4, 7],
-                        explanation: { 
-                            title: `[${meeting}] - 新會議室`, 
-                            text: heap.length === 1 
-                                ? `Heap 為空，開新會議室<br>push(${meeting[1]})` 
-                                : `Heap top > ${meeting[0]}，需新會議室<br>push(${meeting[1]})`,
-                            formula: `rooms = ${heap.length}`
-                        }
-                    });
-                } else {
-                    steps.push({
-                        heap: [...heap], rooms: heap.length, assignments: [...roomAssignments],
-                        currentMeeting: i,
-                        highlightLines: [7],
-                        explanation: { 
-                            title: `[${meeting}] - push`, 
-                            text: `push(${meeting[1]}) 到 Heap`,
-                            formula: `rooms = ${heap.length}`
-                        }
+                const oldRes = res;
+                res = Math.max(res, count);
+                if(res > oldRes) {
+                     steps.push({
+                        intervals, starts, ends, count, res, s, e, time, type, changed: true,
+                        msg: `New Max Rooms Needed: ${res}.`, highlightLines: [16],
+                        explanation: {title: "更新最大值", text: `當前同時進行的會議數量達到新高 ${res}。`, formula: "res = max(res, count)"}
                     });
                 }
             }
-
+            
             steps.push({
-                heap, rooms: heap.length, assignments: roomAssignments, final: true,
-                highlightLines: [9],
-                explanation: { title: '完成!', text: `最少需要 ${heap.length} 間會議室`, formula: `return ${heap.length}` }
+                intervals, starts, ends, count, res, final: true,
+                msg: `Final Result: ${res} rooms.`, highlightLines: [18],
+                explanation: {title: "完成", text: `所需最少會議室數量為 ${res}。`, formula: `return ${res}`}
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('cntDisplay').textContent = step.count;
+            document.getElementById('resDisplay').textContent = step.res;
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            // Axis
+             const allPoints = [];
+            step.intervals.forEach(x => { allPoints.push(x[0]); allPoints.push(x[1]); });
+            const minVal = Math.min(...allPoints, 0);
+            const maxVal = Math.max(...allPoints, 30);
+            
+            const margin = {top: 20, right: 30, bottom: 40, left: 30};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const scaleX = d3.scaleLinear().domain([minVal - 1, maxVal + 1]).range([0, innerW]);
+            // Max possible count is N
+            const scaleY = d3.scaleLinear().domain([0, step.intervals.length + 1]).range([innerH, 0]);
+            
+            const g = svg.selectAll(".main-g").data([0]);
+            const gEnter = g.enter().append("g").attr("class", "main-g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+            const gUpdate = g.merge(gEnter);
+            
+             // Draw Axis
+            const axisX = d3.axisBottom(scaleX).ticks(10);
+            gUpdate.select(".axis-x").remove();
+            gUpdate.append("g").attr("class", "axis axis-x timeline-axis")
+                .attr("transform", `translate(0, ${innerH})`)
+                .call(axisX);
+                
+            const axisY = d3.axisLeft(scaleY).ticks(5);
+            gUpdate.select(".axis-y").remove();
+            gUpdate.append("g").attr("class", "axis axis-y timeline-axis")
+                .call(axisY);
+
+            // Draw Intervals (transparently in background just for ref)
+            // Stagger them vertically so they don't look like count chart yet
+            // Just raw bars at bottom?
+            // Actually, let's just focus on the Count Chart which is the core of this algo
+            
+            // We need to construct the path of count over time up to current step
+            // To do this, we need history. Or we can reconstruct entire history for the chart.
+            // Since simulate is run once, we don't have history in 'step' object unless we put it there.
+            // Simplification: In simulate, we can store 'history' of (time, count) in every step.
+            
+            // BUT, for simplicity in `render`, let's just draw the current scan line and a marker.
+            // To be cooler, let's pre-calculate the full chart and unveil it.
+            
+            // Calc full history locally for rendering background
+            const points = [];
+            const timeline = [];
+            step.intervals.forEach(i => {
+                timeline.push({t: i[0], type: 1});
+                timeline.push({t: i[1], type: -1});
+            });
+            timeline.sort((a,b) => a.t - b.t || a.type - b.type); // order matters for same time
+            
+            let currC = 0;
+            points.push({t: minVal, c: 0});
+            timeline.forEach(ev => {
+                points.push({t: ev.t, c: currC}); // step before change
+                currC += ev.type;
+                points.push({t: ev.t, c: currC}); // step after change
+            });
+             points.push({t: maxVal, c: currC});
+             
+             const lineGen = d3.line().x(d => scaleX(d.t)).y(d => scaleY(d.c)).curve(d3.curveStepAfter);
+             
+             // Draw full path faded
+             gUpdate.selectAll(".path-full").remove();
+             gUpdate.append("path").attr("class", "path-full").attr("d", lineGen(points))
+                .attr("stroke", "#334155").attr("stroke-width", 2).attr("fill", "none").attr("stroke-dasharray", "2,2");
+                
+            // Scan Line
+            if(step.time !== undefined) {
+                const x = scaleX(step.time);
+                gUpdate.selectAll(".scan-line").remove();
+                gUpdate.append("line").attr("class", "scan-line event-line")
+                    .attr("x1", x).attr("y1", 0).attr("x2", x).attr("y2", innerH)
+                    .attr("stroke", step.type === 'start' ? "#22c55e" : "#ef4444");
+                    
+                gUpdate.append("circle").attr("cx", x).attr("cy", scaleY(step.count))
+                    .attr("r", 6).attr("fill", step.type === 'start' ? "#22c55e" : "#ef4444")
+                    .attr("stroke", "#fff");
+            }
+            
+            // Draw path up to current time (if we want to build it up)
+            // ... omitting for simplicity, the scan line and count display is good enough
+        }
+
+        function runVisualizer() {
+            const intRaw = document.getElementById('intervalsInput').value;
+             let intervals;
+             try {
+                 if(intRaw.trim().startsWith('[')) {
+                     try { intervals = JSON.parse(intRaw.replace(/'/g, '"')); }
+                     catch(e) { intervals = JSON.parse('[' + intRaw.replace(/'/g, '"') + ']'); }
+                 } else {
+                     intervals = JSON.parse('[' + intRaw.replace(/'/g, '"') + ']');
+                 }
+             } catch(e) { return; }
+             if(!Array.isArray(intervals)) return;
+             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    const sorted = [...currentMeetings].sort((a, b) => a[0] - b[0]);
-                    const container = document.getElementById('timelineDisplay');
-                    const width = container.clientWidth - 60;
-                    const maxVal = Math.max(...sorted.flat()) + 5;
-                    
-                    // Determine max rooms
-                    const maxRooms = Math.max(1, ...(step.assignments?.map(a => a.roomIdx) ?? [0])) + 1;
-                    container.style.height = `${50 + maxRooms * 35}px`;
-                    
-                    let html = '';
-                    for (let r = 0; r < maxRooms; r++) {
-                        html += `<span class="room-label" style="top:${15+r*35}px">Room ${r + 1}</span>`;
-                    }
-                    
-                    (step.assignments || []).forEach((a, idx) => {
-                        const m = sorted[a.meetingIdx];
-                        const left = (m[0] / maxVal) * width + 55;
-                        const w = Math.max(40, ((m[1] - m[0]) / maxVal) * width);
-                        const top = 10 + a.roomIdx * 35;
-                        const isCurrent = step.currentMeeting === a.meetingIdx;
-                        
-                        html += `<div class="meeting ${isCurrent ? 'current' : ''}" style="left:${left}px;top:${top}px;width:${w}px;background:${colors[a.meetingIdx % colors.length]}">[${m[0]},${m[1]}]</div>`;
-                    });
-                    
-                    container.innerHTML = html;
-                    document.getElementById('heapDisplay').innerHTML = (step.heap || []).length > 0 
-                        ? step.heap.map(h => `<span class="heap-item">${h}</span>`).join('') 
-                        : '<span style="color: var(--viz-text-muted)">空</span>';
-                    document.getElementById('roomsDisplay').textContent = step.rooms ?? 0;
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentMeetings));
+            viz.setSteps(simulate(intervals));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

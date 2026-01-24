@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partition Equal Subset Sum - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 500px;
+        }
+
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .num-box { fill: #334155; stroke: #475569; stroke-width: 2px; rx: 4; }
+        .num-box.active { stroke: #fbbf24; stroke-width: 3px; }
+        .num-text { fill: #fff; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        
+        .sum-circle { fill: #475569; stroke: #fff; stroke-width: 1px; transition: all 0.5s; }
+        .sum-circle.existing { fill: #3b82f6; } /* Existing sums */
+        .sum-circle.new { fill: #f59e0b; } /* Newly added */
+        .sum-circle.target { fill: #22c55e; stroke-width: 3px; stroke: #fff; filter: drop-shadow(0 0 8px #22c55e); }
+        .sum-text { fill: #fff; font-size: 10px; text-anchor: middle; font-weight: bold; pointer-events: none; }
+
+        .connector-path { fill: none; stroke: #f59e0b; stroke-width: 1px; marker-end: url(#arrow); opacity: 0.5; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 140px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Partition Equal Subset Sum</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Nums:</label>
+                            <input type="text" id="numsInput" value="1, 5, 11, 5">
+                        </div>
+                        <button onclick="runVisualizer()">Partition</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Existing Sum</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>New Sum (s + num)</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Target Found</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                             <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="20" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#f59e0b"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Total Sum</div>
+                            <div class="stat-val" id="totalDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Target (Total/2)</div>
+                            <div class="stat-val" id="targetDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Reachable Sums</div>
+                            <div class="stat-val" id="countDisplay">1</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'bool canPartition(vector<int>& nums) {', id: 0 },
+            { line: '    int sum = accumulate(nums);', id: 1 },
+            { line: '    if (sum % 2 != 0) return false;', id: 2 },
+            { line: '    unordered_set<int> dp;', id: 3 },
+            { line: '    dp.insert(0);', id: 4 },
+            { line: '    int target = sum / 2;', id: 5 },
+            { line: '    for (int i = 0; i < nums.size(); i++) {', id: 6 },
+            { line: '        unordered_set<int> nextDP;', id: 7 },
+            { line: '        for (int t : dp) {', id: 8 },
+            { line: '            if (t + nums[i] == target) return true;', id: 9 },
+            { line: '            nextDP.insert(t + nums[i]);', id: 10 },
+            { line: '            nextDP.insert(t);', id: 11 },
+            { line: '        }', id: 12 },
+            { line: '        dp = nextDP;', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '    return dp.count(target);', id: 15 },
+            { line: '}', id: 16 }
+        ];
+
+        let viz;
+
+        function simulate(nums) {
+            const steps = [];
+            const sum = nums.reduce((a,b)=>a+b, 0);
+            
+            steps.push({
+                nums, dp: [0], i: -1, sum, target: sum/2,
+                msg: `Sum: ${sum}. Target: ${sum/2}.`, highlightLines: [0, 1],
+                explanation: {title: "初始化", text: `計算總和 ${sum}。目標 partition sum 為 ${sum/2}。`, formula: ""}
+            });
+
+            if (sum % 2 !== 0) {
+                 steps.push({
+                    nums, dp: [0], i: -1, sum, target: sum/2, final: true, result: false,
+                    msg: `Sum is odd. Impossible.`, highlightLines: [2],
+                    explanation: {title: "奇數總和", text: "總和為奇數，無法平分。", formula: "return false"}
+                });
+                return steps;
+            }
+            
+            const target = sum / 2;
+            let dp = new Set([0]);
+            
+            steps.push({
+                nums, dp: [...dp], i: -1, sum, target,
+                msg: `Init DP set with {0}.`, highlightLines: [3, 4],
+                explanation: {title: "DP 集合", text: "初始可達到的總和集合包含 {0}。", formula: "dp = {0}"}
+            });
+
+            for(let i=0; i<nums.length; i++) {
+                const n = nums[i];
+                const currentSums = Array.from(dp).sort((a,b)=>a-b);
+                const nextDP = new Set();
+                const newSums = [];
+                
+                steps.push({
+                    nums, dp: [...currentSums], i, sum, target, calculating: true,
+                    msg: `Process num ${n}. Current reachable: {${currentSums.join(',')}}`, highlightLines: [6, 7],
+                    explanation: {title: `處理數字 ${n}`, text: "對集合中每個已達到的總和，加上當前數字。", formula: `newSum = oldSum + ${n}`}
+                });
+                
+                let found = false;
+                
+                for(let t of currentSums) {
+                    const nextVal = t + n;
+                    nextDP.add(t); // keep old
+                    
+                    // Add animation step for generation
+                    // Only highlight interesting ones to avoid spam?
+                    // Let's batch visual: Show existing t, and arrow to t+n.
+                    newSums.push({from: t, to: nextVal});
+                    
+                    nextDP.add(nextVal);
+                    if (nextVal === target) found = true;
+                }
+                
+                steps.push({
+                     nums, dp: [...currentSums], i, sum, target, newSums,
+                     msg: `Adding ${n} to all existing sums...`, highlightLines: [8, 10, 11],
+                     explanation: {title: "擴展集合", text: `產生新的可達總和。`, formula: "dp.insert(t+num)"}
+                });
+                
+                if (found) {
+                     steps.push({
+                        nums, dp: [...nextDP].sort((a,b)=>a-b), i, sum, target, found: true, final: true, result: true,
+                        msg: `Target ${target} reached! Return True.`, highlightLines: [9],
+                        explanation: {title: "找到目標", text: `成功湊出目標值 ${target}！`, formula: "return true"}
+                    });
+                    return steps;
+                }
+                
+                dp = nextDP;
+                steps.push({
+                     nums, dp: [...dp].sort((a,b)=>a-b), i, sum, target,
+                     msg: `DP updated. Size: ${dp.size}.`, highlightLines: [13],
+                     explanation: {title: "更新集合", text: `本輪結束，可達總和集合已更新。`, formula: "dp = nextDP"}
+                });
+            }
+            
+            steps.push({
+                nums, dp: [...dp].sort((a,b)=>a-b), i: nums.length, sum, target, final: true, result: false,
+                msg: `Target ${target} not found. Return False.`, highlightLines: [15],
+                explanation: {title: "失敗", text: "遍歷結束，無法湊出目標值。", formula: "return false"}
+            });
+
+            return steps;
+        }
+
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('totalDisplay').textContent = step.sum;
+            document.getElementById('targetDisplay').textContent = Number.isInteger(step.target) ? step.target : "N/A";
+            document.getElementById('countDisplay').textContent = step.dp.length;
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const nNums = step.nums.length;
+            const margin = {top: 50, left: 30, right: 30};
+            
+            // Draw Nums at Top
+            const itemW = 50;
+            const startX = (width - nNums*itemW)/2;
+            
+            const numG = svg.selectAll(".val-g").data(step.nums.map((v,i)=>({v,i})));
+            const numGEnter = numG.enter().append("g").attr("class", "val-g");
+            numGEnter.append("rect").attr("class", "num-box")
+                 .attr("width", 40).attr("height", 40).attr("rx", 4);
+            numGEnter.append("text").attr("class", "num-text")
+                 .attr("x", 20).attr("y", 20);
+            
+            const numGUpdate = numG.merge(numGEnter)
+                .attr("transform", d => `translate(${startX + d.i * itemW}, 20)`);
+                
+            numGUpdate.select(".num-box").attr("class", d => d.i === step.i ? "num-box active" : "num-box");
+            numGUpdate.select(".num-text").text(d => d.v);
+            
+            numG.exit().remove();
+            
+            // Draw Reachable Sums (Circles packing or grid?)
+            // Grid is cleaner.
+            const sums = step.dp; // sorted array
+            const cols = 10;
+            const gridW = 40;
+            const gridH = 40;
+            const gridStartX = (width - cols*gridW)/2;
+            const gridStartY = 100;
+
+            const sumG = svg.selectAll(".sum-g").data(sums, d => d); // Key by value
+            
+            const sumGEnter = sumG.enter().append("g").attr("class", "sum-g").attr("opacity", 0);
+            
+            sumGEnter.append("circle").attr("class", "sum-circle")
+                .attr("r", 15);
+            sumGEnter.append("text").attr("class", "sum-text")
+                .attr("dy", 4);
+                
+            const sumGUpdate = sumG.merge(sumGEnter)
+                .transition().duration(500)
+                .attr("opacity", 1)
+                .attr("transform", (d, i) => {
+                    const r = Math.floor(i/cols);
+                    const c = i%cols;
+                    return `translate(${gridStartX + c*gridW + gridW/2}, ${gridStartY + r*gridH + gridH/2})`;
+                });
+                
+            sumGUpdate.select("circle").attr("class", d => {
+                 if(d === step.target) return "sum-circle target";
+                 // Determine if new or existing?
+                 // If step.newSums exists, check if d is destination.
+                 if(step.newSums && step.newSums.some(x => x.to === d)) return "sum-circle new";
+                 return "sum-circle existing";
+            });
+            
+            sumGUpdate.select(".sum-text").text(d => d);
+            
+            sumG.exit().transition().duration(200).attr("opacity", 0).remove();
+            
+            // Connectors (Arcs from old to new)
+            // Need positions.
+            // Map value to position index in current array (or previous array? dynamic positioning makes connections hard visually)
+            // Simplified: If 'newSums' present, just show arcs maybe fading out?
+            // Actually, since layout shifts (sort), absolute arcs are messy.
+            // Let's skip arcs and rely on color (Blue = Old, Orange = New).
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('numsInput').value;
+             const nums = raw.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+             
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(nums));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

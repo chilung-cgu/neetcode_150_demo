@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Surrounded Regions - D3 精緻視覺化</title>
+    <title>Surrounded Regions - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -15,102 +15,84 @@
             flex-direction: column;
             gap: 20px;
             align-items: center;
-            min-height: 550px;
+            min-height: 500px;
         }
 
-        /* SVG */
-        .grid-viewport {
+        .stage-viewport {
             width: 100%; height: 400px;
             background: rgba(30, 41, 59, 0.4);
             border-radius: 12px;
-            position: relative;
             overflow: hidden;
             border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
-        #viz-svg { width: 100%; height: 100%; cursor: grab; }
-        #viz-svg:active { cursor: grabbing; }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .cell-rect { stroke: #334155; stroke-width: 1px; transition: fill 0.3s; }
-        .cell-rect.x { fill: #1f2937; } /* Wall/X */
-        .cell-rect.o { fill: #f59e0b; } /* O */
-        .cell-rect.safe { fill: #22c55e; } /* Safe 'S' */
-        .cell-rect.captured { fill: #ef4444; } /* Captured 'X' */
+        .cell-rect { stroke: #475569; stroke-width: 1px; rx: 4; transition: fill 0.3s; fill: #1e293b; }
+        .cell-rect.x-cell { fill: #334155; } /* X */
+        .cell-rect.o-cell { fill: #f1f5f9; } /* O (Vulnerable) */
+        .cell-rect.safe { fill: #22c55e; } /* T (Safe) */
+        .cell-rect.captured { fill: #ef4444; } /* O -> X */
+        .cell-rect.active { stroke: #fbbf24; stroke-width: 3px; }
         
-        .cell-text { pointer-events: none; font-size: 16px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; fill: white; }
-
-        /* Highlight */
-        .highlight-rect { fill: none; stroke: #fff; stroke-width: 2px; filter: drop-shadow(0 0 4px white); }
-
-        /* Stats */
+        .cell-text { fill: #0f172a; font-family: monospace; font-size: 16px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-weight: bold; }
+        .cell-rect.x-cell + .cell-text { fill: #94a3b8; }
+        
         .stats-panel {
-            display: flex; gap: 30px; justify-content: center; width: 100%;
-            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
         }
-        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
-        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
-        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; height: 80px; resize: none; }
-        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
-
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
-        
-        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .input-row textarea { width: 300px; height: 60px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
-    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Surrounded Regions (Border DFS)</div>
+                <div class="viz-title">Surrounded Regions (DFS)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <div>
-                            <label style="font-size:0.8rem; color:#94a3b8;">Board:</label>
-                            <textarea id="gridInput">X,X,X,X
-X,O,O,X
-X,X,O,X
-X,O,X,X</textarea>
+                        <div class="input-group">
+                            <label>Board (X/O):</label>
+                            <textarea id="gridInput">
+[["X","X","X","X"],
+ ["X","O","O","X"],
+ ["X","X","O","X"],
+ ["X","O","X","X"]]</textarea>
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:5px;">
-                            <button onclick="runVisualizer()">Solve</button>
-                            <button onclick="loadExample(2)" style="background:#475569">Ex 2</button>
-                        </div>
+                        <button onclick="runVisualizer()">Capture Regions</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
                     <div class="legend">
-                        <div class="legend-item"><div class="legend-color" style="background:#1f2937"></div>X</div>
-                        <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>O</div>
-                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Safe</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#f1f5f9; border:1px solid #94a3b8"></div>'O' (Target)</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Safe 'O' (Border)</div>
                         <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Captured</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#334155"></div>'X'</div>
                     </div>
-                    
-                    <div class="grid-viewport">
-                        <svg id="viz-svg"><g id="zoom-group"></g></svg>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
                     </div>
                     
                     <div class="stats-panel">
-                        <div class="stat-box">
-                            <div class="stat-label">Captured</div>
-                            <div class="stat-val" id="capturedDisplay">0</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Safe</div>
-                            <div class="stat-val" id="safeDisplay">0</div>
+                         <div class="stat-box">
+                            <div class="stat-label">Phase</div>
+                            <div class="stat-val" id="phaseDisplay">-</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="step-breakdown">
-                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
-                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
@@ -122,15 +104,16 @@ X,O,X,X</textarea>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">0.5x</option>
-                            <option value="1000" selected>1x</option>
-                            <option value="300">2x</option>
+                             <option value="1000">Slow</option>
+                             <option value="500" selected>Normal</option>
+                             <option value="200">Fast</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
                 <div class="viz-title">C++ Code</div>
@@ -144,67 +127,61 @@ X,O,X,X</textarea>
     <script>
         const codeStructure = [
             { line: 'void solve(vector<vector<char>>& board) {', id: 0 },
-            { line: '    // 1. Mark Border O -> S (Safe)', id: 1 },
-            { line: '    for (int i = 0; i < m; i++) {', id: 2 },
-            { line: '        dfs(board, i, 0); dfs(board, i, n-1);', id: 3 },
-            { line: '    }', id: 4 },
-            { line: '    for (int j = 0; j < n; j++) {', id: 5 },
-            { line: '        dfs(board, 0, j); dfs(board, m-1, j);', id: 6 },
-            { line: '    }', id: 7 },
-            { line: '    // 2. Capture remaining O -> X, Restore S -> O', id: 8 },
-            { line: '    for (int i = 0; i < m; i++) for (int j = 0; j < n; j++) {', id: 9 },
-            { line: '        if (board[i][j] == "O") board[i][j] = "X";', id: 10 },
-            { line: '        if (board[i][j] == "S") board[i][j] = "O";', id: 11 },
-            { line: '    }', id: 12 },
+            { line: '    // 1. Mark border O as Safe (T)', id: 1 },
+            { line: '    for (int i=0; i<m; i++) {', id: 2 },
+            { line: '        if (board[i][0] == "O") dfs(i, 0);', id: 3 },
+            { line: '        if (board[i][n-1] == "O") dfs(i, n-1);', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    // Same for top/bottom rows...', id: 6 },
+            { line: '    // 2. Capture remaining O -> X', id: 7 },
+            { line: '    for (int i=0; i<m; i++) for (j...)', id: 8 },
+            { line: '        if (board[i][j] == "O") board[i][j] = "X";', id: 9 },
+            { line: '    // 3. Restore Safe T -> O', id: 10 },
+            { line: '    for (int i=0; i<m; i++) for (j...)', id: 11 },
+            { line: '        if (board[i][j] == "T") board[i][j] = "O";', id: 12 },
             { line: '}', id: 13 },
-            { line: 'void dfs(board, i, j) {', id: 14 },
-            { line: '    if (out || board[i][j] != "O") return;', id: 15 },
-            { line: '    board[i][j] = "S";', id: 16 },
-            { line: '    dfs(board, i+1, j); ...', id: 17 },
-            { line: '}', id: 18 },
+            { line: 'void dfs(r, c) {', id: 14 },
+            { line: '    if (invalid || board[r][c] != "O") return;', id: 15 },
+            { line: '    board[r][c] = "T"; // Mark Safe', id: 16 },
+            { line: '    dfs(r+1, c); dfs(r-1, c); ...', id: 17 },
+            { line: '}', id: 18 }
         ];
 
         let viz;
 
         function simulate(gridInput) {
             const steps = [];
-            const grid = gridInput.map(r => [...r]);
+            const grid = gridInput.map(row => [...row]);
             const m = grid.length;
             const n = grid[0].length;
             
-            // To animate captures:
-            // Phase 1: Mark Safe (Turn O to S)
-            // Phase 2: Capture (Turn remaining O to X)
-            // Phase 3: Restore (Turn S back to O)
+            steps.push({
+                grid: JSON.parse(JSON.stringify(grid)), phase: "Init",
+                msg: "Init. X=Wall, O=Region. Goal: Capture surrounded O's.", highlightLines: [0],
+                explanation: {title: "初始化", text: "所有不與邊界相連的 'O' 都會被 'X' 包圍並佔領。我們使用反向思維：先找出與邊界相連的 'O' (安全區)。", formula: ""}
+            });
             
-            const pushState = (msg, hl, activeCells=[], captured=0, safe=0) => {
-                steps.push({
-                    grid: grid.map(r => [...r]),
-                    activeCells,
-                    captured,
-                    safe,
-                    msg, highlightLines: hl
-                });
-            };
-
-            let safeCount = 0;
-            let capturedCount = 0;
-
-            const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
-
             function dfs(r, c) {
-                if(r<0||c<0||r>=m||c>=n || grid[r][c] !== 'O') return;
+                if(r<0 || c<0 || r>=m || c>=n || grid[r][c] !== 'O') return;
                 
-                grid[r][c] = 'S';
-                safeCount++;
-                pushState(`DFS(${r},${c}): Mark Safe 'S'`, [16], [{r,c}], capturedCount, safeCount);
+                grid[r][c] = 'T'; // Safe Temp
+                steps.push({
+                    grid: JSON.parse(JSON.stringify(grid)), phase: "Mark Safe",
+                    i: r, j: c, visiting: true,
+                    msg: `Border Connected O at (${r},${c}). Mark as Safe 'T'.`, highlightLines: [16],
+                    explanation: {title: "標記安全", text: `此 'O' 與邊界相連 (直接或間接)，標記為 'T' (Safe)。`, formula: "board[r][c] = 'T'"}
+                });
                 
-                for(let [dr, dc] of dirs) dfs(r+dr, c+dc);
+                dfs(r+1,c); dfs(r-1,c); dfs(r,c+1); dfs(r,c-1);
             }
+            
+            // Phase 1: Borders
+            steps.push({
+                grid: JSON.parse(JSON.stringify(grid)), phase: "Scan Borders",
+                msg: "Phase 1: Scan borders for 'O's.", highlightLines: [1, 2],
+                explanation: {title: "掃描邊界", text: "檢查上下左右四個邊界，對所有 'O' 啟動 DFS。", formula: ""}
+            });
 
-            pushState("Phase 1: Mark Border Connected 'O's as Safe", [1], [], 0, 0);
-
-            // Borders
             for(let i=0; i<m; i++) {
                 if(grid[i][0] === 'O') dfs(i, 0);
                 if(grid[i][n-1] === 'O') dfs(i, n-1);
@@ -214,108 +191,144 @@ X,O,X,X</textarea>
                 if(grid[m-1][j] === 'O') dfs(m-1, j);
             }
             
-            pushState("Phase 2: Capture surrounded 'O's -> 'X'", [8], [], 0, safeCount);
+            // Phase 2: Capture O -> X
+            steps.push({
+                grid: JSON.parse(JSON.stringify(grid)), phase: "Capture",
+                msg: "Phase 2: Capture remaining 'O's (Surrounded).", highlightLines: [7, 8],
+                explanation: {title: "佔領區域", text: "遍歷全圖。剩下的 'O' 都是被包圍的，將其變為 'X'。", formula: "board[i][j] = 'X'"}
+            });
             
             for(let i=0; i<m; i++) {
                 for(let j=0; j<n; j++) {
                     if(grid[i][j] === 'O') {
-                        grid[i][j] = 'X'; // Captured
-                        capturedCount++;
-                        pushState(`Capture (${i},${j}): O -> X`, [10], [{r:i, c:j}], capturedCount, safeCount);
+                        grid[i][j] = 'X'; // Captured!
+                        // Visual trick: show as different color first?
+                        // Let's mark as 'C' (Captured) for visual distinction, then final X
+                        // Or just update directly.
+                        
+                        steps.push({
+                            grid: JSON.parse(JSON.stringify(grid)), phase: "Capture",
+                            i, j, captured: true,
+                            msg: `Capture (${i},${j}). O -> X.`, highlightLines: [9],
+                            explanation: {title: "佔領", text: `(${i},${j}) 是被包圍的 'O'，佔領為 'X'。`, formula: "board[i][j] = 'X'"}
+                        });
                     }
                 }
             }
             
-            pushState("Phase 3: Restore Safe 'S' -> 'O'", [8], [], capturedCount, safeCount);
+            // Phase 3: Restore T -> O
+            steps.push({
+                 grid: JSON.parse(JSON.stringify(grid)), phase: "Restore",
+                 msg: "Phase 3: Restore Safe 'T' back to 'O'.", highlightLines: [10, 11],
+                 explanation: {title: "還原", text: "將標記為 'T' 的安全區域還原回 'O'。", formula: "board[i][j] = 'O'"}
+            });
             
             for(let i=0; i<m; i++) {
                 for(let j=0; j<n; j++) {
-                    if(grid[i][j] === 'S') {
+                    if(grid[i][j] === 'T') {
                         grid[i][j] = 'O'; // Restore
-                        // Not really a step we need to highlight individually unless requested
+                        steps.push({
+                            grid: JSON.parse(JSON.stringify(grid)), phase: "Restore",
+                            i, j, restored: true,
+                            msg: `Restore (${i},${j}). T -> O.`, highlightLines: [12],
+                            explanation: {title: "還原", text: `(${i},${j}) 是安全的，變回 'O'。`, formula: "board[i][j] = 'O'"}
+                        });
                     }
                 }
             }
-            pushState("Done.", [13], [], capturedCount, safeCount); // Final state
-
+            
+            steps.push({
+                grid: JSON.parse(JSON.stringify(grid)), phase: "Done", final: true,
+                msg: "Algorithm Complete.", highlightLines: [13],
+                explanation: {title: "完成", text: "所有被包圍區域已被佔領，邊界連接區域保留。", formula: ""}
+            });
+            
             return steps;
         }
 
         // --- Render ---
         const svg = d3.select("#viz-svg");
-        const gZoom = d3.select("#zoom-group");
-        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
-        svg.call(zoom);
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            document.getElementById('capturedDisplay').textContent = step.captured;
-            document.getElementById('safeDisplay').textContent = step.safe;
+            if(step.phase) document.getElementById('phaseDisplay').textContent = step.phase;
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
             const grid = step.grid;
             const m = grid.length;
             const n = grid[0].length;
-            const cellSize = 45;
+            
+            const margin = {top: 20, left: 20, right: 20, bottom: 20};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const cellSize = Math.min(innerW / n, innerH / m, 50);
+            const gridW = n * cellSize;
+            const gridH = m * cellSize;
+            const startX = (width - gridW) / 2;
+            const startY = (height - gridH) / 2;
 
             const cells = [];
-            for(let r=0; r<m; r++) for(let c=0; c<n; c++) cells.push({r, c, val: grid[r][c]});
+            for(let i=0; i<m; i++) {
+                for(let j=0; j<n; j++) {
+                    cells.push({i, j, val: grid[i][j]});
+                }
+            }
 
-            const rects = gZoom.selectAll(".cell-rect").data(cells, d => `${d.r},${d.c}`);
-            rects.enter().append("rect")
-                .attr("class", "cell-rect")
-                .attr("x", d => d.c * cellSize).attr("y", d => d.r * cellSize)
-                .attr("width", cellSize).attr("height", cellSize)
-                .merge(rects)
-                .attr("class", d => {
-                    let c = "cell-rect";
-                    if(d.val === 'X') c += " x";
-                    else if(d.val === 'O') c += " o";
-                    else if(d.val === 'S') c += " safe";
-                    return c;
-                });
-            rects.exit().remove();
+            const g = svg.selectAll(".cell-g").data(cells, d => `${d.i}-${d.j}`);
+            const gEnter = g.enter().append("g").attr("class", "cell-g");
 
-            const texts = gZoom.selectAll(".cell-text").data(cells, d => `${d.r},${d.c}`);
-            texts.enter().append("text").attr("class", "cell-text")
-                .attr("x", d => d.c * cellSize + cellSize/2).attr("y", d => d.r * cellSize + cellSize/2)
-                .merge(texts)
-                .text(d => d.val);
-            texts.exit().remove();
+            gEnter.append("rect").attr("class", "cell-rect")
+                .attr("width", cellSize).attr("height", cellSize);
 
-            const highlights = gZoom.selectAll(".highlight-rect").data(step.activeCells, d => `${d.r},${d.c}`);
-            highlights.enter().append("rect")
-                .attr("class", "highlight-rect")
-                .attr("width", cellSize).attr("height", cellSize)
-                .merge(highlights)
-                .attr("x", d => d.c * cellSize).attr("y", d => d.r * cellSize);
-            highlights.exit().remove();
+            gEnter.append("text").attr("class", "cell-text")
+                .attr("x", cellSize/2).attr("y", cellSize/2);
+
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${startX + d.j*cellSize}, ${startY + d.i*cellSize})`);
+
+            gUpdate.select(".cell-rect").attr("class", d => {
+                 let c = "cell-rect";
+                 if(d.val === 'X') {
+                     // Was it captured just now?
+                     if(step.captured && step.i === d.i && step.j === d.j) c += " captured";
+                     else c += " x-cell";
+                 }
+                 else if(d.val === 'O') c += " o-cell";
+                 else if(d.val === 'T') c += " safe";
+                 
+                 if(step.i === d.i && step.j === d.j && !step.final) c += " active";
+                 return c;
+            });
+            
+            gUpdate.select(".cell-text").text(d => d.val);
+
+            g.exit().remove();
         }
 
         function runVisualizer() {
             const raw = document.getElementById('gridInput').value;
-            const grid = raw.split('\n').map(l => l.split(',').map(x => x.trim()));
-            
-            const cellSize = 45;
-            const w = grid[0].length * cellSize;
-            const h = grid.length * cellSize;
-            const scale = Math.min(1, 400 / Math.max(w, h));
-            const tx = (svg.node().clientWidth - w*scale)/2;
-            const ty = (svg.node().clientHeight - h*scale)/2;
-            svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+            let grid;
+            try {
+                grid = JSON.parse(raw.replace(/'/g, '"'));
+            } catch(e) { alert("Invalid JSON"); return; }
+            if(!Array.isArray(grid)) return;
 
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
             viz.setSteps(simulate(grid));
-        }
-
-        const examples = {
-            2: "X,X,X,X,X\nX,O,O,O,X\nX,X,O,X,X\nX,O,X,O,X\nX,O,X,X,X"
-        };
-        function loadExample(n) {
-            document.getElementById('gridInput').value = examples[n];
-            runVisualizer();
         }
 
         window.addEventListener('load', runVisualizer);

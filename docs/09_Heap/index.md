@@ -10,7 +10,7 @@ Interactive visualizations for NeetCode 150 - Heap Problems.
 
 1.  **Kth Largest Element in a Stream**: [Visualizer](kth_largest_stream_visualizer.html)
     - _Logic_: Min-Heap of size K.
-2.  **Last Stone Weight**: [Visualizer](last_stone_weight_visualizer.html)
+2.  **Last Stone Weight**: [Visualizer](last_stone_visualizer.html)
     - _Logic_: Max-Heap simulation.
 3.  **K Closest Points to Origin**: [Visualizer](k_closest_visualizer.html)
     - _Logic_: Max-Heap store K smallest distances (or Min-Heap all). We visualize Max-Heap K approach.

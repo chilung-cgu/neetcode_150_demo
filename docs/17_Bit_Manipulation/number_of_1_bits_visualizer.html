@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number of 1 Bits - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .stage-viewport {
+            width: 100%; height: 300px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .bit-row { display: flex; gap: 5px; font-family: monospace; align-items: center; }
+        .bit-box { 
+            width: 40px; height: 50px; 
+            border: 2px solid #475569; border-radius: 6px; 
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem; font-weight: bold; color: #cbd5e1;
+            transition: all 0.3s;
+        }
+        .bit-box.one { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; color: #60a5fa; }
+        .bit-box.zero { background: rgba(30, 41, 59, 0.5); border-color: #475569; color: #94a3b8; }
+        .bit-box.target { border: 2px dashed #fbbf24; }
+        
+        .bit-label { width: 80px; text-align: right; color: #94a3b8; margin-right: 15px; font-size: 0.9rem; }
+        
+        .operator { font-size: 1.5rem; color: #fbbf24; margin: 5px 0; }
+        .result-box { border-color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row input { width: 100px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Number of 1 Bits (n & n-1)</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Integer:</label>
+                            <input type="number" id="numInput" value="11">
+                        </div>
+                        <button onclick="runVisualizer()">Count Bits</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="stats-panel">
+                         <div class="stat-box">
+                            <div class="stat-label">Count</div>
+                            <div class="stat-val" id="countDisplay">0</div>
+                        </div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <div class="bit-row" id="nRow">
+                            <div class="bit-label">n</div>
+                            <!-- bits -->
+                        </div>
+                        
+                        <div class="operator">AND</div>
+                        
+                        <div class="bit-row" id="nMinus1Row">
+                            <div class="bit-label">n - 1</div>
+                            <!-- bits -->
+                        </div>
+                        
+                        <div style="height: 2px; width: 300px; background: #475569; margin: 10px 0;"></div>
+                        
+                        <div class="bit-row" id="resRow">
+                            <div class="bit-label">New n</div>
+                            <!-- bits -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                             <option value="1500">Slow</option>
+                             <option value="1000" selected>Normal</option>
+                             <option value="500">Fast</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int hammingWeight(uint32_t n) {', id: 0 },
+            { line: '    int count = 0;', id: 1 },
+            { line: '    while (n != 0) {', id: 2 },
+            { line: '        n = n & (n - 1);', id: 3 },
+            { line: '        count++;', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    return count;', id: 6 },
+            { line: '}', id: 7 }
+        ];
+
+        let viz;
+
+        function simulate(n) {
+            const steps = [];
+            let count = 0;
+            
+            // Limit to check if input is too huge, UI can handle up to 32 bits but wider
+            // Let's use 8 bits for visualization if small number, else 32.
+            let bitLen = n > 255 ? 16 : 8;
+            if(n > 65535) bitLen = 32;
+
+            steps.push({
+                n, nMinus1: 0, res: 0, count, bitLen,
+                msg: `Init count = 0. n = ${n}.`, highlightLines: [0, 1],
+                explanation: {title: "初始化", text: "計數器歸零。", formula: "count = 0"}
+            });
+            
+            while(n !== 0) {
+                const nPrev = n;
+                const nMinus1 = n - 1;
+                const result = n & nMinus1;
+                
+                // Identify which bit was removed (LSB 1)
+                // Just for visual effect maybe?
+                
+                steps.push({
+                    n: nPrev, nMinus1: nMinus1, res: result, count, bitLen,
+                    msg: `Calculate n & (n-1). Remove LSB.`, highlightLines: [2, 3],
+                    explanation: {title: "消除最低位 1", text: `n-1 會將最低位的 1 翻轉為 0 (且更低位翻轉為 1)。\n` +
+                                                        `${nPrev.toString(2)} & ${nMinus1.toString(2)} = ${result.toString(2)}`, formula: "n & (n-1)"}
+                });
+                
+                n = result;
+                count++;
+                
+                steps.push({
+                    n: nPrev, nMinus1: nMinus1, res: result, count, bitLen,
+                    msg: `Update n. Count incremented to ${count}.`, highlightLines: [4],
+                    explanation: {title: "更新計數", text: "計數器加一。準備下一輪。", formula: "count++"}
+                });
+            }
+            
+            steps.push({
+                n, nMinus1: 0, res: 0, count, bitLen, final: true,
+                msg: `n is 0. Return count ${count}.`, highlightLines: [6],
+                explanation: {title: "完成", text: "n 變為 0，循環結束。", formula: `return ${count}`}
+            });
+            
+            return steps;
+        }
+
+        function toBinArray(val, len) {
+            let s = (val >>> 0).toString(2).padStart(len, '0');
+            // If length is > 16, maybe truncate or show ... if not relevant?
+            // Just show full if small.
+            return s.split('').map(x => x === '1');
+        }
+
+        function renderBits(containerId, val, len, highlightDiff=false, baseVal=null) {
+            const arr = toBinArray(val, len);
+            const baseArr = baseVal !== null ? toBinArray(baseVal, len) : null;
+            
+            const container = document.getElementById(containerId);
+            const label = container.querySelector('.bit-label');
+            const itemsDivs = container.querySelectorAll('.bit-box');
+            
+            if(itemsDivs.length !== arr.length) {
+                container.innerHTML = '';
+                container.appendChild(label);
+                arr.forEach((bit, i) => {
+                    const div = document.createElement('div');
+                    div.className = `bit-box ${bit ? 'one' : 'zero'}`;
+                    div.textContent = bit ? '1' : '0';
+                    container.appendChild(div);
+                });
+            } else {
+                arr.forEach((bit, i) => {
+                    const div = itemsDivs[i];
+                    div.className = `bit-box ${bit ? 'one' : 'zero'}`;
+                    // Highlight if diff from baseVal
+                    if(highlightDiff && baseArr && baseArr[i] !== bit) {
+                         div.classList.add('target');
+                    } else {
+                         div.classList.remove('target');
+                    }
+                    div.textContent = bit ? '1' : '0';
+                });
+            }
+        }
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('countDisplay').textContent = step.count;
+            
+            const len = step.bitLen;
+            
+            renderBits('nRow', step.n, len); // Current n
+            
+            if(step.nMinus1 !== undefined && !step.final) {
+                renderBits('nMinus1Row', step.nMinus1, len, true, step.n); // Diff from n?
+                renderBits('resRow', step.res, len, true, step.n);
+                
+                // Show operator visibility
+                document.querySelector('.operator').style.display = 'block';
+                document.getElementById('nMinus1Row').style.visibility = 'visible';
+                document.getElementById('resRow').style.visibility = 'visible';
+            } else {
+                // Hide intermediary rows if just n is updated or final
+                // Or maybe just show empty?
+                // Let's keep them hidden if n is 0.
+                if(step.n === 0) {
+                     document.querySelector('.operator').style.display = 'hidden'; // Just keep structure
+                     // actually visibility hidden
+                }
+            }
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+        }
+
+        function runVisualizer() {
+            const val = parseInt(document.getElementById('numInput').value);
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(val));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

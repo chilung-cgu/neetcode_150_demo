@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Ladder - D3 精緻視覺化</title>
+    <title>Word Ladder - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -15,103 +15,95 @@
             flex-direction: column;
             gap: 20px;
             align-items: center;
-            min-height: 600px;
+            min-height: 500px;
         }
 
-        /* SVG */
-        .graph-viewport {
-            width: 100%; height: 450px;
+        .stage-viewport {
+            width: 100%; height: 400px;
             background: rgba(30, 41, 59, 0.4);
             border-radius: 12px;
-            position: relative;
             overflow: hidden;
             border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
-        #viz-svg { width: 100%; height: 100%; cursor: grab; }
-        #viz-svg:active { cursor: grabbing; }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .node-rect { fill: #475569; stroke: #fff; stroke-width: 2px; rx: 8; ry: 8; transition: fill 0.3s; }
-        .node-rect.start { fill: #3b82f6; }
-        .node-rect.end { fill: #ef4444; }
-        .node-rect.visited { fill: #f59e0b; }
-        .node-rect.path { fill: #22c55e; stroke: #86efac; stroke-width: 3px; }
-        .node-rect.current { stroke: #fbbf24; stroke-width: 4px; filter: drop-shadow(0 0 5px #fbbf24); }
+        .node-circle { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; }
+        .node-circle.start { fill: #22c55e; stroke: #10b981; }
+        .node-circle.end { fill: #ef4444; stroke: #f87171; }
+        .node-circle.visited { fill: #3b82f6; stroke: #60a5fa; }
+        .node-circle.active { stroke: #fbbf24; stroke-width: 3px; filter: drop-shadow(0 0 5px #fbbf24); }
 
-        .node-text { pointer-events: none; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; fill: white; font-family: monospace; }
-
-        .link { stroke: #94a3b8; stroke-width: 1px; opacity: 0.2; }
-        .link.path { stroke: #22c55e; stroke-width: 3px; opacity: 1; }
-
-        /* Stats */
-        .stats-panel {
-            display: flex; gap: 30px; justify-content: center; width: 100%;
-            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
-        }
-        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
-        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
-
-        /* Controls */
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
-        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 300px; height: 60px; resize: none; }
-        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
-
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        .node-text { fill: #fff; font-family: monospace; font-size: 12px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-weight: bold; }
         
-        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .legend-color { width: 12px; height: 12px; border-radius: 2px; border: 1px solid #fff; }
+        .link-line { stroke: #64748b; stroke-width: 1px; opacity: 0.3; }
+        .link-line.path { stroke: #fbbf24; stroke-width: 3px; opacity: 1; }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row input { width: 100px; text-align: center; padding: 5px; }
+        
     </style>
 </head>
 <body>
-    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Word Ladder (BFS Shortest Path)</div>
+                <div class="viz-title">Word Ladder (BFS)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <div>
-                            <label style="font-size:0.8rem; color:#94a3b8;">Input JSON {begin, end, words}:</label>
-                            <textarea id="gridInput">{"begin":"hit","end":"cog","words":["hot","dot","dog","lot","log","cog"]}</textarea>
+                        <div class="input-group">
+                            <label>Begin:</label>
+                            <input type="text" id="beginInput" value="hit">
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:5px;">
-                            <button onclick="runVisualizer()">Transform</button>
-                            <div style="display:flex; gap:5px;">
-                                <button onclick="loadExample(1)" style="background:#475569; font-size:0.8rem; padding:5px;">Hit-Cog</button>
-                                <button onclick="loadExample(2)" style="background:#475569; font-size:0.8rem; padding:5px;">Cat-Dog</button>
-                            </div>
+                        <div class="input-group">
+                            <label>End:</label>
+                            <input type="text" id="endInput" value="cog">
                         </div>
+                       <div class="input-group">
+                            <label>List:</label>
+                            <input type="text" id="listInput" value='["hot","dot","dog","lot","log","cog"]' style="width:250px">
+                        </div>
+                        <button onclick="runVisualizer()">Shortest Path</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
                     <div class="legend">
-                        <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Start</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Begin</div>
                         <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>End</div>
-                        <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Visited</div>
-                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Path</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Visited (BFS)</div>
+                        <div class="legend-item"><div class="legend-color" style="height:2px; width:15px; background:#fbbf24"></div>Shortest Path</div>
                     </div>
-                    
-                    <div class="graph-viewport">
-                        <svg id="viz-svg"><g id="zoom-group"></g></svg>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
                     </div>
                     
                     <div class="stats-panel">
-                        <div class="stat-box">
-                            <div class="stat-label">Level</div>
+                         <div class="stat-box">
+                            <div class="stat-label">Level (Distance)</div>
                             <div class="stat-val" id="levelDisplay">0</div>
                         </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Shortest Path</div>
-                            <div class="stat-val" id="answerDisplay">0</div>
+                         <div class="stat-box">
+                            <div class="stat-label">Queue Size</div>
+                            <div class="stat-val" id="qDisplay">0</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="step-breakdown">
-                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
-                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
@@ -123,15 +115,16 @@
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">0.5x</option>
-                            <option value="1000" selected>1x</option>
-                            <option value="500">2x</option>
+                             <option value="1500">Slow</option>
+                             <option value="1000" selected>Normal</option>
+                             <option value="500">Fast</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
                 <div class="viz-title">C++ Code</div>
@@ -144,268 +137,283 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int ladderLength(string beginWord, string endWord, vector<string>& wordList) {', id: 0 },
-            { line: '    unordered_set<string> dict(wordList.begin(), wordList.end());', id: 1 },
-            { line: '    if (!dict.count(endWord)) return 0;', id: 2 },
-            { line: '    queue<string> q; q.push(beginWord);', id: 3 },
+            { line: 'int ladderLength(string begin, string end, vector<string>& list) {', id: 0 },
+            { line: '    unordered_set<string> dict(list.begin(), list.end());', id: 1 },
+            { line: '    if (!dict.count(end)) return 0;', id: 2 },
+            { line: '    queue<string> q; q.push(begin);', id: 3 },
             { line: '    int level = 1;', id: 4 },
             { line: '    while (!q.empty()) {', id: 5 },
             { line: '        int size = q.size();', id: 6 },
             { line: '        while(size--) {', id: 7 },
             { line: '            string curr = q.front(); q.pop();', id: 8 },
-            { line: '            if (curr == endWord) return level;', id: 9 },
-            { line: '            for (int i = 0; i < curr.size(); ++i) {', id: 10 },
-            { line: '               // Try changing char', id: 11 },
-            { line: '               if (dict.count(next)) {', id: 12 },
-            { line: '                   dict.erase(next); q.push(next);', id: 13 },
-            { line: '               }', id: 14 },
-            { line: '            }', id: 15 },
-            { line: '        }', id: 16 },
-            { line: '        level++;', id: 17 },
-            { line: '    }', id: 18 },
-            { line: '    return 0;', id: 19 },
-            { line: '}', id: 20 }
+            { line: '            if (curr == end) return level;', id: 9 },
+            { line: '            for (int i=0; i<curr.size(); i++) {', id: 10 },
+            { line: '                 // change char, check dict...', id: 11 },
+            { line: '                 if (dict.count(nextWord)) {', id: 12 },
+            { line: '                     dict.erase(nextWord); // mark visited', id: 13 },
+            { line: '                     q.push(nextWord);', id: 14 },
+            { line: '                 }', id: 15 },
+            { line: '            }', id: 16 },
+            { line: '        }', id: 17 },
+            { line: '        level++;', id: 18 },
+            { line: '    }', id: 19 },
+            { line: '    return 0;', id: 20 },
+            { line: '}', id: 21 }
         ];
 
         let viz;
 
-        function oneCharDiff(a, b) {
-            if (a.length !== b.length) return false;
-            let diff = 0;
-            for (let i = 0; i < a.length; i++) {
-                if (a[i] !== b[i]) diff++;
-                if (diff > 1) return false;
-            }
-            return diff === 1;
-        }
-
-        function simulate(input) {
+        function simulate(beginWord, endWord, wordList) {
             const steps = [];
-            const { begin, end, words } = input;
             
-            // Build visual graph first
-            // Note: In real BFS we don't build full graph, but implicitly traverse.
-            // For visualization, seeing connections is helpful.
-            // Nodes: begin + words
-            const allWords = Array.from(new Set([begin, ...words]));
-            const wordMap = {};
-            allWords.forEach((w,i) => wordMap[w] = i);
+            // Prepare Graph Data
+            const allWords = new Set(wordList);
+            if(!allWords.has(beginWord)) allWords.add(beginWord); 
+            // endWord must ideally be in wordList, otherwise impossible unless added.
+            // Problem says endWord must be in list.
             
-            const nodes = allWords.map((w,i) => ({id: i, label: w}));
+            const nodes = Array.from(allWords).map(w => ({id: w}));
             const links = [];
-            for(let i=0; i<allWords.length; i++) {
-                for(let j=i+1; j<allWords.length; j++) {
-                    if(oneCharDiff(allWords[i], allWords[j])) {
-                        links.push({source: i, target: j});
+            
+            // Build edges (differ by 1 char)
+            const n = nodes.length;
+            for(let i=0; i<n; i++) {
+                for(let j=i+1; j<n; j++) {
+                    if(diffOne(nodes[i].id, nodes[j].id)) {
+                        links.push({source: nodes[i].id, target: nodes[j].id, id: `${nodes[i].id}-${nodes[j].id}`});
                     }
                 }
             }
-
-            const pushState = (msg, hl, activeWord, visitedSet, pathSet, level, result) => {
-                steps.push({
-                    graph: {nodes, links}, // Static structure
-                    visited: new Set(visitedSet),
-                    path: new Set(pathSet),
-                    activeWord,
-                    level,
-                    result,
-                    msg, highlightLines: hl
-                });
-            };
-
-            // BFS
-            const dict = new Set(words);
-            if(!dict.has(end)) {
-                pushState(`End word "${end}" not in list! Impossible.`, [2], null, [], [], 0, 0);
-                return steps;
+            
+            function diffOne(s1, s2) {
+                if(s1.length !== s2.length) return false;
+                let cnt = 0;
+                for(let i=0; i<s1.length; i++) if(s1[i] !== s2[i]) cnt++;
+                return cnt === 1;
             }
             
-            const q = [begin];
-            const visited = new Set([begin]); // standard bfs tracks visited
-            const parent = {}; // to reconstruct path
-            let level = 1;
+             // D3 Layout
+             const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(60))
+                .force("charge", d3.forceManyBody().strength(-200))
+                .force("center", d3.forceCenter(0,0))
+                .stop();
+            for (let i = 0; i < 300; ++i) simulation.tick();
             
-            pushState(`Start BFS from "${begin}"`, [3], begin, [begin], [], 1, 0);
-
+            const layout = {};
+            nodes.forEach(d => { layout[d.id] = {x: d.x, y: d.y}; });
+            
+            // BFS logic
+            const dict = new Set(wordList);
+            const q = [beginWord];
+            const visited = new Set(); visited.add(beginWord);
+            
+            // For path highlighting, track parent
+            const parentMap = {}; 
+            
+            let level = 1;
             let found = false;
             
+            steps.push({
+                layout, nodes, links, 
+                visited: new Set(visited), q: [...q], level,
+                msg: "Init. Build Graph. Start BFS from BeginWord.", highlightLines: [0, 1, 3],
+                explanation: {title: "初始化", text: `建立單詞圖 (相差一字元連線)。從 ${beginWord} 開始 BFS。`, formula: ""}
+            });
+
+            if(!dict.has(endWord)) {
+                 steps.push({
+                    layout, nodes, links, visited: new Set(visited), q: [], level, final: true,
+                    msg: "EndWord not in list. Return 0.", highlightLines: [2],
+                    explanation: {title: "無解", text: "EndWord 不在字典中，無法抵達。", formula: "return 0"}
+                });
+                return steps;
+            }
+
             while(q.length > 0) {
                 const size = q.length;
-                const currentLevelNodes = [];
+                steps.push({
+                    layout, nodes, links, visited: new Set(visited), q: [...q], level,
+                    msg: `Level ${level}. Queue Size: ${size}.`, highlightLines: [5, 6],
+                    explanation: {title: `BFS 層級 ${level}`, text: "處理當前層的所有單詞。", formula: ""}
+                });
                 
-                // Process level
+                const currentLevelNodes = [];
+                for(let k=0; k<size; k++) {
+                     currentLevelNodes.push(q[k]); // Peek for visuals? No shift logic below.
+                }
+
                 for(let k=0; k<size; k++) {
                     const curr = q.shift();
-                    currentLevelNodes.push(curr);
                     
-                    if(curr === end) {
+                    if(curr === endWord) {
                         found = true;
-                        break;
+                        
+                        // Reconstruct Path
+                        const path = [endWord];
+                        let p = endWord;
+                        while(parentMap[p]) {
+                            p = parentMap[p];
+                            path.unshift(p);
+                        }
+                        
+                        steps.push({
+                            layout, nodes, links, visited: new Set(visited), q: [...q], level, 
+                            curr, found: true, path,
+                            final: true,
+                            msg: `Found EndWord! Distance: ${level}.`, highlightLines: [9],
+                            explanation: {title: "找到目標", text: `到達 ${endWord}。最短路徑長度為 ${level}。`, formula: `return ${level}`}
+                        });
+                        return steps;
                     }
                     
-                    //Neighbors
-                    for(let w of allWords) {
-                        if(oneCharDiff(curr, w) && dict.has(w) && !visited.has(w)) {
-                            visited.add(w);
-                            q.push(w);
-                            parent[w] = curr;
-                        } else if (oneCharDiff(curr, w) && w === end && !visited.has(w)) {
-                             // Special case if end is in dict (checked above)
-                             // If end reached
-                             visited.add(w);
-                             q.push(w);
-                             parent[w] = curr;
+                    // Neighbors
+                    // We can utilize 'links' to find neighbors or logic
+                    // Logic is cleaner:
+                    const neighbors = [];
+                    // Find neighbors based on graph logic to match visual
+                    links.forEach(l => {
+                        let other = null;
+                        if(l.source === curr || (l.source.id && l.source.id === curr)) other = l.target.id || l.target;
+                        else if(l.target === curr || (l.target.id && l.target.id === curr)) other = l.source.id || l.source;
+                        
+                        if(other) {
+                            // Check if in dict/visited?
+                            // Standard BFS checks !visited.
+                            // However, we only care if it's in list (except beginWord might not be in list).
+                            // Simplification: check if !visited.
+                             if(!visited.has(other)) {
+                                 neighbors.push(other);
+                             }
+                        }
+                    });
+                    
+                    for(let next of neighbors) {
+                        if(!visited.has(next)) {
+                            visited.add(next);
+                            parentMap[next] = curr;
+                            q.push(next);
+                            
+                            steps.push({
+                                layout, nodes, links, visited: new Set(visited), q: [...q], level, 
+                                curr, processingNeighbor: next,
+                                msg: `  -> Neighbor ${next}. Add to Queue.`, highlightLines: [13, 14],
+                                explanation: {title: "探索鄰居", text: `單詞 ${next} 未訪問，加入佇列。`, formula: ""}
+                            });
                         }
                     }
                 }
-                
-                if(found) break;
-                
-                pushState(`Level ${level} processed. Next Queue Size: ${q.length}`, [17], null, Array.from(visited), [], level, 0);
                 level++;
             }
             
-            if(found) {
-                // Reconstruct path
-                const path = [];
-                let curr = end;
-                while(curr) {
-                    path.push(curr);
-                    curr = parent[curr];
-                }
-                const pathSet = new Set(path);
-                pushState(`Found "${end}" at Level ${level}! Path reconstruction.`, [9], end, Array.from(visited), path, level, level);
-            } else {
-                pushState(`Queue empty. "${end}" unreachable.`, [19], null, Array.from(visited), [], level, 0);
-            }
-
+            steps.push({
+                layout, nodes, links, visited: new Set(visited), q: [], level, final: true,
+                msg: "Queue empty. EndWord unreachable.", highlightLines: [20],
+                explanation: {title: "無解", text: "無法抵達目標單詞。", formula: "return 0"}
+            });
+            
             return steps;
         }
 
         // --- Render ---
         const svg = d3.select("#viz-svg");
-        const gZoom = d3.select("#zoom-group");
-        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
-        svg.call(zoom);
-
-        // Force Sim
-        let simulation = d3.forceSimulation()
-            .force("charge", d3.forceManyBody().strength(-300))
-            .force("link", d3.forceLink().id(d => d.id).distance(100))
-            .force("center", d3.forceCenter(400, 225));
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
             document.getElementById('levelDisplay').textContent = step.level;
-            document.getElementById('answerDisplay').textContent = step.result;
+            document.getElementById('qDisplay').textContent = step.q.length;
 
-            // Nodes
-            const { begin, end } = JSON.parse(document.getElementById('gridInput').value); // Crude access to current config
-            
-            gZoom.selectAll(".node-rect")
-                .attr("class", d => {
-                    let c = "node-rect";
-                    if (d.label === begin) c += " start";
-                    else if (d.label === end) c += " end";
-                    else if (step.path.has(d.label)) c += " path"; // Path overrides visited
-                    else if (step.visited.has(d.label)) c += " visited";
-                    
-                    if (d.label === step.activeWord) c += " current";
-                    return c;
-                });
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const centerX = width/2;
+            const centerY = height/2;
             
             // Links
-            // Highlight links on path?
-            // If both source/target in path, maybe?
-            gZoom.selectAll(".link")
+            const paths = svg.selectAll(".link-line").data(step.links);
+            const pEnter = paths.enter().append("line").attr("class", "link-line");
+            paths.merge(pEnter)
+                .attr("x1", d => centerX + step.layout[d.source].x)
+                .attr("y1", centerY + step.layout[d.source].y)
+                .attr("x2", d => centerX + step.layout[d.target].x)
+                .attr("y2", centerY + step.layout[d.target].y)
                 .attr("class", d => {
-                    if (step.path.has(d.source.label) && step.path.has(d.target.label)) return "link path";
-                    return "link";
+                     let c = "link-line";
+                     // Highlight edges in path
+                     if(step.path) {
+                         const s = d.source.id || d.source;
+                         const t = d.target.id || d.target;
+                         // Check if this edge is part of path sequence
+                         for(let i=0; i<step.path.length-1; i++) {
+                             if((step.path[i] === s && step.path[i+1] === t) || (step.path[i] === t && step.path[i+1] === s)) {
+                                 return "link-line path";
+                             }
+                         }
+                     }
+                     return c;
                 });
-        }
-
-        function initGraph(nodes, links) {
-            gZoom.selectAll("*").remove();
+            paths.exit().remove();
             
-            simulation.nodes(nodes);
-            simulation.force("link").links(links);
-            simulation.alpha(1).restart();
-
-            const link = gZoom.append("g").selectAll(".link")
-                .data(links).enter().append("line")
-                .attr("class", "link");
-
-            const node = gZoom.append("g").selectAll(".node-g")
-                .data(nodes).enter().append("g")
-                .attr("class", "node-g")
-                .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
-
-            node.append("rect")
-                .attr("width", 60).attr("height", 30)
-                .attr("x", -30).attr("y", -15)
-                .attr("class", "node-rect");
-
-            node.append("text")
-                .attr("class", "node-text")
-                .attr("dy", 1)
-                .text(d => d.label);
-
-            simulation.on("tick", () => {
-                link
-                    .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
-                    .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
-                node
-                    .attr("transform", d => `translate(${d.x},${d.y})`);
+            // Nodes
+            const g = svg.selectAll(".node-g").data(step.nodes, d=>d.id);
+            const gEnter = g.enter().append("g").attr("class", "node-g");
+            
+            gEnter.append("circle").attr("class", "node-circle").attr("r", 18);
+            gEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${centerX + step.layout[d.id].x}, ${centerY + step.layout[d.id].y})`);
+            
+            gUpdate.select(".node-circle").attr("class", d => {
+                 let c = "node-circle";
+                 const beginWord = document.getElementById('beginInput').value;
+                 const endWord = document.getElementById('endInput').value;
+                 
+                 if(d.id === beginWord) c += " start";
+                 else if(d.id === endWord) c += " end";
+                 
+                 if(step.visited.has(d.id)) {
+                     // Check if active (being processed)
+                     if(step.curr === d.id && !step.found) c += " active";
+                     else c += " visited";
+                 }
+                 
+                 return c;
+            })
+            // Override fill if found path node
+            .style("fill", d => {
+                if(step.found && step.path && step.path.includes(d.id)) return "#fbbf24";
+                return null;
             });
-        }
-
-        function dragstarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x; d.fy = d.y;
-        }
-        function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
-        function dragended(event, d) {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null; d.fy = null;
+            
+            gUpdate.select(".node-text").text(d => d.id);
+            
+            g.exit().remove();
         }
 
         function runVisualizer() {
+            const begin = document.getElementById('beginInput').value;
+            const end = document.getElementById('endInput').value;
+            const raw = document.getElementById('listInput').value;
+            let list;
             try {
-                const raw = document.getElementById('gridInput').value;
-                const input = JSON.parse(raw);
-                
-                // Calc graph
-                const allWords = Array.from(new Set([input.begin, ...input.words]));
-                const nodes = allWords.map((w,i) => ({id: i, label: w}));
-                const links = [];
-                for(let i=0; i<allWords.length; i++) {
-                    for(let j=i+1; j<allWords.length; j++) {
-                        if(oneCharDiff(allWords[i], allWords[j])) {
-                            links.push({source: i, target: j});
-                        }
-                    }
-                }
-                
-                initGraph(nodes, links);
-                
-                viz = new AlgorithmVisualizer({
-                    codeLines: codeStructure,
-                    onStepChange: render
-                });
-                viz.setSteps(simulate(input));
-            } catch(e) {
-                alert("Invalid JSON");
-                console.error(e);
-            }
-        }
+                list = JSON.parse(raw); // raw supports ' or "
+            } catch(e) { alert("Invalid JSON List"); return; }
+            if(!Array.isArray(list)) return;
 
-        const examples = {
-            1: '{"begin":"hit","end":"cog","words":["hot","dot","dog","lot","log","cog"]}',
-            2: '{"begin":"cat","end":"dog","words":["cot","cog","dog","dat","dag"]}'
-        };
-        function loadExample(n) {
-            document.getElementById('gridInput').value = examples[n];
-            runVisualizer();
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(begin, end, list));
         }
 
         window.addEventListener('load', runVisualizer);

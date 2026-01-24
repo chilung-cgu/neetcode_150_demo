@@ -3,27 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unique Paths 不同路徑 - 視覺化</title>
+    <title>Unique Paths (2D DP) - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .grid-container { overflow: auto; padding: 10px; display: flex; justify-content: center; }
-        .grid { display: inline-grid; gap: 2px; background: var(--viz-bg-secondary); padding: 10px; border-radius: 8px; }
-        .cell { 
-            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
-            background: var(--viz-card-bg); color: var(--viz-text); border-radius: 4px;
-            font-weight: bold; font-size: 1rem; transition: all 0.3s ease; border: 2px solid transparent;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 500px;
         }
-        .cell.start { background: linear-gradient(135deg, var(--viz-success), var(--viz-secondary)); color: #0f172a; }
-        .cell.end { background: linear-gradient(135deg, var(--viz-warning), var(--viz-error)); color: #0f172a; }
-        .cell.current { border-color: var(--viz-primary); background: var(--viz-primary); color: white; transform: scale(1.05); }
-        .cell.from-top { border-color: var(--viz-warning); }
-        .cell.from-left { border-color: var(--viz-success); }
-        .cell.filled { background: rgba(34, 197, 94, 0.15); }
+
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .cell-rect { fill: #334155; stroke: #475569; stroke-width: 1px; rx: 4; }
+        .cell-rect.active { stroke: #fbbf24; stroke-width: 3px; }
+        .cell-rect.start { fill: rgba(34, 197, 94, 0.3); stroke: #22c55e; }
+        .cell-rect.end { fill: rgba(239, 68, 68, 0.3); stroke: #ef4444; }
+        .cell-rect.visited { fill: #1e293b; }
+
+        .cell-text { fill: #fff; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .cell-icon { font-size: 16px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        
+        .connector-path { fill: none; stroke: #fbbf24; stroke-width: 2px; marker-end: url(#arrow); opacity: 0.6; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -31,162 +68,248 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">不同路徑 (Unique Paths)</div>
+                <div class="viz-title">Unique Paths (2D DP)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>行 (m):</label>
-                        <input type="number" id="mInput" value="3" min="1" max="7">
-                        <label>列 (n):</label>
-                        <input type="number" id="nInput" value="4" min="1" max="7">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div class="input-group">
+                            <label>Rows (m):</label>
+                            <input type="number" id="mInput" value="3" min="1" max="7">
+                        </div>
+                        <div class="input-group">
+                            <label>Cols (n):</label>
+                            <input type="number" id="nInput" value="4" min="1" max="7">
+                        </div>
+                        <button onclick="runVisualizer()">Count Paths</button>
                     </div>
-                </div>
-                
-                <div class="grid-container">
-                    <div class="grid" id="gridDisplay"></div>
                 </div>
 
-                <div class="controls" style="margin-top: 15px;">
-                    <button class="viz-btn" id="prevBtn">← 上一步</button>
-                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
-                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
-                    <div class="speed-control">
-                        <label>速度:</label>
-                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
-                        </select>
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:rgba(34, 197, 94, 0.3); border:1px solid #22c55e"></div>Start</div>
+                       <div class="legend-item"><div class="legend-color" style="background:rgba(239, 68, 68, 0.3); border:1px solid #ef4444"></div>End</div>
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #fbbf24"></div>Current</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24" />
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">From Top</div>
+                            <div class="stat-val" id="topDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">From Left</div>
+                            <div class="stat-val" id="leftDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Total Paths</div>
+                            <div class="stat-val" id="totalDisplay">-</div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(m·n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(m·n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">答案</div><div class="state-value" id="answerDisplay">-</div></div>
+
+                <div class="code-area" style="margin-top:20px; border-radius:12px; overflow:hidden;">
+                     <div class="viz-card" style="height: auto;">
+                        <div class="viz-title">Algorithm</div>
+                        <div class="code-panel" id="codeDisplay" style="height:auto; min-height:100px;"></div>
+                    </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">Explanation</div><div class="explanation" id="explanation"></div></div>
         </div>
-        <div class="code-area">
-            <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
-                <div class="code-panel" id="codeDisplay"></div>
-            </div>
-        </div>
+        
+        <!-- Merging logic card into standard layout to match others if needed, 
+             but here I kept grid separated. Actually standard layout has code on right.
+             Let's stick to standard layout container.
+        -->
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'int uniquePaths(int m, int n) {', id: 0 },
             { line: '    vector<vector<int>> dp(m, vector<int>(n, 1));', id: 1 },
-            { line: '    for (int i = 1; i < m; i++) {', id: 2 },
-            { line: '        for (int j = 1; j < n; j++) {', id: 3 },
-            { line: '            dp[i][j] = dp[i-1][j] + dp[i][j-1];', id: 4 },
-            { line: '        }', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    return dp[m-1][n-1];', id: 7 },
-            { line: '}', id: 8 },
+            { line: '    // Base cases first row/col = 1', id: 2 },
+            { line: '    for (int i = 1; i < m; i++) {', id: 3 },
+            { line: '        for (int j = 1; j < n; j++) {', id: 4 },
+            { line: '            dp[i][j] = dp[i-1][j] + dp[i][j-1];', id: 5 },
+            { line: '        }', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return dp[m-1][n-1];', id: 8 },
+            { line: '}', id: 9 }
         ];
-        
-        let currentM = 3, currentN = 4;
 
-        function runCustomInput() {
-            const m = parseInt(document.getElementById('mInput').value);
-            const n = parseInt(document.getElementById('nInput').value);
-            if (m < 1 || m > 7 || n < 1 || n > 7) {
-                alert('行與列請輸入 1-7');
-                return;
-            }
-            currentM = m;
-            currentN = n;
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(m, n) {
+        function simulate(m, n) {
             const steps = [];
-            const dp = Array.from({ length: m }, () => Array(n).fill(0));
+            const dp = Array.from({length: m}, () => Array(n).fill(0));
             
-            // Init first row and column
-            for (let i = 0; i < m; i++) dp[i][0] = 1;
-            for (let j = 0; j < n; j++) dp[0][j] = 1;
-
+            // Base cases
+            for(let i=0; i<m; i++) dp[i][0] = 1;
+            for(let j=0; j<n; j++) dp[0][j] = 1;
+            
             steps.push({
-                dp: dp.map(r => [...r]), pos: null,
-                highlightLines: [0, 1],
-                explanation: { title: '初始化', text: `網格 ${m}×${n}<br>第一行/列只有 1 種路徑`, formula: 'dp[0][*] = dp[*][0] = 1' }
+                m, n, dp: dp.map(r=>[...r]), i: -1, j: -1,
+                msg: `Init ${m}x${n} Grid. First row & col = 1.`, highlightLines: [0, 1, 2],
+                explanation: {title: "初始化", text: "第一列和第一行的格子只有一條路徑 (只能一直往下或一直往右)。", formula: "dp[i][0]=1, dp[0][j]=1"}
             });
-
-            // Fill DP
-            for (let i = 1; i < m; i++) {
-                for (let j = 1; j < n; j++) {
-                    const fromTop = dp[i - 1][j];
-                    const fromLeft = dp[i][j - 1];
-                    dp[i][j] = fromTop + fromLeft;
+            
+            for(let i=1; i<m; i++) {
+                for(let j=1; j<n; j++) {
+                    const top = dp[i-1][j];
+                    const left = dp[i][j-1];
+                    const total = top + left;
+                    dp[i][j] = total;
                     
                     steps.push({
-                        dp: dp.map(r => [...r]), 
-                        pos: [i, j], fromTopPos: [i-1, j], fromLeftPos: [i, j-1],
-                        highlightLines: [2, 3, 4],
-                        explanation: { 
-                            title: `計算 dp[${i}][${j}]`, 
-                            text: `從上 (${i-1},${j}): ${fromTop}<br>從左 (${i},${j-1}): ${fromLeft}<br>總計: ${dp[i][j]}`,
-                            formula: `dp[${i}][${j}] = ${fromTop} + ${fromLeft} = ${dp[i][j]}`
-                        }
+                        m, n, dp: dp.map(r=>[...r]), i, j,
+                        top, left, total,
+                        msg: `Calc (${i},${j}): Top(${top}) + Left(${left}) = ${total}`, highlightLines: [3, 4, 5],
+                        explanation: {title: `計算格子 (${i}, ${j})`, text: `路徑總數 = 上方格子路徑數 + 左方格子路徑數。`, formula: `dp[${i}][${j}] = ${top} + ${left}`}
                     });
                 }
             }
-
+            
             steps.push({
-                dp: dp.map(r => [...r]), pos: [m-1, n-1], answer: dp[m-1][n-1], final: true,
-                highlightLines: [7],
-                explanation: { title: '完成', text: `共有 ${dp[m-1][n-1]} 種不同路徑`, formula: `return ${dp[m-1][n-1]}` }
+                m, n, dp: dp.map(r=>[...r]), i: m-1, j: n-1, final: true, result: dp[m-1][n-1],
+                msg: `Final Result: ${dp[m-1][n-1]} unique paths.`, highlightLines: [8],
+                explanation: {title: "完成", text: `到達右下角的總路徑數為 ${dp[m-1][n-1]}。`, formula: `return ${dp[m-1][n-1]}`}
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            if(step.i >= 1 && step.j >= 1 && !step.final) {
+                 document.getElementById('topDisplay').textContent = step.top;
+                 document.getElementById('leftDisplay').textContent = step.left;
+            } else {
+                 document.getElementById('topDisplay').textContent = "-";
+                 document.getElementById('leftDisplay').textContent = "-";
+            }
+            document.getElementById('totalDisplay').textContent = step.result || (step.i >=0 ? step.dp[step.i][step.j] : "-");
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const m = step.m;
+            const n = step.n;
+            const margin = {top: 20, left: 20, right: 20, bottom: 20};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const cellSize = Math.min(innerW / n, innerH / m, 50); // max 50px cell
+            const gridW = stateW = n * cellSize;
+            const gridH = m * cellSize;
+            const startX = (width - gridW) / 2;
+            const startY = (height - gridH) / 2;
+
+            // Flatten data
+            const cells = [];
+            for(let i=0; i<m; i++) {
+                for(let j=0; j<n; j++) {
+                    cells.push({i, j, val: step.dp[i][j]});
+                }
+            }
+
+            const g = svg.selectAll(".cell-g").data(cells, d => `${d.i}-${d.j}`);
+            const gEnter = g.enter().append("g").attr("class", "cell-g");
+            
+            gEnter.append("rect").attr("class", "cell-rect")
+                .attr("width", cellSize).attr("height", cellSize);
+            
+            gEnter.append("text").attr("class", "cell-text")
+                .attr("x", cellSize/2).attr("y", cellSize/2);
+                
+            gEnter.append("text").attr("class", "cell-icon")
+                .attr("x", cellSize/2).attr("y", cellSize/2);
+
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${startX + d.j*cellSize}, ${startY + d.i*cellSize})`);
+            
+            gUpdate.select(".cell-rect").attr("class", d => {
+                let c = "cell-rect";
+                if(d.i===0 && d.j===0) c += " start";
+                else if(d.i===m-1 && d.j===n-1) c += " end";
+                
+                if(d.val > 0) c += " visited";
+                if(step.i === d.i && step.j === d.j && !step.final) c += " active";
+                
+                return c;
+            });
+            
+            gUpdate.select(".cell-text").text(d => (d.i===0 && d.j===0) || (d.i===m-1 && d.j===n-1) ? "" : (d.val > 0 ? d.val : ""));
+            
+            gUpdate.select(".cell-icon").text(d => {
+                if(d.i===0 && d.j===0) return "🤖";
+                if(d.i===m-1 && d.j===n-1) return "⭐";
+                return "";
+            });
+            
+            g.exit().remove();
+            
+            // Connectors
+            const connectors = [];
+            if(step.i >= 1 && step.j >= 1 && !step.final) {
+                // Top to Curr
+                connectors.push({
+                    x1: startX + step.j*cellSize + cellSize/2, 
+                    y1: startY + (step.i-1)*cellSize + cellSize/2,
+                    x2: startX + step.j*cellSize + cellSize/2, 
+                    y2: startY + step.i*cellSize + cellSize/2
+                });
+                // Left to Curr
+                connectors.push({
+                    x1: startX + (step.j-1)*cellSize + cellSize/2, 
+                    y1: startY + step.i*cellSize + cellSize/2,
+                    x2: startX + step.j*cellSize + cellSize/2, 
+                    y2: startY + step.i*cellSize + cellSize/2
+                });
+            }
+            
+            const paths = svg.selectAll(".connector-path").data(connectors);
+            paths.enter().append("path").attr("class", "connector-path")
+                .merge(paths)
+                .attr("d", d => `M${d.x1},${d.y1} L${d.x2},${d.y2}`);
+            paths.exit().remove();
+        }
+
+        function runVisualizer() {
+            const m = parseInt(document.getElementById('mInput').value);
+            const n = parseInt(document.getElementById('nInput').value);
+            if(m<1||n<1) return;
+
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    const grid = document.getElementById('gridDisplay');
-                    const m = currentM, n = currentN;
-                    grid.style.gridTemplateColumns = `repeat(${n}, 50px)`;
-                    
-                    let html = '';
-                    for (let i = 0; i < m; i++) {
-                        for (let j = 0; j < n; j++) {
-                            let cls = 'cell';
-                            const val = step.dp?.[i]?.[j] ?? 0;
-                            
-                            if (i === 0 && j === 0) cls += ' start';
-                            else if (i === m - 1 && j === n - 1) cls += ' end';
-                            else if (step.pos?.[0] === i && step.pos?.[1] === j) cls += ' current';
-                            else if (val > 0) cls += ' filled';
-                            
-                            // Highlight source cells
-                            if (step.fromTopPos && step.fromTopPos[0] === i && step.fromTopPos[1] === j) cls += ' from-top';
-                            if (step.fromLeftPos && step.fromLeftPos[0] === i && step.fromLeftPos[1] === j) cls += ' from-left';
-                            
-                            const content = i === 0 && j === 0 ? '🤖' : (val || '-');
-                            html += `<div class="${cls}">${content}</div>`;
-                        }
-                    }
-                    grid.innerHTML = html;
-                    
-                    document.getElementById('answerDisplay').textContent = step.answer ?? '-';
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentM, currentN));
+            viz.setSteps(simulate(m, n));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

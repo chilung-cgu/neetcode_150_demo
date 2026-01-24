@@ -3,29 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distinct Subsequences - 視覺化</title>
+    <title>Distinct Subsequences - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
+        }
 
-        .strings { text-align: center; margin: 15px 0; }
-        .string-line { margin: 5px 0; }
-        .string-label { color: var(--viz-text-muted); margin-right: 10px; }
-        .str { display: inline-flex; gap: 2px; }
-        .char { width: 28px; height: 32px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-weight: bold; background: var(--viz-bg-secondary); border-radius: 3px; }
-        .char.s { background: var(--viz-primary); color: white; }
-        .char.t { background: var(--viz-warning); color: #0f172a; }
-        .char.matched { border: 2px solid var(--viz-success); box-shadow: 0 0 5px var(--viz-success); }
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .dp-scroll { overflow: auto; padding: 10px; display: flex; justify-content: center; }
-        .dp-table { display: inline-grid; gap: 2px; }
-        .dp-cell { width: 32px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 3px; background: var(--viz-bg-secondary); font-size: 0.8rem; }
-        .dp-cell.header { background: var(--viz-primary); color: white; }
-        .dp-cell.current { background: var(--viz-warning); color: #0f172a; }
-        .dp-cell.match { background: var(--viz-success); color: #0f172a; }
+        .cell-rect { fill: #334155; stroke: #475569; stroke-width: 1px; rx: 4; }
+        .cell-rect.active { stroke: #fbbf24; stroke-width: 3px; }
+        .cell-rect.match { fill: rgba(34, 197, 94, 0.2); stroke: #22c55e; }
+        .cell-rect.mismatch { fill: #1e293b; }
+
+        .cell-text { fill: #fff; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .axis-label { fill: #94a3b8; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
+        
+        .connector-path { fill: none; stroke: #94a3b8; stroke-width: 2px; marker-end: url(#arrow); opacity: 0.6; }
+        .connector-path.use { stroke: #22c55e; }
+        .connector-path.skip { stroke: #3b82f6; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 100px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -33,189 +69,294 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">不同的子序列 (Distinct Subsequences)</div>
+                <div class="viz-title">Distinct Subsequences (2D DP)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>s:</label>
-                        <input type="text" id="sInput" value="rabbbit" style="width: 120px;" maxlength="10">
-                        <label>t:</label>
-                        <input type="text" id="tInput" value="rabbit" style="width: 100px;" maxlength="8">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div class="input-group">
+                            <label>s (Source):</label>
+                            <input type="text" id="sInput" value="rabbbit">
+                        </div>
+                        <div class="input-group">
+                            <label>t (Target):</label>
+                            <input type="text" id="tInput" value="rabbit">
+                        </div>
+                        <button onclick="runVisualizer()">Count</button>
                     </div>
                 </div>
-                
-                <div class="strings" id="stringsDisplay"></div>
-                
-                <div class="dp-scroll">
-                    <div class="dp-table" id="dpTable"></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Match Input (Use)</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Inherit Value (Skip)</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                             <defs>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Compare</div>
+                            <div class="stat-val" id="compDisplay">-</div>
+                        </div>
+                         <div class="stat-box">
+                            <div class="stat-label">Calculation</div>
+                            <div class="stat-val" id="calcDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Result</div>
+                            <div class="stat-val" id="resDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(m·n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(m·n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">方法數</div><div class="state-value" id="resultDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'int numDistinct(string s, string t) {', id: 0 },
             { line: '    int m = s.size(), n = t.size();', id: 1 },
-            { line: '    vector<vector<long>> dp(m+1, vector<long>(n+1, 0));', id: 2 },
-            { line: '    for (int i = 0; i <= m; i++) dp[i][0] = 1;', id: 3 },
-            { line: '    for (int i = 1; i <= m; i++) {', id: 4 },
-            { line: '        for (int j = 1; j <= n; j++) {', id: 5 },
-            { line: '            dp[i][j] = dp[i-1][j];', id: 6 },
-            { line: '            if (s[i-1] == t[j-1])', id: 7 },
-            { line: '                dp[i][j] += dp[i-1][j-1];', id: 8 },
-            { line: '        }', id: 9 },
-            { line: '    }', id: 10 },
-            { line: '    return dp[m][n];', id: 11 },
-            { line: '}', id: 12 },
+            { line: '    vector<vector<unsigned int>> dp(m+1, vector<unsigned int>(n+1, 0));', id: 2 },
+            { line: '    for(int i=0; i<=m; i++) dp[i][0] = 1;', id: 3 },
+            { line: '    for (int j = 1; j <= n; j++) {', id: 4 },
+            { line: '        for (int i = 1; i <= m; i++) {', id: 5 },
+            { line: '            if (s[i-1] == t[j-1]) {', id: 6 },
+            { line: '                dp[i][j] = dp[i-1][j-1] + dp[i-1][j];', id: 7 },
+            { line: '            } else {', id: 8 },
+            { line: '                dp[i][j] = dp[i-1][j];', id: 9 },
+            { line: '            }', id: 10 },
+            { line: '        }', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    return dp[m][n];', id: 13 },
+            { line: '}', id: 14 }
         ];
-        
-        let sStr = "rabbbit", tStr = "rabbit";
 
-        function runCustomInput() {
-            const s = document.getElementById('sInput').value;
-            const t = document.getElementById('tInput').value;
-            if (!s || !t || s.length < t.length) {
-                alert('s 長度必須 >= t 長度');
-                return;
-            }
-            sStr = s; tStr = t;
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(s, t) {
+        function simulate(s, t) {
             const steps = [];
-            const m = s.length, n = t.length;
-            const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+            const m = s.length;
+            const n = t.length;
+            // Use standard indexing DP: Rows=i (s), Cols=j (t)
+            // dp[i][j] = ways to form t[0..j-1] from s[0..i-1]
+            const dp = Array.from({length: m+1}, () => Array(n+1).fill(0));
             
-            for (let i = 0; i <= m; i++) dp[i][0] = 1;
-
+            for(let i=0; i<=m; i++) dp[i][0] = 1; // Empty target can always be formed by deleting all chars
+            
             steps.push({
-                dp: dp.map(r => [...r]), i: -1, j: -1,
-                highlightLines: [0, 1, 2, 3],
-                explanation: { title: '初始化', text: `s="${s}", t="${t}"<br>dp[i][0]=1 (空字串 t 有 1 種匹配)`, formula: 'setup' }
+                s, t, dp: dp.map(r=>[...r]), i: -1, j: -1,
+                msg: `Init Table ${m+1}x${n+1}. Col 0 (Empty Target) = 1.`, highlightLines: [0, 1, 2, 3],
+                explanation: {title: "初始化", text: "空字串 t 可以由任何 s (刪除所有字符) 變換而來，故 dp[i][0] = 1。", formula: "dp[i][0] = 1"}
             });
-
-            for (let i = 1; i <= m; i++) {
-                for (let j = 1; j <= n; j++) {
-                    dp[i][j] = dp[i - 1][j]; // Skip s[i-1]
-                    const isMatch = s[i - 1] === t[j - 1];
+            
+            for(let j=1; j<=n; j++) {
+                for(let i=1; i<=m; i++) {
+                    const charS = s[i-1];
+                    const charT = t[j-1];
+                    const match = charS === charT;
                     
-                    if (isMatch) {
-                        dp[i][j] += dp[i - 1][j - 1];
+                    let calcStr = "";
+                    let skip = dp[i-1][j];
+                    let use = 0;
+                    
+                    if (match) {
+                        use = dp[i-1][j-1];
+                        dp[i][j] = use + skip;
+                        calcStr = `Skip(${skip}) + Use(${use}) = ${dp[i][j]}`;
+                    } else {
+                        dp[i][j] = skip;
+                        calcStr = `Skip(${skip}) = ${dp[i][j]}`;
                     }
                     
                     steps.push({
-                        dp: dp.map(r => [...r]), i, j, match: isMatch,
-                        charMatch: isMatch ? { si: i-1, tj: j-1 } : null,
-                        highlightLines: isMatch ? [6, 7, 8] : [6],
-                        explanation: { 
-                            title: `dp[${i}][${j}]`, 
-                            text: isMatch 
-                                ? `'${s[i-1]}' == '${t[j-1]}'<br>dp[${i}][${j}] = dp[${i-1}][${j}] + dp[${i-1}][${j-1}] = ${dp[i][j]}`
-                                : `'${s[i-1]}' != '${t[j-1]}'<br>dp[${i}][${j}] = dp[${i-1}][${j}] = ${dp[i][j]}`,
-                            formula: `dp[${i}][${j}] = ${dp[i][j]}`
+                        s, t, dp: dp.map(r=>[...r]), i, j, charS, charT, match,
+                        skip, use, val: dp[i][j], calcStr,
+                        msg: `s[${i-1}]='${charS}' vs t[${j-1}]='${charT}'. Match: ${match}.`, highlightLines: [5, 6, 7, 8, 9, 10],
+                        explanation: {
+                            title: `比較 (${charS}, ${charT})`, 
+                            text: match ? `符合！可以選擇匹配 (Use) 或不匹配 (Skip)。` : `不符合。只能選擇跳過 s 當前字符 (Skip)。`, 
+                            formula: match ? `dp[i][j] = dp[i-1][j-1] + dp[i-1][j]` : `dp[i][j] = dp[i-1][j]`
                         }
                     });
                 }
             }
-
+            
             steps.push({
-                dp: dp.map(r => [...r]), result: dp[m][n], final: true,
-                highlightLines: [11],
-                explanation: { title: '完成', text: `方法數: ${dp[m][n]}`, formula: `return ${dp[m][n]}` }
+                 s, t, dp: dp.map(r=>[...r]), i: m, j: n, final: true, result: dp[m][n],
+                 msg: `Final Result: ${dp[m][n]}`, highlightLines: [13],
+                 explanation: {title: "完成", text: `s 中共有 ${dp[m][n]} 種方法組成子序列 t。`, formula: `return ${dp[m][n]}`}
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            if(step.charS) {
+                document.getElementById('compDisplay').textContent = `${step.charS} vs ${step.charT}`;
+                document.getElementById('calcDisplay').textContent = step.calcStr;
+            } else {
+                 document.getElementById('compDisplay').textContent = "-";
+                 document.getElementById('calcDisplay').textContent = "-";
+            }
+            document.getElementById('resDisplay').textContent = step.result !== undefined ? step.result : "-";
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const m = step.s.length + 1;
+            const n = step.t.length + 1;
+            const margin = {top: 40, left: 40, right: 20, bottom: 20};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const cellSize = Math.min(innerW / n, innerH / m, 50);
+            const gridW = n * cellSize;
+            const gridH = m * cellSize;
+            const startX = (width - gridW) / 2 + margin.left/2;
+            const startY = (height - gridH) / 2 + margin.top/2;
+
+            // Axis Labels
+            // Col headers (t)
+            const colLabels = svg.selectAll(".col-label").data(step.t.split(''));
+            colLabels.enter().append("text").attr("class", "axis-label col-label")
+                .merge(colLabels)
+                .attr("x", (d, i) => startX + (i+1)*cellSize + cellSize/2)
+                .attr("y", startY - 10)
+                .text(d => d);
+            colLabels.exit().remove();
+            
+            // Row headers (s)
+            const rowLabels = svg.selectAll(".row-label").data(step.s.split(''));
+            rowLabels.enter().append("text").attr("class", "axis-label row-label")
+                .merge(rowLabels)
+                .attr("x", startX - 15)
+                .attr("y", (d, i) => startY + (i+1)*cellSize + cellSize/2)
+                .text(d => d);
+            rowLabels.exit().remove();
+            
+            const cells = [];
+            for(let i=0; i<m; i++) {
+                for(let j=0; j<n; j++) {
+                    cells.push({i, j, val: step.dp[i][j]});
+                }
+            }
+            
+            const g = svg.selectAll(".cell-g").data(cells, d => `${d.i}-${d.j}`);
+            const gEnter = g.enter().append("g").attr("class", "cell-g");
+            gEnter.append("rect").attr("class", "cell-rect").attr("width", cellSize).attr("height", cellSize);
+            gEnter.append("text").attr("class", "cell-text").attr("x", cellSize/2).attr("y", cellSize/2);
+            
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${startX + d.j*cellSize}, ${startY + d.i*cellSize})`);
+            
+            gUpdate.select(".cell-rect").attr("class", d => {
+                let c = "cell-rect";
+                if(step.i === d.i && step.j === d.j && !step.final) {
+                    c += " active";
+                    if(step.match) c += " match";
+                    else c += " mismatch";
+                }
+                return c;
+            });
+            
+            gUpdate.select(".cell-text").text(d => d.val);
+            g.exit().remove();
+            
+            // Connectors
+            const connectors = [];
+             if (step.i > 0 && step.j >= 0 && !step.final) {
+                 const cx = startX + step.j*cellSize + cellSize/2;
+                 const cy = startY + step.i*cellSize + cellSize/2;
+                 
+                 // Skip (Top) - Always happens
+                 connectors.push({
+                    x1: cx, 
+                    y1: startY + (step.i-1)*cellSize + cellSize/2,
+                    x2: cx, y2: cy, type: 'skip'
+                });
+                
+                // Use (Diag) - Only if match
+                if(step.match && step.j > 0) {
+                     connectors.push({
+                        x1: startX + (step.j-1)*cellSize + cellSize/2, 
+                        y1: startY + (step.i-1)*cellSize + cellSize/2,
+                        x2: cx, y2: cy, type: 'use'
+                    });
+                }
+             }
+             
+            const paths = svg.selectAll(".connector-path").data(connectors);
+            paths.enter().append("path").attr("class", "connector-path")
+                .merge(paths)
+                .attr("d", d => `M${d.x1},${d.y1} L${d.x2},${d.y2}`)
+                .attr("class", d => `connector-path ${d.type}`);
+            paths.exit().remove();
+        }
+
+        function runVisualizer() {
+            const s = document.getElementById('sInput').value;
+            const t = document.getElementById('tInput').value;
+            if(!s || !t) return;
+
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Strings
-                    let html = '<div class="string-line"><span class="string-label">s:</span><span class="str">';
-                    html += sStr.split('').map((c, idx) => {
-                        let cls = 'char s';
-                        if (step.charMatch && step.charMatch.si === idx) cls += ' matched';
-                        return `<span class="${cls}">${c}</span>`;
-                    }).join('');
-                    html += '</span></div>';
-                    
-                    html += '<div class="string-line"><span class="string-label">t:</span><span class="str">';
-                    html += tStr.split('').map((c, idx) => {
-                        let cls = 'char t';
-                        if (step.charMatch && step.charMatch.tj === idx) cls += ' matched';
-                        return `<span class="${cls}">${c}</span>`;
-                    }).join('');
-                    html += '</span></div>';
-                    document.getElementById('stringsDisplay').innerHTML = html;
-
-                    // DP Table
-                    const m = sStr.length, n = tStr.length;
-                    const grid = document.getElementById('dpTable');
-                    grid.style.gridTemplateColumns = `repeat(${n + 2}, 32px)`;
-                    
-                    let tableHtml = '<div class="dp-cell header"></div>';
-                    tableHtml += '<div class="dp-cell header">""</div>';
-                    for (let j = 0; j < n; j++) tableHtml += `<div class="dp-cell header">${tStr[j]}</div>`;
-                    
-                    tableHtml += '<div class="dp-cell header">""</div>';
-                    for (let j = 0; j <= n; j++) {
-                        let cls = 'dp-cell';
-                        if (step.i === 0 && step.j === j) cls += ' current';
-                        tableHtml += `<div class="${cls}">${step.dp?.[0]?.[j] ?? 0}</div>`;
-                    }
-
-                    for (let i = 1; i <= m; i++) {
-                        tableHtml += `<div class="dp-cell header">${sStr[i - 1]}</div>`;
-                        for (let j = 0; j <= n; j++) {
-                            let cls = 'dp-cell';
-                            if (step.i === i && step.j === j) cls += step.match ? ' match' : ' current';
-                            tableHtml += `<div class="${cls}">${step.dp?.[i]?.[j] ?? 0}</div>`;
-                        }
-                    }
-                    grid.innerHTML = tableHtml;
-                    
-                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : '-';
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(sStr, tStr));
+            viz.setSteps(simulate(s, t));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

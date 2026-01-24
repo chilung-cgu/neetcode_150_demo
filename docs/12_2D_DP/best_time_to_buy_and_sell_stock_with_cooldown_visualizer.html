@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock with Cooldown - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 500px;
+        }
+
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .price-bar { fill: #334155; rx: 4; }
+        .price-bar.active { fill: #fbbf24; }
+        .price-text { fill: #fff; font-size: 10px; text-anchor: middle; font-family: monospace; }
+        
+        .state-node { fill: #1e293b; stroke: #94a3b8; stroke-width: 2px; r: 30; }
+        .state-node.active { stroke: #fbbf24; stroke-width: 4px; fill: #334155; }
+        .state-text { fill: #fff; font-size: 12px; font-weight: bold; text-anchor: middle; pointer-events: none; }
+        
+        .transition-edge { fill: none; stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); opacity: 0.3; }
+        .transition-edge.active { stroke: #22c55e; stroke-width: 4px; opacity: 1; }
+        
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Buy Sell Stock with Cooldown</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Prices:</label>
+                            <input type="text" id="pricesInput" value="1, 2, 3, 0, 2">
+                        </div>
+                        <button onclick="runVisualizer()">Trade</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Active State</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Transition</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                             <defs>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+                                </marker>
+                                <marker id="arrow-active" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#22c55e" />
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Hold</div>
+                            <div class="stat-val" id="holdDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Sold</div>
+                            <div class="stat-val" id="soldDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Rest</div>
+                            <div class="stat-val" id="restDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int maxProfit(vector<int>& prices) {', id: 0 },
+            { line: '    int sold = 0;', id: 1 },
+            { line: '    int rest = 0;', id: 2 },
+            { line: '    int hold = -Infinity;', id: 3 },
+            { line: '    for (int p : prices) {', id: 4 },
+            { line: '        int prev_sold = sold;', id: 5 },
+            { line: '        sold = hold + p;', id: 6 },
+            { line: '        hold = max(hold, rest - p);', id: 7 },
+            { line: '        rest = max(rest, prev_sold);', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return max(sold, rest);', id: 10 },
+            { line: '}', id: 11 }
+        ];
+
+        let viz;
+
+        function simulate(prices) {
+            const steps = [];
+            
+            let sold = 0;
+            let rest = 0;
+            let hold = -Infinity; // Init hold
+            // Usually init hold=-prices[0] if looping from 1, or -inf if looping from 0
+            // Algorithm above loops from 0.
+            
+            steps.push({
+                prices, i:-1, sold, rest, hold,
+                msg: "Init. Sold=0, Rest=0, Hold=-Inf", highlightLines: [0, 1, 2, 3],
+                explanation: {title: "初始化狀態", text: "Hold (持有): -∞ (未開始)\nSold (剛賣出): 0\nRest (休息/冷卻): 0", formula: "hold=-inf, sold=0, rest=0"}
+            });
+
+            for(let i=0; i<prices.length; i++) {
+                const p = prices[i];
+                
+                const prev_sold = sold;
+                const prev_hold = hold;
+                const prev_rest = rest;
+                
+                // Transitions
+                // sold = prev_hold + p
+                const cand_sold = prev_hold + p; 
+                
+                // hold = max(prev_hold, prev_rest - p)
+                const hold_keep = prev_hold;
+                const hold_buy = prev_rest - p;
+                const cand_hold = Math.max(hold_keep, hold_buy);
+                
+                // rest = max(prev_rest, prev_sold)
+                const rest_wait = prev_rest;
+                const rest_after_sold = prev_sold;
+                const cand_rest = Math.max(rest_wait, rest_after_sold);
+                
+                sold = cand_sold;
+                hold = cand_hold;
+                rest = cand_rest;
+                
+                steps.push({
+                    prices, i, sold, rest, hold,
+                    prev_sold, prev_hold, prev_rest,
+                    hold_act: hold_keep > hold_buy ? 'keep' : 'buy',
+                    rest_act: rest_wait > rest_after_sold ? 'wait' : 'cooldown',
+                    msg: `Day ${i} (Price ${p}): Hold(${hold}), Sold(${sold}), Rest(${rest})`, highlightLines: [5, 6, 7, 8],
+                    explanation: {
+                        title: `第 ${i} 天 (價格 ${p})`, 
+                        text: `
+                        <b>Hold:</b> max(${prev_hold}, ${prev_rest}-${p}) = ${hold}
+                        <br><b>Sold:</b> ${prev_hold} + ${p} = ${sold}
+                        <br><b>Rest:</b> max(${prev_rest}, ${prev_sold}) = ${rest}
+                        `,
+                        formula: "更新所有狀態"
+                    }
+                });
+            }
+            
+            steps.push({
+                prices, i: prices.length, sold, rest, hold, final: true, result: Math.max(sold, rest),
+                msg: `Final Result: Max(Sold, Rest) = ${Math.max(sold, rest)}`, highlightLines: [10],
+                explanation: {title: "完成", text: `最大利潤為 ${Math.max(sold, rest)} (賣出或休息狀態)。`, formula: "return max(sold, rest)"}
+            });
+
+            return steps;
+        }
+
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+        
+        // Define Graph Layout
+        const nodes = [
+            { id: 'hold', x: 150, y: 250, label: 'Hold' },
+            { id: 'sold', x: 450, y: 250, label: 'Sold' },
+            { id: 'rest', x: 300, y: 100, label: 'Rest' }
+        ];
+        
+        const edges = [
+            { from: 'hold', to: 'hold', label: 'Wait' }, // Self loop
+            { from: 'hold', to: 'sold', label: 'Sell' },
+            { from: 'rest', to: 'hold', label: 'Buy' },
+            { from: 'rest', to: 'rest', label: 'Wait' }, // Self loop
+            { from: 'sold', to: 'rest', label: 'Cooldown' } // Sold -> Rest (Cooldown force)
+        ];
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            const formatVal = (v) => v === -Infinity ? "-Inf" : v;
+            
+            document.getElementById('holdDisplay').textContent = formatVal(step.hold);
+            document.getElementById('soldDisplay').textContent = formatVal(step.sold);
+            document.getElementById('restDisplay').textContent = formatVal(step.rest);
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            // Draw Prices at Top
+            const n = step.prices.length;
+            const barW = (width - 100) / n;
+            const maxP = Math.max(...step.prices);
+            
+            const pGroup = svg.selectAll(".price-g").data(step.prices.map((p,i)=>({p,i})));
+            const pEnter = pGroup.enter().append("g").attr("class", "price-g");
+            pEnter.append("rect").attr("class", "price-bar").attr("width", barW-5);
+            pEnter.append("text").attr("class", "price-text").attr("y", -5);
+            
+            const pUpdate = pGroup.merge(pEnter)
+                .attr("transform", d => `translate(${50 + d.i*barW}, 80)`); // y=80 baseline? No, bars go up.
+            
+            // Actually let's put prices at bottom or side. 
+            // Or just a simple text list at top?
+            // Graph is central. Put prices at very top.
+            pUpdate.attr("transform", d => `translate(${50 + d.i*barW}, 50)`);
+            pUpdate.select("rect")
+                .attr("height", d => d.p * 10 + 5)
+                .attr("y", d => -(d.p * 10 + 5))
+                .attr("class", d => d.i === step.i ? "price-bar active" : "price-bar");
+            pUpdate.select(".price-text").text(d => d.p).attr("x", (barW-5)/2).attr("y", d => -(d.p*10 + 10));
+
+            pGroup.exit().remove();
+            
+            // Draw Graph
+            // Edges
+            const link = svg.selectAll(".transition-edge").data(edges);
+            link.enter().append("path").attr("class", "transition-edge")
+                .attr("marker-end", "url(#arrow)")
+                .merge(link)
+                .attr("d", d => {
+                     const src = nodes.find(n=>n.id===d.from);
+                     const dst = nodes.find(n=>n.id===d.to);
+                     
+                     if (d.from === d.to) {
+                         // Self loop
+                         return `M${src.x},${src.y-30} A20,20 0 1,1 ${src.x+1},${src.y-30}`; // simplified self loop arc
+                     }
+                     
+                     return `M${src.x},${src.y} L${dst.x},${dst.y}`;
+                })
+                .attr("class", d => {
+                     let c = "transition-edge";
+                     // Highlight active transitions
+                     if (step.i >= 0 && !step.final) {
+                         // Determine which edges were taken based on logic
+                         // Hold: prev_hold (Wait), prev_rest (Buy)
+                         // Sold: prev_hold (Sell)
+                         // Rest: prev_rest (Wait), prev_sold (Cooldown)
+                         
+                         if (d.to === 'hold') {
+                             if (d.from === 'hold' && step.hold_act === 'keep') c += " active";
+                             if (d.from === 'rest' && step.hold_act === 'buy') c += " active";
+                         }
+                         if (d.to === 'sold') {
+                             if (d.from === 'hold') c += " active"; // Always sells from hold
+                         }
+                         if (d.to === 'rest') {
+                             if (d.from === 'rest' && step.rest_act === 'wait') c += " active";
+                             if (d.from === 'sold' && step.rest_act === 'cooldown') c += " active";
+                         }
+                     }
+                     return c;
+                })
+                .attr("marker-end", d => d3.select(this).classed("active") ? "url(#arrow-active)" : "url(#arrow)");
+            
+            // Nodes
+            const node = svg.selectAll(".state-node-g").data(nodes);
+            const nodeEnter = node.enter().append("g").attr("class", "state-node-g");
+            nodeEnter.append("circle").attr("class", "state-node");
+            nodeEnter.append("text").attr("class", "state-text").attr("dy", 5);
+            
+            const nodeUpdate = node.merge(nodeEnter)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            nodeUpdate.select("circle").attr("class", d => {
+                // Just highlight all nodes? Or highlight if value changed?
+                // Let's highlight all as they all update every step
+                return "state-node active";
+            });
+            nodeUpdate.select(".state-text").text(d => d.label);
+
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('pricesInput').value;
+             const prices = raw.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+             
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(prices));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

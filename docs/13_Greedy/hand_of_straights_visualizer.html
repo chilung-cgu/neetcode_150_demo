@@ -3,27 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hand of Straights - 視覺化</title>
+    <title>Hand of Straights - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .cards-container { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .card { 
-            width: 40px; height: 55px; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; border-radius: 6px; background: white; color: #333; 
-            border: 2px solid #ddd; font-size: 1.1rem; transition: all 0.3s;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
         }
-        .card.grouped { background: var(--viz-success); color: #0f172a; border-color: var(--viz-success); }
-        .card.current { border-color: var(--viz-warning); border-width: 3px; transform: scale(1.1); }
-        .card.used { opacity: 0.3; }
 
-        .groups-container { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 15px 0; }
-        .group { display: flex; gap: 3px; padding: 8px; background: var(--viz-bg-secondary); border-radius: 8px; }
-        .group .card { width: 30px; height: 40px; font-size: 0.9rem; }
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .card-rect { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1px; rx: 4; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
+        .card-rect.used { opacity: 0.3; }
+        .card-rect.active { stroke: #fbbf24; stroke-width: 2px; }
+        .card-rect.group { fill: #e2e8f0; }
+
+        .card-text { fill: #1e293b; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .count-badge { fill: #ef4444; stroke: #fff; stroke-width: 1px; }
+        .count-text { fill: #fff; font-size: 10px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
+        
+        .group-box { fill: none; stroke: #3b82f6; stroke-width: 2px; rx: 8; stroke-dasharray: 4,4; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -31,204 +68,300 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">一手順子 (Hand of Straights)</div>
+                <div class="viz-title">Hand of Straights (Greedy)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>牌 (hand):</label>
-                        <input type="text" id="handInput" value="1, 2, 3, 6, 2, 3, 4, 7, 8" style="width: 200px;">
-                        <label>組大小:</label>
-                        <input type="number" id="sizeInput" value="3" style="width: 50px;" min="1" max="6">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div class="input-group">
+                            <label>Cards:</label>
+                            <input type="text" id="handInput" value="1, 2, 3, 6, 2, 3, 4, 7, 8">
+                        </div>
+                        <div class="input-group">
+                            <label>Group Size (W):</label>
+                            <input type="number" id="wInput" value="3" style="width:60px;">
+                        </div>
+                        <button onclick="runVisualizer()">Group</button>
                     </div>
                 </div>
-                
-                <div class="cards-container" id="cardsDisplay"></div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.9rem;">已分組:</div>
-                <div class="groups-container" id="groupsDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#f8fafc; border:1px solid #cbd5e1"></div>Available Card</div>
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #3b82f6; border-style:dashed;"></div>Formed Group</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Map Size</div>
+                            <div class="stat-val" id="mapSizeDisplay">0</div>
+                        </div>
+                         <div class="stat-box">
+                            <div class="stat-label">Min Card</div>
+                            <div class="stat-val" id="minCardDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Result</div>
+                            <div class="stat-val" id="resDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n log n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'bool isNStraightHand(vector<int>& hand, int groupSize) {', id: 0 },
             { line: '    if (hand.size() % groupSize != 0) return false;', id: 1 },
             { line: '    map<int, int> count;', id: 2 },
-            { line: '    for (int c : hand) count[c]++;', id: 3 },
-            { line: '    for (auto& [card, cnt] : count) {', id: 4 },
-            { line: '        if (cnt > 0) {', id: 5 },
-            { line: '            for (int i = 0; i < groupSize; i++) {', id: 6 },
-            { line: '                if (count[card + i] < cnt) return false;', id: 7 },
-            { line: '                count[card + i] -= cnt;', id: 8 },
-            { line: '            }', id: 9 },
+            { line: '    for (int n : hand) count[n]++;', id: 3 },
+            { line: '    while (!count.empty()) {', id: 4 },
+            { line: '        int first = count.begin()->first;', id: 5 },
+            { line: '        for (int i = 0; i < groupSize; i++) {', id: 6 },
+            { line: '            if (count[first + i] == 0) return false;', id: 7 },
+            { line: '            count[first + i]--;', id: 8 },
+            { line: '            if (count[first + i] == 0) count.erase(first + i);', id: 9 },
             { line: '        }', id: 10 },
             { line: '    }', id: 11 },
             { line: '    return true;', id: 12 },
-            { line: '}', id: 13 },
+            { line: '}', id: 13 }
         ];
-        
-        let currentHand = [1, 2, 3, 6, 2, 3, 4, 7, 8];
-        let currentGroupSize = 3;
 
-        function runCustomInput() {
-            const str = document.getElementById('handInput').value;
-            const gs = parseInt(document.getElementById('sizeInput').value);
-            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            
-            if (arr.length < 1 || arr.length > 12 || isNaN(gs) || gs < 1) {
-                alert('請輸入有效的牌組 (1-12張) 和組大小');
-                return;
-            }
-            currentHand = arr;
-            currentGroupSize = gs;
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(hand, groupSize) {
+        function simulate(hand, groupSize) {
             const steps = [];
-            const sorted = [...hand].sort((a, b) => a - b);
             
-            // Check divisibility
-            if (hand.length % groupSize !== 0) {
-                steps.push({
-                    groups: [], result: false,
-                    highlightLines: [1],
-                    explanation: { title: '失敗', text: `牌數 ${hand.length} 不能被 ${groupSize} 整除`, formula: 'return false' }
+            // Build map
+            const count = {};
+            for(let n of hand) count[n] = (count[n] || 0) + 1;
+            // Sorted keys for iteration (min heap simulation)
+            let sortedKeys = Object.keys(count).map(Number).sort((a,b)=>a-b);
+            
+            steps.push({
+                count: {...count}, formedGroups: [],
+                msg: `Count card frequencies. Total Cards: ${hand.length}. Group Size: ${groupSize}.`, highlightLines: [0, 1, 2, 3],
+                explanation: {title: "初始化", text: `統計每張牌的數量。若總數不能被 ${groupSize} 整除則直接返回 False。`, formula: "count[n]++"}
+            });
+            
+            if(hand.length % groupSize !== 0) {
+                 steps.push({
+                    count: {...count}, formedGroups: [], final: true, result: false,
+                    msg: `Total cards ${hand.length} NOT divisible by ${groupSize}. Return False.`, highlightLines: [1],
+                    explanation: {title: "檢查總數", text: "無法整除，無法分組。", formula: "return false"}
                 });
                 return steps;
             }
             
-            steps.push({
-                usedIndices: [], groups: [],
-                highlightLines: [0, 1, 2, 3],
-                explanation: { title: '初始化', text: `Hand: [${hand.join(', ')}]<br>GroupSize: ${groupSize}<br>排序後計數`, formula: 'setup' }
-            });
-
-            // Simulate grouping
-            const count = {};
-            for (const c of sorted) count[c] = (count[c] || 0) + 1;
+            const formedGroups = [];
             
-            const groups = [];
-            const usedIndices = [];
-            const uniqueCards = [...new Set(sorted)].sort((a, b) => a - b);
-            
-            for (const start of uniqueCards) {
-                while (count[start] > 0) {
-                    const group = [];
-                    let valid = true;
+            // We use a simulation of min-heap by always taking sortedKeys[0]
+            while(sortedKeys.length > 0) {
+                const first = sortedKeys[0];
+                
+                steps.push({
+                    count: {...count}, formedGroups: [...formedGroups], minCard: first,
+                    msg: `Min card is ${first}. Try to make a group starting at ${first}.`, highlightLines: [4, 5],
+                    explanation: {title: "尋找最小牌", text: `當前最小的牌是 ${first}，它必須是一個群組的起點。`, formula: `first = ${first}`}
+                });
+                
+                const currentGroup = [];
+                for(let i=0; i<groupSize; i++) {
+                    const target = first + i;
                     
-                    for (let i = 0; i < groupSize; i++) {
-                        if ((count[start + i] || 0) <= 0) {
-                            valid = false;
-                            break;
-                        }
-                        group.push(start + i);
-                    }
-                    
-                    if (!valid) {
-                        steps.push({
-                            usedIndices: [...usedIndices], groups: [...groups], result: false,
-                            highlightLines: [7],
-                            explanation: { title: '失敗!', text: `無法組成從 ${start} 開始的順子`, formula: 'return false' }
+                    if(!count[target] || count[target] <= 0) {
+                         steps.push({
+                            count: {...count}, formedGroups: [...formedGroups], minCard: first, failed: true,
+                            target,
+                            msg: `Need card ${target} but count is 0. Failed.`, highlightLines: [7],
+                            explanation: {title: "失敗", text: `需要牌 ${target} 但已用完或不存在。無法組成連續群組。`, formula: "return false"}
                         });
                         return steps;
                     }
                     
-                    // Mark used
-                    for (const c of group) {
-                        count[c]--;
-                        const idx = sorted.findIndex((v, i) => v === c && !usedIndices.includes(i));
-                        if (idx !== -1) usedIndices.push(idx);
+                    count[target]--;
+                    currentGroup.push(target);
+                    if(count[target] === 0) {
+                        delete count[target];
+                        sortedKeys = sortedKeys.filter(k => k !== target); // remove from keys
                     }
                     
-                    groups.push([...group]);
-                    
                     steps.push({
-                        usedIndices: [...usedIndices], groups: [...groups], current: group,
-                        highlightLines: [6, 7, 8],
-                        explanation: { 
-                            title: `組 ${groups.length}: [${group.join(', ')}]`, 
-                            text: `從 ${start} 開始組成順子`,
-                            formula: `group #${groups.length}`
-                        }
+                        count: {...count}, formedGroups: [...formedGroups], minCard: first, 
+                        currentGroup: [...currentGroup], target,
+                        msg: `Used card ${target}. Remaining: ${count[target] || 0}.`, highlightLines: [8, 9],
+                        explanation: {title: "使用卡牌", text: `使用了 ${target}。`, formula: `count[${target}]--`}
                     });
                 }
+                
+                formedGroups.push(currentGroup);
             }
-
+            
             steps.push({
-                usedIndices, groups, result: true, final: true,
-                highlightLines: [12],
-                explanation: { title: '完成!', text: `成功分成 ${groups.length} 組順子`, formula: 'return true' }
+                count: {...count}, formedGroups: [...formedGroups], final: true, result: true,
+                msg: `All groups formed successfully. Return True.`, highlightLines: [12],
+                explanation: {title: "完成", text: "所有牌都成功分組。", formula: "return true"}
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            const sorted = [...currentHand].sort((a, b) => a - b);
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
             
+            document.getElementById('mapSizeDisplay').textContent = Object.keys(step.count).length;
+            document.getElementById('minCardDisplay').textContent = step.minCard !== undefined ? step.minCard : "-";
+            if(step.final || step.failed) document.getElementById('resDisplay').textContent = step.failed ? "False" : (step.result ? "True" : "-");
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            // Draw Frequency Map (Available Cards)
+            const mapKeys = Object.keys(step.count).map(Number).sort((a,b)=>a-b);
+            const cardW = 40;
+            const cardH = 50;
+            const cardGap = 10;
+            
+            const mapStartX = 30;
+            const mapY = 50;
+            
+            const mapData = mapKeys.map((k, i) => ({k, count: step.count[k], i}));
+            
+            // Map Label
+            svg.selectAll(".section-label").remove();
+            svg.append("text").attr("class", "section-label")
+                .attr("x", 30).attr("y", 30).attr("fill", "#94a3b8").attr("font-size", "12px").text("Available Cards (Map)");
+            
+            const gMap = svg.selectAll(".card-g").data(mapData, d => d.k);
+            const gMapEnter = gMap.enter().append("g").attr("class", "card-g");
+             gMapEnter.append("rect").attr("class", "card-rect").attr("width", cardW).attr("height", cardH);
+            gMapEnter.append("text").attr("class", "card-text").attr("x", cardW/2).attr("y", cardH/2);
+            // Count badge
+            gMapEnter.append("circle").attr("class", "count-badge").attr("r", 8).attr("cx", cardW).attr("cy", 0);
+            gMapEnter.append("text").attr("class", "count-text").attr("x", cardW).attr("y", 0);
+            
+            const gMapUpdate = gMap.merge(gMapEnter)
+                 .transition().duration(300)
+                .attr("transform", d => `translate(${mapStartX + d.i*(cardW+cardGap)}, ${mapY})`);
+            
+            gMapUpdate.select(".card-rect").attr("class", d => {
+                let c = "card-rect";
+                if(d.k === step.target) c += " active";
+                return c;
+            })
+            
+            gMapUpdate.select(".card-text").text(d => d.k);
+            gMapUpdate.select(".count-text").text(d => d.count);
+             gMapUpdate.select(".count-badge").attr("r", d => d.count > 0 ? 8 : 0); // Hide if 0 (should be removed from map, but just in case)
+            
+            gMap.exit().remove();
+            
+            // Draw Formed Groups
+            const groupStartX = 30;
+            const groupY = 150;
+            const groupGap = 20;
+            
+            let currentX = groupStartX;
+            
+            svg.append("text").attr("class", "section-label")
+            .attr("x", 30).attr("y", 140).attr("fill", "#94a3b8").attr("font-size", "12px").text("Formed Groups");
+            
+            // Previous groups
+            step.formedGroups.forEach((group, idx) => {
+                 const gW = group.length * (cardW + 5) + 10;
+                 
+                 const gG = svg.append("g").attr("class", "group-g").attr("transform", `translate(${currentX}, ${groupY})`);
+                 
+                 // Box
+                 gG.append("rect").attr("class", "group-box").attr("width", gW).attr("height", cardH + 20);
+                 
+                 // Cards
+                 group.forEach((val, i) => {
+                     const cG = gG.append("g").attr("transform", `translate(${10 + i*(cardW+5)}, 10)`);
+                     cG.append("rect").attr("class", "card-rect group").attr("width", cardW).attr("height", cardH);
+                     cG.append("text").attr("class", "card-text").attr("x", cardW/2).attr("y", cardH/2).text(val);
+                 });
+                 
+                 currentX += gW + groupGap;
+            });
+            
+            // Current forming group
+            if(step.currentGroup && step.currentGroup.length > 0) {
+                 const group = step.currentGroup;
+                 const gW = width - currentX - 20; // fill remaining for visual
+                 const gG = svg.append("g").attr("class", "group-g active").attr("transform", `translate(${currentX}, ${groupY})`);
+                 
+                 // Box (Dashed/Active)
+                  gG.append("rect").attr("class", "group-box").attr("width", group.length * (cardW + 5) + 20).attr("height", cardH + 20).attr("stroke", "#fbbf24");
+                 
+                 group.forEach((val, i) => {
+                     const cG = gG.append("g").attr("transform", `translate(${10 + i*(cardW+5)}, 10)`);
+                     cG.append("rect").attr("class", "card-rect group").attr("width", cardW).attr("height", cardH).attr("fill", "#fffbeb");
+                     cG.append("text").attr("class", "card-text").attr("x", cardW/2).attr("y", cardH/2).text(val);
+                 });
+            }
+        }
+
+        function runVisualizer() {
+            const handRaw = document.getElementById('handInput').value;
+             const groupSize = parseInt(document.getElementById('wInput').value);
+             const hand = handRaw.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+             
+             if(!hand.length || isNaN(groupSize)) return;
+             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    let html = '';
-                    sorted.forEach((c, i) => {
-                        let cls = 'card';
-                        if (step.usedIndices?.includes(i)) cls += ' used';
-                        if (step.current?.includes(c) && !step.usedIndices?.includes(i)) cls += ' current';
-                        html += `<div class="${cls}">${c}</div>`;
-                    });
-                    document.getElementById('cardsDisplay').innerHTML = html;
-                    
-                    document.getElementById('groupsDisplay').innerHTML = (step.groups || []).map(g => 
-                        `<div class="group">${g.map(c => `<div class="card grouped">${c}</div>`).join('')}</div>`
-                    ).join('') || '<span style="color: var(--viz-text-muted);">無</span>';
-                    
-                    if (step.result !== undefined) {
-                        document.getElementById('resultDisplay').textContent = step.result ? 'True ✓' : 'False ✗';
-                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
-                    } else {
-                        document.getElementById('resultDisplay').textContent = '-';
-                        document.getElementById('resultDisplay').style.color = 'inherit';
-                    }
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentHand, currentGroupSize));
+            viz.setSteps(simulate(hand, groupSize));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

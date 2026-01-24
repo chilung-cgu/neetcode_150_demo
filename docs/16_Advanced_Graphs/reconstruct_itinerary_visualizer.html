@@ -3,237 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reconstruct Itinerary - 視覺化</title>
+    <title>Reconstruct Itinerary - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 500px;
+        }
 
-        .path-container { 
-            display: flex; gap: 6px; justify-content: center; margin: 20px 0; 
-            flex-wrap: wrap; align-items: center; min-height: 50px;
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
-        .city { 
-            padding: 12px 18px; border-radius: 8px; font-family: monospace; font-weight: bold;
-            background: var(--viz-primary); color: white; transition: all 0.3s;
-        }
-        .city.current { background: var(--viz-warning); color: #0f172a; transform: scale(1.05); }
-        .city.final { background: var(--viz-success); color: #0f172a; }
-        .arrow { color: var(--viz-text-muted); font-size: 1.2rem; }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .tickets-container { 
-            display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; 
-            margin: 15px 0; padding: 12px; background: var(--viz-bg-secondary); border-radius: 8px;
-        }
-        .ticket { padding: 5px 10px; border-radius: 4px; font-size: 0.85rem; background: var(--viz-bg-primary); }
-        .ticket.used { opacity: 0.4; text-decoration: line-through; }
+        /* Graph Nodes */
+        .node-circle { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; }
+        .node-circle.active { stroke: #fbbf24; stroke-width: 3px; filter: drop-shadow(0 0 5px #fbbf24); }
 
-        .stack-container {
-            display: flex; gap: 6px; justify-content: center; margin: 10px 0; 
-            padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px;
+        .node-text { fill: #fff; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-weight: bold; }
+        .node-circle.jfk { stroke: #22c55e; }
+        
+        .link-line { stroke: #64748b; stroke-width: 2px; marker-end: url(#arrow); }
+        .link-line.used { stroke: #334155; opacity: 0.2; stroke-dasharray: 4; }
+        .link-line.highlight { stroke: #fbbf24; opacity: 1; stroke-width: 3px; }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
         }
-        .stack-item { padding: 6px 12px; border-radius: 4px; background: var(--viz-warning); color: #0f172a; font-family: monospace; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row input { width: 400px; text-align: center; }
+        
+        .result-list { 
+            font-family: monospace; color: #22c55e;
+            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; 
+            width: 90%; text-align: center; word-wrap: break-word;
+        }
     </style>
 </head>
 <body>
-    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">重建行程 (Reconstruct Itinerary)</div>
+                <div class="viz-title">Reconstruct Itinerary (Hierholzer's Algo)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <button onclick="setExample(1)">範例1 (簡單)</button>
-                        <button onclick="setExample(2)">範例2 (複雜)</button>
-                        <button onclick="resetVisualization()">↻ 重置</button>
+                        <div class="input-group">
+                            <label>Tickets:</label>
+                            <input type="text" id="ticketsInput" value='[["MUC","LHR"],["JFK","MUC"],["SFO","SJC"],["LHR","SFO"]]'>
+                        </div>
+                        <button onclick="runVisualizer()">Find Path</button>
                     </div>
                 </div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">機票</div>
-                <div class="tickets-container" id="ticketsDisplay"></div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">Stack</div>
-                <div class="stack-container" id="stackDisplay"></div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">結果行程</div>
-                <div class="path-container" id="pathDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:#334155; border:1px solid #475569"></div>Airport</div>
+                        <div class="legend-item"><div class="legend-color" style="height:2px; width:15px; background:#64748b"></div>Flight Available</div>
+                        <div class="legend-item"><div class="legend-color" style="height:2px; width:15px; background:#fbbf24"></div>Traversing</div>
+                        <div class="legend-item"><div class="legend-color" style="height:2px; width:15px; background:#334155; border:1px dashed #334155"></div>Used</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                             <defs>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="20" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="result-list" id="resDisplay">Itinerary: []</div>
+                    
+                    <div class="stats-panel">
+                         <div class="stat-box">
+                            <div class="stat-label">Stack (DFS path)</div>
+                            <div class="stat-val" id="stackDisplay"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="800">2x</option>
+                             <option value="1500">Slow</option>
+                             <option value="1000" selected>Normal</option>
+                             <option value="500">Fast</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(E log E)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(V+E)
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
+        
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">Hierholzer's Algorithm (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'vector<string> findItinerary(tickets) {', id: 0 },
-            { line: '    map<string, priority_queue<string, vec, greater<>>> graph;', id: 1 },
+            { line: 'vector<string> findItinerary(vector<vector<string>>& tickets) {', id: 0 },
+            { line: '    unordered_map<string, priority_queue<string...>> graph;', id: 1 },
             { line: '    for (auto& t : tickets) graph[t[0]].push(t[1]);', id: 2 },
-            { line: '    vector<string> result;', id: 3 },
-            { line: '    stack<string> stk; stk.push("JFK");', id: 4 },
-            { line: '    while (!stk.empty()) {', id: 5 },
-            { line: '        string curr = stk.top();', id: 6 },
-            { line: '        if (graph[curr].empty()) {', id: 7 },
-            { line: '            result.push_back(curr);', id: 8 },
-            { line: '            stk.pop();', id: 9 },
-            { line: '        } else {', id: 10 },
-            { line: '            stk.push(graph[curr].top());', id: 11 },
-            { line: '            graph[curr].pop();', id: 12 },
-            { line: '        }', id: 13 },
-            { line: '    }', id: 14 },
-            { line: '    reverse(result.begin(), result.end());', id: 15 },
-            { line: '    return result;', id: 16 },
-            { line: '}', id: 17 },
+            { line: '    vector<string> res;', id: 3 },
+            { line: '    dfs("JFK", graph, res);', id: 4 },
+            { line: '    reverse(res.begin(), res.end());', id: 5 },
+            { line: '    return res;', id: 6 },
+            { line: '}', id: 7 },
+            { line: 'void dfs(string u, map& graph, vector<string>& res) {', id: 8 },
+            { line: '    while (!graph[u].empty()) {', id: 9 },
+            { line: '        string v = graph[u].top(); graph[u].pop();', id: 10 },
+            { line: '        dfs(v, graph, res);', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    res.push_back(u);', id: 13 },
+            { line: '}', id: 14 }
         ];
-        
-        const examples = {
-            1: [['MUC','LHR'],['JFK','MUC'],['SFO','SJC'],['LHR','SFO']],
-            2: [['JFK','SFO'],['JFK','ATL'],['SFO','ATL'],['ATL','JFK'],['ATL','SFO']]
-        };
-        
-        let currentTickets = examples[1];
 
-        function setExample(n) {
-            currentTickets = examples[n];
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(tickets) {
+        function simulate(tickets) {
             const steps = [];
             
-            // Build graph
-            const graph = {};
-            for (const [from, to] of tickets) {
-                if (!graph[from]) graph[from] = [];
-                graph[from].push(to);
-            }
-            // Sort destinations lexicographically
-            for (const key in graph) {
-                graph[key].sort();
-            }
+            // Build Graph visuals
+            const nodesSet = new Set();
+            const edges = [];
             
-            const usedTickets = [];
+            // For Simulation logic, we need mutable Edge List (Multiset effectively)
+            // Use ID for edges to mark 'used' individually
+            let edgeCounter = 0;
+            const adj = {}; // key -> [ {target: "MUC", id: 0}, ... ] sorted
             
-            steps.push({
-                stack: ['JFK'], result: [], usedTickets: [],
-                highlightLines: [0, 1, 2, 3, 4],
-                explanation: { 
-                    title: '初始化', 
-                    text: `機票: ${tickets.map(t => t[0]+'→'+t[1]).join(', ')}<br><br>Hierholzer 演算法找歐拉路徑<br>從 JFK 開始`,
-                    formula: 'setup'
-                }
-            });
-
-            // Simulate the algorithm
-            const stack = ['JFK'];
-            const result = [];
-            const graphCopy = JSON.parse(JSON.stringify(graph));
-
-            while (stack.length > 0) {
-                const curr = stack[stack.length - 1];
+            tickets.forEach(t => {
+                nodesSet.add(t[0]); nodesSet.add(t[1]);
+                if(!adj[t[0]]) adj[t[0]] = [];
+                adj[t[0]].push({target: t[1], id: edgeCounter++});
                 
-                if (!graphCopy[curr] || graphCopy[curr].length === 0) {
-                    result.push(curr);
-                    stack.pop();
-                    
-                    steps.push({
-                        stack: [...stack], result: [...result], usedTickets: [...usedTickets],
-                        highlightLines: [7, 8, 9],
-                        explanation: { 
-                            title: `${curr} 無出邊`, 
-                            text: `加入結果，彈出 stack`,
-                            formula: `result += ${curr}`
-                        }
-                    });
-                } else {
-                    const next = graphCopy[curr].shift();
-                    stack.push(next);
-                    usedTickets.push([curr, next]);
-                    
-                    steps.push({
-                        stack: [...stack], result: [...result], usedTickets: [...usedTickets],
-                        highlightLines: [10, 11, 12],
-                        explanation: { 
-                            title: `${curr} → ${next}`, 
-                            text: `使用機票，push ${next}`,
-                            formula: `stack += ${next}`
-                        }
-                    });
-                }
-            }
-
-            const finalPath = [...result].reverse();
-            steps.push({
-                stack: [], result: finalPath, usedTickets, final: true, reversed: true,
-                highlightLines: [15, 16],
-                explanation: { 
-                    title: '完成!', 
-                    text: `反轉結果<br>行程: ${finalPath.join(' → ')}`,
-                    formula: 'done'
-                }
+                edges.push({source: t[0], target: t[1], id: edgeCounter-1});
             });
+            
+            // Sort adjacency list (reverse for pop from back, or just sort and use shift/pop logic)
+            // C++ priority_queue (greater) means smallest first.
+            // Let's sort lexicographically.
+            Object.keys(adj).forEach(k => {
+                adj[k].sort((a,b) => a.target.localeCompare(b.target));
+            });
+            
+            const nodes = Array.from(nodesSet).map(id => ({id}));
+            
+            // Layout
+             const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(edges).id(d => d.id).distance(100))
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(0,0))
+                .stop();
+            for (let i = 0; i < 300; ++i) simulation.tick();
+            
+            const layout = {};
+            nodes.forEach(d => { layout[d.id] = {x: d.x, y: d.y}; });
 
+            // DFS State
+            const res = [];
+            const resultStack = []; // Visualizing the 'res' which is post-order
+            const usedEdges = new Set();
+            const activeStack = ["JFK"]; // Call stack
+            
+            steps.push({
+                layout, nodes, edges, usedEdges: new Set(usedEdges), resultStack: [...resultStack],
+                activeStack: [...activeStack],
+                msg: "Init. Sort edges. Start DFS(JFK).", highlightLines: [0, 1, 2, 4],
+                explanation: {title: "初始化", text: "構建鄰接表並對目的地進行詞法排序。從 JFK 開始 DFS。", formula: "dfs('JFK')"}
+            });
+            
+            function dfs(u) {
+                // While has neighbors
+                while(adj[u] && adj[u].length > 0) {
+                    const nextEdge = adj[u].shift(); // Smallest lexical
+                    const v = nextEdge.target;
+                    const eid = nextEdge.id;
+                    
+                    usedEdges.add(eid);
+                    activeStack.push(v);
+                    
+                    steps.push({
+                         layout, nodes, edges, usedEdges: new Set(usedEdges), resultStack: [...resultStack],
+                         activeStack: [...activeStack],
+                         curr: u, processingEdgeId: eid,
+                         msg: `Take flight ${u} -> ${v}.`, highlightLines: [9, 10, 11],
+                         explanation: {title: "選擇路徑", text: `選擇最小詞法序的目的地 ${v}。標記邊為已使用。遞迴進入 ${v}。`, formula: "dfs(v)"}
+                    });
+                    
+                    dfs(v);
+                }
+                
+                // No more outgoing edges (stuck)
+                resultStack.push(u);
+                activeStack.pop(); // finished u
+                
+                steps.push({
+                     layout, nodes, edges, usedEdges: new Set(usedEdges), resultStack: [...resultStack],
+                     activeStack: [...activeStack],
+                     curr: u, stuck: true,
+                     msg: `Stuck at ${u}. Add to Result. Backtrack.`, highlightLines: [13],
+                     explanation: {title: "回溯", text: `節點 ${u} 無可用出邊，將 ${u} 加入結果列表 (逆序)。回溯到上一層。`, formula: "res.push_back(u)"}
+                });
+            }
+            
+            dfs("JFK");
+            
+            const finalRes = [...resultStack].reverse();
+            steps.push({
+                layout, nodes, edges, usedEdges: new Set(usedEdges), resultStack: [...resultStack],
+                finalRes,
+                final: true,
+                msg: `Done. Reverse Result: ${JSON.stringify(finalRes)}`, highlightLines: [5, 6],
+                explanation: {title: "完成", text: "所有遞迴完成。將結果列表反轉即為歐拉路徑。", formula: "reverse(res)"}
+            });
+            
             return steps;
         }
 
-        let viz;
-        function init() {
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            if(step.finalRes) {
+                document.getElementById('resDisplay').textContent = "Itinerary: " + JSON.stringify(step.finalRes);
+            } else {
+                document.getElementById('resDisplay').textContent = "Path Building (Reversed): " + JSON.stringify(step.resultStack);
+            }
+            document.getElementById('stackDisplay').textContent = JSON.stringify(step.activeStack);
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const centerX = width/2;
+            const centerY = height/2;
+            
+            // Links
+            const paths = svg.selectAll(".link-line").data(step.edges);
+            const pEnter = paths.enter().append("line").attr("class", "link-line");
+            paths.merge(pEnter)
+                .attr("x1", d => centerX + step.layout[d.source].x)
+                .attr("y1", centerY + step.layout[d.source].y)
+                .attr("x2", d => centerX + step.layout[d.target].x)
+                .attr("y2", centerY + step.layout[d.target].y)
+                .attr("class", d => {
+                     if(step.processingEdgeId === d.id) return "link-line highlight";
+                     if(step.usedEdges.has(d.id)) return "link-line used";
+                     return "link-line";
+                });
+            paths.exit().remove();
+            
+            // Nodes
+            const g = svg.selectAll(".node-g").data(step.nodes, d=>d.id);
+            const gEnter = g.enter().append("g").attr("class", "node-g");
+            
+            gEnter.append("circle").attr("class", `node-circle`).attr("r", 20);
+            gEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${centerX + step.layout[d.id].x}, ${centerY + step.layout[d.id].y})`);
+            
+            gUpdate.select(".node-circle").attr("class", d => {
+                 let c = "node-circle";
+                 if(d.id === "JFK") c += " jfk";
+                 
+                 // Highlight current
+                 if(step.curr === d.id && !step.final) c += " active";
+                 return c;
+            })
+            // Change color if in result stack?
+            .style("fill", d => {
+                 if(step.resultStack.includes(d.id)) return "#22c55e";
+                 return null;
+            });
+            
+            gUpdate.select(".node-text").text(d => d.id);
+            
+            g.exit().remove();
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('ticketsInput').value;
+            let tickets;
+            try {
+                tickets = JSON.parse(raw);
+            } catch(e) { alert("Invalid JSON"); return; }
+            if(!Array.isArray(tickets)) return;
+
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Tickets
-                    document.getElementById('ticketsDisplay').innerHTML = 
-                        currentTickets.map(t => {
-                            const used = step.usedTickets?.some(u => u[0] === t[0] && u[1] === t[1]);
-                            return `<span class="ticket ${used ? 'used' : ''}">${t[0]}→${t[1]}</span>`;
-                        }).join('');
-                    
-                    // Stack
-                    document.getElementById('stackDisplay').innerHTML = 
-                        (step.stack || []).length > 0 
-                            ? step.stack.map(s => `<span class="stack-item">${s}</span>`).join('')
-                            : '<span style="color: var(--viz-text-muted)">空</span>';
-                    
-                    // Result
-                    const result = step.result || [];
-                    if (result.length > 0) {
-                        document.getElementById('pathDisplay').innerHTML = result.map((city, i) => 
-                            `${i > 0 ? '<span class="arrow">→</span>' : ''}<span class="city ${step.final ? 'final' : (i === result.length - 1 ? 'current' : '')}">${city}</span>`
-                        ).join('');
-                    } else {
-                        document.getElementById('pathDisplay').innerHTML = '<span style="color: var(--viz-text-muted)">等待...</span>';
-                    }
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentTickets));
+            viz.setSteps(simulate(tickets));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

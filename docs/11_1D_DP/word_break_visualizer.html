@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Break - D3 動態視覺化</title>
+    <title>Word Break (1D DP) - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -15,10 +15,10 @@
             flex-direction: column;
             gap: 20px;
             align-items: center;
-            min-height: 480px;
+            min-height: 500px;
         }
 
-        /* SVG */
+        /* D3 Viewport */
         .stage-viewport {
             width: 100%; height: 350px;
             background: rgba(30, 41, 59, 0.4);
@@ -29,39 +29,46 @@
         }
         #viz-svg { width: 100%; height: 100%; }
 
-        .char-group rect { fill: #334155; stroke: #475569; stroke-width: 2px; rx: 4; }
-        .char-group text { fill: #fff; font-family: monospace; font-size: 16px; font-weight: bold; text-anchor: middle; pointer-events: none; }
+        .char-box { fill: #334155; stroke: #475569; stroke-width: 2px; }
+        .char-text { fill: #fff; font-family: monospace; font-size: 16px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
         
-        .dp-node { fill: #ef4444; stroke: #fff; stroke-width: 2px; transition: fill 0.3s; }
-        .dp-node.true { fill: #22c55e; } /* Valid break point */
-        .dp-node.active { stroke: #f59e0b; stroke-width: 4px; filter: drop-shadow(0 0 5px #f59e0b); }
+        .substring-rect { fill: none; stroke: #fbbf24; stroke-width: 3px; rx: 4; stroke-dasharray: 4; animation: dash 1s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -20; } }
         
-        .check-arc { fill: none; stroke: #f59e0b; stroke-width: 3px; marker-end: url(#arrow); stroke-dasharray: 5; opacity: 0.8; }
-        .check-arc.match { stroke: #22c55e; stroke-dasharray: 0; }
+        .dp-circle { r: 8px; fill: #475569; stroke: #94a3b8; stroke-width: 1px; transition: all 0.3s; }
+        .dp-circle.true { fill: #22c55e; stroke: #fff; }
+        .dp-circle.false { fill: #ef4444; }
+        .dp-circle.checking { stroke: #fbbf24; stroke-width: 3px; }
         
-        .dict-word { fill: #94a3b8; font-size: 12px; font-family: monospace; }
-        .dict-word.active { fill: #f59e0b; font-weight: bold; font-size: 14px; }
+        .pointer-text { fill: #94a3b8; font-size: 10px; text-anchor: middle; }
+        
+        .dict-box { fill: #1e293b; stroke: #475569; rx: 4; }
+        .dict-box.match { fill: rgba(34, 197, 94, 0.2); stroke: #22c55e; }
+        .dict-text { fill: #cbd5e1; font-size: 12px; font-family: monospace; text-anchor: middle; dominant-baseline: middle; }
 
         /* Stats */
         .stats-panel {
-            display: flex; gap: 30px; justify-content: center; width: 100%;
-            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
         }
-        .stat-box { display: flex; flex-direction: column; align-items: center; }
-        .stat-val { font-size: 1.2rem; font-weight: bold; color: #22c55e; }
-        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
         .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
-        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; margin-top: 20px; }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
         
-        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .legend-color { width: 12px; height: 12px; border-radius: 2px; border: 1px solid #fff; }
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -69,20 +76,18 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Word Break (DP)</div>
+                <div class="viz-title">Word Break (1D DP)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <div>
-                            <label style="font-size:0.8rem; color:#94a3b8;">String:</label>
-                            <input type="text" id="strInput" value="leetcode">
+                        <div class="input-group">
+                            <label>String:</label>
+                            <input type="text" id="strInput" value="leetcode" style="width:120px;">
                         </div>
-                        <div>
-                            <label style="font-size:0.8rem; color:#94a3b8;">Dict (comma sep):</label>
-                            <input type="text" id="dictInput" value="leet, code">
+                        <div class="input-group">
+                            <label>Dict (comma sep):</label>
+                            <input type="text" id="dictInput" value="leet, code" style="width:150px;">
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:5px;">
-                            <button onclick="runVisualizer()">Check</button>
-                        </div>
+                        <button onclick="runVisualizer()">Break</button>
                     </div>
                 </div>
 
@@ -90,23 +95,25 @@
                     <div class="legend">
                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>True (Breakable)</div>
                        <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>False</div>
-                       <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Checking</div>
+                       <div class="legend-item"><div class="legend-color" style="border: 2px dashed #fbbf24; background:none;"></div>Evaluating</div>
                     </div>
-                    
+
                     <div class="stage-viewport">
-                        <svg id="viz-svg">
-                            <defs>
-                                <marker id="arrow" viewBox="0 -5 10 10" refX="20" refY="0" markerWidth="6" markerHeight="6" orient="auto">
-                                    <path d="M0,-5L10,0L0,5" fill="#f59e0b"/>
-                                </marker>
-                            </defs>
-                        </svg>
+                        <svg id="viz-svg"></svg>
                     </div>
                     
                     <div class="stats-panel">
                         <div class="stat-box">
-                            <div class="stat-label">Result</div>
-                            <div class="stat-val" id="resultDisplay">-</div>
+                            <div class="stat-label">Substring</div>
+                            <div class="stat-val" id="subDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">In Dict?</div>
+                            <div class="stat-val" id="dictDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Prev DP True?</div>
+                            <div class="stat-val" id="prevDpDisplay">-</div>
                         </div>
                     </div>
                 </div>
@@ -127,7 +134,7 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">2x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
@@ -146,135 +153,72 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'bool wordBreak(string s, vector<string>& dict) {', id: 0 },
+            { line: 'bool wordBreak(string s, vector<string>& wordDict) {', id: 0 },
             { line: '    vector<bool> dp(s.size() + 1, false);', id: 1 },
-            { line: '    dp[0] = true; // Base case', id: 2 },
+            { line: '    dp[0] = true;', id: 2 },
             { line: '    for (int i = 1; i <= s.size(); i++) {', id: 3 },
-            { line: '        for (auto w : dict) {', id: 4 },
-            { line: '            int start = i - w.length();', id: 5 },
-            { line: '            if (start >= 0 && dp[start]) {', id: 6 },
-            { line: '                if (s.substr(start, w.len) == w) {', id: 7 },
-            { line: '                    dp[i] = true; break;', id: 8 },
-            { line: '                }', id: 9 },
-            { line: '            }', id: 10 },
-            { line: '        }', id: 11 },
-            { line: '    }', id: 12 },
-            { line: '    return dp[s.size()];', id: 13 },
-            { line: '}', id: 14 }
+            { line: '        for (int j = 0; j < i; j++) {', id: 4 },
+            { line: '            if (dp[j] &&', id: 5 },
+            { line: '                dict.count(s.substr(j, i - j))) {', id: 6 },
+            { line: '                dp[i] = true;', id: 7 },
+            { line: '                break;', id: 8 },
+            { line: '            }', id: 9 },
+            { line: '        }', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return dp[s.size()];', id: 12 },
+            { line: '}', id: 13 }
         ];
 
         let viz;
 
-        function simulate(s, dict) {
+        function simulate(s, dictArr) {
             const steps = [];
             const n = s.length;
+            const dict = new Set(dictArr);
             const dp = new Array(n + 1).fill(false);
             
             steps.push({
-                s, dict, dp: [...dp], idx: -1,
-                msg: "Init DP array (False).", highlightLines: [0, 1],
-                explanation: {
-                    title: "初始化",
-                    text: `輸入字串 "${s}"。建立長度 ${n+1} 的 DP 陣列來記錄每個前綴是否可拆分。`,
-                    formula: "dp = [false, ...]"
-                }
+                s, dict: dictArr, dp: [...dp], i: 0,
+                msg: "Init DP. dp[0] = true (Empty string is valid)", highlightLines: [0, 1, 2],
+                explanation: {title: "初始化", text: "dp[0] 設為 true，表示空字串可以被分割（基礎情況）。", formula: "dp[0] = true"}
             });
-
+            
             dp[0] = true;
-            steps.push({
-                s, dict, dp: [...dp], idx: -1,
-                msg: "dp[0] = true (Base case)", highlightLines: [2],
-                explanation: {
-                    title: "Base Case",
-                    text: "長度為 0 的字串被視為可拆分 (空集合)。",
-                    formula: "dp[0] = true"
-                }
-            });
-
+            
             for (let i = 1; i <= n; i++) {
-                let matched = false;
-                for (let w of dict) {
-                    const start = i - w.length;
+                steps.push({
+                   s, dict: dictArr, dp: [...dp], i, checking: false,
+                   msg: `Checking dp[${i}]: Can prefix '${s.slice(0,i)}' be segmented?`, highlightLines: [3],
+                   explanation: {title: `檢查長度 ${i}`, text: `嘗試找出分割點 j，使得 dp[j] 為真且 s[j..i] 在字典中。`, formula: "dp[i] = ?"}
+                });
+                
+                for (let j = 0; j < i; j++) {
+                    const sub = s.substring(j, i);
+                    const inDict = dict.has(sub);
+                    const prevTruth = dp[j];
                     
                     steps.push({
-                        s, dict, dp: [...dp], idx: i, currentWord: w, startIdx: start,
-                        msg: `Check if dp[${i}] can be formed by "${w}"`, highlightLines: [4, 5],
-                        explanation: {
-                            title: `檢查 dp[${i}]`,
-                            text: `嘗試單詞 "${w}"。如果它能接在某個可拆分的前綴後面，則當前長度也可拆分。<br>檢查點：start = i - len = ${start}`,
-                            formula: `start = ${i} - ${w.length}`
-                        }
+                        s, dict: dictArr, dp: [...dp], i, j, checking: true, sub, inDict, prevTruth,
+                        msg: `Check sub '${sub}' (j=${j}). dp[${j}] is ${prevTruth}. InDict is ${inDict}.`, highlightLines: [5, 6],
+                        explanation: {title: `檢查子串 '${sub}'`, text: `條件：dp[${j}] (${prevTruth}) 且 '${sub}' 在字典中 (${inDict})。`, formula: "dp[j] && checking(sub)"}
                     });
-
-                    if (start >= 0) {
-                        const isPrevValid = dp[start];
-                        
-                        if (isPrevValid) {
-                            // Check substr
-                            const sub = s.substring(start, i);
-                            const isMatch = sub === w;
-                            
-                            steps.push({
-                                s, dict, dp: [...dp], idx: i, currentWord: w, startIdx: start,
-                                checkingMatch: true, isMatch, sub,
-                                msg: `dp[${start}] is True. Check "${sub}" == "${w}"?`, highlightLines: [6, 7],
-                                explanation: {
-                                    title: "前綴有效，比對單詞",
-                                    text: `dp[${start}] 為 true，代表前 ${start} 個字元可拆分。<br>現在比對 s[${start}...${i-1}] ("${sub}") 是否等於字典字 "${w}"。`,
-                                    formula: `"${sub}" == "${w}"`
-                                }
-                            });
-                            
-                            if (isMatch) {
-                                dp[i] = true;
-                                matched = true;
-                                steps.push({
-                                    s, dict, dp: [...dp], idx: i, currentWord: w, startIdx: start,
-                                    matchSuccess: true,
-                                    msg: `Match! Set dp[${i}] = true`, highlightLines: [8],
-                                    explanation: {
-                                        title: "匹配成功",
-                                        text: `單詞匹配成功！既然前綴 dp[${start}] 有效且接上 "${w}" 也是有效的，故前綴 i (${i}) 也是有效的。`,
-                                        formula: `dp[${i}] = true`
-                                    }
-                                });
-                                break; 
-                            }
-                        } else {
-                             steps.push({
-                                s, dict, dp: [...dp], idx: i, currentWord: w, startIdx: start,
-                                msg: `dp[${start}] is False. Cannot chain.`, highlightLines: [6],
-                                explanation: {
-                                    title: "前綴無效",
-                                    text: `雖然長度符合，但 dp[${start}] 為 false，表示前面的字串無法拆分，所以不能接上 "${w}"。`,
-                                    formula: `dp[${start}] == false`
-                                }
-                            });
-                        }
+                    
+                    if (prevTruth && inDict) {
+                        dp[i] = true;
+                        steps.push({
+                            s, dict: dictArr, dp: [...dp], i, j, checking: true, sub, inDict, prevTruth, success: true,
+                            msg: "Match found! Set dp[${i}] = true. Break.", highlightLines: [7, 8],
+                            explanation: {title: "成功分割", text: `找到有效分割點 j=${j}。dp[${i}] 設為 true。`, formula: "dp[i] = true"}
+                        });
+                        break; 
                     }
-                }
-                
-                if (!matched) {
-                     steps.push({
-                        s, dict, dp: [...dp], idx: i,
-                        msg: `No valid word found for dp[${i}].`, highlightLines: [3],
-                        explanation: {
-                            title: `dp[${i}] 無解`,
-                            text: `嘗試了所有字典單詞，沒有任何一個能匹配且接在有效前綴後。dp[${i}] 保持 false。`,
-                            formula: `dp[${i}] = false`
-                        }
-                    });
                 }
             }
             
             steps.push({
-                s, dict, dp: [...dp], idx: n, result: dp[n], final: true,
-                msg: `Done. Result: ${dp[n]}`, highlightLines: [13],
-                explanation: {
-                    title: "完成",
-                    text: `最終結果取決於 dp[${n}]。如果為 true，表示整個字串可被拆分。`,
-                    formula: `return ${dp[n]}`
-                }
+                s, dict: dictArr, dp: [...dp], i: n, final: true, result: dp[n],
+                msg: `Final Result: ${dp[n]}`, highlightLines: [12],
+                explanation: {title: "完成", text: `字串 ${dp[n] ? "可以" : "無法"} 被字典單字分割。`, formula: `return ${dp[n]}`}
             });
 
             return steps;
@@ -288,9 +232,18 @@
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : (step.dp[step.dp.length-1] ? 'True' : 'False');
             
-            if(step.explanation) {
+            if(step.checking) {
+                document.getElementById('subDisplay').textContent = step.sub;
+                document.getElementById('dictDisplay').textContent = step.inDict ? "YES" : "NO";
+                document.getElementById('prevDpDisplay').textContent = step.prevTruth ? "YES" : "NO";
+            } else {
+                 document.getElementById('subDisplay').textContent = "-";
+                 document.getElementById('dictDisplay').textContent = "-";
+                 document.getElementById('prevDpDisplay').textContent = "-";
+            }
+
+            if (step.explanation) {
                 document.getElementById('explanation').innerHTML = `
                     <div class="expl-title">${step.explanation.title}</div>
                     <div class="expl-text">${step.explanation.text}</div>
@@ -298,96 +251,104 @@
                 `;
             }
 
-            const s = step.s;
-            const n = s.length;
-            const charW = width / (n + 2);
-            const startX = charW;
-            const startY = 150;
-
-            // Chars (s[0]...s[n-1]) are placed between nodes (0...n)
-            // Nodes are at "gap" positions.
-            // Node 0 is before s[0]. Node n is after s[n-1].
+            const n = step.s.length;
+            const margin = {top: 60, left: 40, right: 40};
+            const w = width - margin.left - margin.right;
+            const charW = w / n;
+            const yChar = 100;
+            const yDP = 150;
+            const yDict = 250;
             
-            // Draw String Chars
-            const chars = s.split('').map((c, i) => ({c, i}));
-            const charG = svg.selectAll(".char-group").data(chars);
-            const charEnter = charG.enter().append("g").attr("class", "char-group");
-            charEnter.append("rect").attr("width", charW-2).attr("height", 40).attr("y", -20);
-            charEnter.append("text").attr("dy", 5).attr("x", charW/2);
+            // Draw Characters
+            const chars = step.s.split('').map((c, i) => ({c, i}));
             
-            const charMerge = charG.merge(charEnter)
-                .attr("transform", (d, i) => `translate(${startX + i*charW + charW/2}, ${startY})`);
+            const gChar = svg.selectAll(".char-g").data(chars);
+            const gCharEnter = gChar.enter().append("g").attr("class", "char-g");
             
-            charMerge.select("text").text(d => d.c);
+            gCharEnter.append("rect").attr("class", "char-box")
+                .attr("width", charW).attr("height", 30).attr("y", -15);
+            gCharEnter.append("text").attr("class", "char-text").text(d => d.c);
             
-            // Highlight checking substring
-            charMerge.select("rect")
-                .attr("stroke", d => {
-                    if (step.startIdx !== undefined && step.idx !== undefined) {
-                        if (d.i >= step.startIdx && d.i < step.idx) return step.checkingMatch ? "#f59e0b" : "#475569";
-                    }
-                    return "#475569";
-                })
-                .attr("fill", d => {
-                    if (step.matchSuccess && d.i >= step.startIdx && d.i < step.idx) return "#22c55e"; // matched part
-                    return "#334155";
-                });
-
-            charG.exit().remove();
-
-            // Draw DP Nodes (0 to n)
-            // Node i is at gap i.
-            const dpData = step.dp.map((v, i) => ({v, i}));
-            const nodes = svg.selectAll(".dp-node-g").data(dpData);
-            const nodeEnter = nodes.enter().append("g").attr("class", "dp-node-g");
-            nodeEnter.append("circle").attr("class", "dp-node").attr("r", 8);
-            nodeEnter.append("text").attr("y", 20).attr("text-anchor", "middle").attr("fill", "#94a3b8").style("font-size", "10px").text(d => d.i);
+            const gCharUpdate = gChar.merge(gCharEnter)
+                .attr("transform", d => `translate(${margin.left + d.i*charW}, ${yChar})`);
             
-            const nodeMerge = nodes.merge(nodeEnter)
-                .attr("transform", (d, i) => `translate(${startX + i*charW}, ${startY + 30})`); // Offset below chars
+            gChar.exit().remove();
             
-            nodeMerge.select(".dp-node")
+            // Draw DP nodes (size n+1)
+            // dp[i] corresponds to prefix length i, so placed between chars i-1 and i
+            const dpNodes = step.dp.map((v, i) => ({v, i}));
+            
+            const gDP = svg.selectAll(".dp-g").data(dpNodes);
+            const gDPEnter = gDP.enter().append("g").attr("class", "dp-g");
+            
+            gDPEnter.append("circle").attr("r", 8);
+            gDPEnter.append("text").attr("class", "pointer-text").attr("y", 20).text(d => d.i);
+            
+            const gDPUpdate = gDP.merge(gDPEnter)
+                .attr("transform", d => `translate(${margin.left + d.i*charW}, ${yDP})`);
+                
+            gDPUpdate.select("circle")
                 .attr("class", d => {
-                    let c = "dp-node";
-                    if (d.v) c += " true";
-                    // If this is startIdx or idx being checked
-                    if (d.i === step.startIdx || d.i === step.idx) c += " active";
+                    let c = "dp-circle " + (d.v ? "true" : "false");
+                    if (step.checking && d.i === step.j) c += " checking"; // prev truth checking
+                    if (d.i === step.i) c += " active"; // target
                     return c;
                 });
                 
-            nodes.exit().remove();
+            gDP.exit().remove();
             
-            // Draw Arcs (Checking)
-            svg.selectAll(".check-arc").remove();
-            if (step.startIdx !== undefined && step.idx !== undefined) {
-                // Arc from startIdx to idx
-                const x1 = startX + step.startIdx * charW;
-                const x2 = startX + step.idx * charW;
-                const y = startY - 25; // Above chars
+            // Highlight Substring (Rect)
+            svg.selectAll(".substring-rect").remove();
+            if (step.checking) {
+                // from j to i (indices of DP correspond to boundaries of chars)
+                // j=start char index, i=end char index (exclusive in substr, but inclusive char box i-1)
+                const startX = margin.left + step.j * charW;
+                const endX = margin.left + step.i * charW;
+                const rectW = endX - startX;
                 
-                const path = d3.path();
-                path.moveTo(x1, y);
-                path.quadraticCurveTo((x1+x2)/2, y - 40, x2, y);
-                
-                svg.append("path")
-                    .attr("d", path.toString())
-                    .attr("class", `check-arc ${step.matchSuccess ? 'match' : ''}`)
-                    .attr("stroke", step.matchSuccess ? "#22c55e" : "#f59e0b");
-                    
-                svg.append("text")
-                    .attr("x", (x1+x2)/2)
-                    .attr("y", y - 45)
-                    .attr("text-anchor", "middle")
-                    .attr("fill", step.matchSuccess ? "#22c55e" : "#f59e0b")
-                    .style("font-family", "monospace")
-                    .text(step.currentWord || "");
+                svg.append("rect")
+                    .attr("class", "substring-rect")
+                    .attr("x", startX).attr("y", yChar - 15)
+                    .attr("width", rectW).attr("height", 30)
+                    .style("stroke", step.inDict ? "#22c55e" : "#fbbf24");
             }
+            
+            // Draw Dictionary Words
+            const dictWords = step.dict.map((w, i) => ({w, i}));
+            const gDict = svg.selectAll(".dict-g").data(dictWords);
+            const gDictEnter = gDict.enter().append("g").attr("class", "dict-g");
+            
+            // Simple grid layout for dict
+            const dictCols = 4;
+            const dictItemW = w / dictCols;
+            const dictItemH = 30;
+            
+            gDictEnter.append("rect").attr("class", "dict-box")
+                 .attr("width", dictItemW - 10).attr("height", dictItemH)
+                 .attr("x", 5);
+            gDictEnter.append("text").attr("class", "dict-text")
+                 .attr("x", dictItemW/2).attr("y", dictItemH/2);
+                 
+            const gDictUpdate = gDict.merge(gDictEnter)
+                 .attr("transform", (d, i) => {
+                     const r = Math.floor(i / dictCols);
+                     const c = i % dictCols;
+                     return `translate(${margin.left + c*dictItemW}, ${yDict + r*(dictItemH+5)})`;
+                 });
+                 
+            gDictUpdate.select("rect")
+                .attr("class", d => (step.checking && step.sub === d.w) ? "dict-box match" : "dict-box");
+                
+            gDictUpdate.select(".dict-text").text(d => d.w);
+            
+            gDict.exit().remove();
         }
 
         function runVisualizer() {
             const s = document.getElementById('strInput').value;
-            const dict = document.getElementById('dictInput').value.split(',').map(x=>x.trim()).filter(x=>x);
-            if(!s || dict.length === 0) return;
+            const dictStr = document.getElementById('dictInput').value;
+             // parse dict
+            const dict = dictStr.split(',').map(x=>x.trim()).filter(x=>x);
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,

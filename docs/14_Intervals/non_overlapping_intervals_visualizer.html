@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Non-overlapping Intervals - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
+        }
+
+        /* D3 Viewport */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .interval-bar { fill: #334155; rx: 4; stroke: #475569; }
+        .interval-bar.current { stroke: #fbbf24; stroke-width: 2px; }
+        .interval-bar.kept { fill: #22c55e; stroke: #fff; }
+        .interval-bar.removed { fill: #ef4444; opacity: 0.3; stroke-dasharray: 4,2; }
+
+        .interval-text { fill: #fff; font-family: monospace; font-size: 10px; text-anchor: middle; pointer-events: none; }
+        
+        .timeline-axis line { stroke: #64748b; }
+        .timeline-axis text { fill: #94a3b8; font-family: monospace; }
+        .timeline-axis path { stroke: #64748b; }
+        
+        .boundary-line { stroke: #fbbf24; stroke-width: 2px; stroke-dasharray: 4,4; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Non-overlapping Intervals (Greedy)</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Intervals:</label>
+                            <input type="text" id="intervalsInput" value="[1,2],[2,3],[3,4],[1,3]">
+                        </div>
+                        <button onclick="runVisualizer()">Count Removal</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Kept</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Removed</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Min Removal</div>
+                            <div class="stat-val" id="resDisplay">0</div>
+                        </div>
+                         <div class="stat-box">
+                            <div class="stat-label">Prev End</div>
+                            <div class="stat-val" id="endDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int eraseOverlapIntervals(vector<vector<int>>& intervals) {', id: 0 },
+            { line: '    if (intervals.empty()) return 0;', id: 1 },
+            { line: '    sort(intervals.begin(), intervals.end());', id: 2 },
+            { line: '    int res = 0;', id: 3 },
+            { line: '    int prevEnd = intervals[0][1];', id: 4 },
+            { line: '    for (int i = 1; i < intervals.size(); i++) {', id: 5 },
+            { line: '        if (intervals[i][0] >= prevEnd) {', id: 6 },
+            { line: '            prevEnd = intervals[i][1];', id: 7 },
+            { line: '        } else {', id: 8 },
+            { line: '            res++;', id: 9 },
+            { line: '            prevEnd = min(prevEnd, intervals[i][1]);', id: 10 },
+            { line: '        }', id: 11 },
+            { line: '    }', id: 12 },
+            { line: '    return res;', id: 13 },
+            { line: '}', id: 14 }
+        ];
+
+        let viz;
+
+        function simulate(intervalsInput) {
+            const steps = [];
+            let intervals = intervalsInput.map((x, idx) => ({val: [...x], id: idx, removed: false})); // track status
+            
+            steps.push({
+                intervals: JSON.parse(JSON.stringify(intervals)), res: 0, i: -1,
+                msg: `Init.`, highlightLines: [0, 1],
+                explanation: {title: "初始化", text: "準備移除重疊區間。", formula: ""}
+            });
+            
+            intervals.sort((a,b) => a.val[0] - b.val[0]);
+            
+            steps.push({
+                intervals: JSON.parse(JSON.stringify(intervals)), res: 0, i: -1,
+                msg: `Sorted by Start Time.`, highlightLines: [2],
+                explanation: {title: "排序", text: "按開始時間排序。", formula: "sort(start)"}
+            });
+            
+            if(intervals.length === 0) return steps;
+            
+            let res = 0;
+            let prevEnd = intervals[0].val[1];
+            intervals[0].kept = true; // Mark first as kept initially
+            
+            steps.push({
+                intervals: JSON.parse(JSON.stringify(intervals)), res: 0, i: 0, prevEnd,
+                msg: `Prev End set to ${prevEnd} (First Interval).`, highlightLines: [4],
+                explanation: {title: "設定初始邊界", text: "第一個區間暫定保留，記錄其結束位置。", formula: `prevEnd = ${prevEnd}`}
+            });
+            
+            for(let i=1; i<intervals.length; i++) {
+                const cur = intervals[i];
+                
+                if (cur.val[0] >= prevEnd) {
+                    // No overlap
+                    prevEnd = cur.val[1];
+                    cur.kept = true;
+                    steps.push({
+                        intervals: JSON.parse(JSON.stringify(intervals)), res, i, prevEnd,
+                        msg: `[${cur.val}] starts after Prev End. No Overlap. Update Prev End -> ${prevEnd}.`, highlightLines: [6, 7],
+                        explanation: {title: "無重疊", text: "當前區間在邊界之後，保留並更新邊界。", formula: "prevEnd = curr[1]"}
+                    });
+                } else {
+                    // Overlap
+                    res++;
+                    cur.removed = true;
+                    
+                    // Greedy choice: Remove the one that ends later to minimize impact on future
+                    // If prevEnd < curEnd, we keep prev (implicit, because we don't update prevEnd to curEnd)
+                    // If prevEnd > curEnd, we remove prev (logically swap) -> update prevEnd to curEnd
+                    // Actually code says: prevEnd = min(prevEnd, cur[1])
+                    // If we update prevEnd to smaller, it means we 'kept' the smaller ending one and 'removed' the larger ending one.
+                    
+                    // Let's reflect "which one removed" in visual accurately
+                    // The logic `re++` counts removals. `prevEnd = min` updates boundary.
+                    // If prevEnd was larger, it effectively means the 'previous' kept interval is now discarded in favor of current one?
+                    // Or standard logic: We have conflict. We must discard one. We discard the one with LARGER end.
+                    
+                    const oldEnd = prevEnd;
+                    prevEnd = Math.min(prevEnd, cur.val[1]);
+                    
+                    // Visual hack: finding which one was 'removed' in the past is hard without tracking history.
+                    // But effectively, if we shrink prevEnd, we are saying "Actually, I'd rather keep THIS current one and remove the previous one".
+                    // But `res` just counts.
+                    // Let's just mark `cur` as removed if we keep old prevEnd.
+                    // If we switch prevEnd, marks `cur` as kept and 'un-keep' the previous?? No, that's complex.
+                    // Simplified visual: Just visualize the boundary shrinking.
+                    // If we shrink boundary, it visually helps 
+                    
+                     steps.push({
+                        intervals: JSON.parse(JSON.stringify(intervals)), res, i, prevEnd,
+                        msg: `Overlap! Remove one. Greedy: Keep one ending earlier (min(${oldEnd}, ${cur.val[1]}) = ${prevEnd}).`, highlightLines: [9, 10],
+                        explanation: {title: "重疊移除", text: "發生重疊。貪婪策略：保留結束時間較早的那個，移除另一個，從而留出更多空間給後面。", formula: "prevEnd = min(prevEnd, end)"}
+                    });
+                }
+            }
+            
+            steps.push({
+                intervals: JSON.parse(JSON.stringify(intervals)), res, final: true,
+                msg: `Total Removed: ${res}.`, highlightLines: [13],
+                explanation: {title: "完成", text: `最少移除數量為 ${res}。`, formula: `return ${res}`}
+            });
+
+            return steps;
+        }
+
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            if(step.res !== undefined) document.getElementById('resDisplay').textContent = step.res;
+            if(step.prevEnd !== undefined) document.getElementById('endDisplay').textContent = step.prevEnd;
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            // Axis
+            const allPoints = [];
+            step.intervals.forEach(x => { allPoints.push(x.val[0]); allPoints.push(x.val[1]); });
+            const minVal = Math.min(...allPoints, 0);
+            const maxVal = Math.max(...allPoints, 10);
+            
+            const margin = {top: 20, right: 30, bottom: 40, left: 30};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const scaleX = d3.scaleLinear().domain([minVal - 1, maxVal + 1]).range([0, innerW]);
+            
+            const g = svg.selectAll(".main-g").data([0]);
+            const gEnter = g.enter().append("g").attr("class", "main-g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+            const gUpdate = g.merge(gEnter);
+            
+             // Draw Axis
+            const axis = d3.axisBottom(scaleX).ticks(10);
+            gUpdate.select(".axis").remove();
+            gUpdate.append("g").attr("class", "axis timeline-axis")
+                .attr("transform", `translate(0, ${innerH})`)
+                .call(axis);
+                
+            const rowH = 30;
+            const gap = 10;
+            
+            // Layout intervals as rows? Or stacked?
+            // Stacked helps see overlap. But maybe stagger overlapping ones?
+            // Simple approach: One row per interval, sorted
+            
+            const bars = gUpdate.selectAll(".int-g").data(step.intervals, d => d.id);
+            const barsEnter = bars.enter().append("g").attr("class", "int-g");
+            barsEnter.append("rect").attr("class", "interval-bar").attr("height", rowH).attr("rx", 5);
+            barsEnter.append("text").attr("class", "interval-text").attr("y", rowH/2 + 4);
+            
+            const barsUpdate = bars.merge(barsEnter)
+                 .transition().duration(200)
+                 .attr("transform", (d, i) => `translate(0, ${i * (rowH+gap)})`);
+                 
+            barsUpdate.select("rect")
+                .attr("x", d => scaleX(d.val[0]))
+                .attr("width", d => Math.max(2, scaleX(d.val[1]) - scaleX(d.val[0])))
+                .attr("class", (d, i) => {
+                     let c = "interval-bar";
+                     // We can infer kept/removed status
+                     if(d.removed) c += " removed";
+                     else if(d.kept) c += " kept"; // Only logic above sets kept
+                     
+                     if(step.i === i && !step.final) c += " current";
+                     return c;
+                });
+                
+             barsUpdate.select("text")
+                .attr("x", d => (scaleX(d.val[0]) + scaleX(d.val[1]))/2)
+                .text(d => `[${d.val}]`);
+                
+            bars.exit().remove();
+            
+            // Draw Boundary Line (PrevEnd)
+             gUpdate.selectAll(".boundary-line").remove();
+            if(step.prevEnd !== undefined) {
+                const x = scaleX(step.prevEnd);
+                gUpdate.append("line").attr("class", "boundary-line")
+                    .attr("x1", x).attr("y1", 0)
+                    .attr("x2", x).attr("y2", innerH)
+                    .attr("opacity", 0.5);
+                    
+                gUpdate.append("text").attr("x", x).attr("y", -5)
+                    .attr("fill", "#fbbf24").attr("text-anchor", "middle").attr("font-size", "10px").text("PrevEnd");
+            }
+        }
+
+        function runVisualizer() {
+            const intRaw = document.getElementById('intervalsInput').value;
+             
+             let intervals;
+             try {
+                 if(intRaw.trim().startsWith('[')) {
+                     try { intervals = JSON.parse(intRaw.replace(/'/g, '"')); }
+                     catch(e) { intervals = JSON.parse('[' + intRaw.replace(/'/g, '"') + ']'); }
+                 } else {
+                     intervals = JSON.parse('[' + intRaw.replace(/'/g, '"') + ']');
+                 }
+             } catch(e) { return; }
+             
+             if(!Array.isArray(intervals)) return;
+             
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(intervals));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

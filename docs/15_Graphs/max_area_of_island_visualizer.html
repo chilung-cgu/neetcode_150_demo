@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Max Area of Island - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 500px;
+        }
+
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .cell-rect { stroke: #475569; stroke-width: 1px; rx: 4; transition: fill 0.3s; }
+        .cell-rect.water { fill: #0f172a; opacity: 0.8; }
+        .cell-rect.land { fill: #22c55e; }
+        .cell-rect.visited { fill: #059669; stroke: #10b981; }
+        .cell-rect.active { stroke: #fbbf24; stroke-width: 3px; }
+        
+        .cell-text { fill: #fff; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row textarea { width: 300px; height: 60px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Max Area of Island (DFS)</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Grid (0/1):</label>
+                            <textarea id="gridInput">
+[[0,0,1,0,0,0,0,1,0,0,0,0,0],
+ [0,0,0,0,0,0,0,1,1,1,0,0,0],
+ [0,1,1,0,1,0,0,0,0,0,0,0,0],
+ [0,1,0,0,1,1,0,0,1,0,1,0,0],
+ [0,1,0,0,1,1,0,0,1,1,1,0,0],
+ [0,0,0,0,0,0,0,0,0,0,1,0,0],
+ [0,0,0,0,0,0,0,1,1,1,0,0,0],
+ [0,0,0,0,0,0,0,1,1,0,0,0,0]]</textarea>
+                        </div>
+                        <button onclick="runVisualizer()">Calculate Area</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Land</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#0f172a; border:1px solid #475569"></div>Water</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#059669; border:1px solid #10b981"></div>Visited</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                         <div class="stat-box">
+                            <div class="stat-label">Current Area</div>
+                            <div class="stat-val" id="currAreaDisplay">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Max Area</div>
+                            <div class="stat-val" id="maxAreaDisplay">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                             <option value="1000">Slow</option>
+                             <option value="500" selected>Normal</option>
+                             <option value="200">Fast</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'int maxAreaOfIsland(vector<vector<int>>& grid) {', id: 0 },
+            { line: '    int maxArea = 0;', id: 1 },
+            { line: '    for (int r = 0; r < rows; r++) {', id: 2 },
+            { line: '        for (int c = 0; c < cols; c++) {', id: 3 },
+            { line: '            if (grid[r][c] == 1) {', id: 4 },
+            { line: '                maxArea = max(maxArea, dfs(grid, r, c));', id: 5 },
+            { line: '            }', id: 6 },
+            { line: '        }', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return maxArea;', id: 9 },
+            { line: '}', id: 10 },
+            { line: 'int dfs(vector<vector<int>>& grid, int r, int c) {', id: 11 },
+            { line: '    if (r < 0 || c < 0 || r >= rows || c >= cols || grid[r][c] == 0)', id: 12 },
+            { line: '        return 0;', id: 13 },
+            { line: '    grid[r][c] = 0; // Mark visited', id: 14 },
+            { line: '    return 1 + dfs(r+1, c) + dfs(r-1, c) + dfs(r, c+1) + dfs(r, c-1);', id: 15 },
+            { line: '}', id: 16 }
+        ];
+
+        let viz;
+
+        function simulate(gridInput) {
+            const steps = [];
+            // Parse grid robustly, could be numbers 0/1 or chars '0'/'1'
+            // We standardize to numbers 0/1 for simulation
+            // But let's track visited as '2'.
+            const grid = gridInput.map(row => row.map(cell => (cell == 1 || cell == '1') ? 1 : 0));
+            const m = grid.length;
+            const n = grid[0].length;
+
+            steps.push({
+                grid: JSON.parse(JSON.stringify(grid)), maxArea: 0, 
+                i: -1, j: -1, msg: "Init. Find largest connected component.", highlightLines: [0, 1],
+                explanation: {title: "初始化", text: "準備掃描網格。找出最大的相連陸地面積。", formula: "maxArea = 0"}
+            });
+
+            let maxArea = 0;
+            let currentArea = 0;
+
+            function dfs(r, c) {
+                if (r < 0 || c < 0 || r >= m || c >= n || grid[r][c] !== 1) return 0;
+                
+                grid[r][c] = 2; // Visited
+                currentArea++;
+                
+                steps.push({
+                    grid: JSON.parse(JSON.stringify(grid)), maxArea, currArea: currentArea,
+                    i: r, j: c, visiting: true,
+                    msg: `DFS(${r},${c}): Land found. Area++ -> ${currentArea}`, highlightLines: [14, 15],
+                    explanation: {title: "訪問陸地", text: `訪問 (${r},${c})，區域面積 +1。繼續探索四周。`, formula: "area += 1"}
+                });
+                
+                dfs(r+1, c);
+                dfs(r-1, c);
+                dfs(r, c+1);
+                dfs(r, c-1);
+            }
+
+            for(let i=0; i<m; i++) {
+                for(let j=0; j<n; j++) {
+                    steps.push({
+                        grid: JSON.parse(JSON.stringify(grid)), maxArea, currArea: 0,
+                        i, j, scanning: true,
+                        msg: `Scanning (${i},${j})...`, highlightLines: [3],
+                        explanation: { title: "掃描", text: `檢查 (${i}, ${j}) 是否為未訪問的陸地。`, formula: ""}
+                    });
+                    
+                    if(grid[i][j] === 1) {
+                         currentArea = 0;
+                         steps.push({
+                            grid: JSON.parse(JSON.stringify(grid)), maxArea, currArea: 0,
+                            i, j, found: true,
+                            msg: `Found Land! Start DFS from (${i},${j}).`, highlightLines: [4, 5],
+                            explanation: {title: "發現新島嶼", text: "開始計算此島嶼面積。", formula: "dfs(r, c)"}
+                        });
+                        
+                        dfs(i, j);
+                        
+                        maxArea = Math.max(maxArea, currentArea);
+                        
+                        steps.push({
+                            grid: JSON.parse(JSON.stringify(grid)), maxArea, currArea: currentArea,
+                            i, j, finishedIsland: true,
+                            msg: `Finished Island. Area: ${currentArea}. New Max: ${maxArea}`, highlightLines: [5],
+                            explanation: {title: "更新最大面積", text: `比較當前島嶼面積與歷史最大值。`, formula: `max(${maxArea}, ${currentArea})`}
+                        });
+                    }
+                }
+            }
+            
+            steps.push({
+                grid: JSON.parse(JSON.stringify(grid)), maxArea, final: true,
+                msg: `Final Max Area: ${maxArea}`, highlightLines: [9],
+                explanation: {title: "完成", text: `最大島嶼面積為 ${maxArea}。`, formula: `return ${maxArea}`}
+            });
+            
+            return steps;
+        }
+
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            if(step.currArea !== undefined) document.getElementById('currAreaDisplay').textContent = step.currArea;
+            if(step.maxArea !== undefined) document.getElementById('maxAreaDisplay').textContent = step.maxArea;
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const grid = step.grid;
+            const m = grid.length;
+            const n = grid[0].length;
+            
+            const margin = {top: 20, left: 20, right: 20, bottom: 20};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const cellSize = Math.min(innerW / n, innerH / m, 40);
+            const gridW = n * cellSize;
+            const gridH = m * cellSize;
+            const startX = (width - gridW) / 2;
+            const startY = (height - gridH) / 2;
+
+            const cells = [];
+            for(let i=0; i<m; i++) {
+                for(let j=0; j<n; j++) {
+                    cells.push({i, j, val: grid[i][j]});
+                }
+            }
+
+            const g = svg.selectAll(".cell-g").data(cells, d => `${d.i}-${d.j}`);
+            const gEnter = g.enter().append("g").attr("class", "cell-g");
+
+            gEnter.append("rect").attr("class", "cell-rect")
+                .attr("width", cellSize).attr("height", cellSize);
+            
+            // Text is annoying for large grid, simple dots or empty
+            // Numbers 0, 1?
+            gEnter.append("text").attr("class", "cell-text")
+                .attr("x", cellSize/2).attr("y", cellSize/2);
+
+            const gUpdate = g.merge(gEnter)
+                .attr("transform", d => `translate(${startX + d.j*cellSize}, ${startY + d.i*cellSize})`);
+
+            gUpdate.select(".cell-rect").attr("class", d => {
+                 let c = "cell-rect";
+                 if(d.val === 1) c += " land";
+                 else if(d.val === 0) c += " water";
+                 else if(d.val === 2) c += " visited";
+                 
+                 if(step.i === d.i && step.j === d.j && !step.final) c += " active";
+                 return c;
+            });
+            
+            gUpdate.select(".cell-text").text(d => d.val === 1 ? "1" : (d.val === 2 ? "v" : "")); // Show 1 or v, or empty for water
+
+            g.exit().remove();
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('gridInput').value;
+            let grid;
+            try {
+                // Support both types
+                grid = JSON.parse(raw.replace(/'/g, '"'));
+            } catch(e) { alert("Invalid Grid JSON"); return; }
+            if(!Array.isArray(grid)) return;
+
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(grid));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>

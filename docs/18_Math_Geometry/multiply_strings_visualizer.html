@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiply Strings - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .digit-row { display: flex; gap: 5px; justify-content: center; align-items: center; }
+        
+        .digit-box { 
+            width: 40px; height: 50px; 
+            border: 1px solid #475569; background: #1e293b; border-radius: 4px; 
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.2rem; font-weight: bold; color: #cbd5e1;
+            position: relative;
+        }
+        .digit-box.active { border-color: #fbbf24; color: #fff; background: rgba(251, 191, 36, 0.2); }
+        .digit-box.target { border-color: #3b82f6; color: #fff; background: rgba(59, 130, 246, 0.2); }
+        
+        .idx-label { position: absolute; top: -15px; font-size: 0.6rem; color: #64748b; }
+
+        .calc-panel {
+             background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;
+             font-family: monospace; color: #cbd5e1; text-align: center;
+             min-width: 300px; min-height: 60px;
+             display: flex; flex-direction: column; justify-content: center;
+        }
+        .calc-main { font-size: 1.2rem; color: #fbbf24; }
+        .calc-sub { font-size: 0.8rem; color: #94a3b8; }
+
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px; border: 1px solid #475569;
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-row input { width: 100px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Multiply Strings</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Num1:</label>
+                            <input type="text" id="num1Input" value="123">
+                        </div>
+                        <div class="input-group">
+                            <label>Num2:</label>
+                            <input type="text" id="num2Input" value="45">
+                        </div>
+                        <button onclick="runVisualizer()">Multiply</button>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="stage-viewport">
+                        <div class="digit-row" id="num1Row"></div>
+                        <div style="font-size:1.5rem; color:#64748b">×</div>
+                        <div class="digit-row" id="num2Row"></div>
+                        
+                        <div class="calc-panel" id="calcDisplay">
+                            <div class="calc-main">-</div>
+                        </div>
+                        
+                        <div style="font-size:1.5rem; color:#64748b">=</div>
+                        <div class="digit-row" id="resRow"></div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                             <option value="1500">Slow</option>
+                             <option value="800" selected>Normal</option>
+                             <option value="300">Fast</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+             <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'string multiply(string num1, string num2) {', id: 0 },
+            { line: '    int n1=num1.size(), n2=num2.size();', id: 1 },
+            { line: '    vector<int> res(n1+n2, 0);', id: 2 },
+            { line: '    for (int i=n1-1; i>=0; i--) {', id: 3 },
+            { line: '        for (int j=n2-1; j>=0; j--) {', id: 4 },
+            { line: '            int mul = (num1[i]-"0") * (num2[j]-"0");', id: 5 },
+            { line: '            int sum = mul + res[i+j+1];', id: 6 },
+            { line: '            res[i+j+1] = sum % 10;', id: 7 },
+            { line: '            res[i+j] += sum / 10;', id: 8 },
+            { line: '        }', id: 9 },
+            { line: '    }', id: 10 },
+            { line: '    // Convert to string (skip leading zeros)', id: 11 },
+            { line: '    return str;', id: 12 },
+            { line: '}', id: 13 }
+        ];
+
+        let viz;
+
+        function simulate(num1, num2) {
+            const steps = [];
+            const n1 = num1.length;
+            const n2 = num2.length;
+            let res = Array(n1 + n2).fill(0);
+            
+            steps.push({
+                num1, num2, res: [...res],
+                msg: `Init result array size ${n1+n2}.`, highlightLines: [0, 1, 2],
+                explanation: {title: "初始化", text: "結果陣列長度為兩數長度之和。", formula: ""}
+            });
+            
+            for(let i=n1-1; i>=0; i--) {
+                for(let j=n2-1; j>=0; j--) {
+                    const d1 = parseInt(num1[i]);
+                    const d2 = parseInt(num2[j]);
+                    const product = d1 * d2;
+                    const p1 = i + j;     // High index (Carry)
+                    const p2 = i + j + 1; // Low index
+                    
+                    const sum = product + res[p2];
+                    
+                    steps.push({
+                        num1, num2, res: [...res], i, j,
+                        val1: d1, val2: d2, prod: product, p2,
+                        msg: `Mult ${d1} * ${d2} = ${product}. Add to res[${p2}] (${res[p2]}). Sum = ${sum}.`, highlightLines: [5, 6],
+                        explanation: {title: "乘法與加法", text: `計算 ${d1} x ${d2} = ${product}，並加上當前位置已有的進位/值 ${res[p2]}。`, formula: `sum = ${product} + ${res[p2]}`}
+                    });
+                    
+                    res[p2] = sum % 10;
+                    res[p1] += Math.floor(sum / 10);
+                    
+                    steps.push({
+                        num1, num2, res: [...res], i, j,
+                        val1: d1, val2: d2, prod: product, p2, p1,
+                        msg: `Set res[${p2}] = ${res[p2]}. Carry ${Math.floor(sum/10)} to res[${p1}].`, highlightLines: [7, 8],
+                        explanation: {title: "更新陣列", text: "將個位數存入 p2，進位加到 p1。", formula: ""}
+                    });
+                }
+            }
+            
+            // Skip leading zeros logic for visual final result
+            let str = "";
+            let start = 0;
+            while(start < res.length && res[start] === 0) start++;
+            if(start === res.length) str = "0";
+            else str = res.slice(start).join("");
+            
+            steps.push({
+                num1, num2, res: [...res], final: true, finalStr: str,
+                msg: `Done. Result: ${str}`, highlightLines: [11, 12],
+                explanation: {title: "完成", text: "轉換為字串並去除前導零。", formula: `return "${str}"`}
+            });
+            
+            return steps;
+        }
+
+        function renderRow(containerId, strOrArr, activeIdx=-1) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            // If string, iterate chars. If array, numbers.
+            const len = strOrArr.length;
+            for(let i=0; i<len; i++) {
+                const div = document.createElement('div');
+                div.className = 'digit-box';
+                div.textContent = strOrArr[i];
+                if(i === activeIdx) div.classList.add('active');
+                
+                const label = document.createElement('div');
+                label.className = 'idx-label';
+                label.textContent = i;
+                div.appendChild(label);
+                
+                container.appendChild(div);
+            }
+        }
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            renderRow('num1Row', step.num1, step.i);
+            renderRow('num2Row', step.num2, step.j);
+            
+            // Results array
+            const resContainer = document.getElementById('resRow');
+            resContainer.innerHTML = '';
+            step.res.forEach((d, k) => {
+                const div = document.createElement('div');
+                div.className = 'digit-box';
+                div.textContent = d;
+                
+                if(step.p2 === k) div.classList.add('active');
+                if(step.p1 === k) div.classList.add('target'); // Carry target
+                
+                const label = document.createElement('div');
+                label.className = 'idx-label';
+                label.textContent = k;
+                div.appendChild(label);
+                resContainer.appendChild(div);
+            });
+            
+            // Calc panel
+            if(!step.final && step.prod !== undefined) {
+                 document.getElementById('calcDisplay').innerHTML = `
+                    <div class="calc-main">${step.val1} × ${step.val2} = ${step.prod}</div>
+                    <div class="calc-sub">Sum: ${step.prod} + prev = ...</div>
+                 `;
+            } else if (step.final) {
+                document.getElementById('calcDisplay').innerHTML = `
+                    <div class="calc-main">Result: ${step.finalStr}</div>
+                `;
+            } else {
+                document.getElementById('calcDisplay').innerHTML = '<div class="calc-main">-</div>';
+            }
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+        }
+
+        function runVisualizer() {
+            const num1 = document.getElementById('num1Input').value;
+            const num2 = document.getElementById('num2Input').value;
+            // validate
+            if(!/^\d+$/.test(num1) || !/^\d+$/.test(num2)) { alert("Enter positive integers"); return; }
+            
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(num1, num2));
+        }
+
+        window.addEventListener('load', runVisualizer);
+    </script>
+</body>
+</html>
