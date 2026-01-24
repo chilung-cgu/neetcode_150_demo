@@ -3,31 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Max Product Subarray - 視覺化</title>
+    <title>Max Product Subarray - D3 動態視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 450px;
+        }
 
-        .array-container { display: flex; gap: 10px; justify-content: center; margin: 20px 0; overflow-x: auto; padding: 10px; }
-        .num-box { 
-            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; 
-            background: var(--viz-bg-secondary); border: 2px solid var(--viz-border); border-radius: 6px;
-            font-weight: bold; position: relative;
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 300px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
-        .num-box.active { border-color: var(--viz-primary); transform: scale(1.1); box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .num-group rect { fill: #334155; stroke: #475569; stroke-width: 2px; rx: 4; }
+        .num-group text { fill: #fff; font-family: monospace; font-size: 16px; font-weight: bold; text-anchor: middle; pointer-events: none; }
         
-        .var-grid { 
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 600px; margin: 20px auto; 
-            background: rgba(0,0,0,0.1); padding: 15px; border-radius: 8px;
+        .num-group.active rect { stroke: #f59e0b; stroke-width: 3px; filter: drop-shadow(0 0 5px #f59e0b); }
+        
+        .track-line { stroke: #94a3b8; stroke-width: 2px; stroke-dasharray: 4; opacity: 0.3; }
+        .val-point { r: 6; stroke: #fff; stroke-width: 2px; transition: all 0.3s; }
+        .val-point.max { fill: #22c55e; }
+        .val-point.min { fill: #ef4444; }
+        
+        .val-label { font-size: 10px; fill: #cbd5e1; text-anchor: middle; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
         }
-        .var-box { text-align: center; }
-        .var-name { font-size: 0.9rem; color: var(--viz-text-muted); margin-bottom: 5px; }
-        .var-val { font-size: 1.5rem; font-weight: bold; font-family: monospace; }
-        .var-val.pos { color: var(--viz-success); }
-        .var-val.neg { color: var(--viz-error); }
+        .stat-box { display: flex; flex-direction: column; align-items: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #22c55e; font-family: monospace; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 220px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; border: 1px solid #fff; }
     </style>
 </head>
 <body>
@@ -35,61 +68,77 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">最大乘積子陣列 (Max Product)</div>
+                <div class="viz-title">Max Product Subarray</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>數組 (nums):</label>
-                        <input type="text" id="numsInput" value="2, 3, -2, 4" style="width: 200px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Nums:</label>
+                            <input type="text" id="numsInput" value="2, 3, -2, 4">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Run</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="array-container" id="arrayDisplay"></div>
-                
-                <div class="var-grid">
-                    <div class="var-box">
-                        <div class="var-name">Cur Max</div>
-                        <div class="var-val" id="curMaxDisplay">-</div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Cur Max</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Cur Min</div>
                     </div>
-                    <div class="var-box">
-                        <div class="var-name">Cur Min</div>
-                        <div class="var-val" id="curMinDisplay">-</div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
                     </div>
-                    <div class="var-box">
-                        <div class="var-name">Result (Global Max)</div>
-                        <div class="var-val" id="resDisplay">-</div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Result</div>
+                            <div class="stat-val" id="resDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Cur Max</div>
+                            <div class="stat-val" id="maxDisplay" style="color:#22c55e">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Cur Min</div>
+                            <div class="stat-val" id="minDisplay" style="color:#ef4444">-</div>
+                        </div>
                     </div>
                 </div>
-                
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
@@ -98,129 +147,184 @@
             { line: '    int curMax = 1, curMin = 1;', id: 2 },
             { line: '    for (int n : nums) {', id: 3 },
             { line: '        int tmp = curMax * n;', id: 4 },
-            { line: '        curMax = max({n, curMax * n, curMin * n});', id: 5 },
-            { line: '        curMin = min({n, tmp, curMin * n});', id: 6 },
+            { line: '        curMax = max({n, n * curMax, n * curMin});', id: 5 },
+            { line: '        curMin = min({n, tmp, n * curMin});', id: 6 },
             { line: '        res = max(res, curMax);', id: 7 },
             { line: '    }', id: 8 },
             { line: '    return res;', id: 9 },
-            { line: '}', id: 10 },
+            { line: '}', id: 10 }
         ];
 
-        let currentNums = [2, 3, -2, 4];
+        let viz;
 
-        function runCustomInput() {
-            const str = document.getElementById('numsInput').value;
-            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            if (arr.length < 1 || arr.length > 10) {
-                alert('請輸入 1-10 個數字');
-                return;
-            }
-            currentNums = arr;
-            init();
-        }
-
-        function generateAlgorithmSteps(nums) {
+        function simulate(nums) {
             const steps = [];
-            let res = Math.max(...nums); // Initial res usually first element or max, actually code says nums[0] is fine but needs proper init. Code above logic: curMax=1 resets.
-            // Let's stick to NeetCode logic: maintain curMax/curMin
+            // To visualize we need history of curMax/curMin
+            // We'll plot them like a line chart above the array elements.
             
-            res = Math.max(...nums); // Technicality: code sample above uses slightly modified logic.
-            // Standard logic:
-            // curMax = 1, curMin = 1; ans = max(nums)
-            
-            steps.push({
-                idx: -1, curMax: 1, curMin: 1, res: res,
-                highlightLines: [0, 1, 2],
-                explanation: { title: '初始化', text: `Nums: [${nums.join(', ')}]<br>curMax=1, curMin=1`, formula: 'setup' }
-            });
-
+            let res = Math.max(...nums); // Initial estimate
             let curMax = 1;
             let curMin = 1;
+            
+            // To properly visualize, we need boundaries.
+            // But max product can grow super large. We might need log scale or just dynamic text?
+            // Let's store values and use dynamic scale in render.
+            
+            steps.push({
+                idx: -1, nums, curMax, curMin, res,
+                msg: "Init curMax=1, curMin=1", highlightLines: [0, 1, 2],
+                explanation: {
+                    title: "初始化",
+                    text: "維護兩個變數：curMax (當前連續最大) 和 curMin (當前連續最小)。",
+                    formula: "curMax=1, curMin=1"
+                }
+            });
 
             for (let i = 0; i < nums.length; i++) {
                 const n = nums[i];
                 if (n === 0) {
-                     curMax = 1; 
-                     curMin = 1;
-                     steps.push({
-                         idx: i, curMax, curMin, res,
-                         highlightLines: [3, 4, 5, 6],
-                         explanation: { title: `遇見 0`, text: `重置 curMax/curMin 為 1`, formula: 'Reset' }
-                     });
-                     continue; 
+                    curMax = 1; 
+                    curMin = 1;
+                    res = Math.max(res, 0); // 0 itself could be result
+                    steps.push({
+                        idx: i, nums, curMax, curMin, res, isZero: true,
+                        msg: `Encounter 0. Reset to 1.`, highlightLines: [3],
+                        explanation: {
+                            title: "遇到 0",
+                            text: "0 會中斷乘積連續性。重置 curMax/curMin 為 1，重新開始。",
+                            formula: "Reset"
+                        }
+                    });
+                    continue; 
                 }
                 
+                const oldMax = curMax;
                 const tmp = curMax * n;
-                const opt1 = n;
-                const opt2 = curMax * n;
-                const opt3 = curMin * n;
                 
-                const newMax = Math.max(opt1, opt2, opt3);
-                const newMin = Math.min(opt1, tmp, opt3); // tmp uses old curMax
+                const opts = [n, oldMax * n, curMin * n];
                 
-                // Show possibilities
-                steps.push({
-                    idx: i, curMax: newMax, curMin: newMin, res, calculating: true,
-                    opts: [opt1, opt2, opt3],
-                    highlightLines: [4, 5, 6],
-                    explanation: { 
-                        title: `處理 ${n}`, 
-                        text: `選項: n=${n}, Max*n=${opt2}, Min*n=${opt3}<br>新 Max=${newMax}, 新 Min=${newMin}`, 
-                        formula: `Update min/max` 
-                    }
-                });
-                
-                curMax = newMax;
-                curMin = newMin;
+                curMax = Math.max(n, oldMax * n, curMin * n);
+                curMin = Math.min(n, tmp, curMin * n);
                 res = Math.max(res, curMax);
                 
                 steps.push({
-                    idx: i, curMax, curMin, res,
-                    highlightLines: [7],
-                    explanation: { title: `更新結果`, text: `Global Max = ${res}`, formula: `res = max(${res}, ${curMax})` }
+                    idx: i, nums, curMax, curMin, res,
+                    opts,
+                    msg: `n=${n}. New Max=${curMax}, New Min=${curMin}`, 
+                    highlightLines: [5, 6, 7],
+                    explanation: {
+                        title: `處理數值 ${n}`,
+                        text: `比較三種情況：自己(${n})、乘以前最大(${oldMax * n})、乘以前最小(${curMin * n})。<br>前最小若是負數，乘以當前負數可能變最大。`,
+                        formula: `Max = max(${opts.join(', ')})`
+                    }
                 });
             }
-
+            
             steps.push({
-                idx: nums.length, curMax, curMin, res, final: true,
-                highlightLines: [9],
-                explanation: { title: '完成', text: `最大乘積: ${res}`, formula: `return ${res}` }
+                idx: nums.length, nums, curMax, curMin, res, final: true,
+                msg: `Finished. Result: ${res}`, highlightLines: [9],
+                explanation: { title: "完成", text: `最大乘積子陣列結果為 ${res}`, formula: `return ${res}` }
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    const container = document.getElementById('arrayDisplay');
-                    container.innerHTML = currentNums.map((n, i) => {
-                        let cls = 'num-box';
-                        if (i === step.idx) cls += ' active';
-                        return `<div class="${cls}">${n}</div>`;
-                    }).join('');
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 300;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('maxDisplay').textContent = step.curMax;
+            document.getElementById('minDisplay').textContent = step.curMin;
+            document.getElementById('resDisplay').textContent = step.res;
+            
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const nums = step.nums;
+            const n = nums.length;
+            
+            const margin = {top: 50, right: 30, bottom: 80, left: 30};
+            const innerW = width - margin.left - margin.right;
+            const itemW = Math.min(50, innerW / n);
+            const startX = (width - n * itemW) / 2;
+            const centerY = height - 40; // Array at bottom
+
+            // Draw Array
+            const numData = nums.map((v, i) => ({v, i}));
+            const groups = svg.selectAll(".num-group").data(numData);
+            
+            const enter = groups.enter().append("g").attr("class", "num-group");
+            enter.append("rect").attr("width", itemW-4).attr("height", 40).attr("y", -20);
+            enter.append("text").attr("x", itemW/2 - 2).attr("dy", 5);
+            
+            const merge = groups.merge(enter)
+                .attr("transform", (d, i) => `translate(${startX + i*itemW}, ${centerY})`);
+            
+            merge.select("rect").attr("class", d => d.i === step.idx ? "active" : ""); // Highlight current
+            
+            merge.select("text").text(d => d.v);
+            
+            groups.exit().remove();
+
+            // Visualize curMax/curMin as points above columns
+            // Since values can be wildly different scales (e.g. 2 vs 1000), typical graph is hard.
+            // We use simple markers + text label above the current index.
+            
+            // Markers Group
+            let markersData = [];
+            if (step.idx >= 0 && step.idx < n) {
+                markersData = [
+                    { type: 'max', val: step.curMax, i: step.idx, offset: -60 },
+                    { type: 'min', val: step.curMin, i: step.idx, offset: -30 }
+                ];
+            }
+            
+            const points = svg.selectAll(".val-point").data(markersData, d => d.type);
+            const pEnter = points.enter().append(step.idx >= 0 ? "circle" : "g"); // Handle init state
+            
+            // Actually better to just clear and redraw markers for simplicity in this case
+            svg.selectAll(".marker-g").remove();
+            
+            if (markersData.length > 0) {
+                const mg = svg.selectAll(".marker-g").data(markersData).enter().append("g").attr("class", "marker-g");
+                
+                mg.attr("transform", d => `translate(${startX + d.i * itemW + itemW/2 - 2}, ${centerY + d.offset})`);
+                
+                mg.append("circle").attr("r", 6)
+                    .attr("fill", d => d.type === 'max' ? '#22c55e' : '#ef4444');
+                
+                mg.append("text").attr("text-anchor", "middle").attr("dy", -10).attr("fill", "#fff").style("font-size", "12px")
+                    .text(d => `${d.type}: ${d.val}`);
                     
-                    const setVal = (id, val, isMax) => {
-                        const el = document.getElementById(id);
-                        el.textContent = val;
-                        // Color
-                        el.className = 'var-val';
-                        if (val > 0) el.classList.add('pos');
-                        if (val < 0) el.classList.add('neg');
-                    };
-                    
-                    setVal('curMaxDisplay', step.curMax);
-                    setVal('curMinDisplay', step.curMin);
-                    setVal('resDisplay', step.res);
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(currentNums));
+                // Connect lines
+                mg.append("line").attr("y1", 0).attr("y2", -d => d.offset - 20) // down to box
+                    .attr("stroke", d => d.type === 'max' ? '#22c55e' : '#ef4444')
+                    .attr("stroke-dasharray", "2,2");
+            }
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runVisualizer() {
+            const raw = document.getElementById('numsInput').value;
+            const nums = raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            if(nums.length === 0) return;
+            
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(nums));
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

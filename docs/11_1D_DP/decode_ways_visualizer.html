@@ -3,43 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Decode Ways - 視覺化</title>
+    <title>Decode Ways - D3 路徑計數視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 480px;
+        }
 
-        .string-container { display: flex; gap: 4px; justify-content: center; margin: 20px 0; }
-        .char-box { 
-            width: 50px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            border-radius: 6px; background: var(--viz-bg-secondary); border: 2px solid var(--viz-border); transition: all 0.3s;
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
             position: relative;
         }
-        .char-box .val { font-size: 1.4rem; font-weight: bold; }
-        .char-box .idx { font-size: 0.7rem; opacity: 0.6; }
-        
-        .char-box.valid { border-color: var(--viz-success); }
-        .char-box.invalid { border-color: var(--viz-error); opacity: 0.5; }
-        
-        .char-box.single { box-shadow: 0 0 0 2px var(--viz-primary); }
-        .char-box.pair-l { box-shadow: -2px 0 0 2px var(--viz-warning); }
-        .char-box.pair-r { box-shadow: 2px 0 0 2px var(--viz-warning); }
-        
-        /* Connecting pair visually */
-        .pair-connector {
-            position: absolute; top: 10px; height: 4px; background: var(--viz-warning); z-index: 10;
-        }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .dp-row { display: flex; gap: 4px; justify-content: center; margin-top: 20px; }
-        .dp-cell { 
-            width: 50px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: var(--viz-bg-secondary); border: 1px solid var(--viz-border); border-radius: 4px;
+        .node-circle { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; }
+        .node-circle.active { stroke: #f59e0b; stroke-width: 3px; fill: #475569; filter: drop-shadow(0 0 5px #f59e0b); }
+        .node-circle.visited { fill: #22c55e; stroke: #86efac; }
+        
+        .node-text { fill: #fff; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; pointer-events: none; }
+        .dp-text { fill: #fbbf24; font-size: 12px; text-anchor: middle; pointer-events: none; }
+        
+        .edge-path { stroke: #94a3b8; stroke-width: 2px; fill: none; opacity: 0.2; marker-end: url(#arrow); transition: all 0.3s; }
+        .edge-path.valid { stroke: #22c55e; opacity: 0.8; stroke-width: 3px; }
+        .edge-path.invalid { stroke: #ef4444; opacity: 0.3; stroke-dasharray: 4; }
+        .edge-path.processing { stroke: #f59e0b; opacity: 1; stroke-width: 3px; filter: drop-shadow(0 0 3px #f59e0b); }
+        
+        .char-label { fill: #94a3b8; font-family: monospace; font-size: 16px; text-anchor: middle; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
         }
-        .dp-cell.active { background: var(--viz-primary); color: white; border-color: transparent; }
-        .dp-cell .cell-val { font-size: 1.1rem; font-weight: bold; }
-        .dp-cell .cell-idx { font-size: 0.7rem; opacity: 0.8; }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; border: 1px solid #fff; }
     </style>
 </head>
 <body>
@@ -47,228 +69,293 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">解碼方法數 (Decode Ways)</div>
+                <div class="viz-title">Decode Ways (Path Counting)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>數字字串 (s):</label>
-                        <input type="text" id="strInput" value="226" style="width: 150px;" maxlength="10">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Input String:</label>
+                            <input type="text" id="strInput" value="22610">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Decode</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div style="text-align: center; font-size: 0.9rem; color: var(--viz-text-muted); margin-bottom: 10px;">
-                    'A' -> 1, 'B' -> 2 ... 'Z' -> 26
+
+                <div class="visualization-area">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Valid Path</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Invalid</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Checking</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="25" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#94a3b8"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Total Ways</div>
+                            <div class="stat-val" id="resultDisplay">-</div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="string-container" id="strDisplay"></div>
-                <div style="text-align: center; margin-top: 10px;">DP Table (dp[i] = ways to decode s[0...i-1])</div>
-                <div class="dp-row" id="dpDisplay"></div>
-                
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">解碼總數</div><div class="state-value" id="resultDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'int numDecodings(string s) {', id: 0 },
-            { line: '    if (s[0] == \'0\') return 0;', id: 1 },
-            { line: '    int n = s.size();', id: 2 },
-            { line: '    vector<int> dp(n + 1);', id: 3 },
-            { line: '    dp[0] = 1; dp[1] = 1;', id: 4 },
-            { line: '    for (int i = 2; i <= n; i++) {', id: 5 },
-            { line: '        if (s[i-1] != \'0\')', id: 6 },
-            { line: '            dp[i] += dp[i-1];', id: 7 },
-            { line: '        int two = stoi(s.substr(i-2, 2));', id: 8 },
-            { line: '        if (two >= 10 && two <= 26)', id: 9 },
-            { line: '            dp[i] += dp[i-2];', id: 10 },
-            { line: '    }', id: 11 },
-            { line: '    return dp[n];', id: 12 },
-            { line: '}', id: 13 },
+            { line: '    int n = s.size();', id: 1 },
+            { line: '    vector<int> dp(n + 1, 0);', id: 2 },
+            { line: '    dp[0] = 1;', id: 3 },
+            { line: '    for (int i = 1; i <= n; i++) {', id: 4 },
+            { line: '        // 1 digit: s[i-1]', id: 5 },
+            { line: '        if (s[i-1] != \'0\') dp[i] += dp[i-1];', id: 6 },
+            { line: '        // 2 digits: s[i-2...i-1]', id: 7 },
+            { line: '        if (valid(s.substr(i-2, 2))) dp[i] += dp[i-2];', id: 8 },
+            { line: '    }', id: 9 },
+            { line: '    return dp[n];', id: 10 },
+            { line: '}', id: 11 }
         ];
 
-        let currentStr = "226";
+        let viz;
 
-        function runCustomInput() {
-            let s = document.getElementById('strInput').value.trim();
-            if (!/^\d+$/.test(s) || s.length > 15) {
-                alert('請輸入 1-15 位數字');
-                return;
-            }
-            currentStr = s;
-            init();
-        }
-
-        function generateAlgorithmSteps(s) {
+        function simulate(s) {
             const steps = [];
             const n = s.length;
             const dp = new Array(n + 1).fill(0);
             
             steps.push({
-                idx: 0, dp: [...dp], 
-                highlightLines: [0, 1, 2, 3],
-                explanation: { title: '初始化', text: `Input: "${s}"<br>DP 長度: ${n+1}`, formula: 'dp[0]=1' }
+                idx: 0, dp: [...dp], s,
+                msg: "Init DP array.", highlightLines: [0, 1, 2]
             });
 
-            if (s[0] === '0') {
-                steps.push({
-                   final: true, result: 0,
-                   highlightLines: [1],
-                   explanation: { title: '無效開頭', text: '首字元為 0，無法解碼', formula: 'return 0' }
-                });
-                return steps;
+            if(s[0] === '0') {
+               // Technically base case logic, but usually loop handles it or explicit check
+               // For visual, start loop and fail.
             }
 
             dp[0] = 1;
-            dp[1] = 1; // Since s[0] != '0' confirmed above
-            
             steps.push({
-                idx: 1, dp: [...dp],
-                highlightLines: [4],
-                explanation: { title: 'Base Case', text: `dp[0]=1, dp[1]=1 ( "${s[0]}" only 1 way)`, formula: 'dp[1]=1' }
+                idx: 0, dp: [...dp], s,
+                msg: "dp[0] = 1 (Base case: empty string 1 way)", highlightLines: [3]
             });
 
-            for (let i = 2; i <= n; i++) {
-                const oneDigit = parseInt(s.substring(i-1, i));
-                const twoDigits = parseInt(s.substring(i-2, i));
+            for (let i = 1; i <= n; i++) {
+                // Check One digit
+                const oneDigit = s[i-1];
+                let added1 = 0;
                 
                 steps.push({
-                    idx: i, dp: [...dp], calculating: true,
-                    one: oneDigit, two: twoDigits,
-                    highlightLines: [5],
-                    explanation: { title: `Step ${i}`, text: `檢查 '${s[i-1]}' (單) 和 '${s[i-2]}${s[i-1]}' (雙)`, formula: 'Check' }
+                    idx: i, dp: [...dp], s, calculating: true, type: 'one', 
+                    val: oneDigit,
+                    msg: `Check 1 digit '${oneDigit}'`, highlightLines: [6]
                 });
-
-                let val = 0;
-                // One digit check
-                if (oneDigit !== 0) {
-                    val += dp[i-1];
-                    steps.push({
-                        idx: i, dp: [...dp], calculating: true, type: 'one',
-                        one: oneDigit, two: twoDigits,
-                        highlightLines: [6, 7],
-                        explanation: { title: '單數字解碼', text: `'${oneDigit}' 有效 (1-9)<br>由 dp[${i-1}] 轉移: +${dp[i-1]}`, formula: `dp[${i}] += ${dp[i-1]}` }
-                    });
-                } else {
-                     steps.push({
-                        idx: i, dp: [...dp], calculating: true, type: 'one-fail',
-                        one: oneDigit, two: twoDigits,
-                        highlightLines: [6],
-                        explanation: { title: '單數字無效', text: `'${oneDigit}' 是 0，無法單獨解碼`, formula: 'Skip' }
-                    });
-                }
                 
-                // Two digits check
-                if (twoDigits >= 10 && twoDigits <= 26) {
-                    val += dp[i-2];
+                if (oneDigit !== '0') {
+                    added1 = dp[i-1];
+                    dp[i] += added1;
                     steps.push({
-                        idx: i, dp: [...dp], calculating: true, type: 'two',
-                         one: oneDigit, two: twoDigits, valSoFar: val,
-                        highlightLines: [8, 9, 10],
-                        explanation: { title: '雙數字解碼', text: `'${twoDigits}' 有效 (10-26)<br>由 dp[${i-2}] 轉移: +${dp[i-2]}`, formula: `dp[${i}] += ${dp[i-2]}` }
+                        idx: i, dp: [...dp], s, valid: 'one',
+                        msg: `'${oneDigit}' is valid (1-9). +${added1} ways from dp[${i-1}]`, highlightLines: [6]
                     });
                 } else {
                     steps.push({
-                        idx: i, dp: [...dp], calculating: true, type: 'two-fail',
-                        one: oneDigit, two: twoDigits,
-                        highlightLines: [8, 9],
-                        explanation: { title: '雙數字無效', text: `'${twoDigits}' 不在 10-26 範圍內`, formula: 'Skip' }
+                        idx: i, dp: [...dp], s, invalid: 'one',
+                        msg: `'${oneDigit}' is invalid (must be 1-9)`, highlightLines: [6]
                     });
                 }
-
-                dp[i] = val;
-                steps.push({
-                    idx: i, dp: [...dp], 
-                    highlightLines: [5],
-                    explanation: { title: `Step ${i} 結果`, text: `解碼方法總數: ${val}`, formula: `dp[${i}] = ${val}` }
-                });
+                
+                // Check Two digits
+                if (i >= 2) {
+                    const twoDigits = s.substring(i-2, i);
+                    const val = parseInt(twoDigits);
+                    let added2 = 0;
+                    
+                    steps.push({
+                        idx: i, dp: [...dp], s, calculating: true, type: 'two',
+                        val: twoDigits,
+                        msg: `Check 2 digits '${twoDigits}'`, highlightLines: [8]
+                    });
+                    
+                    if (val >= 10 && val <= 26) {
+                        added2 = dp[i-2];
+                        dp[i] += added2;
+                        steps.push({
+                            idx: i, dp: [...dp], s, valid: 'two',
+                            msg: `'${twoDigits}' is valid (10-26). +${added2} ways from dp[${i-2}]`, highlightLines: [8]
+                        });
+                    } else {
+                        steps.push({
+                            idx: i, dp: [...dp], s, invalid: 'two',
+                            msg: `'${twoDigits}' is invalid range.`, highlightLines: [8]
+                        });
+                    }
+                }
             }
-
+            
             steps.push({
-                idx: n, dp: [...dp], result: dp[n], final: true,
-                highlightLines: [12],
-                explanation: { title: '完成', text: `總共有 ${dp[n]} 種解碼方式`, formula: `return ${dp[n]}` }
+                idx: n, dp: [...dp], s, result: dp[n], final: true,
+                msg: `Finished. Total Ways: ${dp[n]}`, highlightLines: [10]
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // String Display
-                    const strDiv = document.getElementById('strDisplay');
-                    strDiv.innerHTML = [...currentStr].map((c, i) => {
-                        let cls = 'char-box';
-                        // Logic to highlight currently checked chars
-                        // step.idx corresponds to length being built, so char indices are step.idx-1 and step.idx-2
-                        if (step.calculating) {
-                            if (step.type === 'one' || step.type === 'one-fail') {
-                                if (i === step.idx - 1) cls += ' single';
-                            } else if (step.type === 'two' || step.type === 'two-fail') {
-                                if (i === step.idx - 2) cls += ' pair-l';
-                                if (i === step.idx - 1) cls += ' pair-r';
-                            } else {
-                                // Default checking phase
-                                if (i === step.idx - 1) cls += ' single'; // Focus current
-                            }
-                        }
-                        
-                        return `<div class="${cls}">
-                            <div class="val">${c}</div>
-                            <div class="idx">${i}</div>
-                        </div>`;
-                    }).join('');
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
-                    // DP Display
-                    const dpDiv = document.getElementById('dpDisplay');
-                    dpDiv.innerHTML = (step.dp || []).map((v, i) => {
-                         let cls = 'dp-cell';
-                         if (i === step.idx) cls += ' active';
-                         return `<div class="${cls}">
-                            <div class="cell-val">${v}</div>
-                            <div class="cell-idx">dp[${i}]</div>
-                         </div>`;
-                    }).join('');
-                    
-                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : (step.dp ? step.dp[step.dp.length-1] || '-' : '-');
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : step.dp[step.dp.length-1] || 0;
+
+            const n = step.s.length;
+            
+            // Draw Nodes 0 to N arranged horizontally
+            const margin = {top: 100, right: 50, bottom: 50, left: 50};
+            const innerW = width - margin.left - margin.right;
+            const nodeStep = innerW / n;
+            
+            // Edges (History of valid moves)
+            // We can infer edges from dp logic in simulation? 
+            // Or just draw arcs based on current step status?
+            // Let's draw node structure.
+            
+            const nodesData = d3.range(0, n+1);
+            
+            const nodes = svg.selectAll(".node-g").data(nodesData);
+            const nodesEnter = nodes.enter().append("g").attr("class", "node-g");
+            
+            nodesEnter.append("circle").attr("r", 15).attr("class", "node-circle");
+            nodesEnter.append("text").attr("class", "node-text").attr("dy", 5).text(d => d);
+            nodesEnter.append("text").attr("class", "dp-text").attr("dy", 30).text(d => d === 0 ? "1" : ""); // Initial dp[0]
+            
+            const nodesMerge = nodes.merge(nodesEnter)
+                .attr("transform", d => `translate(${margin.left + d*nodeStep}, ${height/2})`);
+            
+            nodesMerge.select(".dp-text").text(d => step.dp[d]);
+            
+            nodesMerge.select(".node-circle")
+                .attr("class", d => {
+                    let c = "node-circle";
+                    if (step.idx === d) c += " active"; // target
+                    if (d < step.idx) c += " visited";
+                    return c;
+                });
+            
+            nodes.exit().remove();
+            
+            // Draw Chars between nodes
+            // Char s[i] is between node i and i+1
+            const charData = step.s.split('').map((c, i) => ({c, i}));
+            const chars = svg.selectAll(".char-label").data(charData);
+            const charsEnter = chars.enter().append("text").attr("class", "char-label");
+            chars.merge(charsEnter)
+                .attr("x", d => margin.left + d.i*nodeStep + nodeStep/2)
+                .attr("y", height/2 - 30)
+                .text(d => d.c);
+            chars.exit().remove();
+            
+            // Draw Edges (Active only? or all valid?)
+            // We want to persist valid edges.
+            // But simulation step doesn't store edge list.
+            // Can assume edges exist if dp propagation happened.
+            // Visually showing "Checking" edge is important.
+            
+            const edges = [];
+            
+            // Add checking edge
+            if (step.calculating) {
+                if (step.type === 'one' || step.type === 'one-fail') {
+                    // Edge from i-1 to i
+                    edges.push({source: step.idx-1, target: step.idx, type: 'one', status: 'processing'});
+                } else if (step.type === 'two' || step.type === 'two-fail') {
+                    // Edge from i-2 to i
+                    edges.push({source: step.idx-2, target: step.idx, type: 'two', status: 'processing'});
                 }
-            });
-            viz.setSteps(generateAlgorithmSteps(currentStr));
+            }
+            if (step.valid) {
+                 if (step.valid === 'one') edges.push({source: step.idx-1, target: step.idx, type: 'one', status: 'valid'});
+                 else edges.push({source: step.idx-2, target: step.idx, type: 'two', status: 'valid'});
+            }
+            if (step.invalid) {
+                 if (step.invalid === 'one') edges.push({source: step.idx-1, target: step.idx, type: 'one', status: 'invalid'});
+                 else edges.push({source: step.idx-2, target: step.idx, type: 'two', status: 'invalid'});
+            }
+            
+            // Persistent valid edges? Simulating full redraw is better if possible.
+            // Simplified: Just show current check.
+            
+            // Arc path generator
+            const arcPath = (src, tgt) => {
+                const x1 = margin.left + src * nodeStep;
+                const x2 = margin.left + tgt * nodeStep;
+                const dist = x2 - x1;
+                const h = dist * 0.7; // arc height
+                return `M${x1},${height/2} Q${(x1+x2)/2},${height/2 - h} ${x2},${height/2}`;
+            };
+            
+            const edgeSel = svg.selectAll(".edge-path").data(edges, d => d.type+d.status);
+            edgeSel.enter().append("path").attr("class", "edge-path fade-in")
+                .merge(edgeSel)
+                .attr("d", d => arcPath(d.source, d.target))
+                .attr("class", d => `edge-path ${d.status}`);
+            
+            edgeSel.exit().remove();
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runVisualizer() {
+            const s = document.getElementById('strInput').value;
+            if(!s) return;
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(s));
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

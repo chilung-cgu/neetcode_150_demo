@@ -3,43 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partition Equal Subset Sum - 視覺化</title>
+    <title>Partition Equal Subset Sum - D3 動態視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .nums-container { display: flex; gap: 8px; justify-content: center; margin: 20px 0; }
-        .num-box { 
-            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; 
-            background: var(--viz-bg-secondary); border: 2px solid var(--viz-border); border-radius: 50%;
-            font-weight: bold; transition: all 0.3s;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 500px;
         }
-        .num-box.active { background: var(--viz-warning); color: #0f172a; border-color: transparent; transform: scale(1.1); }
+
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .num-rect { fill: #334155; stroke: #475569; stroke-width: 2px; rx: 6; }
+        .num-rect.active { stroke: #f59e0b; stroke-width: 3px; filter: drop-shadow(0 0 5px #f59e0b); }
+        .num-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; pointer-events: none; }
         
-        .dp-grid-container { 
-            overflow-x: auto; padding: 10px; margin-top: 20px; 
-            max-width: 100%; display: flex; justify-content: center;
-        }
-        .dp-row { display: flex; gap: 2px; }
-        .dp-cell { 
-            display: flex; flex-direction: column; width: 35px; min-width: 35px;
-        }
-        .dp-header {
-            font-size: 0.7rem; color: var(--viz-text-muted); text-align: center; margin-bottom: 2px;
-        }
-        .dp-val {
-            height: 35px; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; font-size: 0.8rem;
-            background: rgba(255, 255, 255, 0.05); border-radius: 4px; border: 1px solid transparent;
-        }
-        .dp-val.true { background: var(--viz-success); color: #0f172a; }
-        .dp-val.false { background: var(--viz-error); opacity: 0.2; }
-        .dp-val.target { border: 2px solid var(--viz-white); }
-        .dp-val.new { box-shadow: 0 0 10px var(--viz-success); z-index: 2; }
+        .sum-circle { fill: #3b82f6; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .sum-circle.target { fill: #22c55e; stroke: #fff; stroke-width: 2px; }
+        .sum-circle.base { fill: #64748b; }
+        .sum-circle.new { fill: #a855f7; }
+        
+        .axis-line { stroke: #475569; stroke-width: 2px; }
+        .tick-line { stroke: #475569; stroke-width: 1px; }
+        .tick-text { fill: #94a3b8; font-size: 10px; text-anchor: middle; }
+        
+        .expand-arc { fill: none; stroke: #fbbf24; stroke-width: 2px; marker-end: url(#arrow); stroke-dasharray: 4; opacity: 0.6; }
 
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+        }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 200px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #fff; }
     </style>
 </head>
 <body>
@@ -47,246 +70,338 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">分割等和子集 (Partition Equal Subset Sum)</div>
+                <div class="viz-title">Partition Equal Subset Sum (Set DP)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>集合 (nums):</label>
-                        <input type="text" id="numsInput" value="1, 5, 11, 5" style="width: 200px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Nums:</label>
+                            <input type="text" id="numsInput" value="1, 5, 11, 5">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Partition</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="nums-container" id="numsDisplay"></div>
-                
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">總和 (Sum)</div><div class="state-value" id="sumDisplay">-</div></div>
-                    <div class="state-item"><div class="state-label">目標 (Target)</div><div class="state-value" id="targetDisplay">-</div></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Existing Sum</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#a855f7"></div>New Sum</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Target</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#f59e0b"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Total Sum</div>
+                            <div class="stat-val" id="sumDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Target</div>
+                            <div class="stat-val" id="targetDisplay">-</div>
+                        </div>
+                    </div>
                 </div>
 
-                <div style="text-align: center; margin-top: 15px; font-size: 0.9rem;">DP Array (Boolean) - reachable sums</div>
-                <div class="dp-grid-container">
-                    <div class="dp-row" id="dpDisplay"></div>
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n * sum)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(sum)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">Result</div><div class="state-value" id="resDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'bool canPartition(vector<int>& nums) {', id: 0 },
             { line: '    int sum = accumulate(nums.begin(), nums.end(), 0);', id: 1 },
             { line: '    if (sum % 2 != 0) return false;', id: 2 },
-            { line: '    int target = sum / 2;', id: 3 },
-            { line: '    unordered_set<int> dp;', id: 4 },
-            { line: '    dp.insert(0);', id: 5 },
-            { line: '    for (int i = 0; i < nums.size(); i++) {', id: 6 },
-            { line: '        unordered_set<int> nextDP = dp;', id: 7 },
-            { line: '        for (int t : dp) {', id: 8 },
-            { line: '            if (t + nums[i] == target) return true;', id: 9 },
-            { line: '            nextDP.insert(t + nums[i]);', id: 10 },
+            { line: '    unordered_set<int> dp; dp.insert(0);', id: 3 },
+            { line: '    int target = sum / 2;', id: 4 },
+            { line: '    for (int i = 0; i < nums.size(); i++) {', id: 5 },
+            { line: '        unordered_set<int> nextDP;', id: 6 },
+            { line: '        for (int t : dp) {', id: 7 },
+            { line: '            if (t + nums[i] == target) return true;', id: 8 },
+            { line: '            nextDP.insert(t + nums[i]);', id: 9 },
+            { line: '            nextDP.insert(t);', id: 10 },
             { line: '        }', id: 11 },
             { line: '        dp = nextDP;', id: 12 },
             { line: '    }', id: 13 },
-            { line: '    return dp.count(target);', id: 14 },
-            { line: '}', id: 15 },
+            { line: '    return false;', id: 14 },
+            { line: '}', id: 15 }
         ];
-        // Note: Using Set logic to visualize, basically same as boolean array but sparser. 
-        // But for visualization of 0/1 Knapsack often array is clearer for dense ranges. 
-        // NeetCode video uses Set. I'll stick to Set logic for code display but might visualize array if range small, 
-        // or just visualize the Set elements if range large. 
-        // Given constraints usually sum <= 200 * 100 = 20000. Array fits.
-        // Let's use Boolean Array logic for visualization to show "reaching target".
 
-        let currentNums = [1, 5, 11, 5];
+        let viz;
 
-        function runCustomInput() {
-            const str = document.getElementById('numsInput').value;
-            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            if (arr.length < 1 || arr.length > 10) {
-                alert('請輸入 1-10 個數字');
-                return;
-            }
-            // Constraint check for sum
-            const sum = arr.reduce((a,b)=>a+b,0);
-            if (sum > 100) {
-                alert('為了視覺化效果，總和請勿超過 100');
-                return;
-            }
-            
-            currentNums = arr;
-            init();
-        }
-
-        function generateAlgorithmSteps(nums) {
+        function simulate(nums) {
             const steps = [];
             const sum = nums.reduce((a,b)=>a+b, 0);
             
             steps.push({
-                idx: -1, dp: new Set([0]), sum, target: sum/2, 
-                highlightLines: [0, 1],
-                explanation: { title: '初始化', text: `Nums: [${nums.join(',')}]<br>Total Sum: ${sum}`, formula: `sum=${sum}` }
+                idx: -1, nums, dp: [0], sum, 
+                msg: `Init: Sum=${sum}`, highlightLines: [0, 1],
+                explanation: {
+                    title: "計算總和",
+                    text: `總和為 ${sum}。如果總和是奇數，則無法平分成兩個整數子集。`,
+                    formula: `Sum = ${sum}`
+                }
             });
 
             if (sum % 2 !== 0) {
                 steps.push({
-                    final: true, result: false, sum, target: -1,
-                    highlightLines: [2],
-                    explanation: { title: '奇數總和', text: '無法平分', formula: 'return false' }
+                    sum, result: false, final: true, dp: [],
+                    msg: "Sum is odd. Impossible.", highlightLines: [2],
+                    explanation: { title: "奇數總和", text: "總和是奇數，返回 false。", formula: "return false" } 
                 });
                 return steps;
             }
 
             const target = sum / 2;
-            let dp = new Set();
-            dp.add(0);
-
+            let dp = new Set([0]);
+            
             steps.push({
-                idx: -1, dp: new Set(dp), sum, target,
-                highlightLines: [3, 4, 5],
-                explanation: { title: '目標設定', text: `Target = ${target} (Sum/2)<br>DP Set: {0}`, formula: `target=${target}` }
+                idx: -1, nums, dp: Array.from(dp), sum, target,
+                msg: `Target = ${sum}/2 = ${target}`, highlightLines: [3, 4],
+                explanation: {
+                    title: "設定目標",
+                    text: `目標是找到子集和為 ${target}。初始化 DP Set 包含 {0}。`,
+                    formula: `Target = ${target}, DP={0}`
+                }
             });
 
             for (let i = 0; i < nums.length; i++) {
                 const num = nums[i];
-                const nextDP = new Set(dp);
-                const newSums = [];
-
+                // Visualize "Before processing num"
                 steps.push({
-                    idx: i, dp: new Set(dp), sum, target,
-                    highlightLines: [6, 7],
-                    explanation: { title: `處理 nums[${i}] = ${num}`, text: `遍歷當前所有可能的和`, formula: `Check ${num}` }
+                    idx: i, nums, dp: Array.from(dp), sum, target, num,
+                    msg: `Process nums[${i}] = ${num}`, highlightLines: [5],
+                    explanation: {
+                        title: `處理數字 ${num}`,
+                        text: `對於集合中現有的每個和 t，我們都嘗試加上 ${num} 來產生新的和。`,
+                        formula: `Check all t in DP`
+                    }
                 });
 
+                const currentDPList = Array.from(dp);
+                const newSums = [];
+                const nextDP = new Set(dp);
                 let found = false;
-                for (let t of dp) {
-                    const newSum = t + num;
-                    if (newSum === target) {
-                         found = true;
-                         steps.push({
-                             idx: i, dp: new Set(dp), sum, target, foundSum: newSum,
-                             highlightLines: [9],
-                             explanation: { title: '找到目標！', text: `${t} + ${num} = ${target}<br>完成分割`, formula: 'return true' }
-                         });
-                         break;
+
+                for (let t of currentDPList) {
+                    const nextVal = t + num;
+                    if (nextVal === target) {
+                        steps.push({
+                            idx: i, nums, dp: Array.from(dp), sum, target, num, 
+                            foundSum: nextVal, sourceSum: t,
+                            msg: `Found ${t} + ${num} = ${target}!`, highlightLines: [8],
+                            explanation: {
+                                title: "找到目標！",
+                                text: `現有和 ${t} 加上 ${num} 等於目標 ${target}。任務完成。`,
+                                formula: "return true"
+                            }
+                        });
+                        found = true;
+                        break;
                     }
-                    if (newSum < target) { // optimization
-                        if (!dp.has(newSum)) {
-                            newSums.push(newSum);
-                            nextDP.add(newSum);
-                        }
+                    if (nextVal < target && !dp.has(nextVal)) {
+                        newSums.push({val: nextVal, src: t});
+                        nextDP.add(nextVal);
                     }
                 }
                 
                 if (found) {
+                    dp = nextDP; // just for final state consistency if we continued
+                    // But we return early
+                    steps.push({
+                        idx: i, nums, dp: Array.from(dp), sum, target, result: true, final: true,
+                        msg: "Result: True", highlightLines: [8],
+                        explanation: { title: "完成", text: "成功分割。", formula: "True" }
+                    });
                     return steps;
                 }
                 
+                // Show update
                 dp = nextDP;
                 steps.push({
-                    idx: i, dp: new Set(dp), sum, target, newSums: newSums,
-                    highlightLines: [10, 11, 12],
-                    explanation: { title: `更新 DP Set`, text: `新增和: ${newSums.join(', ') || '無'}`, formula: 'Union' }
+                    idx: i, nums, dp: Array.from(dp), sum, target, num,
+                    newSums: newSums, // {val, src}
+                    msg: `Updated DP with new sums from +${num}`, highlightLines: [12],
+                    explanation: {
+                        title: "更新 DP 集合",
+                        text: `新增了 ${newSums.length} 個新的可能的和。新集合大小: ${dp.size}。`,
+                        formula: `DP = DP U {t+${num}}`
+                    }
                 });
             }
-
+            
             steps.push({
-                result: false, final: true, dp: new Set(dp), sum, target,
-                highlightLines: [14],
-                explanation: { title: '失敗', text: `無法湊出 ${target}`, formula: 'return false' }
+                idx: nums.length, nums, dp: Array.from(dp), sum, target, result: false, final: true,
+                msg: "Failed to reach target.", highlightLines: [14],
+                explanation: {
+                    title: "失敗",
+                    text: `遍歷所有數字後仍未找到和為 ${target} 的子集。`,
+                    formula: "return false"
+                }
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    const sum = step.sum || 0;
-                    const target = step.target || 0;
-                    
-                    document.getElementById('sumDisplay').textContent = sum;
-                    document.getElementById('targetDisplay').textContent = target > 0 ? target : '-';
-                    
-                    // Nums
-                    const nDiv = document.getElementById('numsDisplay');
-                    nDiv.innerHTML = currentNums.map((n, i) => {
-                        let cls = 'num-box';
-                        if (i === step.idx) cls += ' active';
-                        return `<div class="${cls}">${n}</div>`;
-                    }).join('');
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
-                    // DP Grid (0 to Target)
-                    const dDiv = document.getElementById('dpDisplay');
-                    if (target > 0) {
-                        let html = '';
-                        // Show up to target + margin? Just show up to target or sum?
-                        // Showing up to target is enough for logic.
-                        for (let j = 0; j <= target; j++) {
-                            const isPresent = step.dp && step.dp.has(j);
-                            const isNew = step.newSums && step.newSums.includes(j);
-                            const isGoal = j === target;
-                            
-                            let cls = 'dp-val';
-                            if (isPresent) cls += ' true'; else cls += ' false';
-                            if (isGoal) cls += ' target';
-                            if (isNew) cls += ' new';
-                            
-                            html += `<div class="dp-cell">
-                                <div class="dp-header">${j}</div>
-                                <div class="${cls}">${isPresent ? 'T' : 'F'}</div>
-                            </div>`;
-                        }
-                        dDiv.innerHTML = html;
-                    } else {
-                        dDiv.innerHTML = '<div style="padding:10px; color:var(--viz-text-muted)">Waiting...</div>';
-                    }
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('sumDisplay').textContent = step.sum || '-';
+            document.getElementById('targetDisplay').textContent = step.target || '-';
+            
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
-                    if (step.final) {
-                        document.getElementById('resDisplay').textContent = step.result ? 'True' : 'False';
-                        document.getElementById('resDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
-                    } else {
-                         document.getElementById('resDisplay').textContent = '-';
-                         document.getElementById('resDisplay').style.color = 'inherit';
-                    }
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(currentNums));
+            // Draw Number Line (0 to Target)
+            const target = step.target || step.sum || 10;
+            const margin = {top: 50, right: 30, bottom: 50, left: 30};
+            const innerW = width - margin.left - margin.right;
+            const scaleX = d3.scaleLinear().domain([0, target]).range([0, innerW]);
+            
+            // Draw Axis
+            const axisY = 200;
+            const axisG = svg.selectAll(".axis-group").data([1]);
+            const axisEnter = axisG.enter().append("g").attr("class", "axis-group");
+            axisEnter.append("line").attr("x1", 0).attr("x2", innerW).attr("y1", axisY).attr("y2", axisY).attr("class", "axis-line");
+            
+            const ticks = scaleX.ticks(10);
+            const tickG = axisEnter.selectAll(".tick-g").data(ticks).enter().append("g").attr("transform", d => `translate(${scaleX(d)}, ${axisY})`);
+            tickG.append("line").attr("y2", 5).attr("class", "tick-line");
+            tickG.append("text").attr("y", 15).attr("class", "tick-text").text(d => d);
+            
+            axisG.merge(axisEnter).attr("transform", `translate(${margin.left}, 0)`);
+
+            // Draw Sum Circles (DP State)
+            // Existing sums
+            const sumsData = (step.dp || []).map(v => ({val: v, type: 'existing'}));
+            // Highlight New Sums
+            if (step.newSums) {
+                // newSums is array of {val, src}
+                // Override type
+                step.newSums.forEach(ns => {
+                    const idx = sumsData.findIndex(d => d.val === ns.val);
+                    if (idx >= 0) sumsData[idx].type = 'new'; // Should not happen if set logic correct
+                    else sumsData.push({val: ns.val, type: 'new', src: ns.src});
+                });
+            }
+            if (step.foundSum !== undefined) {
+                sumsData.push({val: step.foundSum, type: 'target', src: step.sourceSum});
+            }
+
+            const circles = svg.selectAll(".sum-circle").data(sumsData, d => d.val);
+            
+            circles.enter().append("circle")
+                .attr("class", d => `sum-circle ${d.type}`)
+                .attr("r", 0)
+                .attr("cx", d => margin.left + scaleX(d.val))
+                .attr("cy", axisY)
+                .transition().duration(400)
+                .attr("r", 6);
+            
+            circles
+                .attr("class", d => `sum-circle ${d.type}`) // Update type/color
+                .transition().duration(400)
+                .attr("cx", d => margin.left + scaleX(d.val));
+                
+            circles.exit().transition().duration(200).attr("r", 0).remove();
+            
+            // Draw Arcs from source to new
+            svg.selectAll(".expand-arc").remove();
+            if (step.newSums) {
+                step.newSums.forEach(ns => drawArc(ns.src, ns.val, false));
+            }
+            if (step.foundSum !== undefined) {
+                drawArc(step.sourceSum, step.foundSum, true);
+            }
+            
+            function drawArc(src, dst, isSuccess) {
+                if (src === undefined || dst === undefined) return;
+                const x1 = margin.left + scaleX(src);
+                const x2 = margin.left + scaleX(dst);
+                const dist = x2 - x1;
+                const h = dist * 0.5;
+                
+                const path = d3.path();
+                path.moveTo(x1, axisY - 10);
+                path.quadraticCurveTo(x1 + dist/2, axisY - 10 - h, x2, axisY - 10);
+                
+                svg.append("path")
+                    .attr("d", path.toString())
+                    .attr("class", "expand-arc")
+                    .attr("stroke", isSuccess ? "#22c55e" : "#fbbf24")
+                    .attr("opacity", isSuccess ? 1 : 0.6)
+                    .attr("marker-end", "url(#arrow)");
+            }
+            
+            // Draw current Num bubble
+            if (step.num !== undefined) {
+               svg.selectAll(".num-bubble").remove();
+               const bg = svg.append("g").attr("class", "num-bubble").attr("transform", `translate(${margin.left + innerW/2}, 50)`);
+               bg.append("text").attr("text-anchor", "middle").attr("fill", "#fff").style("font-size", "14px").text(`Current Num: +${step.num}`);
+            }
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runVisualizer() {
+            const raw = document.getElementById('numsInput').value;
+            const nums = raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            if(nums.length === 0) return;
+            
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(nums));
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

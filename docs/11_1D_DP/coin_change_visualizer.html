@@ -3,38 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coin Change - 視覺化</title>
+    <title>Coin Change - D3 動態視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 500px;
+        }
 
-        .coins-container { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
-        .coin-bubble { 
-            width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            background: var(--viz-warning); color: #0f172a; font-weight: bold; font-size: 1.2rem;
-            border: 2px solid #b45309; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s;
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
-        .coin-bubble.active { transform: scale(1.15); box-shadow: 0 0 15px var(--viz-warning); border-color: white; }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .dp-scroll { overflow-x: auto; padding-bottom: 10px; margin-top: 20px; }
-        .dp-table { display: flex; gap: 2px; min-width: max-content; margin: 0 auto; }
-        .dp-col { display: flex; flex-direction: column; width: 45px; margin-right: 2px; }
-        .dp-header { 
-            height: 30px; display: flex; align-items: center; justify-content: center; 
-            font-size: 0.8rem; color: var(--viz-text-muted); background: var(--viz-bg-secondary);
-            border-radius: 4px 4px 0 0;
+        .coin-circle { fill: #f59e0b; stroke: #fff; stroke-width: 2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); cursor: pointer; }
+        .coin-circle:hover { fill: #fbbf24; }
+        
+        .dp-bar-bg { fill: #334155; rx: 4; }
+        .dp-bar { fill: #3b82f6; rx: 4; transition: height 0.5s, y 0.5s; }
+        
+        .dp-bar.active { fill: #f59e0b; }
+        .dp-bar.done { fill: #22c55e; }
+        .dp-bar.inf { fill: #ef4444; opacity: 0.3; } /* Infinite/Unreachable */
+
+        .axis-text { fill: #94a3b8; font-size: 10px; text-anchor: middle; font-family: monospace; }
+        .bar-label { fill: #fff; font-size: 12px; text-anchor: middle; font-weight: bold; pointer-events: none; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
         }
-        .dp-val {
-            height: 45px; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; border: 1px solid var(--viz-border); background: var(--viz-card-bg);
-            border-top: none;
-        }
-        .dp-val.inf { color: var(--viz-error); font-size: 1.5rem; }
-        .dp-val.active { background: var(--viz-primary); color: white; }
-        .dp-val.source { background: rgba(234, 179, 8, 0.2); border-color: var(--viz-warning); }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; border: 1px solid #fff; }
     </style>
 </head>
 <body>
@@ -42,56 +68,74 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">零錢兌換 (Coin Change)</div>
+                <div class="viz-title">Coin Change (DP)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>硬幣 (coins):</label>
-                        <input type="text" id="coinsInput" value="1, 2, 5" style="width: 100px;">
-                        <label>金額 (amount):</label>
-                        <input type="number" id="amtInput" value="11" style="width: 60px;" max="20">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Coins:</label>
+                            <input type="text" id="coinsInput" value="1, 2, 5" style="width: 100px;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Amount:</label>
+                            <input type="number" id="amtInput" value="11" style="width: 60px;" max="20">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Calc</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="coins-container" id="coinsDisplay"></div>
-                
-                <div style="text-align: center; font-size: 0.9rem; margin-top: 10px;">DP: dp[i] = min coins to make amount i</div>
-                <div class="dp-scroll">
-                    <div class="dp-table" id="dpDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Coin</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>DP Steps</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444; opacity:0.3;"></div>∞</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Min Coins</div>
+                            <div class="stat-val" id="resultDisplay">-</div>
+                        </div>
+                    </div>
                 </div>
-                
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(amount * len(coins))
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(amount)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">最少硬幣數</div><div class="state-value" id="resultDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
@@ -101,131 +145,245 @@
             { line: '    for (int i = 1; i <= amount; i++) {', id: 3 },
             { line: '        for (int c : coins) {', id: 4 },
             { line: '            if (i - c >= 0) {', id: 5 },
-            { line: '                dp[i] = min(dp[i], 1 + dp[i - c]);', id: 6 },
+            { line: '                dp[i] = min(dp[i], 1 + dp[i-c]);', id: 6 },
             { line: '            }', id: 7 },
             { line: '        }', id: 8 },
             { line: '    }', id: 9 },
             { line: '    return dp[amount] > amount ? -1 : dp[amount];', id: 10 },
-            { line: '}', id: 11 },
+            { line: '}', id: 11 }
         ];
 
-        let currentCoins = [1, 2, 5];
-        let currentAmt = 11;
+        let viz;
 
-        function runCustomInput() {
-            const coinsStr = document.getElementById('coinsInput').value;
-            const amt = parseInt(document.getElementById('amtInput').value);
-            
-            const arr = coinsStr.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            
-            if (arr.length === 0 || isNaN(amt) || amt > 25) { // Limit amt for display
-                alert('請輸入有效的硬幣陣列和金額 (Max 25)');
-                return;
-            }
-            currentCoins = arr;
-            currentAmt = amt;
-            init();
-        }
-
-        function generateAlgorithmSteps(coins, amount) {
+        function simulate(coins, amount) {
             const steps = [];
+            
+            // Limit amount for visual clarity if user enters huge number
+            // But we trust input validation for now.
+            
             const INF = amount + 1;
             const dp = new Array(amount + 1).fill(INF);
             
             steps.push({
-                idx: -1, dp: [...dp], 
-                highlightLines: [0, 1, 2],
-                explanation: { title: '初始化', text: `Amount: ${amount}, Coins: [${coins.join(', ')}]<br>dp[0]=0, 其他=MAX`, formula: 'setup' }
+                dp: [...dp], coins, idx: 0, 
+                msg: `Init DP array [0..${amount}] with INF`, 
+                highlightLines: [0, 1],
+                explanation: {
+                    title: "初始化 DP 表",
+                    text: `建立長度為 ${amount+1} 的 DP 陣列。初始值設為 ${INF} (代表無解/無限大)，因為我們要找最小值。`,
+                    formula: `dp = [${INF}, ${INF}, ...]`
+                }
             });
 
             dp[0] = 0;
+            steps.push({
+                dp: [...dp], coins, idx: 0,
+                msg: "dp[0] = 0 (Base case)", 
+                highlightLines: [2],
+                explanation: {
+                    title: "Base Case",
+                    text: "組成金額 0 不需要任何硬幣。",
+                    formula: "dp[0] = 0"
+                }
+            });
 
             for (let i = 1; i <= amount; i++) {
                 for (let c of coins) {
-                    if (i - c >= 0) {
-                        const prev = dp[i - c];
-                        const proposal = prev + 1;
-                        steps.push({
-                            idx: i, dp: [...dp], coin: c,
-                            proposal: proposal,
-                            highlightLines: [4, 5, 6],
-                            explanation: { 
-                                title: `計算 dp[${i}]`, 
-                                text: `嘗試硬幣 ${c}:<br>使用前剩餘 ${i-c} (dp[${i-c}]=${prev === INF ? '∞' : prev})<br>新方案: ${prev === INF ? '∞' : prev + 1}`, 
-                                formula: `min(dp[${i}], dp[${i-c}] + 1)` 
-                            }
-                        });
-                        
-                        // Update
-                        if (proposal < dp[i]) {
-                             dp[i] = proposal;
+                    steps.push({
+                        dp: [...dp], coins, idx: i, currentCoin: c,
+                        msg: `Check amount ${i} with coin ${c}`, 
+                        highlightLines: [4, 5],
+                        explanation: {
+                            title: `計算 dp[${i}]`,
+                            text: `嘗試使用硬幣 ${c}。檢查是否可以從金額 ${i-c} 轉移過來。`,
+                            formula: `if (${i} - ${c} >= 0)`
                         }
-                    } else {
-                         // Too big
-                         /* steps.push({
-                            idx: i, dp: [...dp], coin: c,
-                            highlightLines: [4, 5],
-                            explanation: { title: `跳過硬幣 ${c}`, text: `金額 ${i} 小於硬幣 ${c}`, formula: 'skip' }
-                         }); // Optional: skip reducing visual noise */
+                    });
+
+                    if (i - c >= 0) {
+                        const prev = dp[i-c];
+                        const newData = prev + 1;
+                        const original = dp[i];
+                        
+                        let updateMsg = `dp[${i-c}]=${prev > amount ? '∞' : prev}. New path: ${prev > amount ? '∞' : newData}`;
+                        
+                        if (newData < dp[i]) {
+                            dp[i] = newData;
+                            steps.push({
+                                dp: [...dp], coins, idx: i, currentCoin: c, sourceIdx: i-c,
+                                msg: `Update dp[${i}]: min(${original}, ${newData}) -> ${newData}`, 
+                                highlightLines: [6],
+                                explanation: {
+                                    title: "狀態轉移成功",
+                                    text: `因為 dp[${i-c}] + 1 (${newData}) 比當前 dp[${i}] (${original > amount ? '∞' : original}) 更小，所以更新。`,
+                                    formula: `dp[${i}] = ${newData}`
+                                }
+                            });
+                        } else {
+                             steps.push({
+                                dp: [...dp], coins, idx: i, currentCoin: c, sourceIdx: i-c,
+                                msg: `No update. ${newData} >= ${original}`, 
+                                highlightLines: [6],
+                                explanation: {
+                                    title: "無更優解",
+                                    text: `雖然可以用硬幣 ${c}，但 dp[${i-c}] + 1 並沒有比現有解更好。`,
+                                    formula: `${newData} >= ${original}`
+                                }
+                            });
+                        }
                     }
                 }
-                steps.push({
-                    idx: i, dp: [...dp], finalStep: true,
-                    highlightLines: [3],
-                    explanation: { title: `dp[${i}] 確定`, text: `最少硬幣數: ${dp[i] === INF ? '無解' : dp[i]}`, formula: `dp[${i}] = ${dp[i] === INF ? '-1' : dp[i]}` }
-                });
             }
-
+            
             const res = dp[amount] > amount ? -1 : dp[amount];
             steps.push({
-                idx: amount, dp: [...dp], result: res, final: true,
+                dp: [...dp], coins, idx: amount, result: res, final: true,
+                msg: `Finished. Result: ${res}`, 
                 highlightLines: [10],
-                explanation: { title: '完成', text: `結果: ${res}`, formula: `return ${res}` }
+                explanation: {
+                    title: "完成",
+                    text: `最終檢查 dp[${amount}]。如果是初始值則無解(-1)，否則返回最小值。`,
+                    formula: `return ${res}`
+                }
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Render Coins
-                    const cDiv = document.getElementById('coinsDisplay');
-                    cDiv.innerHTML = currentCoins.map(c => {
-                        let cls = 'coin-bubble';
-                        if (step.coin === c) cls += ' active';
-                        return `<div class="${cls}">${c}</div>`;
-                    }).join('');
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
-                    // Render DP Table
-                    const tDiv = document.getElementById('dpDisplay');
-                    tDiv.innerHTML = step.dp.map((val, i) => {
-                        let valStr = val > currentAmt ? '∞' : val;
-                        let cls = 'dp-val';
-                        if (val > currentAmt) cls += ' inf';
-                        
-                        if (i === step.idx) cls += ' active';
-                        // Highlight source if checking
-                        if (step.idx !== undefined && step.coin !== undefined && i === step.idx - step.coin) {
-                            cls += ' source';
-                        }
-                        
-                        return `<div class="dp-col">
-                            <div class="dp-header">${i}</div>
-                            <div class="${cls}">${valStr}</div>
-                        </div>`;
-                    }).join('');
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : '-';
+            
+            // Logic Card Update
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
-                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : '-';
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(currentCoins, currentAmt));
+            const dp = step.dp;
+            const n = dp.length; // actually amount + 1
+            const maxVal = Math.max(...dp.filter(v => v <= n)); // Ignore INF for scaling
+            
+            // Draw Coins (Top Left)
+            const coinR = 20;
+            const coinData = step.coins.map((v, i) => ({v, i, x: 50 + i*50, y: 40}));
+            
+            const coins = svg.selectAll(".coin-g").data(coinData);
+            const coinEnter = coins.enter().append("g").attr("class", "coin-g");
+            coinEnter.append("circle").attr("class", "coin-circle").attr("r", coinR);
+            coinEnter.append("text").attr("class", "bar-label").attr("dy", 5);
+            
+            const coinMerge = coins.merge(coinEnter);
+            coinMerge.attr("transform", d => `translate(${d.x}, ${d.y})`);
+            coinMerge.select("circle")
+                .attr("stroke", d => d.v === step.currentCoin ? "#fff" : "#f59e0b")
+                .attr("stroke-width", d => d.v === step.currentCoin ? 4 : 2);
+            coinMerge.select("text").text(d => d.v);
+            
+            coins.exit().remove();
+
+            // Draw Bar Chart for DP
+            const margin = {top: 100, right: 30, bottom: 30, left: 30};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const barW = innerW / n;
+            const barMaxH = innerH;
+            
+            // Y Scale
+            const yScale = d3.scaleLinear()
+                .domain([0, Math.max(5, maxVal)]) // Min height reference
+                .range([0, barMaxH]);
+
+            const bars = svg.selectAll(".bar-g").data(dp.map((v, i) => ({v, i})));
+            const barEnter = bars.enter().append("g").attr("class", "bar-g");
+            
+            barEnter.append("rect").attr("class", "dp-bar-bg"); // bg track
+            barEnter.append("rect").attr("class", "dp-bar"); // actual value
+            barEnter.append("text").attr("class", "bar-label"); // value label
+            barEnter.append("text").attr("class", "axis-text"); // index label
+            
+            const barMerge = bars.merge(barEnter)
+                .attr("transform", (d, i) => `translate(${margin.left + i*barW + 2}, ${margin.top})`);
+            
+            // BG Track
+            barMerge.select(".dp-bar-bg")
+                .attr("width", barW - 4)
+                .attr("height", barMaxH)
+                .attr("y", 0);
+            
+            // Active Bar
+            barMerge.select(".dp-bar")
+                .attr("width", barW - 4)
+                .attr("class", d => {
+                    let c = "dp-bar";
+                    if (d.v > n - 1) c += " inf"; // Using n-1 as threshold for INF check roughly
+                    else if (step.idx === d.i) c += " active";
+                    else if (d.i < step.idx) c += " done";
+                    return c;
+                })
+                .transition().duration(200)
+                .attr("height", d => {
+                    if (d.v > n - 1) return barMaxH; // Full height for INF
+                    return yScale(d.v);
+                })
+                .attr("y", d => {
+                    if (d.v > n - 1) return 0;
+                    return barMaxH - yScale(d.v);
+                });
+            
+            // Labels
+            barMerge.select(".bar-label")
+                .attr("x", (barW-4)/2)
+                .attr("y", d => {
+                    // if INF, top; else follow bar top
+                    if (d.v > n - 1) return 15;
+                    return barMaxH - yScale(d.v) - 5;
+                })
+                .text(d => d.v > n - 1 ? "∞" : d.v);
+                
+            barMerge.select(".axis-text")
+                .attr("x", (barW-4)/2)
+                .attr("y", barMaxH + 15)
+                .text(d => d.i);
+                
+            // Source arrow (Arc)
+            // If we have current sourceIdx
+            const links = step.sourceIdx !== undefined ? [{s: step.sourceIdx, t: step.idx}] : [];
+            
+            // ... Draw link code ... 
+            // Simplified: Just highlight source bar?
+            // We can highlight source bar in a different way or rely on text explanation.
+            // Let's just highlight source bar with different logic in class above? 
+            // Better to keep clean. 
+            
+            bars.exit().remove();
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runVisualizer() {
+            const coinsStr = document.getElementById('coinsInput').value;
+            const amt = parseInt(document.getElementById('amtInput').value);
+            
+            const coins = coinsStr.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            if(coins.length === 0 || isNaN(amt)) return;
+            
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(coins, amt));
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

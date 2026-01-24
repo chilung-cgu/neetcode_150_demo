@@ -3,35 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Longest Increasing Subsequence - 視覺化</title>
+    <title>Longest Increasing Subsequence - D3 動態視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 480px;
+        }
 
-        .array-container { display: flex; gap: 4px; justify-content: center; margin: 20px 0; overflow-x: auto; padding: 10px; }
-        .col-box { display: flex; flex-direction: column; align-items: center; width: 45px; }
-        
-        .num-box { 
-            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
-            background: var(--viz-bg-secondary); border: 2px solid var(--viz-border); border-radius: 6px;
-            font-weight: bold; margin-bottom: 5px; transition: all 0.2s;
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
-        .num-box.active { border-color: var(--viz-primary); }
-        .num-box.compare { border-color: var(--viz-warning); }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .num-group rect { fill: #334155; stroke: #475569; stroke-width: 2px; rx: 4; } /* DP Val container */
+        .num-group text { fill: #fff; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; pointer-events: none; }
         
-        .dp-box {
-            width: 45px; height: 35px; display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.1); border-radius: 4px; font-family: monospace; font-size: 0.9rem;
-            color: var(--viz-text-muted);
-        }
-        .dp-box.updated { background: var(--viz-success); color: #0f172a; font-weight: bold; }
+        .val-circle { fill: #3b82f6; stroke: #cbd5e1; stroke-width: 2px; } /* Actual Num value bubble */
+        .val-circle text { fill: white; }
         
-        .connection-line {
-            height: 2px; background: var(--viz-warning); width: 100%; margin: 5px 0; opacity: 0; transition: opacity 0.2s;
+        .arrow-line { stroke: #fbbf24; stroke-width: 2px; fill: none; marker-end: url(#arrow); stroke-dasharray: 5; animation: dash 1s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -10; } }
+        
+        .highlight-rect { fill: none; stroke: #f59e0b; stroke-width: 2px; rx: 4; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
         }
+        .stat-box { display: flex; flex-direction: column; align-items: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; border: 1px solid #fff; }
     </style>
 </head>
 <body>
@@ -39,50 +67,76 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">最長遞增子序列 (LIS - O(n²))</div>
+                <div class="viz-title">Longest Increasing Subsequence</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>數組 (nums):</label>
-                        <input type="text" id="numsInput" value="10, 9, 2, 5, 3, 7, 101, 18" style="width: 250px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Nums:</label>
+                            <input type="text" id="numsInput" value="10, 9, 2, 5, 3, 7, 101, 18">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Run</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="array-container" id="vizDisplay"></div>
-                <div style="text-align: center; font-size: 0.9rem; color: var(--viz-text-muted);">Top: nums[i] | Bottom: dp[i] (LIS ending at i)</div>
-                
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Num Value</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>DP Value (Length)</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Comparing</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="20" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#fbbf24"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Max Length</div>
+                            <div class="stat-val" id="resultDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n²)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">最長長度</div><div class="state-value" id="resultDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
@@ -99,118 +153,195 @@
             { line: '        maxLen = max(maxLen, dp[i]);', id: 10 },
             { line: '    }', id: 11 },
             { line: '    return maxLen;', id: 12 },
-            { line: '}', id: 13 },
+            { line: '}', id: 13 }
         ];
 
-        let currentNums = [10, 9, 2, 5, 3, 7, 101, 18];
+        let viz;
 
-        function runCustomInput() {
-            const str = document.getElementById('numsInput').value;
-            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            if (arr.length < 1 || arr.length > 15) {
-                alert('請輸入 1-15 個數字');
-                return;
-            }
-            currentNums = arr;
-            init();
-        }
-
-        function generateAlgorithmSteps(nums) {
+        function simulate(nums) {
             const steps = [];
             const n = nums.length;
             const dp = new Array(n).fill(1);
-            let globalMax = 1;
-
+            let maxLen = 1;
+            
             steps.push({
-                idx: -1, dp: [...dp], 
-                highlightLines: [0, 1, 2, 3],
-                explanation: { title: '初始化', text: `Nums: [${nums.join(', ')}]<br>dp 初始化為 1 (每個元素自身)`, formula: 'dp[:] = 1' }
+                idx: -1, dp: [...dp], nums,
+                msg: "Init DP array to 1.", highlightLines: [0, 1, 2],
+                explanation: {
+                    title: "初始化",
+                    text: "dp[i] 代表以 nums[i] 結尾的最長遞增子序列長度。初始值皆為 1 (自己)。",
+                    formula: "dp = [1, 1, ...]"
+                }
             });
 
-            for (let i = 0; i < n; i++) { // Starting from 0 as outer loop, inner 0 to i
-                // Actually optimized loop starts i=1, but 0 is safe
+            for (let i = 0; i < n; i++) {
+                // Highlight i
+                steps.push({
+                    idx: i, dp: [...dp], nums, 
+                    msg: `Process nums[${i}] = ${nums[i]}`, highlightLines: [4],
+                    explanation: {
+                        title: `計算 dp[${i}]`,
+                        text: `尋找之前的元素 j (0 to ${i-1})，看誰比 nums[${i}] 小。`,
+                        formula: `Check 0..${i-1}`
+                    }
+                });
+
                 for (let j = 0; j < i; j++) {
                     steps.push({
-                        idx: i, j: j, dp: [...dp], globalMax,
-                        highlightLines: [5, 6],
-                        explanation: { title: `比較 nums[${i}] vs nums[${j}]`, text: `${nums[i]} > ${nums[j]} ?`, formula: 'Check' }
+                        idx: i, j, dp: [...dp], nums, 
+                        msg: `Compare nums[${i}](${nums[i]}) > nums[${j}](${nums[j]})?`, highlightLines: [5, 6],
+                        explanation: {
+                            title: "比較",
+                            text: `如果 nums[${i}] > nums[${j}]，我們可以把 nums[${i}] 接在 nums[${j}] 後面形成更長的子序列。`,
+                            formula: `${nums[i]} > ${nums[j]} ?`
+                        }
                     });
 
                     if (nums[i] > nums[j]) {
-                        const newVal = 1 + dp[j];
-                        const updated = newVal > dp[i];
+                        const newLen = 1 + dp[j];
+                        const oldLen = dp[i];
                         
-                        // Just visualize update attempt
-                        steps.push({
-                            idx: i, j: j, dp: [...dp], globalMax, 
-                            highlightLines: [7],
-                            explanation: { 
-                                title: `接在 nums[${j}] 後`, 
-                                text: `能夠構成長度 ${1 + dp[j]}<br>當前 dp[${i}]=${dp[i]}`, 
-                                formula: `max(${dp[i]}, 1 + ${dp[j]})` 
-                            }
-                        });
-
-                        if (updated) {
-                            dp[i] = newVal;
+                        if (newLen > oldLen) {
+                            dp[i] = newLen;
                             steps.push({
-                                idx: i, j: j, dp: [...dp], globalMax, updated: true,
-                                highlightLines: [7],
-                                explanation: { title: `更新 dp[${i}]`, text: `新長度: ${newVal}`, formula: `dp[${i}] = ${newVal}` }
+                                idx: i, j, dp: [...dp], nums, updated: true, prevLen: oldLen,
+                                msg: `Update dp[${i}]: max(${oldLen}, 1+${dp[j]}) = ${newLen}`, highlightLines: [7],
+                                explanation: {
+                                    title: "狀態轉移 - 更新",
+                                    text: `找到更長的接法！ dp[${j}] + 1 = ${newLen} > 當前 ${oldLen}。更新 dp[${i}]。`,
+                                    formula: `dp[${i}] = ${newLen}`
+                                }
+                            });
+                        } else {
+                             steps.push({
+                                idx: i, j, dp: [...dp], nums, 
+                                msg: `Current dp[${i}] (${oldLen}) is already >= ${newLen}`, highlightLines: [7],
+                                explanation: {
+                                    title: "狀態轉移 - 維持",
+                                    text: `雖然可以接在 nums[${j}] 後面，但長度只有 ${newLen}，沒有比現有的 ${oldLen} 長。`,
+                                    formula: "Skip update"
+                                }
                             });
                         }
                     }
                 }
-                globalMax = Math.max(globalMax, dp[i]);
+                
+                if (dp[i] > maxLen) maxLen = dp[i];
+                
                 steps.push({
-                    idx: i, dp: [...dp], globalMax,
-                    highlightLines: [10],
-                    explanation: { title: `Step ${i} 完成`, text: `目前最大 LIS: ${globalMax}`, formula: `maxLen = ${globalMax}` }
+                    idx: i, dp: [...dp], nums, maxLen,
+                    msg: `Finished i=${i}. MaxLen so far: ${maxLen}`, highlightLines: [10],
+                    explanation: {
+                        title: `Step ${i} 結束`,
+                        text: `以 ${nums[i]} 結尾的 LIS 長度確定為 ${dp[i]}。全局最大更新為 ${maxLen}。`,
+                        formula: `maxLen = ${maxLen}`
+                    }
                 });
             }
-
+            
             steps.push({
-                idx: n, dp: [...dp], globalMax, final: true,
-                highlightLines: [12],
-                explanation: { title: '完成', text: `最長遞增子序列長度: ${globalMax}`, formula: `return ${globalMax}` }
+                idx: n, dp: [...dp], nums, maxLen, final: true, result: maxLen,
+                msg: `Done. Result: ${maxLen}`, highlightLines: [12],
+                explanation: { title: "完成", text: `最長遞增子序列長度為 ${maxLen}。`, formula: `return ${maxLen}` }
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    const matchedIndices = [];
-                    // Backtrack simplistic LIS for highlighting? Too complex for O(N^2) dynamic path
-                    // We just highlight i and j
-                    
-                    const container = document.getElementById('vizDisplay');
-                    container.innerHTML = currentNums.map((num, idx) => {
-                         let nCls = 'num-box';
-                         let dCls = 'dp-box';
-                         
-                         if (idx === step.idx) nCls += ' active';
-                         if (idx === step.j) nCls += ' compare';
-                         
-                         if (step.updated && idx === step.idx) dCls += ' updated';
-                         
-                         return `<div class="col-box">
-                            <div class="${nCls}">${num}</div>
-                            <div class="${dCls}">${step.dp[idx]}</div>
-                         </div>`;
-                    }).join('');
-                    
-                    document.getElementById('resultDisplay').textContent = step.globalMax || 1;
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(currentNums));
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('resultDisplay').textContent = step.maxLen || 1;
+            
+            if(step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const nums = step.nums;
+            const n = nums.length;
+            const itemW = width / (n + 1);
+            const startX = itemW / 2;
+            const centerY = 150;
+
+            // Draw Items using Groups
+            const data = nums.map((v, i) => ({v, i, dp: step.dp[i]}));
+            const groups = svg.selectAll(".item-g").data(data);
+            const enter = groups.enter().append("g").attr("class", "item-g");
+            
+            // Value Bubble
+            enter.append("circle").attr("class", "val-circle").attr("r", 20).attr("cy", 0);
+            enter.append("text").attr("class", "val-text").attr("dy", 5).style("font-weight", "bold");
+            
+            // DP Rect below
+            enter.append("rect").attr("class", "dp-rect").attr("width", 30).attr("height", 30).attr("x", -15).attr("y", 30).attr("rx", 4).attr("fill", "#334155").attr("stroke", "#fff");
+            enter.append("text").attr("class", "dp-text").attr("dy", 50).attr("fill", "#22c55e").style("font-weight", "bold").style("font-size", "14px");
+            
+            const merge = groups.merge(enter)
+                .attr("transform", (d, i) => `translate(${startX + i*itemW + itemW/2}, ${centerY})`);
+            
+            merge.select(".val-text").text(d => d.v);
+            merge.select(".dp-text").text(d => d.dp);
+            
+            // Special styling
+            merge.select(".val-circle")
+                .attr("stroke", d => {
+                    if (d.i === step.idx) return "#f59e0b"; // i
+                    if (d.i === step.j) return "#a855f7"; // j
+                    return "#cbd5e1";
+                })
+                .attr("stroke-width", d => (d.i === step.idx || d.i === step.j) ? 4 : 2);
+                
+            merge.select(".dp-rect")
+                .attr("fill", d => step.updated && d.i === step.idx ? "#22c55e" : "#334155")
+                .transition().duration(200)
+                .attr("stroke", d => step.idx === d.i ? "#f59e0b" : "#fff");
+
+            groups.exit().remove();
+            
+            // Draw Connecting Arc (Comparison or Update)
+            svg.selectAll(".arrow-line").remove();
+            
+            if (step.idx !== undefined && step.j !== undefined) {
+                const x1 = startX + step.j*itemW + itemW/2;
+                const x2 = startX + step.idx*itemW + itemW/2;
+                const y = centerY - 25;
+                
+                const path = d3.path();
+                path.moveTo(x1, y);
+                // Arch height depends on dist
+                const h = (x2 - x1) * 0.5;
+                path.quadraticCurveTo((x1+x2)/2, y - h - 20, x2, y);
+                
+                svg.append("path")
+                    .attr("d", path.toString())
+                    .attr("class", "arrow-line")
+                    .attr("stroke", step.updated ? "#22c55e" : "#f59e0b")
+                    .attr("stroke-dasharray", step.updated ? "0" : "5");
+            }
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runVisualizer() {
+            const raw = document.getElementById('numsInput').value;
+            const nums = raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            if(nums.length === 0) return;
+            
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(nums));
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>
