@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subsets (Backtracking) - D3 精緻視覺化</title>
+    <title>Subsets (Backtracking) - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -19,57 +19,62 @@
         }
 
         .tree-viewport {
-            width: 100%; height: 450px;
+            width: 95%; height: 450px;
             background: rgba(30, 41, 59, 0.4);
             border-radius: 12px;
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.1);
         }
         #tree-svg { width: 100%; height: 100%; cursor: grab; }
         #tree-svg:active { cursor: grabbing; }
 
         /* D3 Nodes */
-        .node-circle { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; }
+        .node-circle { fill: #334155; stroke: #64748b; stroke-width: 2px; transition: all 0.3s; }
         .node-circle.active { fill: #fbbf24; stroke: #fff; stroke-width: 3px; filter: drop-shadow(0 0 10px #fbbf24); }
         .node-circle.leaf { fill: #22c55e; stroke: #16a34a; }
-        .node-text { fill: white; font-family: monospace; font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .node-text { fill: white; font-family: monospace; font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
         
         .link { fill: none; stroke: #475569; stroke-width: 1.5px; opacity: 0.3; transition: all 0.3s; }
         .link.active { stroke: #fbbf24; opacity: 1; stroke-width: 3px; }
         .link.include { stroke: #22c55e; } 
         .link.exclude { stroke: #ef4444; }
 
-        .edge-label { fill: #94a3b8; font-size: 10px; opacity: 0.8; }
+        .edge-label { fill: #94a3b8; font-size: 10px; opacity: 0; transition: opacity 0.3s; }
+        .link.active + .edge-label, .link.include + .edge-label, .link.exclude + .edge-label { opacity: 1; font-weight: bold; }
 
         /* Results Panel */
         .results-panel {
-            width: 100%;
+            width: 95%;
             background: rgba(15, 23, 42, 0.6);
             border-radius: 8px;
             padding: 15px;
             min-height: 80px;
             border: 1px solid #475569;
         }
-        .results-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #94a3b8; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
-        .subsets-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .results-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #94a3b8; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid rgba(148, 163, 184, 0.2); padding-bottom: 5px; }
+        .subsets-grid { display: flex; flex-wrap: wrap; gap: 8px; max-height: 100px; overflow-y: auto; }
         
         .subset-tag { 
-            padding: 5px 10px; background: rgba(34, 197, 94, 0.1); 
+            padding: 4px 10px; background: rgba(34, 197, 94, 0.1); 
             border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 6px;
-            color: #4ade80; font-family: monospace; font-size: 0.9rem;
+            color: #4ade80; font-family: monospace; font-size: 0.85rem;
             animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .subset-tag.current { background: #fbbf24; color: #0f172a; border-color: #fbbf24; }
+        .subset-tag.current { background: #fbbf24; color: #0f172a; border-color: #fbbf24; box-shadow: 0 0 10px rgba(251, 191, 36, 0.4); }
         @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
         .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -80,13 +85,22 @@
                 <div class="viz-title">Subsets (Decision Tree)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Nums (CSV):</label>
+                        <label style="color:#94a3b8; font-weight:bold;">Nums:</label>
                         <input type="text" id="numsInput" value="1, 2, 3">
                         <button onclick="runVisualizer()">Generate</button>
+                    </div>
+                    <div style="text-align:center; font-size:0.85rem; color:#64748b; margin-top:8px;">
+                        For each element, decide: <b>Include</b> (Left) or <b>Exclude</b> (Right).
                     </div>
                 </div>
 
                 <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Include Path</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Exclude Path</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Current State</div>
+                    </div>
+
                     <div class="tree-viewport">
                         <svg id="tree-svg">
                             <g id="zoom-group"></g>
@@ -96,7 +110,7 @@
                     <div class="results-panel">
                         <div class="results-header">
                             <span>Found Subsets</span>
-                            <span id="countDisplay">0</span>
+                            <span id="countDisplay" style="color:#fbbf24">0</span>
                         </div>
                         <div class="subsets-grid" id="resultsDisplay"></div>
                     </div>
@@ -123,7 +137,7 @@
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -147,24 +161,22 @@
             { line: '            res.push_back(subset);', id: 7 },
             { line: '            return;', id: 8 },
             { line: '        }', id: 9 },
-            { line: '        // Include nums[i]', id: 10 },
+            { line: '        // Decision 1: Include nums[i]', id: 10 },
             { line: '        subset.push_back(nums[i]);', id: 11 },
             { line: '        dfs(i + 1);', id: 12 },
-            { line: '        // Exclude nums[i] (Backtrack)', id: 13 },
+            { line: '        // Backtrack', id: 13 },
             { line: '        subset.pop_back();', id: 14 },
-            { line: '        dfs(i + 1);', id: 15 },
-            { line: '    }', id: 16 },
-            { line: '}', id: 17 }
+            { line: '        // Decision 2: Exclude nums[i]', id: 15 },
+            { line: '        dfs(i + 1);', id: 16 },
+            { line: '    }', id: 17 },
+            { line: '}', id: 18 }
         ];
 
         let viz;
 
         // Tree Helper
-        // We will build the full decision tree structure for visualization
-        // Each node represents a state (index, currentSubset)
-        // This is static for layout, but we traverse it dynamically
         function buildDecisionTree(nums, i = 0, currentPath = []) {
-            const id = `node-${i}-${currentPath.join('_')}`; // Unique ID logic
+            const id = `node-${i}-${currentPath.join('_')}`; 
             const node = { 
                 id, 
                 name: i < nums.length ? `? ${nums[i]}` : 'End', 
@@ -192,89 +204,93 @@
         // --- Simulation ---
         function simulate(nums) {
             const steps = [];
-            
-            // Generate full tree for D3 layout first
             const treeRoot = buildDecisionTree(nums);
-            
-            const pushState = (msg, hl, activeId, currentSubset, subsetsList, action=null) => {
+            const res = [];
+            const subset = []; // Current path tracking
+
+            const pushState = (msg, hl, activeId, info={}) => {
                 steps.push({
-                    treeRoot, // Static structure
+                    treeRoot, // Static
                     activeId,
-                    currentSubset: [...currentSubset],
-                    subsetsList: [...subsetsList],
-                    msg, highlightLines: hl,
-                    // Track path for highlighting edges? 
-                    // activeId is enough to find path if we render smart
+                    currentSubset: [...subset],
+                    subsetsList: [...res],
+                    msg, highlightLines: hl, explanation: info
                 });
             };
 
-            const res = [];
-            const subset = [];
+            pushState("Start DFS", [3, 5], treeRoot.id, { title: "開始", text: "從索引 0 開始深度優先搜尋。", formula: "dfs(0)" });
 
-            pushState("Start DFS(0)", [3, 5], treeRoot.id, [], []);
-
-            function dfs(i, parentId, pathStr) { // Mimic build id logic
-                const nodeId = `node-${i}-${pathStr}`; // Reconstruct ID
+            function dfs(i, pathStr) {
+                const nodeId = `node-${i}-${pathStr}`; // Must match buildTree ID logic
                 
                 // Active on current node
-                pushState(`DFS(${i}): Decision for nums[${i}] (Val: ${i<nums.length?nums[i]:'End'})`, [5, 6], nodeId, subset, res);
+                pushState(`DFS(${i}): Decision for ${i<nums.length?nums[i]:'End'}`, [5, 6], nodeId, {
+                    title: `決策點 i=${i}`, text: i<nums.length ? `考慮元素 ${nums[i]}：選或不選？` : `到達葉節點，當前路徑結束。`, formula: "if(i>=n)"
+                });
 
                 if (i >= nums.length) {
                     res.push([...subset]);
-                    pushState(`Base Case: Add [${subset.join(',')}]`, [7, 8], nodeId, subset, res);
+                    pushState(`Base Case: Add [${subset.join(',')}]`, [7, 8], nodeId, {
+                        title: "基底情況", text: `已遍歷所有決策，將當前子集 [${subset.join(',')}] 加入結果。`, formula: "res.push(subset)"
+                    });
                     return;
                 }
 
                 // Include
                 subset.push(nums[i]);
-                pushState(`Include ${nums[i]}`, [11], nodeId, subset, res);
+                pushState(`Include ${nums[i]}`, [11], nodeId, {
+                    title: "選擇 (Include)", text: `將 ${nums[i]} 加入當前子集，遞歸下層。`, formula: "subset.push(nums[i])"
+                });
                 
-                // Recurse Left
-                // Next path str includes this one
-                // construct path for child
-                let incPath = pathStr ? pathStr + "_" + nums[i] : "" + nums[i]; 
-                // Wait, my ID logic needs to be consistent. simulation logic must match buildTree strictly.
-                // Re-using buildTree logic inside simulation is better or passing node refs?
-                // Passing refs is better but simulation usually decoupled.
-                // Let's rely on consistent ID generation: `node-${i}-${subset.join('_')}` (BEFORE push for current?)
-                // Actually `buildDecisionTree` calls with `currentPath` *before* decision for that level?
-                // No, buildTree passes `included` to child.
-                // So child ID at `i+1` is based on `subset` effectively.
-                
-                dfs(i + 1, nodeId, subset.join('_')); 
+                // Construct path for child (Include branch)
+                // In buildTree: included = [...currentPath, nums[i]]
+                // subset has just been updated, so subset.join('_') is correct for child?
+                // Wait, parent ID was based on path BEFORE push.
+                // Child ID is based on path passed to it.
+                // dfs(i+1) will access node with path `subset`.
+                dfs(i + 1, subset.join('_')); 
 
                 // Backtrack
                 const popped = subset.pop();
-                pushState(`Backtrack: Pop ${popped}`, [14], nodeId, subset, res);
+                pushState(`Backtrack: Pop ${popped}`, [14], nodeId, {
+                    title: "回溯 (Backtrack)", text: `撤銷選擇，移除 ${popped}，準備進入不選分支。`, formula: "subset.pop()"
+                });
 
                 // Exclude
-                pushState(`Exclude ${nums[i]}`, [15], nodeId, subset, res);
-                dfs(i + 1, nodeId, subset.join('_'));
+                pushState(`Exclude ${nums[i]} (Skip)`, [16], nodeId, {
+                    title: "不選 (Exclude)", text: `跳過 nums[i]，保持子集不變，遞歸下層。`, formula: "dfs(i+1)"
+                });
+                // Child ID based on subset (which is now same as parent's pathStr)
+                dfs(i + 1, pathStr);
             }
 
-            dfs(0, null, ""); // Start empty path
+            dfs(0, "");
 
-            pushState("Done", [4], null, [], res);
+            pushState("Done", [4], null, { title: "完成", text: `所有路徑遍歷完畢。`, formula: "return res" });
             return steps;
         }
 
         // --- Render ---
         const width = 800, height = 450;
-        
-        // Add Zoom/Pan
         const svg = d3.select("#tree-svg");
         const gZoom = d3.select("#zoom-group");
-        
         const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
         svg.call(zoom);
-        // Initial transform centered top
-        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 40).scale(0.8));
+        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 40).scale(0.85));
 
-        const treeLayout = d3.tree().nodeSize([70, 80]); // Fixed spacing
+        const treeLayout = d3.tree().nodeSize([70, 80]); 
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
             document.getElementById('countDisplay').textContent = step.subsetsList.length;
+            
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
             const root = d3.hierarchy(step.treeRoot);
             treeLayout(root);
@@ -287,15 +303,19 @@
                 .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y))
                 .attr("class", d => {
                     let c = "link";
-                    // If target is active or ancestor of active
-                    // Simple check: if target id is activeId => active link to parent
-                    // No, we need full path.
-                    // Or keep it simple: Highlight if part of current recursion stack?
-                    // Let's just highlight immediate active node's parent link
-                    if(d.target.data.id === step.activeId) c += " active";
-                    
+                    // Highlight logic: if target is active or ancestor of active? 
+                    // Simple path highlighting is complex without parent pointers in step data.
+                    // But activeId usually implies we just traversed to it.
+                    // Let's keep it simple: Color based on static edge type.
                     if(d.target.data.edge === "Include") c += " include";
                     else if(d.target.data.edge === "Exclude") c += " exclude";
+                    
+                    // Highlights active path? 
+                    // If target ID matches part of current activeId path?
+                    // activeId = node-2-1_2. Parent is node-1-1. Link between them active.
+                    // This requires parsing ID or tree lookup.
+                    // Let's highlight specific link if target is step.activeId
+                    if(d.target.data.id === step.activeId) c += " active";
                     
                     return c;
                 });
@@ -306,15 +326,16 @@
             labels.enter().append("text").attr("class", "edge-label")
                 .merge(labels)
                 .transition().duration(300)
-                .attr("x", d => (d.source.x + d.target.x)/2 + (d.target.data.edge==="Include"?20:-20))
+                .attr("x", d => (d.source.x + d.target.x)/2 + (d.target.data.edge==="Include"?-15:15))
                 .attr("y", d => (d.source.y + d.target.y)/2)
-                .text(d => d.target.data.edge === "Include" ? "Yes" : "No");
+                .text(d => d.target.data.edge === "Include" ? "Yes" : "No")
+                .style("opacity", d => d.target.data.id === step.activeId ? 1 : 0.5); // Highlight label too
             labels.exit().remove();
 
             // Nodes
             const nodes = gZoom.selectAll(".node-g").data(root.descendants(), d => d.data.id);
             const nEnter = nodes.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
+            nEnter.append("circle").attr("r", 18).attr("class", "node-circle");
             nEnter.append("text").attr("class", "node-text").attr("dy", 1);
 
             const nUpdate = nodes.merge(nEnter).transition().duration(300)
@@ -323,15 +344,15 @@
             nUpdate.select("circle").attr("class", d => {
                 let c = "node-circle";
                 if(d.data.id === step.activeId) c += " active";
-                if(!d.children) c += " leaf";
+                if(!d.children || d.children.length===0) c += " leaf"; 
+                // Color based on include path state?
+                // Visual enhancements can be done later.
                 return c;
             });
 
             nUpdate.select("text").text(d => {
-                // If leaf, show subset? Or just name?
-                // If leaf, name is "End".
-                // Maybe show subset if leaf?
-                if(!d.children) return `[${d.data.subset.join(',')}]`;
+                // Leaf shows subset
+                if(!d.children || d.children.length===0) return `[${d.data.subset.join(',')}]`;
                 return d.data.name;
             });
             
@@ -344,14 +365,16 @@
                 const tag = document.createElement('span');
                 tag.className = 'subset-tag';
                 tag.textContent = `[${sub.join(',')}]`;
-                // Highlight last added?
                 if (i === step.subsetsList.length - 1) tag.classList.add('current');
                 resContainer.appendChild(tag);
             });
         }
 
         function runVisualizer() {
-            const nums = document.getElementById('numsInput').value.split(',').map(x => parseInt(x.trim()));
+            const val = document.getElementById('numsInput').value;
+            if(!val) return;
+            const nums = val.split(',').map(x => parseInt(x.trim())).filter(n => !isNaN(n));
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render

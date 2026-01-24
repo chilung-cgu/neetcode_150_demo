@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Permutations (Backtracking) - D3 精緻視覺化</title>
+    <title>Permutations (Backtracking) - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -19,35 +19,38 @@
         }
 
         .tree-viewport {
-            width: 100%; height: 450px;
+            width: 95%; height: 450px;
             background: rgba(30, 41, 59, 0.4);
             border-radius: 12px;
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.1);
         }
         #tree-svg { width: 100%; height: 100%; cursor: grab; }
         #tree-svg:active { cursor: grabbing; }
 
         /* D3 Nodes */
-        .node-rect { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; rx: 6; }
+        .node-rect { fill: #334155; stroke: #64748b; stroke-width: 2px; transition: all 0.3s; rx: 6; }
         .node-rect.active { fill: #fbbf24; stroke: #fff; stroke-width: 3px; filter: drop-shadow(0 0 10px #fbbf24); }
-        .node-rect.leaf { fill: #22c55e; stroke: #16a34a; }
+        .node-rect.leaf { fill: #22c55e; stroke: #fff; }
         
-        .node-text { fill: white; font-family: monospace; font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-        .edge-label { fill: #94a3b8; font-size: 10px; opacity: 0.8; }
+        .node-text { fill: white; font-family: monospace; font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-weight: bold; }
         
         .link { fill: none; stroke: #475569; stroke-width: 1.5px; opacity: 0.3; transition: all 0.3s; }
-        .link.active { stroke: #fbbf24; opacity: 1; stroke-width: 2.5px; }
+        .link.active { stroke: #fbbf24; opacity: 1; stroke-width: 3px; }
+        
+        .edge-label { fill: #94a3b8; font-size: 10px; opacity: 0; transition: opacity 0.3s; }
+        .link.active + .edge-label { opacity: 1; font-weight: bold; }
 
         /* Results */
         .results-panel {
-            width: 100%; background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 15px; border: 1px solid #475569;
+            width: 95%; background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 15px; border: 1px solid #475569;
         }
-        .results-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #94a3b8; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+        .results-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #94a3b8; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid rgba(148, 163, 184, 0.2); padding-bottom: 5px; }
         .results-grid { display: flex; flex-wrap: wrap; gap: 8px; min-height: 30px; }
+        
         .res-tag { 
-            padding: 5px 10px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 6px;
+            padding: 4px 10px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 6px;
             color: #93c5fd; font-family: monospace; font-size: 0.9rem; animation: popIn 0.3s;
         }
         .res-tag.new { background: #fbbf24; color: #0f172a; border-color: #fbbf24; }
@@ -56,10 +59,17 @@
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
         .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -70,13 +80,24 @@
                 <div class="viz-title">Permutations (State Space Tree)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Nums:</label>
-                        <input type="text" id="numsInput" value="1, 2, 3">
+                        <div class="input-group">
+                            <label>Nums:</label>
+                            <input type="text" id="numsInput" value="1, 2, 3">
+                        </div>
                         <button onclick="runVisualizer()">Generate</button>
+                    </div>
+                    <div style="text-align:center; font-size:0.85rem; color:#64748b; margin-top:8px;">
+                        Explore swapping current index <code>start</code> with every <code>i >= start</code>.
                     </div>
                 </div>
 
                 <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Solution Found</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Active State</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#334155; border:1px solid #64748b"></div>Traversed</div>
+                    </div>
+
                     <div class="tree-viewport">
                         <svg id="tree-svg"><g id="zoom-group"></g></svg>
                     </div>
@@ -108,11 +129,11 @@
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">C++ Code</div>
+                <div class="viz-title">Backtracking Swap</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -133,18 +154,17 @@
             { line: '        return;', id: 8 },
             { line: '    }', id: 9 },
             { line: '    for (int i = start; i < nums.size(); i++) {', id: 10 },
-            { line: '        swap(nums[start], nums[i]);', id: 11 },
-            { line: '        backtrack(nums, res, start + 1);', id: 12 },
-            { line: '        swap(nums[start], nums[i]); // Undo', id: 13 },
-            { line: '    }', id: 14 },
-            { line: '}', id: 15 }
+            { line: '        // Choose nums[i] as the element at \'start\'', id: 11 },
+            { line: '        swap(nums[start], nums[i]);', id: 12 },
+            { line: '        backtrack(nums, res, start + 1);', id: 13 },
+            { line: '        swap(nums[start], nums[i]); // Restore', id: 14 },
+            { line: '    }', id: 15 },
+            { line: '}', id: 16 }
         ];
 
         let viz;
 
         // Tree Helper
-        // Build state tree. In swap based approach for permutations, each node represents recursion depth `start`
-        // and the children are choices of swapping `start` with `i`.
         function buildTree(nums, start=0, currentArr=[...nums]) {
             const node = {
                 id: `node-${start}-${currentArr.join('_')}`,
@@ -160,7 +180,7 @@
                     [nextArr[start], nextArr[i]] = [nextArr[i], nextArr[start]];
                     
                     const child = buildTree(nums, start + 1, nextArr);
-                    child.edge = i === start ? "K" : `Swap(${start},${i})`; // Keep or Swap
+                    child.edge = i === start ? `Keep [${start}]` : `Swap(${start},${i})`;
                     node.children.push(child);
                 }
             }
@@ -170,53 +190,61 @@
         // --- Simulation ---
         function simulate(nums) {
             const steps = [];
-            
-            // Build visual tree (potentially large if N > 4, but demo uses 3)
             const staticRoot = buildTree(nums);
-            
-            const pushState = (msg, hl, activeId, currentArr, results) => {
-                steps.push({
-                    treeRoot: staticRoot,
-                    activeId,
-                    currentArr: [...currentArr], // The live permutation state
-                    results: [...results],
-                    msg, highlightLines: hl
-                });
-            };
-
             const res = [];
             const arr = [...nums];
 
-            function backtrack(start, pathIdStr) { // pathIdStr helps reconstruct ID match
+            const pushState = (msg, hl, activeId, info={}) => {
+                steps.push({
+                    treeRoot: staticRoot,
+                    activeId,
+                    currentArr: [...arr],
+                    results: [...res],
+                    msg, highlightLines: hl, explanation: info
+                });
+            };
+
+            pushState("Start Permutations", [2], staticRoot.id, { title: "開始", text: "從索引 0 開始遞歸生成排列。", formula: "backtrack(0)" });
+
+            function backtrack(start, pathIdStr) {
                 const nodeId = `node-${start}-${pathIdStr}`;
                 
-                pushState(`backtrack(start=${start}) Arr: [${arr.join(',')}]`, [5], nodeId, arr, res);
+                pushState(`Backtrack(start=${start})`, [5], nodeId, {
+                    title: `遞歸層級 ${start}`, text: `當前陣列狀態：[${arr.join(',')}]。準備決定第 ${start} 個位置的元素。`, formula: "enter recursive call"
+                });
 
                 if (start === arr.length) {
                     res.push([...arr]);
-                    pushState(`Base case: Add [${arr.join(',')}]`, [6, 7], nodeId, arr, res);
+                    pushState(`Base Case: Found [${arr.join(',')}]`, [6, 7], nodeId, {
+                        title: "找到排列", text: "到達陣列末尾，將當前排列加入結果集。", formula: "res.push(nums)"
+                    });
                     return;
                 }
 
                 for (let i = start; i < arr.length; i++) {
-                    pushState(`Try swap start=${start} with i=${i} (${arr[i]})`, [10], nodeId, arr, res);
-                    
                     // Swap
                     [arr[start], arr[i]] = [arr[i], arr[start]];
-                    pushState(`Swapped: [${arr.join(',')}]`, [11], nodeId, arr, res);
                     
-                    backtrack(start + 1, arr.join('_'));
+                    const nextPath = arr.join('_'); // ID after swap
+                    
+                    pushState(`Swap(${start}, ${i}): [${arr.join(',')}]`, [12], nodeId, {
+                        title: "交換選擇", text: `將位置 ${i} 的元素 (${arr[start]}) 放到位置 ${start}。`, formula: "swap(start, i)"
+                    });
+                    
+                    backtrack(start + 1, nextPath);
 
-                    // Undo (Backtrack)
-                    [arr[start], arr[i]] = [arr[i], arr[start]];
-                    pushState(`Undo Swap: [${arr.join(',')}]`, [13], nodeId, arr, res);
+                    // Undo
+                    [arr[start], arr[i]] = [arr[i], arr[start]]; // Restore technically swaps back the same values as before if we track logic correctly
+                    
+                    pushState(`Undo Swap: Restore [${arr.join(',')}]`, [14], nodeId, {
+                        title: "回溯還原", text: "撤銷交換，恢復陣列狀態，準備下一次選擇。", formula: "swap(start, i)"
+                    });
                 }
             }
 
-            pushState("Start Permutations", [2], staticRoot.id, arr, []);
-            backtrack(0, arr.join('_'));
+            backtrack(0, arr.join('_')); // Initial path is original array
             
-            pushState("Done", [3], null, arr, res);
+            pushState("Done", [3], null, { title: "完成", text: "所有排列生成完畢。", formula: "return res" });
 
             return steps;
         }
@@ -230,10 +258,17 @@
         svg.call(zoom);
         svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 40).scale(0.8));
 
-        const treeLayout = d3.tree().nodeSize([100, 80]); // Wider nodes
+        const treeLayout = d3.tree().nodeSize([110, 90]);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
             const root = d3.hierarchy(step.treeRoot);
             treeLayout(root);
@@ -258,17 +293,15 @@
                 .transition().duration(300)
                 .attr("x", d => (d.source.x + d.target.x)/2)
                 .attr("y", d => (d.source.y + d.target.y)/2)
-                .text(d => d.target.data.edge);
+                .text(d => d.target.data.edge)
+                .style("opacity", d => d.target.data.id === step.activeId ? 1 : 0.5);
             labels.exit().remove();
 
             // Nodes
             const nodes = gZoom.selectAll(".node-g").data(root.descendants(), d => d.data.id);
             const nEnter = nodes.enter().append("g").attr("class", "node-g");
             
-            // Rect node size adapted to content length
-            // Typically array string "[1,2,3]"
-            
-            nEnter.append("rect").attr("width", 80).attr("height", 30).attr("x", -40).attr("y", -15)
+            nEnter.append("rect").attr("width", 80).attr("height", 26).attr("x", -40).attr("y", -13)
                 .attr("class", "node-rect").attr("rx", 4);
             
             nEnter.append("text").attr("class", "node-text").attr("dy", 1);
@@ -282,9 +315,6 @@
                 if(d.data.status === 'leaf') c += " leaf";
                 return c;
             })
-            // If active, show current live array state maybe? Or just the static tree state?
-            // Tree state is "Start: 0", but leaf shows array?
-            // Let's show the array at each node actually, it's more informative
             
             nUpdate.select("text").text(d => `[${d.data.arr.join(',')}]`);
             
@@ -303,7 +333,10 @@
         }
 
         function runVisualizer() {
-            const nums = document.getElementById('numsInput').value.split(',').map(x=>parseInt(x.trim()));
+            const val = document.getElementById('numsInput').value;
+            if(!val) return;
+            const nums = val.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render

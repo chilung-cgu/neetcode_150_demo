@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Palindrome Partitioning - D3 精緻視覺化</title>
+    <title>Palindrome Partitioning (Backtracking) - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -19,49 +19,50 @@
         }
 
         .tree-viewport {
-            width: 100%; height: 450px;
+            width: 95%; height: 450px;
             background: rgba(30, 41, 59, 0.4);
             border-radius: 12px;
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.1);
         }
         #tree-svg { width: 100%; height: 100%; cursor: grab; }
         #tree-svg:active { cursor: grabbing; }
 
         /* D3 Nodes */
-        .node-rect { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; rx: 6; }
+        .node-rect { fill: #334155; stroke: #64748b; stroke-width: 2px; transition: all 0.3s; rx: 6; }
         .node-rect.active { fill: #fbbf24; stroke: #fff; stroke-width: 3px; filter: drop-shadow(0 0 10px #fbbf24); }
-        .node-rect.valid { fill: rgba(34, 197, 94, 0.2); stroke: #22c55e; }
-        .node-rect.invalid { fill: rgba(239, 68, 68, 0.2); stroke: #ef4444; opacity: 0.7; }
-        .node-rect.leaf { fill: #22c55e; stroke: #16a34a; }
-        
-        .node-text { fill: white; font-family: monospace; font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .node-rect.leaf { fill: #22c55e; stroke: #fff; }
+        .node-text { fill: white; font-family: monospace; font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-weight: bold; }
         
         .link { fill: none; stroke: #475569; stroke-width: 1.5px; opacity: 0.3; transition: all 0.3s; }
         .link.active { stroke: #fbbf24; opacity: 1; stroke-width: 3px; }
+        
+        .edge-label { fill: #94a3b8; font-size: 10px; opacity: 0; transition: opacity 0.3s; }
+        .link.active + .edge-label { opacity: 1; font-weight: bold; }
 
         /* String View */
         .string-display {
-            display: flex; gap: 4px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; justify-content: center;
+            display: flex; gap: 6px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; justify-content: center;
         }
         .char-box {
-            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
-            border: 1px solid #475569; color: #94a3b8; border-radius: 4px; font-weight: bold;
-            transition: all 0.2s;
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            border: 1px solid #475569; color: #94a3b8; border-radius: 6px; font-weight: bold;
+            transition: all 0.2s; font-size: 1.1rem;
         }
-        .char-box.highlight { background: #3b82f6; color: white; border-color: #60a5fa; transform: scale(1.1); }
-        .char-box.pivot { border-bottom: 3px solid #fbbf24; }
+        .char-box.highlight { background: rgba(59, 130, 246, 0.3); color: #60a5fa; border-color: #3b82f6; transform: scale(1.1); }
+        .char-box.pivot { border-bottom: 3px solid #fbbf24; } /* Current i */
 
         /* Results */
         .results-panel {
-            width: 100%; background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 15px; border: 1px solid #475569;
+            width: 95%; background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 15px; border: 1px solid #475569;
         }
-        .results-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #94a3b8; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
-        .results-grid { display: flex; flex-wrap: wrap; gap: 8px; min-height: 30px; }
+        .results-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #94a3b8; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid rgba(148, 163, 184, 0.2); padding-bottom: 5px; }
+        .results-grid { display: flex; flex-wrap: wrap; gap: 8px; min-height: 30px; max-height: 100px; overflow-y: auto; }
+        
         .res-tag { 
-            padding: 5px 10px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 6px;
-            color: #4ade80; font-family: monospace; font-size: 0.9rem; animation: popIn 0.3s;
+            padding: 4px 10px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 6px;
+            color: #4ade80; font-family: monospace; font-size: 0.85rem; animation: popIn 0.3s;
         }
         .res-tag.new { background: #fbbf24; color: #0f172a; border-color: #fbbf24; }
         @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
@@ -69,10 +70,17 @@
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
         .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 140px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -80,17 +88,29 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Palindrome Partitioning</div>
+                <div class="viz-title">Palindrome Partitioning (Backtracking)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>String:</label>
-                        <input type="text" id="strInput" value="aab">
+                        <div class="input-group">
+                            <label>String:</label>
+                            <input type="text" id="strInput" value="aab">
+                        </div>
                         <button onclick="runVisualizer()">Partition</button>
+                    </div>
+                    <div style="text-align:center; font-size:0.85rem; color:#64748b; margin-top:8px;">
+                        Recursive DFS: Check if substring s[i...j] is palindrome, then recurse.
                     </div>
                 </div>
 
                 <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#60a5fa"></div>Check Substring</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Recurse</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Solution Found</div>
+                    </div>
+
                     <div class="string-display" id="strDisplay"></div>
+
                     <div class="tree-viewport">
                         <svg id="tree-svg"><g id="zoom-group"></g></svg>
                     </div>
@@ -122,11 +142,11 @@
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">C++ Code</div>
+                <div class="viz-title">Backtracking Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -177,12 +197,6 @@
                         const child = buildTree(s, j + 1, [...currentParts, sub]);
                         child.edge = sub;
                         node.children.push(child);
-                    } else {
-                        // For visualization, maybe show invalid branches too?
-                        // Or just show valid paths. Usually better to show pruning or checks.
-                        // Let's create a stub 'invalid' node to show we checked.
-                        // But D3 tree layout gets messy with too many failed nodes.
-                        // Let's stick to valid tree structure but simulate checks in steps.
                     }
                 }
             }
@@ -200,52 +214,64 @@
             const steps = [];
             const staticRoot = buildTree(s);
             
-            const pushState = (msg, hl, activeId, currentParts, res, range={start:-1, end:-1}) => {
+            const pushState = (msg, hl, activeId, currentParts, res, range=null, info={}) => {
                 steps.push({
                     treeRoot: staticRoot,
                     activeId,
                     currentParts: [...currentParts],
                     res: [...res],
-                    range, // highlight string range being checked
-                    msg, highlightLines: hl
+                    range, 
+                    msg, highlightLines: hl, explanation: info
                 });
             };
 
             const res = [];
             const part = [];
 
+            pushState("Start DFS", [3], staticRoot.id, [], [], null, {title:"開始", text:"從索引 0 開始分割字串。", formula:"dfs(0)"});
+
             function dfs(i, pathIdStr) {
                 const nodeId = `node-${i}-${pathIdStr}`;
-                pushState(`dfs(i=${i})`, [5], nodeId, part, res);
+                pushState(`dfs(i=${i})`, [5], nodeId, part, res, null, {
+                    title: `遞歸層級 i=${i}`, text: `當前已分割部分：[${part.join(', ')}]，準備從索引 ${i} 開始尋找回文子串。`, formula: "enter dfs"
+                });
 
                 if (i >= s.length) {
                     res.push([...part]);
-                    pushState(`Base case: Found partition [${part.join(', ')}]`, [6,7], nodeId, part, res);
+                    pushState(`Base case: Found [${part.join(', ')}]`, [6,7], nodeId, part, res, null, {
+                        title: "完成分割", text: "已到達字串末尾，找到一組有效的回文分割。", formula: "res.push(part)"
+                    });
                     return;
                 }
 
                 for (let j = i; j < s.length; j++) {
                     const sub = s.substring(i, j + 1);
-                    pushState(`Check palindrome s[${i}...${j}] = "${sub}"`, [11], nodeId, part, res, {start:i, end:j});
+                    pushState(`Check s[${i}...${j}] = "${sub}"`, [11], nodeId, part, res, {start:i, end:j}, {
+                        title: "檢查回文", text: `檢查子串 "${sub}" 是否為回文。`, formula: "isPalindrome(s, i, j)"
+                    });
                     
                     if (isPalindrome(sub)) {
                         part.push(sub);
-                        pushState(`"${sub}" is palindrome. Recurse.`, [12, 13], nodeId, part, res, {start:i, end:j});
+                        pushState(`"${sub}" is palindrome. Recurse.`, [12], nodeId, part, res, {start:i, end:j}, {
+                            title: "確認回文", text: `"${sub}" 是回文，加入暫存，遞歸處理剩餘部分。`, formula: "part.push(sub)"
+                        });
                         
                         const nextPath = pathIdStr ? pathIdStr + "|" + sub : "" + sub;
                         dfs(j + 1, nextPath);
                         
                         part.pop();
-                        pushState(`Backtrack`, [14], nodeId, part, res);
+                        pushState(`Backtrack: Pop "${sub}"`, [14], nodeId, part, res, null, {
+                            title: "回溯", text: `撤銷選擇 "${sub}"，嘗試下一個可能的 j 位置。`, formula: "part.pop()"
+                        });
                     } else {
-                        pushState(`"${sub}" not palindrome. Skip.`, [11], nodeId, part, res, {start:i, end:j});
+                        // Optional: Visualize skip
+                        // pushState(`"${sub}" Not Palindrome. Skip.`, [11], nodeId, part, res, {start:i, end:j}, {title:"非回文", text:`"${sub}" 不是回文，跳過。`});
                     }
                 }
             }
 
-            pushState("Start", [3], staticRoot.id, [], []);
             dfs(0, "");
-            pushState("Done", [4], null, [], res);
+            pushState("Done", [4], null, [], res, null, {title:"完成", text:"所有分割方案搜尋完畢。", formula:"return res"});
 
             return steps;
         }
@@ -259,10 +285,17 @@
         svg.call(zoom);
         svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 40).scale(0.8));
 
-        const treeLayout = d3.tree().nodeSize([80, 80]);
+        const treeLayout = d3.tree().nodeSize([90, 80]);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
             // String Highlighting
             const strContainer = document.getElementById('strDisplay');
@@ -275,6 +308,8 @@
                 if(step.range && i >= step.range.start && i <= step.range.end) {
                     box.classList.add('highlight');
                 }
+                const activeStart = parseInt(step.activeId ? step.activeId.split('-')[1] : -1);
+                if(i === activeStart) box.classList.add('pivot');
                 strContainer.appendChild(box);
             }
 
@@ -294,12 +329,22 @@
                     return c;
                 });
             links.exit().remove();
+            
+            // Edge Labels
+            const labels = gZoom.selectAll(".edge-label").data(root.links(), d => "lbl-"+d.target.data.id);
+            labels.enter().append("text").attr("class", "edge-label")
+                .merge(labels)
+                .transition().duration(300)
+                .attr("x", d => (d.source.x + d.target.x)/2)
+                .attr("y", d => (d.source.y + d.target.y)/2)
+                .text(d => d.target.data.edge)
+                .style("opacity", d => d.target.data.id === step.activeId ? 1 : 0.5);
+            labels.exit().remove();
 
             // Nodes
             const nodes = gZoom.selectAll(".node-g").data(root.descendants(), d => d.data.id);
             const nEnter = nodes.enter().append("g").attr("class", "node-g");
             
-            // Rect nodes showing substring? or logic
             nEnter.append("rect").attr("width", 60).attr("height", 24).attr("x", -30).attr("y", -12)
                 .attr("class", "node-rect").attr("rx", 4);
             nEnter.append("text").attr("class", "node-text").attr("dy", 1);
@@ -315,10 +360,10 @@
             });
 
             nUpdate.select("text").text(d => {
-                // If it's a child node, show the edge value (substring) that led to it?
-                // Or show "End"
-                // The edge value is stored in child node data
-                return d.data.edge || d.data.name; 
+                // Leaf usually means end, show last part? Or just 'End'?
+                // Logic: edge label shows substring. Node shows current index?
+                if(d.data.name === 'End') return '✓';
+                return d.data.name.replace('Start: ', 'i=');
             });
             nodes.exit().remove();
 
@@ -336,6 +381,7 @@
 
         function runVisualizer() {
             const s = document.getElementById('strInput').value;
+            if(!s) return;
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render

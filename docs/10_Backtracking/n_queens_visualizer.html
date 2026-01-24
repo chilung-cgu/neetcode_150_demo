@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>N-Queens - D3 精緻視覺化</title>
+    <title>N-Queens (Backtracking) - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -16,39 +16,47 @@
             gap: 20px;
             align-items: center;
             min-height: 600px;
-            position: relative; overflow: hidden;
         }
 
-        /* D3 Chess Board Wrapper */
+        /* Chess Board */
         .board-wrapper {
             width: 100%; height: 500px;
-            background: rgba(30,30,30,0.5); border-radius: 8px;
-            overflow: hidden;
+            background: rgba(30,30,30,0.3); border-radius: 8px;
+            overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.2);
         }
         #board-svg { width: 100%; height: 100%; cursor: grab; }
         #board-svg:active { cursor: grabbing; }
 
-        .cell-rect { stroke: #1e293b; stroke-width: 1px; }
-        .cell-rect.white { fill: #cbd5e1; }
-        .cell-rect.black { fill: #475569; }
-        .cell-rect.attacked { fill: rgba(239, 68, 68, 0.5) !important; transition: fill 0.3s; }
-        .cell-rect.safe { fill: rgba(34, 197, 94, 0.3) !important; }
+        .cell-rect { stroke: #334155; stroke-width: 0.5px; }
+        .cell-rect.white { fill: #e2e8f0; fill-opacity: 0.1; }
+        .cell-rect.black { fill: #1e293b; fill-opacity: 0.8; }
+        
+        /* States */
+        .cell-rect.safe { fill: rgba(34, 197, 94, 0.4) !important; stroke: #22c55e; stroke-width: 2px; }
+        .cell-rect.attacked { fill: rgba(239, 68, 68, 0.4) !important; stroke: #ef4444; stroke-width: 2px; }
+        .cell-rect.zone-attack { fill: rgba(239, 68, 68, 0.15); } /* Being attacked by existing queens */
 
-        .queen-circle { fill: #fbbf24; stroke: #b45309; stroke-width: 2px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.4)); transition: all 0.3s; }
-        .queen-text { fill: #451a03; font-weight: 900; font-size: 24px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-
-        .coord-text { fill: #94a3b8; font-size: 10px; opacity: 0.5; pointer-events: none; }
+        .queen-group { pointer-events: none; }
+        .queen-circle { fill: #fbbf24; stroke: #b45309; stroke-width: 2px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); }
+        .queen-text { fill: #451a03; font-weight: 900; font-size: 20px; text-anchor: middle; dominant-baseline: middle; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
         .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
         
-        .results-info { font-size: 0.9rem; color: #94a3b8; margin-top: 5px; }
-        .solution-count { font-weight: bold; color: #22c55e; }
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+
+        .results-info { font-size: 1rem; color: #94a3b8; font-family: monospace; }
+        .solution-count { font-weight: bold; color: #22c55e; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -59,17 +67,29 @@
                 <div class="viz-title">N-Queens (Backtracking)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>N (1-8):</label>
-                        <input type="number" id="nInput" value="4" min="1" max="8">
+                        <div class="input-group">
+                            <label>N (Queens):</label>
+                            <input type="number" id="nInput" value="4" min="1" max="8">
+                        </div>
                         <button onclick="runVisualizer()">Solve</button>
+                    </div>
+                     <div style="text-align:center; font-size:0.85rem; color:#64748b; margin-top:8px;">
+                        Place N Queens so that no two queens attack each other (Row, Col, Diagonal).
                     </div>
                 </div>
 
                 <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24; border:1px solid #b45309"></div>Queen</div>
+                       <div class="legend-item"><div class="legend-color" style="background:rgba(34, 197, 94, 0.4)"></div>Safe Test</div>
+                       <div class="legend-item"><div class="legend-color" style="background:rgba(239, 68, 68, 0.4)"></div>Unsafe Test</div>
+                       <div class="legend-item"><div class="legend-color" style="background:rgba(239, 68, 68, 0.15)"></div>Attacked Zone</div>
+                    </div>
+
                     <div class="board-wrapper">
                         <svg id="board-svg"><g id="zoom-group"></g></svg>
                     </div>
-                    <div class="results-info">Found Solutions: <span class="solution-count" id="solCount">0</span></div>
+                    <div class="results-info">Solutions Found: <span class="solution-count" id="solCount">0</span></div>
                 </div>
 
                 <div class="step-breakdown">
@@ -86,14 +106,14 @@
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1000">0.5x</option>
-                            <option value="500" selected>1x</option>
-                            <option value="200">1.5x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="800" selected>1x</option>
+                            <option value="300">1.5x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -132,84 +152,108 @@
 
         function simulate(n) {
             const steps = [];
-            // State: current board config (Q positions), set of attacked cells?
-            // "Attacked" cells calculation is easy to recompute.
-            
-            // To visualize:
-            // - Current queens (r, c)
-            // - Current "trying" cell (r, c)
-            // - Attacked cells (red overlay)
-            
-            const board = Array(n).fill('.').map(() => Array(n).fill('.'));
-            // Helper to get attacked cells
-            const getAttacked = (queens) => {
-                const attacked = new Set();
-                queens.forEach(q => {
-                    // Row, Col, Diagonals
-                    for(let i=0; i<n; i++) {
-                        attacked.add(`${q.r},${i}`); // Row
-                        attacked.add(`${i},${q.c}`); // Col
-                        // Diagonals
-                        let d = i - q.r;
-                        if(q.c+d >= 0 && q.c+d < n) attacked.add(`${i},${q.c+d}`);
-                        if(q.c-d >= 0 && q.c-d < n) attacked.add(`${i},${q.c-d}`);
-                    }
-                });
-                return Array.from(attacked).map(s => { const [r,c] = s.split(',').map(Number); return {r,c}; });
-            };
-
             const queens = []; // {r, c}
             let solCount = 0;
 
-            const pushState = (msg, hl, activeCell=null, status='normal') => {
-                const att = getAttacked(queens);
+            const getAttackedCells = (currentQueens) => {
+                const attackedSet = new Set();
+                currentQueens.forEach(q => {
+                    // Row is implicitly blocked by logic (one per row) but let's just mark current row? No need.
+                    // Actually, row is blocked.
+                    
+                    // Col and Diagnols
+                    for(let r=0; r<n; r++) {
+                        // Col
+                        attackedSet.add(`${r},${q.c}`);
+                        // Diagonals relative to q
+                        const d = Math.abs(r - q.r); // Dist
+                        if (d !== 0) { // Same row covered already
+                            if(q.c - d >= 0) attackedSet.add(`${r},${q.c-d}`);
+                            if(q.c + d < n) attackedSet.add(`${r},${q.c+d}`);
+                        }
+                    }
+                    attackedSet.add(`${q.r},${q.c}`); // Q position itself
+                    // Also fill row
+                     for(let c=0; c<n; c++) attackedSet.add(`${q.r},${c}`);
+                });
+                return Array.from(attackedSet);
+            };
+
+            const pushState = (msg, hl, activeCell=null, status='normal', info={}) => {
                 steps.push({
                     n,
-                    queens: [...queens],
-                    attacked: att,
+                    queens: [...queens], // copy
+                    attacked: getAttackedCells(queens),
                     activeCell,
                     status,
                     solCount,
-                    msg, highlightLines: hl
+                    msg, highlightLines: hl, explanation: info
                 });
             };
 
-            function isSafe(r, c) {
-                // Check against current queens
+            function isSafe(r, c, recordStep = true) {
+                // Check safety
+                let conflict = null;
                 for(let q of queens) {
-                    if (q.c === c || Math.abs(q.r - r) === Math.abs(q.c - c)) return false;
+                    if (q.c === c) { conflict = q; break; }
+                    if (Math.abs(q.r - r) === Math.abs(q.c - c)) { conflict = q; break; }
+                }
+                
+                if (conflict) {
+                     if(recordStep) {
+                        pushState(`Check (${r}, ${c}): Unsafe! Attacked by Q at (${conflict.r},${conflict.c})`, [11], {r, c}, 'attacked', {
+                            title: "位置衝突", text: `位置 (${r},${c}) 被位於 (${conflict.r},${conflict.c}) 的皇后攻擊 (同列或對角線)。`, formula: "isSafe() == false"
+                        });
+                     }
+                     return false;
+                }
+                
+                if(recordStep) {
+                    pushState(`Check (${r}, ${c}): Safe to place.`, [11], {r, c}, 'safe', {
+                        title: "位置安全", text: `位置 (${r},${c}) 未受任何皇后攻擊，可以放置。`, formula: "isSafe() == true"
+                    });
                 }
                 return true;
             }
 
-            function backtrack(r) {
-                pushState(`Backtrack(r=${r})`, [5], {r, c:-1}, 'check');
+            pushState("Start N-Queens", [3], null, 'normal', {title:"開始", text:`嘗試在 ${n}x${n} 棋盤上放置 ${n} 個皇后。`, formula:"backtrack(0)"});
 
+            function backtrack(r) {
                 if (r === n) {
                     solCount++;
-                    pushState(`Found Solution ${solCount}!`, [6, 7], null, 'success');
+                    pushState(`Solution Found! Total: ${solCount}`, [6, 7], null, 'success', {
+                        title: "找到解", text: `成功放置了 ${n} 個皇后，記錄這組解。`, formula: "ans.push(board)"
+                    });
                     return;
                 }
 
                 for (let c = 0; c < n; c++) {
-                    const safe = isSafe(r, c);
-                    pushState(`Check cell (${r}, ${c}). Safe? ${safe}`, [10, 11], {r, c}, safe ? 'safe' : 'attacked');
-                    
-                    if (safe) {
+                    // isSafe creates a step internally
+                    if(isSafe(r, c, true)) {
+                        
                         queens.push({r, c});
-                        pushState(`Place Q at (${r}, ${c}). Recurse to r=${r+1}`, [12, 13], {r, c}, 'place');
+                        pushState(`Place Q at (${r}, ${c}). Next row...`, [12, 13], {r, c}, 'place', {
+                            title: "放置皇后", text: `在第 ${r} 列放置皇后於第 ${c} 行，遞歸進入第 ${r+1} 列。`, formula: "board[r][c] = 'Q'"
+                        });
                         
                         backtrack(r + 1);
                         
                         queens.pop();
-                        pushState(`Backtrack: Remove Q from (${r}, ${c})`, [14], {r, c}, 'remove');
+                        pushState(`Backtrack: Remove Q from (${r}, ${c})`, [14], {r, c}, 'remove', {
+                            title: "回溯 (Backtrack)", text: `撤銷位置 (${r},${c}) 的皇后，嘗試該列的下一個位置。`, formula: "board[r][c] = '.'"
+                        });
                     }
+                }
+                
+                if(r < n && queens.length < r+1) { 
+                    // Means we tried all cols in this row and found no spot, returning to row r-1
+                    // Only visualize if we are not at root returning final
+                     // Actually logic falls through loop
                 }
             }
 
-            pushState("Start N-Queens", [3], null);
             backtrack(0);
-            pushState("Done", [4], null);
+            pushState("Done. All solutions found.", [4], null, 'normal', {title:"結束", text:`搜尋結束，共找到 ${solCount} 組解。`, formula:"return ans"});
 
             return steps;
         }
@@ -220,25 +264,26 @@
         const gZoom = d3.select("#zoom-group");
         
         // Zoom/Pan
-        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
+        const zoom = d3.zoom().scaleExtent([0.5, 3]).on("zoom", (e) => gZoom.attr("transform", e.transform));
         svg.call(zoom);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
             document.getElementById('solCount').textContent = step.solCount;
+            
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
             const n = step.n;
-            const cellSize = 50; // Base size
-            const boardSize = n * cellSize; // Total size
-            
-            // Re-center initially if needed? 
-            // Better to let user zoom. But we can center content on first render.
-            // (Assuming svg viewbox logic or manual translation)
+            const cellSize = 50; 
+            const boardPx = n * cellSize;
 
-            // Board Group centered
-            // We use simple coords (0,0) at top left
-            
-            // Draw Cells
+            // --- Board Grid ---
             const cells = [];
             for(let r=0; r<n; r++){
                 for(let c=0; c<n; c++){
@@ -246,63 +291,63 @@
                 }
             }
 
-            // G-Board can be static if we just update class?
-            // But we need to redraw if N changes.
-            // D3 Data join for cells
             const cellRects = gZoom.selectAll(".cell-rect").data(cells, d => `${d.r},${d.c}`);
             
-            // Enter
             cellRects.enter().append("rect")
                 .attr("class", d => ((d.r + d.c) % 2 === 0) ? "cell-rect white" : "cell-rect black")
                 .attr("x", d => d.c * cellSize)
                 .attr("y", d => d.r * cellSize)
                 .attr("width", cellSize).attr("height", cellSize)
-                .merge(cellRects) // Update
+                .merge(cellRects)
                 .attr("class", d => {
                     let base = ((d.r + d.c) % 2 === 0) ? "cell-rect white" : "cell-rect black";
+                    const key = `${d.r},${d.c}`;
                     
-                    // Highlight based on state
-                    // Attacked?
-                    // activeCell?
-                    
+                    // Priority: Active Cell status > Attacked Zone > Base
+                    // But if Active Cell matches, we highlight specifically
                     if(step.activeCell && step.activeCell.r === d.r && step.activeCell.c === d.c) {
-                        // Current checking
-                        if(step.status === 'safe') return base + " safe"; // Greenish
-                        if(step.status === 'attacked') return base + " attacked"; // Reddish
+                        if(step.status === 'safe') return base + " safe";
+                        if(step.status === 'attacked') return base + " attacked";
+                        if(step.status === 'place') return base + " safe";
+                        if(step.status === 'remove') return base + " attacked"; // visually indicate removal
                     }
                     
-                    // If simply attacked terrain (optional visual clutter)
-                    // Let's only highlight the active cell's status for clarity
+                    if(step.attacked.includes(key)) {
+                        return base + " zone-attack";
+                    }
                     return base;
                 });
             cellRects.exit().remove();
             
-            // Add queens
-            const queens = gZoom.selectAll(".queen-g").data(step.queens, d => `${d.r},${d.c}`);
+            // --- Queens ---
+            const queens = gZoom.selectAll(".queen-g").data(step.queens, d => `${d.r}`); // Key by row is safe since one per row
             const qEnter = queens.enter().append("g").attr("class", "queen-g")
                 .attr("transform", d => `translate(${d.c * cellSize + cellSize/2}, ${d.r * cellSize + cellSize/2})`);
             
-            qEnter.append("circle").attr("r", cellSize * 0.35).attr("class", "queen-circle");
-            qEnter.append("text").text("Q").attr("class", "queen-text");
+            qEnter.append("circle").attr("r", cellSize * 0.35).attr("class", "queen-circle")
+                 .attr("transform", "scale(0)").transition().duration(300).attr("transform", "scale(1)");
+
+            qEnter.append("text").text("Q").attr("class", "queen-text").attr("dy", 1)
+                 .attr("opacity", 0).transition().delay(100).duration(200).attr("opacity", 1);
 
             queens.merge(qEnter).transition().duration(200)
                 .attr("transform", d => `translate(${d.c * cellSize + cellSize/2}, ${d.r * cellSize + cellSize/2})`);
             
             queens.exit().transition().duration(200).style("opacity", 0).remove();
-            
-            // Adjust Zoom Transform to center board if first step?
-            // We'll skip auto-zoom reset on every step to allow user pan.
-            // Only on resize.
         }
 
         function runVisualizer() {
             const n = parseInt(document.getElementById('nInput').value);
-            // Center the zoom
+            // Auto Center
             const cellSize = 50;
             const boardPx = n * cellSize;
-            const scale = Math.min(1, 400 / boardPx); // Fit within view
-            const tX = (svg.node().clientWidth - boardPx * scale) / 2;
-            const tY = (svg.node().clientHeight - boardPx * scale) / 2;
+            const containerW = svg.node().parentElement.clientWidth;
+            const containerH = svg.node().parentElement.clientHeight;
+            
+            const scale = Math.min(1, Math.min(containerW, containerH) / boardPx * 0.9);
+            const tX = (containerW - boardPx * scale) / 2;
+            const tY = (containerH - boardPx * scale) / 2;
+            
             svg.call(zoom.transform, d3.zoomIdentity.translate(tX, tY).scale(scale));
             
             viz = new AlgorithmVisualizer({

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Combination Sum - D3 精緻視覺化</title>
+    <title>Combination Sum (Backtracking) - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -19,37 +19,42 @@
         }
 
         .tree-viewport {
-            width: 100%; height: 450px;
+            width: 95%; height: 450px;
             background: rgba(30, 41, 59, 0.4);
             border-radius: 12px;
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.1);
         }
         #tree-svg { width: 100%; height: 100%; cursor: grab; }
         #tree-svg:active { cursor: grabbing; }
 
         /* D3 Nodes */
-        .node-circle { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; }
+        .node-circle { fill: #334155; stroke: #64748b; stroke-width: 2px; transition: all 0.3s; }
         .node-circle.active { fill: #fbbf24; stroke: #fff; stroke-width: 3px; filter: drop-shadow(0 0 10px #fbbf24); }
-        .node-circle.success { fill: #22c55e; stroke: #16a34a; }
-        .node-circle.fail { fill: #ef4444; stroke: #b91c1c; opacity: 0.8; }
+        .node-circle.success { fill: #22c55e; stroke: #fff; }
+        .node-circle.fail { fill: #ef4444; stroke: #fff; opacity: 0.8; }
         
-        .node-text { fill: white; font-family: monospace; font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-        .edge-label { fill: #94a3b8; font-size: 10px; opacity: 0.8; }
+        .node-text { fill: white; font-family: monospace; font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-weight: bold; }
         
         .link { fill: none; stroke: #475569; stroke-width: 1.5px; opacity: 0.3; transition: all 0.3s; }
         .link.active { stroke: #fbbf24; opacity: 1; stroke-width: 3px; }
+        .link.include { stroke: #22c55e; }
+        .link.skip { stroke: #ef4444; stroke-dasharray: 4; }
+
+        .edge-label { fill: #94a3b8; font-size: 10px; opacity: 0; transition: opacity 0.3s; }
+        .link.active + .edge-label { opacity: 1; font-weight: bold; }
 
         /* Results */
         .results-panel {
-            width: 100%; background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 15px; border: 1px solid #475569;
+            width: 95%; background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 15px; border: 1px solid #475569;
         }
-        .results-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #94a3b8; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+        .results-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #94a3b8; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid rgba(148, 163, 184, 0.2); padding-bottom: 5px; }
         .results-grid { display: flex; flex-wrap: wrap; gap: 8px; min-height: 30px; }
+        
         .res-tag { 
-            padding: 5px 10px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 6px;
-            color: #4ade80; font-family: monospace; font-size: 0.9rem; animation: popIn 0.3s;
+            padding: 4px 10px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 6px;
+            color: #4ade80; font-family: monospace; font-size: 0.85rem; animation: popIn 0.3s;
         }
         .res-tag.new { background: #fbbf24; color: #0f172a; border-color: #fbbf24; }
         @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
@@ -57,10 +62,17 @@
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
         .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -68,18 +80,31 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Combination Sum (Decision Tree)</div>
+                <div class="viz-title">Combination Sum (Backtracking)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Candidates:</label>
-                        <input type="text" id="numsInput" value="2, 3, 6, 7">
-                        <label>Target:</label>
-                        <input type="number" id="targetInput" value="7" style="width:60px">
-                        <button onclick="runVisualizer()">Start</button>
+                        <div class="input-group">
+                            <label>Candidates:</label>
+                            <input type="text" id="numsInput" value="2, 3, 6, 7">
+                        </div>
+                        <div class="input-group">
+                            <label>Target:</label>
+                            <input type="number" id="targetInput" value="7" style="width:60px">
+                        </div>
+                        <button onclick="runVisualizer()">Find Combinations</button>
+                    </div>
+                    <div style="text-align:center; font-size:0.85rem; color:#64748b; margin-top:8px;">
+                        Each number can be used unlimited times. Find all unique combinations summing to Target.
                     </div>
                 </div>
 
                 <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Target Reached</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Exceed Target</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Current</div>
+                    </div>
+
                     <div class="tree-viewport">
                         <svg id="tree-svg"><g id="zoom-group"></g></svg>
                     </div>
@@ -111,11 +136,11 @@
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">C++ Code</div>
+                <div class="viz-title">Backtracking Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -135,13 +160,13 @@
             { line: '            res.push_back(comb);', id: 7 },
             { line: '            return;', id: 8 },
             { line: '        }', id: 9 },
-            { line: '        if (i >= candidates.size() || target < 0) return;', id: 10 },
-            { line: '        // Include candidates[i]', id: 11 },
+            { line: '        if (i >= N || target < 0) return;', id: 10 },
+            { line: '        // Decision 1: Include nums[i]', id: 11 },
             { line: '        comb.push_back(candidates[i]);', id: 12 },
             { line: '        dfs(i, target - candidates[i]); // Stay at i', id: 13 },
             { line: '        comb.pop_back(); // Backtrack', id: 14 },
-            { line: '        // Skip candidates[i]', id: 15 },
-            { line: '        dfs(i + 1, target);', id: 16 },
+            { line: '        // Decision 2: Skip nums[i]', id: 15 },
+            { line: '        dfs(i + 1, target); // Move next', id: 16 },
             { line: '    }', id: 17 },
             { line: '}', id: 18 }
         ];
@@ -156,21 +181,20 @@
             const node = {
                 id: `node-${i}-${currentPath.join('_')}`,
                 name: remaining === 0 ? "0" : `${remaining}`,
+                rem: remaining,
                 comb: [...currentPath],
                 status: remaining === 0 ? 'success' : (remaining < 0 ? 'fail' : 'process'),
                 children: []
             };
 
-            // Limit depth to avoid explosion
-            if (remaining > 0 && i < candidates.length && currentPath.length < 10) {
+            // Heuristic limit: depth 7 or remaining < -20 to pruning explosion
+            if (remaining > 0 && i < candidates.length && currentPath.length < 8) {
                 // Include Branch
                 const left = buildTree(candidates, target, i, [...currentPath, candidates[i]]);
-                left.edge = `+${candidates[i]}`;
+                left.edge = `Use ${candidates[i]}`;
                 node.children.push(left);
 
                 // Skip Branch
-                // Only if we haven't picked this i yet? 
-                // The structure is: at index i, pick candidates[i] OR skip to i+1.
                 const right = buildTree(candidates, target, i + 1, [...currentPath]);
                 right.edge = "Skip";
                 node.children.push(right);
@@ -181,61 +205,68 @@
         // --- Simulation ---
         function simulate(candidates, target) {
             const steps = [];
-            // Pre-build Tree structure for Layout? 
-            // In Combination sum, tree can be infinite theoretically if 0 allowed, but input >= 2.
-            // Still, can be large. We prune branches > target.
-            
             const staticRoot = buildTree(candidates, target);
-            
-            const pushState = (msg, hl, activeId, currentComb, results) => {
-                steps.push({
-                    treeRoot: staticRoot,
-                    activeId,
-                    currentComb: [...currentComb],
-                    results: [...results],
-                    msg, highlightLines: hl
-                });
-            };
-
             const res = [];
             const comb = [];
 
-            function dfs(i, currentTarget, pathIdStr) { // Construct ID matching buildTree
+            const pushState = (msg, hl, activeId, info={}) => {
+                steps.push({
+                    treeRoot: staticRoot,
+                    activeId,
+                    currentComb: [...comb],
+                    results: [...res],
+                    msg, highlightLines: hl, explanation: info
+                });
+            };
+
+            pushState("Start DFS", [3], staticRoot.id, { title: "開始", text: "從索引 0 開始，初始目標為 Target。", formula: "dfs(0, target)" });
+
+            function dfs(i, currentTarget, pathIdStr) {
                 const nodeId = `node-${i}-${pathIdStr}`;
                 
-                pushState(`DFS(${i}, target=${currentTarget})`, [5], nodeId, comb, res);
+                pushState(`DFS(${i}, rem=${currentTarget})`, [5], nodeId, {
+                    title: `狀態檢查 (Rem: ${currentTarget})`, text: `當前剩餘目標 ${currentTarget}，考慮 candidates[${i}] = ${i<candidates.length?candidates[i]:'End'}。`, formula: "check target"
+                });
 
                 if (currentTarget === 0) {
                     res.push([...comb]);
-                    pushState(`Found target! Add [${comb.join(',')}]`, [7, 8], nodeId, comb, res);
+                    pushState(`Target Reached! Add [${comb.join(',')}]`, [6, 7], nodeId, {
+                        title: "找到組合", text: "剩餘目標為 0，成功找到一組解。", formula: "res.push(comb)"
+                    });
                     return;
                 }
                 if (i >= candidates.length || currentTarget < 0) {
-                    pushState(`Backtrack (Invalid or End)`, [10], nodeId, comb, res);
+                    pushState(`Backtrack (Rem < 0 or End)`, [10], nodeId, {
+                        title: "無效路徑", text: "目標小於 0 或候選數耗盡，回溯。", formula: "return"
+                    });
                     return;
                 }
 
                 // Include
                 comb.push(candidates[i]);
-                pushState(`Include ${candidates[i]} (Stay at index ${i})`, [12], nodeId, comb, res);
+                pushState(`Include ${candidates[i]} (Stay at index ${i})`, [12], nodeId, {
+                    title: "選擇 (Include)", text: `加入 ${candidates[i]}，繼續遞歸當前索引 ${i} (允許重複使用)。`, formula: "dfs(i, rem - val)"
+                });
                 
-                // Child ID path construction needs to match buildTree logic
                 const nextPathId = pathIdStr ? pathIdStr + "_" + candidates[i] : "" + candidates[i];
                 dfs(i, currentTarget - candidates[i], nextPathId);
 
                 // Backtrack
                 const popped = comb.pop();
-                pushState(`Backtrack: Pop ${popped}`, [14], nodeId, comb, res);
+                pushState(`Backtrack: Pop ${popped}`, [14], nodeId, {
+                    title: "回溯 (Backtrack)", text: `撤銷 ${popped}，嘗試跳過當前數字的分支。`, formula: "comb.pop()"
+                });
 
                 // Skip
-                pushState(`Skip ${candidates[i]} (Move to index ${i+1})`, [16], nodeId, comb, res);
-                dfs(i + 1, currentTarget, pathIdStr); // Skipping doesn't change pathIdStr (comb) but changes index
+                pushState(`Skip ${candidates[i]} (Move to index ${i+1})`, [16], nodeId, {
+                    title: "跳過 (Skip)", text: `不再使用 ${candidates[i]}，移動到下一個候選數。`, formula: "dfs(i+1, rem)"
+                });
+                dfs(i + 1, currentTarget, pathIdStr); 
             }
 
-            pushState("Start DFS", [3], staticRoot.id, [], []);
             dfs(0, target, "");
             
-            pushState("Done", [4], null, [], res);
+            pushState("Done", [4], null, { title: "完成", text: "所有組合搜尋完畢。", formula: "return res" });
             return steps;
         }
 
@@ -246,12 +277,19 @@
         
         const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
         svg.call(zoom);
-        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 40).scale(0.8));
+        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 40).scale(0.85));
 
         const treeLayout = d3.tree().nodeSize([70, 80]);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
             const root = d3.hierarchy(step.treeRoot);
             treeLayout(root);
@@ -265,6 +303,8 @@
                 .attr("class", d => {
                     let c = "link";
                     if(d.target.data.id === step.activeId) c += " active";
+                    if(d.target.data.edge === "Skip") c += " skip";
+                    else c += " include";
                     return c;
                 });
             links.exit().remove();
@@ -274,9 +314,10 @@
             labels.enter().append("text").attr("class", "edge-label")
                 .merge(labels)
                 .transition().duration(300)
-                .attr("x", d => (d.source.x + d.target.x)/2 + (d.target.data.edge==="Skip"?-15:15))
+                .attr("x", d => (d.source.x + d.target.x)/2 + (d.target.data.edge==="Skip"?15:-15))
                 .attr("y", d => (d.source.y + d.target.y)/2)
-                .text(d => d.target.data.edge);
+                .text(d => d.target.data.edge)
+                .style("opacity", d => d.target.data.id === step.activeId ? 1 : 0.5);
             labels.exit().remove();
 
             // Nodes
@@ -296,7 +337,7 @@
                 return c;
             });
 
-            nUpdate.select("text").text(d => d.data.name); // rem target
+            nUpdate.select("text").text(d => d.data.name);
             nodes.exit().remove();
 
             // Results
@@ -312,7 +353,9 @@
         }
 
         function runVisualizer() {
-            const cands = document.getElementById('numsInput').value.split(',').map(x=>parseInt(x.trim()));
+            const val = document.getElementById('numsInput').value;
+            if(!val) return;
+            const cands = val.split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
             const target = parseInt(document.getElementById('targetInput').value);
             
             viz = new AlgorithmVisualizer({

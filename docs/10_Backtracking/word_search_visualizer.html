@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Search (Grid DFS) - D3 精緻視覺化</title>
+    <title>Word Search (Grid DFS) - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -24,47 +24,49 @@
             background: rgba(30, 41, 59, 0.4); border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: all 0.3s;
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }
         .cell {
             width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
             background: #334155; border-radius: 8px; font-weight: bold; color: #cbd5e1;
-            font-size: 1.2rem; transition: all 0.3s; border: 2px solid transparent;
+            font-size: 1.4rem; transition: all 0.3s; border: 2px solid transparent;
+            font-family: 'Courier New', monospace;
         }
         
         /* States */
         .cell.visiting { background: #fbbf24; color: #0f172a; transform: scale(1.1); box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); z-index: 10; border-color: #f59e0b; }
-        .cell.visited { background: rgba(59, 130, 246, 0.3); border-color: #3b82f6; color: #93c5fd; } /* Path history */
-        .cell.backtrack { background: #ef4444; color: white; animation: shake 0.4s; }
-        .cell.success { background: #22c55e; color: white; border-color: #16a34a; box-shadow: 0 0 15px rgba(34, 197, 94, 0.5); animation: pulse 1s infinite; }
+        .cell.visited { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; color: #93c5fd; } /* Path history */
+        .cell.backtrack { background: #ef4444; color: white; animation: shake 0.4s; z-index: 10; }
+        .cell.success { background: #22c55e; color: white; border-color: #16a34a; box-shadow: 0 0 15px rgba(34, 197, 94, 0.5); animation: pulse 1s infinite; z-index: 5; }
         
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
         /* Word Progress */
         .word-progress {
-            display: flex; gap: 5px; font-family: monospace; font-size: 1.5rem; color: #64748b;
-            margin-bottom: 10px;
+            display: flex; gap: 8px; font-family: monospace; font-size: 1.5rem; color: #64748b;
+            margin-bottom: 10px; background: rgba(15, 23, 42, 0.5); padding: 10px 20px; border-radius: 8px;
         }
         .char-box {
-            padding: 5px 10px; border-bottom: 3px solid #64748b; transition: all 0.3s;
+            padding: 5px 10px; border-bottom: 3px solid #475569; transition: all 0.3s; color: #94a3b8;
         }
-        .char-box.matched { color: #22c55e; border-color: #22c55e; transform: translateY(-3px); text-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
-        .char-box.active { color: #fbbf24; border-color: #fbbf24; transform: scale(1.2); }
+        .char-box.matched { color: #22c55e; border-color: #22c55e; transform: translateY(-3px); text-shadow: 0 0 10px rgba(34, 197, 94, 0.4); font-weight: bold; }
+        .char-box.active { color: #fbbf24; border-color: #fbbf24; transform: scale(1.1); font-weight: bold; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; flex-wrap: wrap; }
+        .input-row { display: flex; gap: 15px; align-items: start; justify-content: center; flex-wrap: wrap; }
         .input-group { display: flex; flex-direction: column; gap: 5px; }
-        .input-group label { font-size: 0.8rem; color: #94a3b8; font-weight: bold; }
-        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 140px; height: 80px; resize: none; }
-        input[type="text"] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; align-self: flex-end; }
+        .input-group label { font-size: 0.85rem; color: #94a3b8; font-weight: bold; }
+        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 140px; height: 80px; resize: none; letter-spacing: 2px; }
+        input[type="text"] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; text-transform: uppercase; letter-spacing: 2px; }
+        button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; align-self: center; }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 15px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -85,11 +87,21 @@ A,D,E,E</textarea>
                             <label>Target Word:</label>
                             <input type="text" id="wordInput" value="ABCCED">
                         </div>
-                        <button onclick="runVisualizer()">Search</button>
+                        <button onclick="runVisualizer()">Search Path</button>
+                    </div>
+                    <div style="text-align:center; font-size:0.85rem; color:#64748b; margin-top:8px;">
+                        Find sequential path in grid matching word. Cells cannot be reused in single path.
                     </div>
                 </div>
 
                 <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Current</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Found Path</div>
+                       <div class="legend-item"><div class="legend-color" style="background:rgba(59, 130, 246, 0.3); border:1px solid #3b82f6"></div>Visited</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Backtrack</div>
+                    </div>
+
                     <div class="word-progress" id="progressDisplay"></div>
                     <div class="grid-container" id="gridDisplay"></div>
                 </div>
@@ -115,7 +127,7 @@ A,D,E,E</textarea>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -137,13 +149,13 @@ A,D,E,E</textarea>
             { line: '}', id: 6 },
             { line: 'bool dfs(r, c, i) {', id: 7 },
             { line: '    if(i == word.size()) return true;', id: 8 },
-            { line: '    if(!valid(r, c) || board[r][c] != word[i]) return false;', id: 9 },
-            { line: '    char temp = board[r][c];', id: 10 },
-            { line: '    board[r][c] = \'#\'; // Visit', id: 11 },
+            { line: '    // Check bounds, visited, match', id: 9 },
+            { line: '    if(!valid(r, c) || visited[r][c] || board[r][c] != word[i]) return false;', id: 10 },
+            { line: '    visited[r][c] = true;', id: 11 },
             { line: '    for(dir : directions) {', id: 12 },
             { line: '        if(dfs(nr, nc, i+1)) return true;', id: 13 },
             { line: '    }', id: 14 },
-            { line: '    board[r][c] = temp; // Backtrack', id: 15 },
+            { line: '    visited[r][c] = false; // Backtrack', id: 15 },
             { line: '    return false;', id: 16 },
             { line: '}', id: 17 }
         ];
@@ -154,71 +166,92 @@ A,D,E,E</textarea>
             const steps = [];
             const rows = grid.length;
             const cols = grid[0].length;
-            // Use set to track visited for easy cloning in steps
-            // Or mutate a grid copy.
             
-            const pushState = (msg, hl, activeCell, visitedPath=[], matchedIdx=0, status='normal') => {
+            const pushState = (msg, hl, activeCell, visitedList, matchedIdx, status='normal', info={}) => {
                 steps.push({
-                    grid: grid.map(r => [...r]), // copy content
+                    grid: grid.map(r => [...r]), 
                     activeCell,
-                    visitedPath: [...visitedPath], // array of "r,c"
+                    visitedPath: [...visitedList], // array of "r,c"
                     matchedIdx,
-                    status, // normal, success, fail
-                    msg, highlightLines: hl
+                    status, 
+                    msg, highlightLines: hl, explanation: info
                 });
             };
 
+            // Using Set for visited tracking in simulation logic
             const visited = new Set();
 
             function dfs(r, c, i) {
-                if (i === word.length) return true;
+                // If we reached here, grid[r][c] matched word[i] in caller logic check
+                // unless i==length
                 
+                // Wait, recursion structure usually: check base case i==len first.
+                // But we call dfs(0) with i=0 first char.
+                
+                // Let's adapt logic to strict visual match
                 const cellKey = `${r},${c}`;
                 
-                // Check bounds & content
-                if (r < 0 || r >= rows || c < 0 || c >= cols || visited.has(cellKey) || grid[r][c] !== word[i]) {
-                    // We only visualize "fail" if it was a candidate we explicitly checked
-                    // Logic usually checks before recursing, or at start of recursion
-                    return false;
-                }
-
-                // Match found
+                // Visit
                 visited.add(cellKey);
-                pushState(`Match '${word[i]}' at (${r},${c})`, [11], {r,c}, Array.from(visited), i+1);
+                
+                const isComplete = (i + 1 === word.length);
+                const explTitle = isComplete ? "找到完整單字" : `匹配字符 '${word[i]}'`;
+                const explText = isComplete ? "路徑長度等於單字長度，搜尋成功。" : `網格位置 (${r},${c}) 匹配 '${word[i]}'。標記為已訪問。`;
+                
+                pushState(`Match '${word[i]}' at (${r},${c})`, [11], {r,c}, Array.from(visited), i+1, isComplete?'success':'normal', {
+                    title: explTitle, text: explText, formula: "visited[r][c] = true"
+                });
 
-                if (i + 1 === word.length) {
-                    pushState(`Found complete word!`, [8], {r,c}, Array.from(visited), i+1, 'success');
-                    return true;
-                }
+                if (isComplete) return true;
 
-                const dirs = [[0,1], [0,-1], [1,0], [-1,0]];
+                const dirs = [[0,1], [0,-1], [1,0], [-1,0]]; // R, L, D, U
                 for (const [dr, dc] of dirs) {
                     const nr = r + dr;
                     const nc = c + dc;
                     
-                    // Optimistic highlight of trying next
-                    if (nr>=0 && nr<rows && nc>=0 && nc<cols && !visited.has(`${nr},${nc}`)) {
-                        pushState(`Try neighbor (${nr},${nc}) for '${word[i+1]}'`, [12, 13], {r:nr, c:nc}, Array.from(visited), i+1);
-                        if (dfs(nr, nc, i + 1)) return true;
+                    const nKey = `${nr},${nc}`;
+                    // Highlight intent to check
+                    if (nr>=0 && nr<rows && nc>=0 && nc<cols && !visited.has(nKey)) {
+                        // Check content match visually before recursing fully
+                        // In real code we recurse then check base case.
+                        // Here we peek to give visual feedback "Testing neighbor..."
+                        const targetChar = word[i+1];
+                        const match = (grid[nr][nc] === targetChar);
+                        
+                        pushState(`Check neighbor (${nr},${nc}) for '${targetChar}'...`, [12, 13], {r:nr, c:nc}, Array.from(visited), i+1, match ? 'visiting' : 'normal', {
+                            title: `探索鄰居 (${nr},${nc})`, text: `檢查鄰居是否為 '${targetChar}' 且未被訪問。`, formula: "dfs(nr, nc, i+1)"
+                        });
+
+                        if (match) {
+                            if (dfs(nr, nc, i + 1)) return true;
+                        } else {
+                            // Mismatch visualization (optional, usually skipped in fast recursion, but good for learning)
+                            // pushState(`Mismatch at (${nr},${nc})`, [10], {r:nr, c:nc}, Array.from(visited), i+1, 'fail');
+                        }
                     }
                 }
 
                 // Backtrack
                 visited.delete(cellKey);
-                pushState(`Backtrack from (${r},${c})`, [15], {r,c}, Array.from(visited), i, 'fail');
+                pushState(`Backtrack from (${r},${c}) - Undo Visit`, [15], {r,c}, Array.from(visited), i, 'fail', {
+                    title: "回溯 (Backtrack)", text: `所有鄰居皆無法完成單字，撤銷當前位置 (${r},${c}) 的訪問標記。`, formula: "visited[r][c] = false"
+                });
                 return false;
             }
 
-            pushState("Start Search", [1], null, [], 0);
+            pushState("Start Search", [1], null, [], 0, 'normal', {title:"開始", text:"遍歷網格尋找首字元。", formula:"for r, c"});
 
             let found = false;
             for(let r=0; r<rows; r++){
                 for(let c=0; c<cols; c++){
                     if(grid[r][c] === word[0]) {
-                        pushState(`Start DFS from (${r},${c})`, [2], {r,c}, [], 0);
+                        pushState(`Found Start '${word[0]}' at (${r},${c})`, [2], {r,c}, [], 0, 'visiting',{
+                            title: `首字元匹配`, text: `位置 (${r},${c}) 匹配 '${word[0]}'，開始 DFS。`, formula: "if board == word[0]"
+                        });
+                        
                         if(dfs(r, c, 0)) {
                             found = true;
-                            pushState("Word Found!", [3], null, Array.from(visited), word.length, 'success');
+                            // Final success state already pushed inside dfs
                             break;
                         }
                     }
@@ -226,15 +259,23 @@ A,D,E,E</textarea>
                 if(found) break;
             }
             
-            if(!found) pushState("Word Not Found", [5], null, [], 0, 'fail');
+            if(!found) pushState("Word Not Found", [5], null, [], 0, 'fail', {title:"失敗", text:"已遍歷所有可能路徑，未找到單字。", formula:"return false"});
 
             return steps;
         }
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
-            // Render Progress Word
+            // Word Progress
             const progressDiv = document.getElementById('progressDisplay');
             const word = document.getElementById('wordInput').value;
             progressDiv.innerHTML = '';
@@ -243,16 +284,16 @@ A,D,E,E</textarea>
                 charBox.className = 'char-box';
                 charBox.textContent = word[i];
                 if(i < step.matchedIdx) charBox.classList.add('matched');
-                if(i === step.matchedIdx) charBox.classList.add('active'); // searching for this
+                if(i === step.matchedIdx) charBox.classList.add('active'); 
                 progressDiv.appendChild(charBox);
             }
 
-            // Render Grid
+            // Grid
             const gridContainer = document.getElementById('gridDisplay');
             gridContainer.innerHTML = '';
             const rows = step.grid.length;
             const cols = step.grid[0].length;
-            gridContainer.style.gridTemplateColumns = `repeat(${cols}, 50px)`; // Fixed cell size
+            gridContainer.style.gridTemplateColumns = `repeat(${cols}, 50px)`;
 
             for(let r=0; r<rows; r++) {
                 for(let c=0; c<cols; c++) {
@@ -265,12 +306,12 @@ A,D,E,E</textarea>
                         div.classList.add('visited');
                     }
                     
-                    // Active logic
                     if(step.activeCell && step.activeCell.r === r && step.activeCell.c === c) {
-                        div.classList.remove('visited'); // Override
+                        div.classList.remove('visited'); // Highlight takes precedence
                         if(step.status === 'success') div.classList.add('success');
                         else if(step.status === 'fail') div.classList.add('backtrack');
-                        else div.classList.add('visiting');
+                        else if(step.status === 'visiting') div.classList.add('visiting');
+                        else div.classList.add('visiting'); // default
                     }
                     
                     gridContainer.appendChild(div);
@@ -280,7 +321,9 @@ A,D,E,E</textarea>
 
         function runVisualizer() {
             const boardStr = document.getElementById('boardInput').value;
-            const word = document.getElementById('wordInput').value;
+            const word = document.getElementById('wordInput').value.trim();
+            if(!boardStr || !word) return;
+            
             const grid = boardStr.split('\n').map(line => line.split(',').map(c => c.trim()));
             
             viz = new AlgorithmVisualizer({
