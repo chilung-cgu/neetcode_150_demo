@@ -3,35 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Climbing Stairs - 視覺化</title>
+    <title>Climbing Stairs - D3 動態視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 400px;
+        }
 
-        .stairs-container { 
-            display: flex; align-items: flex-end; justify-content: center; 
-            height: 250px; padding-bottom: 20px; gap: 2px; overflow-x: auto;
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
-        .stair { 
-            width: 40px; background: var(--viz-bg-secondary); border: 1px solid var(--viz-border); 
-            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            position: relative; transition: all 0.3s;
-        }
-        .stair.active { background: var(--viz-primary); border-color: white; }
-        .stair-label { margin-bottom: 5px; font-weight: bold; color: white; }
-        .stair-idx { position: absolute; bottom: -25px; color: var(--viz-text-muted); font-size: 0.8rem; }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .stair-rect { fill: #334155; stroke: #475569; stroke-width: 2px; transition: fill 0.3s; }
+        .stair-rect.active { fill: #3b82f6; stroke: #60a5fa; filter: drop-shadow(0 0 5px #3b82f6); }
+        .stair-text { fill: #cbd5e1; font-family: monospace; font-size: 14px; text-anchor: middle; }
         
-        .dp-array { display: flex; gap: 5px; justify-content: center; margin-top: 10px; }
-        .dp-cell { 
-            width: 45px; height: 45px; border: 2px solid var(--viz-border); border-radius: 6px;
-            display: flex; align-items: center; justify-content: center; font-weight: bold;
-            background: var(--viz-bg-secondary); transition: all 0.3s;
+        .player { fill: #fbbf24; stroke: #fff; stroke-width: 2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
         }
-        .dp-cell.highlight { border-color: var(--viz-success); transform: scale(1.1); box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
-        .dp-cell.source { border-color: var(--viz-warning); }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=number] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 80px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -39,51 +57,64 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">爬樓梯 (Climbing Stairs) - DP</div>
+                <div class="viz-title">爬樓梯 (Climbing Stairs)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>階梯數 (n):</label>
-                        <input type="number" id="nInput" value="5" min="1" max="15" style="width: 60px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Steps (N):</label>
+                            <input type="number" id="nInput" value="5" min="1" max="20">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Climb</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="stairs-container" id="stairsDisplay"></div>
-                <div style="text-align: center; margin-top: 30px; font-weight: bold;">DP Table (Ways to reach step i)</div>
-                <div class="dp-array" id="dpDisplay"></div>
-                
+
+                <div class="visualization-area">
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Ways</div>
+                            <div class="stat-val" id="resultDisplay">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">方法總數</div><div class="state-value" id="resultDisplay">0</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
@@ -99,139 +130,149 @@
             { line: '}', id: 9 },
         ];
 
-        let currentN = 5;
+        let viz;
 
-        function runCustomInput() {
-            const val = parseInt(document.getElementById('nInput').value);
-            if (isNaN(val) || val < 1 || val > 15) {
-                alert('請輸入 1-15 之間的整數');
-                return;
-            }
-            currentN = val;
-            init();
-        }
-
-        function generateAlgorithmSteps(n) {
+        function simulate(n) {
             const steps = [];
             const dp = new Array(n + 1).fill(0);
             
+            // Initial
             steps.push({
-                idx: -1, dp: [...dp], 
-                highlightLines: [0, 1, 2],
-                explanation: { title: '初始化', text: `N=${n}, 建立 DP 表`, formula: 'dp[0..n] = 0' }
+                n, dp: [...dp], current: 0,
+                msg: "Init DP array", highlightLines: [0, 1, 2]
             });
 
             if (n <= 2) {
-                // Short circuit visualization
+                dp[n] = n;
                 steps.push({
-                    idx: n, dp: [...dp], result: n,
-                    highlightLines: [1],
-                    explanation: { title: '基本情況', text: `N=${n}，直接返回 ${n}`, formula: `return ${n}` }
+                    n, dp: [...dp], current: n, result: n,
+                    msg: `N=${n} is base case. Return ${n}.`, highlightLines: [1]
                 });
                 return steps;
             }
 
             dp[1] = 1;
             steps.push({
-                idx: 1, dp: [...dp],
-                highlightLines: [3],
-                explanation: { title: 'Step 1', text: '到達第 1 階只有 1 種方法 (1 step)', formula: 'dp[1] = 1' }
+                n, dp: [...dp], current: 1,
+                msg: "dp[1] = 1 (1 way to reach step 1)", highlightLines: [3]
             });
 
             dp[2] = 2;
             steps.push({
-                idx: 2, dp: [...dp],
-                highlightLines: [4],
-                explanation: { title: 'Step 2', text: '到達第 2 階有 2 種方法 (1+1 or 2)', formula: 'dp[2] = 2' }
+                n, dp: [...dp], current: 2,
+                msg: "dp[2] = 2 (1+1 or 2)", highlightLines: [4]
             });
 
             for (let i = 3; i <= n; i++) {
-                // Calculation highlight
                 steps.push({
-                    idx: i, dp: [...dp], calculating: true,
-                    highlightLines: [5, 6],
-                    explanation: { 
-                        title: `計算 Step ${i}`, 
-                        text: `來源：Step ${i-1} (1步) + Step ${i-2} (2步)<br>${dp[i-1]} + ${dp[i-2]}`, 
-                        formula: `dp[${i}] = dp[${i-1}] + dp[${i-2}]` 
-                    }
+                    n, dp: [...dp], current: i, calculating: true,
+                    msg: `Calc dp[${i}] = dp[${i-1}] + dp[${i-2}]`, highlightLines: [5, 6]
                 });
-
+                
                 dp[i] = dp[i-1] + dp[i-2];
+                
                 steps.push({
-                    idx: i, dp: [...dp], 
-                    highlightLines: [6],
-                    explanation: { title: `Step ${i} 結果`, text: `共有 ${dp[i]} 種方法`, formula: `${dp[i-1]} + ${dp[i-2]} = ${dp[i]}` }
+                    n, dp: [...dp], current: i, result: dp[i],
+                    msg: `dp[${i}] = ${dp[i-1]} + ${dp[i-2]} = ${dp[i]}`, highlightLines: [6]
                 });
             }
-
+            
             steps.push({
-                idx: n, dp: [...dp], result: dp[n], final: true,
-                highlightLines: [8],
-                explanation: { title: '完成', text: `到達第 ${n} 階共有 ${dp[n]} 種方法`, formula: `return ${dp[n]}` }
+                n, dp: [...dp], current: n, result: dp[n], final: true,
+                msg: `Result: ${dp[n]} ways to reach top.`, highlightLines: [8]
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Update Stairs
-                    const stairsContainer = document.getElementById('stairsDisplay');
-                    stairsContainer.innerHTML = '';
-                    // Generate N steps. Height proportional.
-                    const maxHeight = 200;
-                    const stepHeight = maxHeight / currentN;
-                    
-                    for (let i = 1; i <= currentN; i++) {
-                        const h = i * stepHeight + 20;
-                        let cls = 'stair';
-                        if (i === step.idx) cls += ' active';
-                        
-                        const div = document.createElement('div');
-                        div.className = cls;
-                        div.style.height = `${h}px`;
-                        
-                        // Show count on stair if calculated
-                        const count = step.dp[i];
-                        if (count > 0) {
-                             div.innerHTML = `<span class="stair-label">${count}</span>`;
-                        } else if (step.calculating && i === step.idx) {
-                             div.innerHTML = `<span class="stair-label">?</span>`;
-                        }
-                        
-                        div.innerHTML += `<span class="stair-idx">${i}</span>`;
-                        stairsContainer.appendChild(div);
-                    }
-                    
-                    // Update DP Table
-                    const dpContainer = document.getElementById('dpDisplay');
-                    dpContainer.innerHTML = '';
-                    for (let i = 1; i <= currentN; i++) {
-                        let cls = 'dp-cell';
-                        if (i === step.idx) cls += ' highlight';
-                        if (step.calculating && (i === step.idx - 1 || i === step.idx - 2)) cls += ' source';
-                        
-                        const val = step.dp[i];
-                        const displayVal = val === 0 ? '' : val;
-                        
-                        const div = document.createElement('div');
-                        div.className = cls;
-                        div.textContent = displayVal;
-                        dpContainer.appendChild(div);
-                    }
-                    
-                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : (step.dp[step.dp.length-1] || 0);
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(currentN));
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('resultDisplay').textContent = step.result || step.dp[step.current] || 0;
+
+            const n = step.n;
+            const dp = step.dp;
+            // Draw Stairs
+            // Calculate dimensions
+            // Fit N stairs in width/height
+            // Stair width = width / (n+1)
+            // Stair height unit = height / (n+1)
+            
+            const margin = {top: 20, right: 50, bottom: 40, left: 50};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const stepW = innerW / n;
+            const stepH = innerH / (n+1); // +1 because we start at floor (0)
+
+            // Data for stairs 1..n
+            const stairsData = d3.range(1, n+1);
+
+            const rects = svg.selectAll(".stair-rect").data(stairsData);
+            
+            rects.enter().append("rect")
+                .attr("class", "stair-rect")
+                .merge(rects)
+                .attr("x", d => margin.left + (d-1)*stepW)
+                .attr("y", d => margin.top + innerH - d*stepH)
+                .attr("width", stepW)
+                .attr("height", d => d*stepH)
+                .attr("class", d => d === step.current ? "stair-rect active" : "stair-rect");
+            
+            rects.exit().remove();
+
+            // Text on stairs (Ways)
+            const texts = svg.selectAll(".stair-text").data(stairsData);
+            texts.enter().append("text")
+                .attr("class", "stair-text")
+                .merge(texts)
+                .attr("x", d => margin.left + (d-1)*stepW + stepW/2)
+                .attr("y", d => margin.top + innerH - d*stepH + 20) // near top of stair
+                .text(d => dp[d] > 0 ? dp[d] : "")
+                .attr("fill", d => d === step.current ? "#fff" : "#cbd5e1");
+            texts.exit().remove();
+
+            // Player Marker
+            // Position player at 'current' step
+            let px, py;
+            if(step.current === 0) {
+                // start floor
+                px = margin.left - stepW/2;
+                py = margin.top + innerH - 10;
+            } else {
+                px = margin.left + (step.current-1)*stepW + stepW/2;
+                py = margin.top + innerH - step.current*stepH - 15; // on top
+            }
+            
+            let player = svg.selectAll(".player").data([1]);
+            player.enter().append("circle")
+                .attr("class", "player")
+                .attr("r", 10)
+                .merge(player)
+                .transition().duration(400)
+                .attr("cx", px)
+                .attr("cy", py);
+                
+            // highlight source steps?
+            // If calculating, maybe draw arc lines from i-1 and i-2 to i?
+            // Advanced visual
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runVisualizer() {
+            const n = parseInt(document.getElementById('nInput').value) || 5;
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(n));
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

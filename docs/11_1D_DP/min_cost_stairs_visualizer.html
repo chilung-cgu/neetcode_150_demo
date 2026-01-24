@@ -3,42 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Min Cost Climbing Stairs - 視覺化</title>
+    <title>Min Cost Climbing Stairs - D3 動態視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 450px;
+        }
 
-        .stairs-viz { 
-            display: flex; align-items: flex-end; justify-content: center; gap: 4px;
-            height: 250px; margin: 20px 0; overflow-x: auto; padding-bottom: 30px;
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 350px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
-        .stair-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 50px; position: relative; }
-        .stair-block { 
-            width: 100%; border-radius: 4px 4px 0 0; background: var(--viz-bg-secondary); border: 2px solid var(--viz-border);
-            display: flex; align-items: flex-start; justify-content: center; padding-top: 5px;
-            font-weight: bold; color: var(--viz-text-muted); transition: all 0.3s;
-        }
-        .stair-block.active { background: var(--viz-primary); border-color: white; color: white; }
-        .stair-block.top { border-color: var(--viz-success); background: rgba(34, 197, 94, 0.2); }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .stair-rect { fill: #334155; stroke: #475569; stroke-width: 2px; transition: fill 0.3s; }
+        .stair-rect.active { fill: #3b82f6; stroke: #60a5fa; filter: drop-shadow(0 0 5px #3b82f6); }
+        .stair-rect.top { fill: #22c55e; stroke: #86efac; }
         
-        .cost-bubble {
-            background: var(--viz-warning); color: #0f172a; padding: 2px 6px; border-radius: 10px; font-size: 0.8rem; font-weight: bold;
-            margin-bottom: 4px; opacity: 0; transition: opacity 0.3s;
-        }
-        .total-bubble {
-            background: var(--viz-success); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem; font-weight: bold;
-            position: absolute; bottom: -30px; min-width: 40px; text-align: center;
-        }
+        .cost-label { fill: #f59e0b; font-family: monospace; font-size: 12px; font-weight: bold; text-anchor: middle; }
+        .dp-label { fill: #fff; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; }
+        
+        .player { fill: #ec4899; stroke: #fff; stroke-width: 2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        .choice-line { stroke: #94a3b8; stroke-width: 2px; stroke-dasharray: 4; opacity: 0.5; marker-end: url(#arrow); }
+        .choice-line.selected { stroke: #22c55e; opacity: 1; stroke-width: 3px; stroke-dasharray: 0; }
 
-        .dp-row { display: flex; justify-content: center; gap: 4px; margin-top: 20px; }
-        .dp-cell { 
-            width: 50px; height: 50px; border: 1px solid var(--viz-border); display: flex; align-items: center; justify-content: center;
-            background: var(--viz-bg-secondary); border-radius: 4px; font-weight: bold; font-family: monospace;
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
         }
-        .dp-cell.highlight { border-color: var(--viz-success); background: rgba(34, 197, 94, 0.1); }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 200px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -46,51 +63,70 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">最小花費爬樓梯 (Min Cost)</div>
+                <div class="viz-title">Min Cost Climbing Stairs</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>Cost 陣列:</label>
-                        <input type="text" id="costInput" value="10, 15, 20" style="width: 200px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Costs (comma separated):</label>
+                            <input type="text" id="costInput" value="10, 15, 20">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Calculate</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="stairs-viz" id="stairsDisplay"></div>
-                <div style="text-align: center; font-weight: bold;">DP State (Min cost to reach index i)</div>
-                <div class="dp-row" id="dpDisplay"></div>
-                
+
+                <div class="visualization-area">
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#94a3b8"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Min Cost</div>
+                            <div class="stat-val" id="resultDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">最小總花費</div><div class="state-value" id="resultDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
@@ -99,142 +135,174 @@
             { line: '    vector<int> dp(n + 1);', id: 2 },
             { line: '    dp[0] = 0; dp[1] = 0;', id: 3 },
             { line: '    for (int i = 2; i <= n; i++) {', id: 4 },
-            { line: '        dp[i] = min(dp[i-1] + cost[i-1],', id: 5 },
-            { line: '                    dp[i-2] + cost[i-2]);', id: 6 },
-            { line: '    }', id: 7 },
-            { line: '    return dp[n];', id: 8 },
-            { line: '}', id: 9 },
+            { line: '        int take1 = dp[i-1] + cost[i-1];', id: 5 },
+            { line: '        int take2 = dp[i-2] + cost[i-2];', id: 6 },
+            { line: '        dp[i] = min(take1, take2);', id: 7 },
+            { line: '    }', id: 8 },
+            { line: '    return dp[n];', id: 9 },
+            { line: '}', id: 10 }
         ];
 
-        let currentCost = [10, 15, 20];
+        let viz;
 
-        function runCustomInput() {
-            const str = document.getElementById('costInput').value;
-            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            if (arr.length < 2 || arr.length > 10) {
-                alert('請輸入 2-10 個數字');
-                return;
-            }
-            currentCost = arr;
-            init();
-        }
-
-        function generateAlgorithmSteps(cost) {
+        function simulate(cost) {
             const steps = [];
             const n = cost.length;
             const dp = new Array(n + 1).fill(null);
             
             steps.push({
-                idx: -1, dp: [...dp], 
-                highlightLines: [0, 1, 2],
-                explanation: { title: '初始化', text: `Cost: [${cost.join(', ')}]<br>DP 表長度 ${n+1}`, formula: 'setup' }
+                idx: -1, dp: [...dp], cost,
+                msg: "Init DP array size N+1", highlightLines: [0, 1, 2]
             });
 
-            dp[0] = 0;
-            dp[1] = 0; // Can start at 0 or 1 for free
+            dp[0] = 0; dp[1] = 0;
             steps.push({
-                idx: 1, dp: [...dp], 
-                highlightLines: [3],
-                explanation: { title: '起點選擇', text: '可以從 index 0 或 index 1 開始，初始花費為 0', formula: 'dp[0]=0, dp[1]=0' }
+                idx: 1, dp: [...dp], cost,
+                msg: "Start at index 0 or 1 with 0 accumulated cost.", highlightLines: [3]
             });
 
             for (let i = 2; i <= n; i++) {
-                const takeOne = dp[i-1] + cost[i-1];
-                const takeTwo = dp[i-2] + cost[i-2];
-                const best = Math.min(takeOne, takeTwo);
+                const c1 = cost[i-1];
+                const c2 = cost[i-2];
+                const v1 = dp[i-1] + c1;
+                const v2 = dp[i-2] + c2;
                 
-                // Show thinking
                 steps.push({
-                    idx: i, dp: [...dp], calculating: true,
-                    vals: {one: takeOne, two: takeTwo},
-                    highlightLines: [4, 5, 6],
-                    explanation: { 
-                        title: `計算到達 Step ${i}`, 
-                        text: `選項 1 (從 i-1): ${dp[i-1]} + ${cost[i-1]} = ${takeOne}<br>選項 2 (從 i-2): ${dp[i-2]} + ${cost[i-2]} = ${takeTwo}`, 
-                        formula: `min(${takeOne}, ${takeTwo})` 
-                    }
+                    idx: i, dp: [...dp], cost, calculating: true,
+                    vals: {v1, v2, i},
+                    msg: `Compare: (dp[${i-1}] + ${c1}) vs (dp[${i-2}] + ${c2})`, highlightLines: [5, 6]
                 });
-
-                dp[i] = best;
+                
+                dp[i] = Math.min(v1, v2);
+                const choice = v1 < v2 ? 1 : 2; // 1 means from i-1, 2 means from i-2
+                
                 steps.push({
-                    idx: i, dp: [...dp],
-                    highlightLines: [5],
-                    explanation: { title: `Step ${i} 結果`, text: `最小花費為 ${best}`, formula: `dp[${i}] = ${best}` }
+                    idx: i, dp: [...dp], cost, choice,
+                    msg: `dp[${i}] = ${dp[i]} (From index ${i-choice})`, highlightLines: [7]
                 });
             }
-
+            
             steps.push({
-                idx: n, dp: [...dp], result: dp[n], final: true,
-                highlightLines: [8],
-                explanation: { title: '完成', text: `到達頂層的最小花費為 ${dp[n]}`, formula: `return ${dp[n]}` }
+                idx: n, dp: [...dp], cost, result: dp[n], final: true,
+                msg: `Final Min Cost: ${dp[n]}`, highlightLines: [9]
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    const n = currentCost.length;
-                    
-                    // Stairs Render
-                    const container = document.getElementById('stairsDisplay');
-                    container.innerHTML = '';
-                    
-                    // We render n steps + Top
-                    for (let i = 0; i <= n; i++) {
-                        const h = 50 + (i * 15);
-                        let cls = 'stair-block';
-                        if (i === n) cls += ' top';
-                        else if (i === step.idx) cls += ' active';
-                        
-                        const col = document.createElement('div');
-                        col.className = 'stair-col';
-                        
-                        // Cost bubble above block
-                        if (i < n) {
-                             const bubble = document.createElement('div');
-                             bubble.className = 'cost-bubble';
-                             bubble.textContent = `Cost: ${currentCost[i]}`;
-                             bubble.style.opacity = 0.8;
-                             col.appendChild(bubble);
-                        }
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 350;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
-                        const block = document.createElement('div');
-                        block.className = cls;
-                        block.style.height = `${h}px`;
-                        block.textContent = i === n ? 'TOP' : i;
-                        col.appendChild(block);
-                        
-                        // Total bubble below
-                        if (step.dp[i] !== null) {
-                            const total = document.createElement('div');
-                            total.className = 'total-bubble';
-                            total.textContent = step.dp[i];
-                            col.appendChild(total);
-                        }
-                        
-                        container.appendChild(col);
-                    }
-                    
-                    // DP Table Render
-                    const dpRow = document.getElementById('dpDisplay');
-                    dpRow.innerHTML = step.dp.map((val, i) => {
-                        let cls = 'dp-cell';
-                        if (i === step.idx) cls += ' highlight';
-                        return `<div class="${cls}">${val === null ? '' : val}</div>`;
-                    }).join('');
-                    
-                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : '-';
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(currentCost));
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : (step.dp[step.dp.length-1]!==null ? step.dp[step.dp.length-1] : '-');
+
+            const n = step.cost.length;
+            const dp = step.dp;
+            
+            const margin = {top: 40, right: 50, bottom: 40, left: 50};
+            const innerW = width - margin.left - margin.right;
+            const innerH = height - margin.top - margin.bottom;
+            
+            const stepW = innerW / (n+1); // 0 to n
+            // Steps 0..N-1 are actual steps with costs. N is TOP.
+            
+            const stepHUnit = innerH / (n+2);
+
+            // Draw connecting lines (Choice)
+            // If calculating, show potential lines. If decided, show chosen line.
+            
+            const linesData = [];
+            if (step.calculating) {
+                const i = step.vals.i;
+                // Line from i-1
+                linesData.push({from: i-1, to: i, val: step.vals.v1, type: 'potential'});
+                // Line from i-2
+                linesData.push({from: i-2, to: i, val: step.vals.v2, type: 'potential'});
+            } else if (step.choice) {
+                // Persistent check: ideally we want to show the full path chosen SO FAR.
+                // But simplified: show just the last choice.
+                // Or recreate path backwards from current i?
+                // Let's just show current step choice.
+            }
+
+            // Draw Steps
+            const stairsData = d3.range(0, n+1); // 0..N
+            
+            const rects = svg.selectAll(".stair-rect").data(stairsData);
+            rects.enter().append("rect")
+                .attr("class", "stair-rect")
+                .merge(rects)
+                .attr("x", d => margin.left + d*stepW)
+                .attr("y", d => margin.top + innerH - (d+1)*stepHUnit)
+                .attr("width", stepW - 4)
+                .attr("height", d => (d+1)*stepHUnit)
+                .attr("class", d => {
+                    if (d === n) return "stair-rect top";
+                    if (d === step.idx) return "stair-rect active";
+                    return "stair-rect";
+                });
+            rects.exit().remove();
+
+            // Costs
+            const costs = svg.selectAll(".cost-label").data(step.cost); // 0..N-1
+            costs.enter().append("text")
+                .attr("class", "cost-label")
+                .merge(costs)
+                .attr("x", (d, i) => margin.left + i*stepW + stepW/2)
+                .attr("y", (d, i) => margin.top + innerH - (i+1)*stepHUnit - 10)
+                .text(d => `Cost:${d}`);
+            costs.exit().remove();
+
+            // DP Vals (Cumulative)
+            // On top of block or insde? Inside top.
+            const dps = svg.selectAll(".dp-label").data(stairsData);
+            dps.enter().append("text")
+                .attr("class", "dp-label")
+                .merge(dps)
+                .attr("x", d => margin.left + d*stepW + stepW/2)
+                .attr("y", d => margin.top + innerH - (d+1)*stepHUnit + 20)
+                .text(d => dp[d] !== null ? dp[d] : "")
+                .attr("fill", "white");
+            dps.exit().remove();
+
+            // Player
+            // At step.idx or previous
+            let pIdx = step.idx > -1 ? step.idx : 0;
+            const px = margin.left + pIdx*stepW + stepW/2;
+            const py = margin.top + innerH - (pIdx+1)*stepHUnit - 30;
+            
+            let player = svg.selectAll(".player").data([1]);
+            player.enter().append("circle")
+                .attr("class", "player")
+                .attr("r", 12)
+                .merge(player)
+                .transition().duration(400)
+                .attr("cx", px)
+                .attr("cy", py);
+                
+            // Selection lines
+            // If choice made, drawing a line from previous to current
+            // Let's rely on text explanation for now to keep SVG clean, 
+            // the player jump animation implicitly shows movement.
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runVisualizer() {
+            const raw = document.getElementById('costInput').value;
+            const cost = raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            if(cost.length < 2) { alert('More costs please'); return; }
+            
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(cost));
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>
