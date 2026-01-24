@@ -3,22 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rotting Oranges - 視覺化</title>
+    <title>Rotting Oranges - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .grid-container { display: inline-grid; gap: 3px; margin: 20px auto; }
-        .cell { 
-            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
-            font-size: 1.5rem; border-radius: 6px; background: var(--viz-bg-secondary); transition: all 0.3s;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
         }
-        .cell.fresh { background: var(--viz-warning); }
-        .cell.rotten { background: var(--viz-error); }
-        .cell.just-rotten { animation: rot 0.5s; border: 2px solid white; }
-        @keyframes rot { 0% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        /* SVG */
+        .grid-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        #viz-svg { width: 100%; height: 100%; cursor: grab; }
+        #viz-svg:active { cursor: grabbing; }
+
+        .cell-rect { stroke: #334155; stroke-width: 1px; transition: fill 0.3s; }
+        .cell-rect.empty { fill: #1f2937; }
+        .cell-rect.fresh { fill: #f59e0b; } /* Orange */
+        .cell-rect.rotten { fill: #ef4444; } /* Red */
+        
+        .cell-text { pointer-events: none; font-size: 20px; text-anchor: middle; dominant-baseline: middle; }
+
+        /* Highlight */
+        .highlight-rect { fill: none; stroke: #fff; stroke-width: 2px; filter: drop-shadow(0 0 4px white); }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+        }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; height: 80px; resize: none; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -26,183 +66,258 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">腐爛的橘子 (Rotting Oranges)</div>
+                <div class="viz-title">Rotting Oranges (Multi-Source BFS)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <button onclick="setExample(1)">範例1 (4分鐘)</button>
-                        <button onclick="setExample(2)">範例2 (不可能)</button>
-                        <button onclick="resetVisualization()">↻ 重置</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Grid (0=Empty, 1=Fresh, 2=Rotten):</label>
+                            <textarea id="gridInput">2,1,1
+1,1,0
+0,1,1</textarea>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Infect</button>
+                            <button onclick="loadExample(2)" style="background:#475569">Ex 2</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div style="text-align: center;"><div class="grid-container" id="gridDisplay"></div></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Fresh</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Rotten</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#1f2937"></div>Empty</div>
+                    </div>
+                    
+                    <div class="grid-viewport">
+                        <svg id="viz-svg"><g id="zoom-group"></g></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Time</div>
+                            <div class="stat-val" id="timeDisplay">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Fresh Left</div>
+                            <div class="stat-val" id="freshDisplay">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="300">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(m×n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(m×n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">分鐘</div><div class="state-value" id="minuteDisplay">0</div></div>
-                    <div class="state-item"><div class="state-label">新鮮橘子</div><div class="state-value" id="freshDisplay">0</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'int orangesRotting(vector<vector<int>>& grid) {', id: 0 },
-            { line: '    queue<pair<int,int>> q;', id: 1 },
-            { line: '    int fresh = 0;', id: 2 },
-            { line: '    for (all cells) {', id: 3 },
-            { line: '        if (rotten) q.push({i,j});', id: 4 },
-            { line: '        if (fresh) fresh++;', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    int minutes = 0;', id: 7 },
-            { line: '    while (!q.empty() && fresh > 0) {', id: 8 },
-            { line: '        // 處理當前層所有腐爛橘子', id: 9 },
-            { line: '        // 感染四個方向的新鮮橘子', id: 10 },
-            { line: '        minutes++;', id: 11 },
-            { line: '    }', id: 12 },
-            { line: '    return fresh == 0 ? minutes : -1;', id: 13 },
-            { line: '}', id: 14 },
+            { line: '    // Add all initial rotten oranges to Queue', id: 1 },
+            { line: '    queue<pair<int, int>> q;', id: 2 },
+            { line: '    int fresh = 0;', id: 3 },
+            { line: '    for(cells) { if (grid[i][j]==2) q.push({i,j}); else if (grid[i][j]==1) fresh++; }', id: 4 },
+            { line: '    int minutes = 0;', id: 5 },
+            { line: '    while (!q.empty() && fresh > 0) {', id: 6 },
+            { line: '        int size = q.size();', id: 7 },
+            { line: '        for (int i = 0; i < size; i++) {', id: 8 },
+            { line: '            auto [r, c] = q.front(); q.pop();', id: 9 },
+            { line: '            for (auto d : dirs) {', id: 10 },
+            { line: '                int nr = r+dr, nc = c+dc;', id: 11 },
+            { line: '                if (grid[nr][nc] == 1) {', id: 12 },
+            { line: '                    grid[nr][nc] = 2; fresh--;', id: 13 },
+            { line: '                    q.push({nr, nc});', id: 14 },
+            { line: '                }', id: 15 },
+            { line: '            }', id: 16 },
+            { line: '        }', id: 17 },
+            { line: '        minutes++;', id: 18 },
+            { line: '    }', id: 19 },
+            { line: '    return fresh == 0 ? minutes : -1;', id: 20 },
+            { line: '}', id: 21 }
         ];
-        
-        const examples = {
-            1: [[2,1,1],[1,1,0],[0,1,1]],
-            2: [[2,1,1],[0,1,1],[1,0,1]]
-        };
-        
-        let currentGrid = examples[1];
 
-        function setExample(n) {
-            currentGrid = examples[n].map(r => [...r]);
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(initialGrid) {
+        function simulate(gridInput) {
             const steps = [];
-            const m = initialGrid.length, n = initialGrid[0].length;
-            let grid = initialGrid.map(r => [...r]);
+            const grid = gridInput.map(r => [...r]);
+            const m = grid.length;
+            const n = grid[0].length;
             
+            const pushState = (msg, hl, activeCells=[], freshCount=0, mins=0) => {
+                steps.push({
+                    grid: grid.map(r => [...r]),
+                    activeCells,
+                    freshCount,
+                    mins,
+                    msg, highlightLines: hl
+                });
+            };
+
+            const q = [];
             let fresh = 0;
-            const queue = [];
             
-            for (let i = 0; i < m; i++) {
-                for (let j = 0; j < n; j++) {
-                    if (grid[i][j] === 2) queue.push([i, j]);
-                    if (grid[i][j] === 1) fresh++;
-                }
+            for(let r=0; r<m; r++) for(let c=0; c<n; c++) {
+                if(grid[r][c] === 2) q.push({r,c});
+                if(grid[r][c] === 1) fresh++;
             }
             
-            steps.push({
-                grid: grid.map(r => [...r]), minute: 0, fresh, newRotten: [],
-                highlightLines: [0, 1, 2, 3, 4, 5, 6, 7],
-                explanation: { title: '初始化', text: `🍊 新鮮橘子: ${fresh}<br>🦠 腐爛橘子: ${queue.length}<br>多源 BFS 同時從所有腐爛橘子開始`, formula: 'setup' }
-            });
+            pushState("Init: Find initial Rotten Oranges", [4], q.map(p=>({...p})), fresh, 0);
 
-            const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
             let minutes = 0;
-
-            while (queue.length > 0 && fresh > 0) {
-                const size = queue.length;
-                const newRotten = [];
+            const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+            
+            while(q.length > 0 && fresh > 0) {
+                const size = q.length;
+                const newRotten = []; // Visual tracking for this minute
                 
-                for (let i = 0; i < size; i++) {
-                    const [r, c] = queue.shift();
+                // We will visualize 1 minute as one main step, but maybe broken down if needed
+                // Showing level-by-level BFS is standard.
+                
+                for(let i=0; i<size; i++) {
+                    const {r, c} = q.shift();
                     
-                    for (const [dr, dc] of dirs) {
-                        const nr = r + dr, nc = c + dc;
-                        if (nr >= 0 && nr < m && nc >= 0 && nc < n && grid[nr][nc] === 1) {
+                    for(let [dr, dc] of dirs) {
+                        const nr = r+dr, nc = c+dc;
+                        if(nr>=0 && nr<m && nc>=0 && nc<n && grid[nr][nc] === 1) {
                             grid[nr][nc] = 2;
                             fresh--;
-                            queue.push([nr, nc]);
-                            newRotten.push([nr, nc]);
+                            q.push({r:nr, c:nc});
+                            newRotten.push({r:nr, c:nc});
                         }
                     }
                 }
                 
-                if (newRotten.length > 0) {
+                if(newRotten.length > 0) { // Only increment if we infected someone
                     minutes++;
-                    steps.push({
-                        grid: grid.map(r => [...r]), minute: minutes, fresh, newRotten,
-                        highlightLines: [8, 9, 10, 11],
-                        explanation: { 
-                            title: `第 ${minutes} 分鐘`, 
-                            text: `感染 ${newRotten.length} 個橘子<br>剩餘新鮮: ${fresh}`,
-                            formula: `minutes = ${minutes}`
-                        }
-                    });
+                    pushState(`Minute ${minutes}: ${newRotten.length} oranges infected`, [18], newRotten, fresh, minutes);
+                } else {
+                    // Queue might not be empty but fresh is 0, handled by loop condition
                 }
             }
-
-            const result = fresh === 0 ? minutes : -1;
-            steps.push({
-                grid: grid.map(r => [...r]), minute: minutes, fresh, result, final: true,
-                highlightLines: [13],
-                explanation: { 
-                    title: '完成!', 
-                    text: result === -1 ? '有橘子無法被感染' : `所有橘子在 ${result} 分鐘內腐爛`,
-                    formula: `return ${result}`
-                }
-            });
+            
+            if(fresh > 0) {
+                pushState("Impossible! Fresh oranges remain isolated.", [20], [], fresh, -1);
+            } else {
+                pushState(`Done. All rotten in ${minutes} minutes.`, [20], [], 0, minutes);
+            }
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            const m = currentGrid.length, n = currentGrid[0].length;
-            const gridEl = document.getElementById('gridDisplay');
-            gridEl.style.gridTemplateColumns = `repeat(${n}, 45px)`;
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const gZoom = d3.select("#zoom-group");
+        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
+        svg.call(zoom);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('timeDisplay').textContent = step.mins;
+            document.getElementById('freshDisplay').textContent = step.freshCount;
+
+            const grid = step.grid;
+            const m = grid.length;
+            const n = grid[0].length;
+            const cellSize = 50;
+
+            const cells = [];
+            for(let r=0; r<m; r++) for(let c=0; c<n; c++) cells.push({r, c, val: grid[r][c]});
+
+            const rects = gZoom.selectAll(".cell-rect").data(cells, d => `${d.r},${d.c}`);
+            rects.enter().append("rect")
+                .attr("class", "cell-rect")
+                .attr("x", d => d.c * cellSize).attr("y", d => d.r * cellSize)
+                .attr("width", cellSize).attr("height", cellSize)
+                .merge(rects)
+                .attr("class", d => {
+                    let c = "cell-rect";
+                    if(d.val === 0) c += " empty";
+                    else if(d.val === 1) c += " fresh";
+                    else if(d.val === 2) c += " rotten";
+                    return c;
+                });
+            rects.exit().remove();
+
+            // Text / Emoji
+            const texts = gZoom.selectAll(".cell-text").data(cells, d => `${d.r},${d.c}`);
+            texts.enter().append("text").attr("class", "cell-text")
+                .attr("x", d => d.c * cellSize + cellSize/2).attr("y", d => d.r * cellSize + cellSize/2)
+                .merge(texts)
+                .text(d => {
+                    if(d.val === 1) return "🍊";
+                    if(d.val === 2) return "🦠";
+                    return "";
+                });
+            texts.exit().remove();
+
+            // Highlight Active (Just Rotten) relative to THIS step
+            const highlights = gZoom.selectAll(".highlight-rect").data(step.activeCells, d => `${d.r},${d.c}`);
+            highlights.enter().append("rect")
+                .attr("class", "highlight-rect")
+                .attr("width", cellSize).attr("height", cellSize)
+                .merge(highlights)
+                .attr("x", d => d.c * cellSize).attr("y", d => d.r * cellSize);
+            highlights.exit().remove();
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('gridInput').value;
+            const grid = raw.split('\n').map(l => l.split(',').map(x => parseInt(x.trim())));
             
+            // Fit
+            const cellSize = 50;
+            const w = grid[0].length * cellSize;
+            const h = grid.length * cellSize;
+            const scale = Math.min(1, 400 / Math.max(w, h));
+            const tx = (svg.node().clientWidth - w*scale)/2;
+            const ty = (svg.node().clientHeight - h*scale)/2;
+            svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    const g = step.grid;
-                    let html = '';
-                    for (let r = 0; r < g.length; r++) {
-                        for (let c = 0; c < g[0].length; c++) {
-                            let cls = 'cell';
-                            if (g[r][c] === 1) cls += ' fresh';
-                            if (g[r][c] === 2) cls += ' rotten';
-                            if (step.newRotten?.some(n => n[0] === r && n[1] === c)) cls += ' just-rotten';
-                            
-                            const emoji = g[r][c] === 0 ? '' : (g[r][c] === 1 ? '🍊' : '🦠');
-                            html += `<div class="${cls}">${emoji}</div>`;
-                        }
-                    }
-                    gridEl.innerHTML = html;
-                    document.getElementById('minuteDisplay').textContent = step.minute ?? 0;
-                    document.getElementById('freshDisplay').textContent = step.fresh ?? 0;
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentGrid));
+            viz.setSteps(simulate(grid));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        const examples = {
+            2: "2,1,1\n0,1,1\n1,0,1"
+        };
+        function loadExample(n) {
+            document.getElementById('gridInput').value = examples[n];
+            runVisualizer();
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Construct Binary Tree - D3 精緻視覺化</title>
+    <title>Construct Binary Tree - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,56 +13,63 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
             min-height: 600px;
         }
-        
-        #viz-svg { width: 100%; height: 400px; }
 
-        /* Tree Nodes */
-        .node-circle { stroke-width: 3px; transition: all 0.5s; fill: #334155; stroke: #64748b; opacity: 0; } /* Hidden by default */
-        .node-circle.visible { opacity: 1; }
-        .node-circle.active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.2); }
-        .node-circle.done { stroke: #22c55e; fill: #1e293b; }
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; opacity: 0; }
-        .node-text.visible { opacity: 1; }
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: all 0.5s; fill: #334155; stroke: #64748b; opacity: 0; } 
+        .node-visible { opacity: 1; }
+        .node-active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.2); stroke-width: 3px; }
+        .node-done { fill: #1e293b; stroke: #22c55e; }
+
+        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; opacity: 0; pointer-events: none; }
+        .text-visible { opacity: 1; }
         
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0; }
-        .link.visible { opacity: 0.6; }
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0; }
+        .link-visible { opacity: 0.6; }
 
         /* Array Visualization */
-        .arrays-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 20px;
-            width: 90%;
+        .arrays-panel {
+            display: flex; flex-direction: column; gap: 10px; width: 95%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 8px; border: 1px solid #475569;
         }
-        .array-row { display: flex; align-items: center; gap: 10px; justify-content: center; }
-        .array-label { width: 80px; text-align: right; color: #94a3b8; font-size: 0.9rem; font-weight: bold; }
-        .array-bar { display: flex; gap: 5px; }
-        .array-cell {
-            width: 30px; height: 30px;
-            border: 1px solid #475569;
-            border-radius: 4px;
+        .array-row { display: flex; align-items: center; gap: 10px; }
+        .array-lbl { width: 70px; text-align: right; color: #94a3b8; font-size: 0.8rem; font-weight: bold; }
+        .array-bar { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 5px; }
+        .cell {
+            width: 30px; height: 30px; border: 1px solid #475569; border-radius: 4px;
             display: flex; align-items: center; justify-content: center;
-            font-family: monospace; font-size: 0.9rem;
-            color: #cbd5e1;
+            color: #cbd5e1; font-family: monospace; font-size: 0.9rem;
             transition: all 0.3s;
         }
-        .array-cell.active-root { background: #fbbf24; color: #0f172a; font-weight: bold; transform: scale(1.1); border-color: #fbbf24; }
-        .array-cell.in-range { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
-        .array-cell.out-range { opacity: 0.3; }
-
-        /* Step Breakdown */
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .cell.focus { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; color: white; } /* Current Range */
+        .cell.root { background: #fbbf24; border-color: #f59e0b; color: #0f172a; font-weight: bold; transform: scale(1.1); } /* Selected Root */
+        .cell.dim { opacity: 0.2; } /* Out of range */
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 220px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -70,32 +77,45 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Construct Tree (Preorder + Inorder)</div>
+                <div class="viz-title">Construct Binary Tree</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Preorder:</label>
-                        <input type="text" id="preInput" value="3,9,20,15,7">
-                        <label>Inorder:</label>
-                        <input type="text" id="inInput" value="9,3,15,20,7">
-                        <button onclick="runVisualizer()">Build</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Preorder:</label>
+                            <input type="text" id="preInput" value="3,9,20,15,7">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Inorder:</label>
+                            <input type="text" id="inInput" value="9,3,15,20,7">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Build</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <div class="arrays-container">
+                    <div class="arrays-panel">
                         <div class="array-row">
-                            <div class="array-label">Preorder</div>
-                            <div class="array-bar" id="preDisplay"></div>
+                            <div class="array-lbl">Preorder</div>
+                            <div class="array-bar" id="preDisp"></div>
                         </div>
                         <div class="array-row">
-                            <div class="array-label">Inorder</div>
-                            <div class="array-bar" id="inDisplay"></div>
+                            <div class="array-lbl">Inorder</div>
+                            <div class="array-bar" id="inDisp"></div>
                         </div>
                     </div>
 
-                    <svg id="viz-svg">
-                        <g id="main-group" transform="translate(40, 40)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:rgba(59,130,246,0.2); border:1px solid #3b82f6"></div>Active Range</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Selected Root</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <g id="main-group" transform="translate(40, 40)"></g>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -114,12 +134,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -134,227 +154,227 @@
     <script>
         const codeStructure = [
             { line: 'TreeNode* buildTree(preorder, inorder) {', id: 0 },
-            { line: '    return build(0, 0, inorder.size()-1);', id: 1 },
-            { line: '}', id: 2 },
-            { line: 'TreeNode* build(preStart, inStart, inEnd) {', id: 3 },
-            { line: '    if (preStart > preEnd || inStart > inEnd) return nullptr;', id: 4 },
-            { line: '    int rootVal = preorder[preStart];', id: 5 },
-            { line: '    TreeNode* root = new TreeNode(rootVal);', id: 6 },
-            { line: '    int inIndex = find(inorder, rootVal);', id: 7 },
-            { line: '    root->left = build(preStart + 1,', id: 8 },
-            { line: '                       inStart, inIndex - 1);', id: 9 },
-            { line: '    root->right = build(preStart + inIndex - inStart + 1,', id: 10 },
-            { line: '                        inIndex + 1, inEnd);', id: 11 },
-            { line: '    return root;', id: 12 },
-            { line: '}', id: 13 }
+            { line: '    if (preorder.empty() || inorder.empty()) return NULL;', id: 1 },
+            { line: '    TreeNode* root = new TreeNode(preorder[0]);', id: 2 },
+            { line: '    int mid = find(inorder, preorder[0]);', id: 3 },
+            { line: '    root->left = buildTree(preorder[1:mid+1], inorder[0:mid]);', id: 4 },
+            { line: '    root->right = buildTree(preorder[mid+1:], inorder[mid+1:]);', id: 5 },
+            { line: '    return root;', id: 6 },
+            { line: '}', id: 7 }
         ];
 
         let viz;
 
-        // We need a helper to build the final tree first to determine layout,
-        // then animate the "creation" of nodes.
-        function buildFinalTree(preorder, inorder) {
-            if (!preorder.length || !inorder.length) return null;
-            
-            const rootVal = preorder[0];
-            const root = { id: rootVal, val: rootVal, children: [] };
-            
-            const mid = inorder.indexOf(rootVal);
-            const leftIn = inorder.slice(0, mid);
-            const rightIn = inorder.slice(mid + 1);
-            
-            const leftPre = preorder.slice(1, 1 + leftIn.length);
-            const rightPre = preorder.slice(1 + leftIn.length);
-            
-            if (leftIn.length) root.children[0] = buildFinalTree(leftPre, leftIn);
-            if (rightIn.length) root.children[1] = buildFinalTree(rightPre, rightIn);
-            
+        // We pre-calculate final tree layout to place nodes correctly, 
+        // but only reveal them as constructed.
+        function buildTreeLogic(pre, inord) {
+            if(!pre.length || !inord.length) return null;
+            let rootVal = pre[0];
+            let root = { val: rootVal, id: Math.random(), left: null, right: null };
+            let mid = inord.indexOf(rootVal);
+            root.left = buildTreeLogic(pre.slice(1, mid+1), inord.slice(0, mid));
+            root.right = buildTreeLogic(pre.slice(mid+1), inord.slice(mid+1));
             return root;
         }
-        
-        // Clean for D3
-        function cleanHierarchy(node) {
-            if(!node) return null;
-            const c = [];
-            if(node.children[0]) c.push(cleanHierarchy(node.children[0]));
-            if(node.children[1]) c.push(cleanHierarchy(node.children[1]));
-            return { ...node, children: c };
+
+        function getLayout(rootNode) {
+            if(!rootNode) return [];
+            const h = d3.hierarchy(rootNode);
+            const treeLayout = d3.tree().size([500, 300]);
+            treeLayout(h);
+            const nodes = [];
+            h.descendants().forEach(d => {
+                nodes.push({
+                    id: d.data.id, val: d.data.val,
+                    x: d.x + 50, y: d.y + 50,
+                    parentId: d.parent ? d.parent.data.id : null
+                });
+            });
+            return nodes;
         }
 
-        function simulate(preorder, inorder) {
+        function simulate(pre, inord) {
             const steps = [];
-            const finalTree = buildFinalTree(preorder, inorder);
-            if(!finalTree) return [];
-
-            // Tracking which nodes are created
-            const visibleNodes = []; // ids (vals in this case, assuming unique)
+            const fullTree = buildTreeLogic(pre, inord);
+            if(!fullTree) return [];
+            const layout = getLayout(fullTree); // static positions
             
-            // Invert map
-            const inMap = {};
-            inorder.forEach((v, i) => inMap[v] = i);
+            // Map: id -> visible (bool)
+            // also tracking active node
+            let visibleSet = new Set();
+            
+            const snap = (rangePre, rangeIn, activeRootVal, activeId, msg, lines, info) => ({
+                layout,
+                visibleSet: new Set(visibleSet),
+                preFull: pre, 
+                inFull: inord,
+                rangePre, rangeIn, // {start, end} indices
+                activeRootVal, activeId,
+                msg, highlightLines: lines, explanation: info
+            });
 
-            const pushState = (msg, hl, activeRootVal, range, explanation=null) => {
-                steps.push({
-                    fullTree: cleanHierarchy(finalTree),
-                    visibleNodes: [...visibleNodes],
-                    preStart: range.preStart,
-                    inStart: range.inStart,
-                    inEnd: range.inEnd,
-                    activeRootVal,
-                    preorder: [...preorder],
-                    inorder: [...inorder],
-                    msg, highlightLines: hl,
-                    explanation
-                });
-            };
-
-            let preIndex = 0;
-
-            function recurse(inStart, inEnd) {
-                if (inStart > inEnd) return null;
-
-                const rootVal = preorder[preIndex++];
-                const inIndex = inMap[rootVal];
+            // Recursive construction simulation
+            // We pass global indices to slice arrays visually
+            
+            const construct = (pStart, pEnd, iStart, iEnd) => {
+                // pStart inclusive, pEnd exclusive
                 
-                // Visualization before creation
-                pushState(
-                    `Select Root ${rootVal} from Preorder`, 
-                    [5], 
-                    rootVal, 
-                    { preStart: preIndex-1, inStart, inEnd },
-                    {
-                        title: '選擇根節點',
-                        text: `前序遍歷的下一個節點是 ${rootVal}，所以它是當前子樹的根。`,
-                        formula: 'root = preorder[preStart]'
-                    }
-                );
-
-                visibleNodes.push(rootVal); // "Create" node visual
-
-                pushState(
-                    `Find ${rootVal} in Inorder at index ${inIndex}. Split Left/Right.`,
-                    [6, 7],
-                    rootVal,
-                    { preStart: preIndex-1, inStart, inEnd, split: inIndex },
-                    {
-                        title: '分割左右子樹',
-                        text: `在中序遍歷中找到 ${rootVal} (索引 ${inIndex})。<br>左邊 [${inStart}~${inIndex-1}] 是左子樹。<br>右邊 [${inIndex+1}~${inEnd}] 是右子樹。`,
-                        formula: 'inIndex = map[rootVal]'
-                    }
-                );
-
-                recurse(inStart, inIndex - 1);
-                recurse(inIndex + 1, inEnd);
+                if (pStart >= pEnd || iStart >= iEnd) {
+                    steps.push(snap({s:pStart, e:pEnd}, {s:iStart, e:iEnd}, null, null, "Base Case: Range Empty. Return NULL.", [1], {
+                        title: "Base Case", text: "陣列範圍為空，返回 NULL。", formula: "return NULL"
+                    }));
+                    return null;
+                }
                 
-                return rootVal;
+                const rootVal = pre[pStart];
+                // Find visible node ID
+                const node = layout.find(n => n.val === rootVal && !visibleSet.has(n.id)); 
+                // Note: duplicates handling is tricky. We assume unique for simplicity or use layout search path.
+                // Assuming unique for visualization simplicity as standard problem.
+                const nodeId = node ? node.id : null;
+                
+                steps.push(snap({s:pStart, e:pEnd}, {s:iStart, e:iEnd}, rootVal, null, `Root is preorder[${pStart}] = ${rootVal}`, [2], {
+                    title: "選擇根節點", text: `Preorder 第一個元素 ${rootVal} 為當前子樹的根。`, formula: "root = pre[0]"
+                }));
+                
+                if(nodeId) visibleSet.add(nodeId);
+                
+                // Find in Inorder
+                let mid = -1;
+                for(let k=iStart; k<iEnd; k++) {
+                    if (inord[k] === rootVal) { mid = k; break; }
+                }
+                
+                steps.push(snap({s:pStart, e:pEnd}, {s:iStart, e:iEnd}, rootVal, nodeId, `Found ${rootVal} at Inorder[${mid}]`, [3], {
+                    title: "在中序中尋找", text: `在中序遍歷中找到 ${rootVal} 的位置 (Index ${mid})。左邊是左子樹，右邊是右子樹。`, formula: "mid = find(inorder, root)"
+                }));
+                
+                const leftSize = mid - iStart;
+                
+                // Left
+                steps.push(snap({s:pStart+1, e:pStart+1+leftSize}, {s:iStart, e:mid}, null, nodeId, `Recurse Left (Size ${leftSize})`, [4], {
+                    title: "構建左子樹", text: `遞歸構建左子樹。Preorder 取 ${leftSize} 個元素，Inorder 取 root 左側元素。`, formula: "build(left)"
+                }));
+                construct(pStart+1, pStart+1+leftSize, iStart, mid);
+                
+                // Right
+                steps.push(snap({s:pStart+1+leftSize, e:pEnd}, {s:mid+1, e:iEnd}, null, nodeId, `Recurse Right`, [5], {
+                    title: "構建右子樹", text: `遞歸構建右子樹。取剩餘元素。`, formula: "build(right)"
+                }));
+                construct(pStart+1+leftSize, pEnd, mid+1, iEnd);
+                
+                steps.push(snap({s:pStart, e:pEnd}, {s:iStart, e:iEnd}, rootVal, nodeId, `Subtree ${rootVal} Done`, [6], {
+                    title: "子樹完成", text: `以 ${rootVal} 為根的子樹構建完成。`, formula: "return root"
+                }));
             }
 
-            recurse(0, inorder.length - 1);
+            construct(0, pre.length, 0, inord.length);
             
-            pushState("Done", [13], null, { preStart:-1, inStart:-1, inEnd:-1 }, {
-                title: '完成',
-                text: '整棵樹構造完畢。',
-                formula: 'return root'
-            });
+            steps.push(snap({s:0,e:0}, {s:0,e:0}, null, null, "Construction Complete", [7], {
+                 title: "完成", text: "整棵樹構建完畢。", formula: "Done"
+            }));
 
             return steps;
         }
 
-        const width = 600;
-        const height = 400;
-        const treeLayout = d3.tree().size([width, height]);
-        const gMain = d3.select("#main-group");
-
+        const svg = d3.select("#viz-svg");
+        const mainG = svg.select("#main-group");
+        
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+            
             // Render Arrays
-            const renderArray = (arr, containerId, type) => {
-                const container = document.getElementById(containerId);
-                container.innerHTML = '';
-                arr.forEach((val, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'array-cell';
-                    div.textContent = val;
-                    
-                    if (val === step.activeRootVal) div.classList.add('active-root');
-                    
-                    if (type === 'inorder') {
-                        if (idx >= step.inStart && idx <= step.inEnd) {
-                            div.classList.add('in-range');
-                        } else {
-                            div.classList.add('out-range');
-                        }
-                    } else if (type === 'preorder') {
-                        // Just highlight active root basically
-                        if (idx === step.preStart) div.classList.add('active-root');
-                        else if (idx < step.preStart) div.classList.add('out-range'); // processed
+            const renderArray = (containerId, arr, range, activeVal) => {
+                const c = document.getElementById(containerId);
+                c.innerHTML = '';
+                arr.forEach((v, i) => {
+                    const el = document.createElement('div');
+                    el.className = 'cell';
+                    if (i >= range.s && i < range.e) {
+                         el.className += ' focus';
+                         if (v === activeVal) el.className += ' root';
+                    } else {
+                        el.className += ' dim';
                     }
-                    
-                    container.appendChild(div);
+                    el.textContent = v;
+                    c.appendChild(el);
                 });
             };
             
-            renderArray(step.preorder, 'preDisplay', 'preorder');
-            renderArray(step.inorder, 'inDisplay', 'inorder');
+            renderArray('preDisp', step.preFull, step.rangePre, step.activeRootVal);
+            renderArray('inDisp', step.inFull, step.rangeIn, step.activeRootVal);
 
-            // Render Tree
-            const root = d3.hierarchy(step.fullTree);
-            treeLayout(root);
-
+            const nodesData = step.layout;
+            
             // Links
-            const links = gMain.selectAll(".link").data(root.links(), d => d.source.data.id + "-" + d.target.data.id);
-            links.enter().append("path").attr("class", "link")
-                .merge(links)
-                .transition().duration(500)
-                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y))
+            const linksData = nodesData.filter(d => d.parentId !== null).map(d => {
+                const p = nodesData.find(x => x.id === d.parentId);
+                return { s: p, t: d, id: `${p.id}-${d.id}` };
+            });
+
+            const linkSel = mainG.selectAll(".link-path").data(linksData, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            linkSel.merge(linkEnter).transition().duration(500)
+                .attr("d", d => `M${d.s.x},${d.s.y} L${d.t.x},${d.t.y}`)
                 .attr("class", d => {
-                    // Visible if target is created
-                    if (step.visibleNodes.includes(d.target.data.val)) return "link visible";
-                    return "link";
+                    // Start node visible AND end node visible?
+                    const sVis = step.visibleSet.has(d.s.id);
+                    const tVis = step.visibleSet.has(d.t.id);
+                    return (sVis && tVis) ? "link-path link-visible" : "link-path";
                 });
-            links.exit().remove();
-
+            linkSel.exit().remove();
+            
             // Nodes
-            const nodes = gMain.selectAll(".node-g").data(root.descendants(), d => d.data.val);
-            const nEnter = nodes.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-
-            const nUpdate = nodes.merge(nEnter).transition().duration(500)
+            const nodeSel = mainG.selectAll(".node-g").data(nodesData, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 18);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter).transition().duration(500)
                 .attr("transform", d => `translate(${d.x}, ${d.y})`);
             
-            nUpdate.select("circle").attr("class", d => {
+            nodeMerge.select("circle").attr("class", d => {
                 let c = "node-circle";
-                if (step.visibleNodes.includes(d.data.val)) {
-                    c += " visible";
-                    if (d.data.val === step.activeRootVal) c += " active";
-                    else c += " done";
+                if(step.visibleSet.has(d.id)) {
+                    c += " node-visible";
+                    if(d.id === step.activeId) c += " node-active";
+                    else c += " node-done";
                 }
                 return c;
             });
-
-            nUpdate.select("text")
-                .text(d => d.data.val)
-                .attr("class", d => step.visibleNodes.includes(d.data.val) ? "node-text visible" : "node-text");
-            
-            nodes.exit().remove();
+            nodeMerge.select("text").attr("class", d => step.visibleSet.has(d.id) ? "node-text text-visible" : "node-text")
+                .text(d => d.val);
+            nodeSel.exit().remove();
         }
 
         function runVisualizer() {
-            const preStr = document.getElementById('preInput').value;
-            const inStr = document.getElementById('inInput').value;
+            const rawP = document.getElementById('preInput').value;
+             const valsP = rawP.split(',').map(x => {
+                const t = x.trim().toLowerCase();
+                if(t==='null' || t==='') return null;
+                return isNaN(parseInt(t)) ? null : parseInt(t);
+            });
+            const rawI = document.getElementById('inInput').value;
+             const valsI = rawI.split(',').map(x => {
+                const t = x.trim().toLowerCase();
+                if(t==='null' || t==='') return null;
+                return isNaN(parseInt(t)) ? null : parseInt(t);
+            });
             
-            const pre = preStr.split(',').map(x=>parseInt(x.trim()));
-            const ino = inStr.split(',').map(x=>parseInt(x.trim()));
-            
-            if(pre.length !== ino.length) { alert("Length mismatch"); return; }
+            if(valsP.length === 0 || valsI.length === 0) return;
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(simulate(pre, ino));
+            viz.setSteps(simulate(valsP, valsI));
         }
 
         window.addEventListener('load', runVisualizer);

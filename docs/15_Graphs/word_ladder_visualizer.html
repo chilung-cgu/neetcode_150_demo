@@ -3,39 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Ladder - 視覺化</title>
+    <title>Word Ladder - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .word-graph { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 15px 0; }
-        .word-node { 
-            padding: 10px 16px; border-radius: 8px; background: var(--viz-bg-secondary); 
-            border: 2px solid var(--viz-border); font-family: monospace; font-weight: bold; 
-            transition: all 0.3s; font-size: 1rem;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 600px;
         }
-        .word-node.start { border-color: var(--viz-success); background: var(--viz-success); color: #0f172a; }
-        .word-node.end { border-color: var(--viz-error); background: rgba(239, 68, 68, 0.2); color: var(--viz-error); }
-        .word-node.current { border-color: var(--viz-warning); background: var(--viz-warning); color: #0f172a; transform: scale(1.05); }
-        .word-node.visited { opacity: 0.5; }
-        .word-node.path { border-color: var(--viz-success); background: var(--viz-success); color: #0f172a; }
-        .word-node.found { border-color: var(--viz-success); background: var(--viz-success); color: #0f172a; animation: pulse 0.5s; }
-        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
-        .queue-container { 
-            display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; 
-            margin: 10px 0; padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px;
+        /* SVG */
+        .graph-viewport {
+            width: 100%; height: 450px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }
-        .queue-label { color: var(--viz-text-muted); font-size: 0.85rem; width: 100%; text-align: center; margin-bottom: 5px; }
-        .queue-item { background: var(--viz-primary); color: white; padding: 5px 10px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; }
+        #viz-svg { width: 100%; height: 100%; cursor: grab; }
+        #viz-svg:active { cursor: grabbing; }
 
-        .path-display { 
-            text-align: center; margin: 15px 0; padding: 12px; 
-            background: var(--viz-bg-secondary); border-radius: 8px; font-size: 1rem;
+        .node-rect { fill: #475569; stroke: #fff; stroke-width: 2px; rx: 8; ry: 8; transition: fill 0.3s; }
+        .node-rect.start { fill: #3b82f6; }
+        .node-rect.end { fill: #ef4444; }
+        .node-rect.visited { fill: #f59e0b; }
+        .node-rect.path { fill: #22c55e; stroke: #86efac; stroke-width: 3px; }
+        .node-rect.current { stroke: #fbbf24; stroke-width: 4px; filter: drop-shadow(0 0 5px #fbbf24); }
+
+        .node-text { pointer-events: none; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; fill: white; font-family: monospace; }
+
+        .link { stroke: #94a3b8; stroke-width: 1px; opacity: 0.2; }
+        .link.path { stroke: #22c55e; stroke-width: 3px; opacity: 1; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
         }
-        .path-arrow { color: var(--viz-text-muted); margin: 0 5px; }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 300px; height: 60px; resize: none; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; border: 1px solid #fff; }
     </style>
 </head>
 <body>
@@ -43,96 +68,106 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">單詞接龍 (Word Ladder)</div>
+                <div class="viz-title">Word Ladder (BFS Shortest Path)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <button onclick="setExample(1)">hit → cog</button>
-                        <button onclick="setExample(2)">cat → dog</button>
-                        <button onclick="resetVisualization()">↻ 重置</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Input JSON {begin, end, words}:</label>
+                            <textarea id="gridInput">{"begin":"hit","end":"cog","words":["hot","dot","dog","lot","log","cog"]}</textarea>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Transform</button>
+                            <div style="display:flex; gap:5px;">
+                                <button onclick="loadExample(1)" style="background:#475569; font-size:0.8rem; padding:5px;">Hit-Cog</button>
+                                <button onclick="loadExample(2)" style="background:#475569; font-size:0.8rem; padding:5px;">Cat-Dog</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="word-graph" id="wordGraph"></div>
-                <div class="path-display" id="pathDisplay">尋找最短轉換路徑...</div>
-                
-                <div class="queue-container">
-                    <div class="queue-label">BFS Queue:</div>
-                    <div id="queueDisplay" style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;"></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Start</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>End</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Visited</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Path</div>
+                    </div>
+                    
+                    <div class="graph-viewport">
+                        <svg id="viz-svg"><g id="zoom-group"></g></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Level</div>
+                            <div class="stat-val" id="levelDisplay">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Shortest Path</div>
+                            <div class="stat-val" id="answerDisplay">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="800">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n·m·26)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n·m)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">BFS 層數</div><div class="state-value" id="levelDisplay">0</div></div>
-                    <div class="state-item"><div class="state-label">最短路徑</div><div class="state-value" id="answerDisplay">?</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int ladderLength(string begin, string end, vector<string>& list) {', id: 0 },
-            { line: '    unordered_set<string> words(list.begin(), list.end());', id: 1 },
-            { line: '    if (words.find(end) == words.end()) return 0;', id: 2 },
-            { line: '    queue<string> q; q.push(begin);', id: 3 },
+            { line: 'int ladderLength(string beginWord, string endWord, vector<string>& wordList) {', id: 0 },
+            { line: '    unordered_set<string> dict(wordList.begin(), wordList.end());', id: 1 },
+            { line: '    if (!dict.count(endWord)) return 0;', id: 2 },
+            { line: '    queue<string> q; q.push(beginWord);', id: 3 },
             { line: '    int level = 1;', id: 4 },
             { line: '    while (!q.empty()) {', id: 5 },
             { line: '        int size = q.size();', id: 6 },
-            { line: '        for (int i = 0; i < size; i++) {', id: 7 },
-            { line: '            string word = q.front(); q.pop();', id: 8 },
-            { line: '            for (int j = 0; j < word.size(); j++) {', id: 9 },
-            { line: '                char original = word[j];', id: 10 },
-            { line: '                for (char c = \'a\'; c <= \'z\'; c++) {', id: 11 },
-            { line: '                    word[j] = c;', id: 12 },
-            { line: '                    if (word == end) return level + 1;', id: 13 },
-            { line: '                    if (words.count(word)) {', id: 14 },
-            { line: '                        q.push(word); words.erase(word);', id: 15 },
-            { line: '                    }', id: 16 },
-            { line: '                }', id: 17 },
-            { line: '                word[j] = original;', id: 18 },
-            { line: '            }', id: 19 },
-            { line: '        }', id: 20 },
-            { line: '        level++;', id: 21 },
-            { line: '    }', id: 22 },
-            { line: '    return 0;', id: 23 },
-            { line: '}', id: 24 },
+            { line: '        while(size--) {', id: 7 },
+            { line: '            string curr = q.front(); q.pop();', id: 8 },
+            { line: '            if (curr == endWord) return level;', id: 9 },
+            { line: '            for (int i = 0; i < curr.size(); ++i) {', id: 10 },
+            { line: '               // Try changing char', id: 11 },
+            { line: '               if (dict.count(next)) {', id: 12 },
+            { line: '                   dict.erase(next); q.push(next);', id: 13 },
+            { line: '               }', id: 14 },
+            { line: '            }', id: 15 },
+            { line: '        }', id: 16 },
+            { line: '        level++;', id: 17 },
+            { line: '    }', id: 18 },
+            { line: '    return 0;', id: 19 },
+            { line: '}', id: 20 }
         ];
-        
-        const examples = {
-            1: { begin: 'hit', end: 'cog', words: ['hot', 'dot', 'dog', 'lot', 'log', 'cog'] },
-            2: { begin: 'cat', end: 'dog', words: ['cot', 'cog', 'dog', 'dat', 'dag'] }
-        };
-        
-        let currentExample = examples[1];
 
-        function setExample(n) {
-            currentExample = examples[n];
-            init();
-        }
+        let viz;
 
         function oneCharDiff(a, b) {
             if (a.length !== b.length) return false;
@@ -144,130 +179,236 @@
             return diff === 1;
         }
 
-        function generateAlgorithmSteps(begin, end, wordList) {
+        function simulate(input) {
             const steps = [];
-            const words = new Set(wordList);
-            const visited = new Set([begin]);
-            const allWords = [begin, ...wordList];
+            const { begin, end, words } = input;
             
-            steps.push({
-                queue: [begin], visited: new Set([begin]), current: null, level: 1,
-                highlightLines: [0, 1, 2, 3, 4],
-                explanation: { 
-                    title: '初始化', 
-                    text: `起點: "${begin}"<br>終點: "${end}"<br>字典: [${wordList.join(', ')}]<br><br>BFS 找最短路徑`,
-                    formula: 'setup'
-                }
-            });
-
-            let queue = [begin];
-            let level = 1;
-            const parent = { [begin]: null };
-
-            while (queue.length > 0) {
-                const nextQueue = [];
-                
-                for (const word of queue) {
-                    // Try all one-char transformations
-                    for (const nextWord of words) {
-                        if (!visited.has(nextWord) && oneCharDiff(word, nextWord)) {
-                            visited.add(nextWord);
-                            parent[nextWord] = word;
-                            nextQueue.push(nextWord);
-                            
-                            // Check if found
-                            if (nextWord === end) {
-                                // Build path
-                                const path = [end];
-                                let curr = end;
-                                while (parent[curr]) {
-                                    path.unshift(parent[curr]);
-                                    curr = parent[curr];
-                                }
-                                
-                                steps.push({
-                                    queue: [], visited: new Set(visited), current: nextWord,
-                                    path, answer: level + 1, level: level + 1, found: true,
-                                    highlightLines: [13],
-                                    explanation: { 
-                                        title: '找到!', 
-                                        text: `"${word}" → "${nextWord}"<br><br>路徑: ${path.join(' → ')}<br>長度: ${level + 1}`,
-                                        formula: `return ${level + 1}`
-                                    }
-                                });
-                                return steps;
-                            }
-                        }
-                    }
-                    
-                    if (nextQueue.length > 0 && nextQueue[nextQueue.length - 1] !== end) {
-                        steps.push({
-                            queue: [...nextQueue], visited: new Set(visited), current: word, level,
-                            highlightLines: [8, 9, 10, 11, 12, 14, 15],
-                            explanation: { 
-                                title: `處理 "${word}"`, 
-                                text: `嘗試所有一字之差的轉換<br>發現: ${nextQueue.slice(-3).join(', ')}`,
-                                formula: `level = ${level}`
-                            }
-                        });
+            // Build visual graph first
+            // Note: In real BFS we don't build full graph, but implicitly traverse.
+            // For visualization, seeing connections is helpful.
+            // Nodes: begin + words
+            const allWords = Array.from(new Set([begin, ...words]));
+            const wordMap = {};
+            allWords.forEach((w,i) => wordMap[w] = i);
+            
+            const nodes = allWords.map((w,i) => ({id: i, label: w}));
+            const links = [];
+            for(let i=0; i<allWords.length; i++) {
+                for(let j=i+1; j<allWords.length; j++) {
+                    if(oneCharDiff(allWords[i], allWords[j])) {
+                        links.push({source: i, target: j});
                     }
                 }
-                
-                queue = nextQueue;
-                level++;
             }
 
-            // Not found
-            steps.push({
-                queue: [], visited, current: null, answer: 0, level,
-                highlightLines: [23],
-                explanation: { title: '無法到達', text: `從 "${begin}" 到 "${end}" 沒有路徑`, formula: 'return 0' }
-            });
+            const pushState = (msg, hl, activeWord, visitedSet, pathSet, level, result) => {
+                steps.push({
+                    graph: {nodes, links}, // Static structure
+                    visited: new Set(visitedSet),
+                    path: new Set(pathSet),
+                    activeWord,
+                    level,
+                    result,
+                    msg, highlightLines: hl
+                });
+            };
+
+            // BFS
+            const dict = new Set(words);
+            if(!dict.has(end)) {
+                pushState(`End word "${end}" not in list! Impossible.`, [2], null, [], [], 0, 0);
+                return steps;
+            }
+            
+            const q = [begin];
+            const visited = new Set([begin]); // standard bfs tracks visited
+            const parent = {}; // to reconstruct path
+            let level = 1;
+            
+            pushState(`Start BFS from "${begin}"`, [3], begin, [begin], [], 1, 0);
+
+            let found = false;
+            
+            while(q.length > 0) {
+                const size = q.length;
+                const currentLevelNodes = [];
+                
+                // Process level
+                for(let k=0; k<size; k++) {
+                    const curr = q.shift();
+                    currentLevelNodes.push(curr);
+                    
+                    if(curr === end) {
+                        found = true;
+                        break;
+                    }
+                    
+                    //Neighbors
+                    for(let w of allWords) {
+                        if(oneCharDiff(curr, w) && dict.has(w) && !visited.has(w)) {
+                            visited.add(w);
+                            q.push(w);
+                            parent[w] = curr;
+                        } else if (oneCharDiff(curr, w) && w === end && !visited.has(w)) {
+                             // Special case if end is in dict (checked above)
+                             // If end reached
+                             visited.add(w);
+                             q.push(w);
+                             parent[w] = curr;
+                        }
+                    }
+                }
+                
+                if(found) break;
+                
+                pushState(`Level ${level} processed. Next Queue Size: ${q.length}`, [17], null, Array.from(visited), [], level, 0);
+                level++;
+            }
+            
+            if(found) {
+                // Reconstruct path
+                const path = [];
+                let curr = end;
+                while(curr) {
+                    path.push(curr);
+                    curr = parent[curr];
+                }
+                const pathSet = new Set(path);
+                pushState(`Found "${end}" at Level ${level}! Path reconstruction.`, [9], end, Array.from(visited), path, level, level);
+            } else {
+                pushState(`Queue empty. "${end}" unreachable.`, [19], null, Array.from(visited), [], level, 0);
+            }
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            const { begin, end, words } = currentExample;
-            const allWords = [begin, ...words];
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const gZoom = d3.select("#zoom-group");
+        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
+        svg.call(zoom);
+
+        // Force Sim
+        let simulation = d3.forceSimulation()
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("link", d3.forceLink().id(d => d.id).distance(100))
+            .force("center", d3.forceCenter(400, 225));
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('levelDisplay').textContent = step.level;
+            document.getElementById('answerDisplay').textContent = step.result;
+
+            // Nodes
+            const { begin, end } = JSON.parse(document.getElementById('gridInput').value); // Crude access to current config
             
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    document.getElementById('wordGraph').innerHTML = allWords.map(w => {
-                        let cls = 'word-node';
-                        if (w === begin) cls += ' start';
-                        else if (w === end) cls += step.found ? ' found' : ' end';
-                        
-                        if (step.current === w) cls += ' current';
-                        else if (step.path?.includes(w)) cls += ' path';
-                        else if (step.visited?.has(w)) cls += ' visited';
-                        
-                        return `<div class="${cls}">${w}</div>`;
-                    }).join('');
+            gZoom.selectAll(".node-rect")
+                .attr("class", d => {
+                    let c = "node-rect";
+                    if (d.label === begin) c += " start";
+                    else if (d.label === end) c += " end";
+                    else if (step.path.has(d.label)) c += " path"; // Path overrides visited
+                    else if (step.visited.has(d.label)) c += " visited";
                     
-                    document.getElementById('queueDisplay').innerHTML = (step.queue || []).map(w => 
-                        `<span class="queue-item">${w}</span>`
-                    ).join('') || '<span style="color:var(--viz-text-muted)">空</span>';
-                    
-                    if (step.path) {
-                        document.getElementById('pathDisplay').innerHTML = 
-                            `<span style="color: var(--viz-success)">路徑: ${step.path.join('<span class="path-arrow">→</span>')}</span>`;
-                    } else {
-                        document.getElementById('pathDisplay').textContent = '尋找中...';
-                    }
-                    
-                    document.getElementById('levelDisplay').textContent = step.level || 0;
-                    document.getElementById('answerDisplay').textContent = step.answer ?? '?';
-                    document.getElementById('answerDisplay').style.color = step.answer ? 'var(--viz-success)' : 'inherit';
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(begin, end, words));
+                    if (d.label === step.activeWord) c += " current";
+                    return c;
+                });
+            
+            // Links
+            // Highlight links on path?
+            // If both source/target in path, maybe?
+            gZoom.selectAll(".link")
+                .attr("class", d => {
+                    if (step.path.has(d.source.label) && step.path.has(d.target.label)) return "link path";
+                    return "link";
+                });
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        function initGraph(nodes, links) {
+            gZoom.selectAll("*").remove();
+            
+            simulation.nodes(nodes);
+            simulation.force("link").links(links);
+            simulation.alpha(1).restart();
+
+            const link = gZoom.append("g").selectAll(".link")
+                .data(links).enter().append("line")
+                .attr("class", "link");
+
+            const node = gZoom.append("g").selectAll(".node-g")
+                .data(nodes).enter().append("g")
+                .attr("class", "node-g")
+                .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+
+            node.append("rect")
+                .attr("width", 60).attr("height", 30)
+                .attr("x", -30).attr("y", -15)
+                .attr("class", "node-rect");
+
+            node.append("text")
+                .attr("class", "node-text")
+                .attr("dy", 1)
+                .text(d => d.label);
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+                node
+                    .attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+        }
+
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x; d.fy = d.y;
+        }
+        function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null; d.fy = null;
+        }
+
+        function runVisualizer() {
+            try {
+                const raw = document.getElementById('gridInput').value;
+                const input = JSON.parse(raw);
+                
+                // Calc graph
+                const allWords = Array.from(new Set([input.begin, ...input.words]));
+                const nodes = allWords.map((w,i) => ({id: i, label: w}));
+                const links = [];
+                for(let i=0; i<allWords.length; i++) {
+                    for(let j=i+1; j<allWords.length; j++) {
+                        if(oneCharDiff(allWords[i], allWords[j])) {
+                            links.push({source: i, target: j});
+                        }
+                    }
+                }
+                
+                initGraph(nodes, links);
+                
+                viz = new AlgorithmVisualizer({
+                    codeLines: codeStructure,
+                    onStepChange: render
+                });
+                viz.setSteps(simulate(input));
+            } catch(e) {
+                alert("Invalid JSON");
+                console.error(e);
+            }
+        }
+
+        const examples = {
+            1: '{"begin":"hit","end":"cog","words":["hot","dot","dog","lot","log","cog"]}',
+            2: '{"begin":"cat","end":"dog","words":["cot","cog","dog","dat","dag"]}'
+        };
+        function loadExample(n) {
+            document.getElementById('gridInput').value = examples[n];
+            runVisualizer();
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

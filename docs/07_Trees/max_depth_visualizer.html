@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Max Depth - D3 Visualizer</title>
+    <title>Max Depth - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,31 +13,50 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
             min-height: 500px;
         }
+
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 450px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; r: 20px; }
+        .node-text { fill: white; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
         
-        #viz-svg { width: 100%; height: 450px; }
+        .node-normal { fill: #334155; stroke: #64748b; }
+        .node-active { stroke: #fbbf24; stroke-width: 3px; filter: drop-shadow(0 0 5px #fbbf24); } /* Visiting */
+        .node-return { fill: #22c55e; stroke: #16a34a; } /* Returning value */
 
-        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; stroke: #64748b; }
-        .node-circle.active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.1); }
-        .node-circle.computed { stroke: #22c55e; fill: rgba(34, 197, 94, 0.1); }
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
+        .link-active { stroke: #fbbf24; stroke-width: 3px; opacity: 1; }
 
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; pointer-events: none; dominant-baseline: middle; }
-        
-        .node-badge { fill: #a855f7; rx: 4; }
-        .badge-text { fill: white; font-size: 10px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
-
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
-        .link.active { stroke: #fbbf24; stroke-width: 3px; opacity: 1; }
+        /* Badges (Return Values) */
+        .badge-g { transition: opacity 0.3s; }
+        .badge-rect { fill: #a855f7; rx: 4; stroke: white; stroke-width: 1px; }
+        .badge-text { fill: white; font-size: 11px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -45,20 +64,32 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Maximum Depth of Binary Tree</div>
+                <div class="viz-title">Maximum Depth of Binary Tree (DFS)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Tree:</label>
-                        <input type="text" id="treeInput" value="3,9,20,null,null,15,7" placeholder="Level order (null for empty)">
-                        <button onclick="runVisualizer()">Calculate</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Tree:</label>
+                            <input type="text" id="treeInput" value="3, 9, 20, null, null, 15, 7">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Calculate</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <g id="main-group" transform="translate(40, 40)"></g>
-                        <g id="badge-group" transform="translate(40, 40)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Visiting</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Computed</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#a855f7; border:1px solid white"></div>Depth Value</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <g id="main-group" transform="translate(40, 40)"></g>
+                            <g id="badge-group" transform="translate(40, 40)"></g>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -77,12 +108,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -96,174 +127,206 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int maxDepth(root) {', id: 0 },
+            { line: 'int maxDepth(TreeNode* root) {', id: 0 },
             { line: '    if (!root) return 0;', id: 1 },
-            { line: '    left = maxDepth(root->left);', id: 2 },
-            { line: '    right = maxDepth(root->right);', id: 3 },
-            { line: '    return 1 + max(left, right);', id: 4 },
+            { line: '    int leftDepth = maxDepth(root->left);', id: 2 },
+            { line: '    int rightDepth = maxDepth(root->right);', id: 3 },
+            { line: '    return 1 + max(leftDepth, rightDepth);', id: 4 },
             { line: '}', id: 5 }
         ];
 
         let viz;
 
-        // Tree Helper
         function buildTree(arr) {
-            if (!arr || arr.length === 0) return null;
-            const root = { id: 0, val: arr[0], children: [] };
-            const queue = [root];
+            if(arr.length===0) return null;
+            let root = {id: 0, val: arr[0], left: null, right: null};
+            let queue = [root];
             let i = 1;
-            while (i < arr.length) {
-                const parent = queue.shift();
-                if (i < arr.length && arr[i] !== null) {
-                    const left = { id: i, val: arr[i], children: [] };
-                    parent.children[0] = left; // ensure slot
-                    queue.push(left);
+            let nextId = 1;
+            while(i < arr.length) {
+                let curr = queue.shift();
+                if(i < arr.length && arr[i] !== null) {
+                    curr.left = {id: nextId++, val: arr[i], left: null, right: null};
+                    queue.push(curr.left);
                 }
                 i++;
-                if (i < arr.length && arr[i] !== null) {
-                    const right = { id: i, val: arr[i], children: [] };
-                    parent.children[1] = right; // ensure slot
-                    queue.push(right);
+                if(i < arr.length && arr[i] !== null) {
+                    curr.right = {id: nextId++, val: arr[i], left: null, right: null};
+                    queue.push(curr.right);
                 }
                 i++;
             }
             return root;
         }
 
-        function cleanHierarchy(node) {
-            if(!node) return null;
-            const c = [];
-            if(node.children[0]) c.push(cleanHierarchy(node.children[0]));
-            if(node.children[1]) c.push(cleanHierarchy(node.children[1]));
-            return { ...node, children: c, _origChildren: node.children };
+        // Layout once
+        function getLayout(rootNode) {
+            if(!rootNode) return [];
+            const h = d3.hierarchy(rootNode);
+            const treeLayout = d3.tree().size([500, 350]);
+            treeLayout(h);
+            const nodes = [];
+            h.descendants().forEach(d => {
+                nodes.push({
+                    id: d.data.id, val: d.data.val,
+                    x: d.x + 50, y: d.y + 50,
+                    parentId: d.parent ? d.parent.data.id : null
+                });
+            });
+            return nodes;
         }
 
         function simulate(arr) {
             const steps = [];
             const root = buildTree(arr);
-            if(!root) return []; // Empty
+            if(!root) return [];
+            
+            const layout = getLayout(root);
+            
+            // Map: NodeId -> {L, R, Max} values for badges
+            // Initial state: empty badges
+            
+            const snap = (activeId, badges, msg, lines, info) => ({
+                layout: layout, // static layout
+                activeId,
+                badges: JSON.parse(JSON.stringify(badges)),
+                msg, highlightLines: lines, explanation: info
+            });
+            
+            let badges = {}; // id -> value
 
-            // Need to persist depth values map
-            const computedDepths = {}; // id -> depth
-
-            const snapshot = (msg, hl, activeId=null, explanation=null) => {
-                steps.push({
-                    root: cleanHierarchy(root),
-                    activeId,
-                    computedDepths: {...computedDepths},
-                    msg,
-                    highlightLines: hl,
-                    explanation
-                });
+            const run = (node) => {
+                if(!node) {
+                    // Visually we can't show null node visit easily unless we add phantom nodes.
+                    // Instead just skip.
+                    return 0;
+                }
+                
+                steps.push(snap(node.id, badges, `Visit Node ${node.val}`, [0, 1], {
+                    title: "訪問節點", text: `正在處理節點 ${node.val}。`, formula: "maxDepth(node)"
+                }));
+                
+                // Left
+                steps.push(snap(node.id, badges, `Recurse Left of ${node.val}`, [2], {
+                    title: "遞歸左子樹", text: `計算左子樹深度。`, formula: "maxDepth(left)"
+                }));
+                
+                const leftD = run(node.left);
+                
+                // Right
+                steps.push(snap(node.id, badges, `Recurse Right of ${node.val}`, [3], {
+                    title: "遞歸右子樹", text: `計算右子樹深度。`, formula: "maxDepth(right)"
+                }));
+                
+                const rightD = run(node.right);
+                
+                // Calc
+                const myD = 1 + Math.max(leftD, rightD);
+                badges[node.id] = myD;
+                
+                steps.push(snap(node.id, badges, `Calc Depth: 1 + max(${leftD}, ${rightD}) = ${myD}`, [4], {
+                    title: "計算深度", text: `當前深度 = 1 + max(左子樹(${leftD}), 右子樹(${rightD})) = ${myD}`, formula: `1 + max(${leftD}, ${rightD})`
+                }));
+                
+                return myD;
             };
 
-            snapshot("Start DFS", [0], root.id, {
-                title: '初始化',
-                text: '這是一個 Post-Order Traversal 演算法。<br>我們會深入到樹的底部，計算子樹的高度，然後將結果向上傳遞 (Bubble Up)。',
-                formula: 'maxDepth(root)'
-            });
-
-            const dfs = (node) => {
-                if (!node) return 0;
-                
-                snapshot(`Visit ${node.val}`, [1], node.id, {
-                    title: `訪問節點 ${node.val}`,
-                    text: `進入 recursion。先計算左右子樹的深度。`,
-                    formula: 'left = dfs(left), right = dfs(right)'
-                });
-
-                const l = dfs(node.children[0]);
-                const r = dfs(node.children[1]);
-                
-                const depth = 1 + Math.max(l, r);
-                computedDepths[node.id] = depth;
-                
-                snapshot(`Calculated depth for ${node.val}: 1 + max(${l}, ${r}) = ${depth}`, [4], node.id, {
-                    title: `計算節點 ${node.val} 深度`,
-                    text: `左子樹深度 = ${l}, 右子樹深度 = ${r}。<br>當前節點深度 = 1 + max(${l}, ${r}) = ${depth}。`,
-                    formula: `return ${depth}`
-                });
-                return depth;
-            };
-
-            dfs(root);
-            snapshot("Done", [5], -1, {
-                title: '完成',
-                text: '已計算完整棵樹的最大深度。',
-                formula: 'Finished'
-            });
+            run(root);
+            
+            steps.push(snap(null, badges, "Done", [5], {
+                title: "完成", text: "整棵樹計算完畢。", formula: "Done"
+            }));
+            
             return steps;
         }
 
-        const width = 600;
-        const height = 400;
-        const treeLayout = d3.tree().size([width, height]);
-        const gMain = d3.select("#main-group");
-        const gBadge = d3.select("#badge-group");
-
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const mainG = svg.select("#main-group");
+        const badgeG = svg.select("#badge-group");
+        
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
-            const root = d3.hierarchy(step.root);
-            treeLayout(root);
-
+            const nodesData = step.layout;
+            
             // Links
-            const links = gMain.selectAll(".link").data(root.links(), d => d.source.data.id + "-" + d.target.data.id);
-            links.enter().append("path").attr("class", "link")
-                .merge(links)
-                .transition().duration(500)
-                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
-            links.exit().remove();
-
-            // Nodes
-            const nodes = gMain.selectAll(".node-g").data(root.descendants(), d => d.data.id);
-            const nEnter = nodes.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-
-            const nUpdate = nodes.merge(nEnter).transition().duration(500)
-                .attr("transform", d => `translate(${d.x}, ${d.y})`);
-                
-            nUpdate.select("circle").attr("class", d => {
-                let c = "node-circle";
-                if(d.data.id === step.activeId) c += " active";
-                if(step.computedDepths[d.data.id] !== undefined) c += " computed";
-                return c;
+            const linksData = nodesData.filter(d => d.parentId !== null).map(d => {
+                const p = nodesData.find(x => x.id === d.parentId);
+                return { s: p, t: d, id: `${p.id}-${d.id}` };
             });
 
-            nUpdate.select("text").text(d => d.data.val);
-            nodes.exit().remove();
-
-            // Badges (Depth Values)
-            // Show badge if computed
-            const badgeData = root.descendants().filter(d => step.computedDepths[d.data.id] !== undefined);
-            const badges = gBadge.selectAll(".badge-g").data(badgeData, d => d.data.id);
-            const bEnter = badges.enter().append("g").attr("class", "badge-g");
-            bEnter.append("rect").attr("class", "node-badge").attr("width", 30).attr("height", 16).attr("x", 10).attr("y", -30);
-            bEnter.append("text").attr("class", "badge-text").attr("x", 25).attr("y", -21);
-
-            const bUpdate = badges.merge(bEnter).transition().duration(500)
+            const linkSel = mainG.selectAll(".link-path").data(linksData, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            linkSel.merge(linkEnter).transition().duration(500)
+                .attr("d", d => `M${d.s.x},${d.s.y} L${d.t.x},${d.t.y}`)
+                .style("stroke", d => {
+                    // Highlight path to active node?
+                    // Simple: Standard color
+                    return null; 
+                });
+            linkSel.exit().remove();
+            
+            // Nodes
+            const nodeSel = mainG.selectAll(".node-g").data(nodesData, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 20);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter).transition().duration(500)
                 .attr("transform", d => `translate(${d.x}, ${d.y})`);
             
-            bUpdate.select("text").text(d => `d=${step.computedDepths[d.data.id]}`);
+            nodeMerge.select("circle").attr("class", d => {
+                let c = "node-circle node-normal";
+                if (d.id === step.activeId) c = "node-circle node-active";
+                if (step.badges[d.id] !== undefined) c = "node-circle node-return";
+                return c;
+            });
+            nodeMerge.select("text").text(d => d.val);
             
-            badges.exit().remove();
+            nodeSel.exit().remove();
+            
+            // Badges
+            // Only show for nodes present in step.badges
+            const badgeData = nodesData.filter(d => step.badges[d.id] !== undefined).map(d => ({
+                id: d.id, val: step.badges[d.id], x: d.x, y: d.y
+            }));
+            
+            const bSel = badgeG.selectAll(".badge-g").data(badgeData, d => d.id);
+            const bEnter = bSel.enter().append("g").attr("class", "badge-g");
+            bEnter.append("rect").attr("class", "badge-rect").attr("width", 24).attr("height", 16).attr("x", 12).attr("y", -20);
+            bEnter.append("text").attr("class", "badge-text").attr("x", 24).attr("y", -11);
+            
+            const bMerge = bSel.merge(bEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            bMerge.select("text").text(d => d.val);
+            
+            bSel.exit().remove();
         }
 
         function runVisualizer() {
-            const valStr = document.getElementById('treeInput').value;
-            const arr = valStr.split(',').map(x => {
-                const t = x.trim();
-                return t === 'null' || t === '' ? null : parseInt(t);
+            const raw = document.getElementById('treeInput').value;
+             const vals = raw.split(',').map(x => {
+                const t = x.trim().toLowerCase();
+                if(t==='null' || t==='') return null;
+                return isNaN(parseInt(t)) ? null : parseInt(t);
             });
             
-            if(arr.length === 0) return;
+            if(vals.length === 0) return;
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(simulate(arr));
+            viz.setSteps(simulate(vals));
         }
 
         window.addEventListener('load', runVisualizer);

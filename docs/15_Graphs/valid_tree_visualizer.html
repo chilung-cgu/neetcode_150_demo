@@ -3,31 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Graph Valid Tree - 視覺化</title>
+    <title>Graph Valid Tree - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .graph-container { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .node { 
-            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white;
-            transition: all 0.3s;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
         }
-        .node.connected { background: var(--viz-success); color: #0f172a; }
 
-        .edges-container { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
-        .edge { padding: 6px 12px; background: var(--viz-bg-secondary); border-radius: 4px; font-size: 0.85rem; transition: all 0.3s; }
-        .edge.processing { background: var(--viz-warning); color: #0f172a; }
-        .edge.added { background: var(--viz-success); color: #0f172a; }
-
-        .conditions-container { 
-            padding: 15px; background: var(--viz-bg-secondary); border-radius: 8px; margin: 15px 0;
+        /* SVG */
+        .graph-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }
-        .condition { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 0.95rem; }
-        .condition-icon { font-size: 1.2rem; width: 30px; text-align: center; }
+        #viz-svg { width: 100%; height: 100%; cursor: grab; }
+        #viz-svg:active { cursor: grabbing; }
+
+        .node-circle { stroke: #fff; stroke-width: 2px; transition: fill 0.3s; }
+        .node-circle.normal { fill: #475569; }
+        .node-circle.connected { fill: #22c55e; }
+        .node-circle.cycle { fill: #ef4444; animation: pulse 0.5s infinite; }
+        
+        .node-text { pointer-events: none; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; fill: white; }
+
+        .link { stroke: #94a3b8; stroke-width: 2px; opacity: 0.3; transition: all 0.3s; }
+        .link.processed { stroke: #22c55e; opacity: 1; stroke-width: 3px; }
+        .link.processing { stroke: #f59e0b; opacity: 1; stroke-width: 4px; filter: drop-shadow(0 0 4px #f59e0b); }
+        .link.cycle { stroke: #ef4444; opacity: 1; stroke-width: 4px; }
+
+        @keyframes pulse { 0% { r: 20; } 50% { r: 25; } 100% { r: 20; } }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+        }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 220px; height: 60px; resize: none; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #fff; }
     </style>
 </head>
 <body>
@@ -35,237 +70,317 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">圖是否為樹 (Graph Valid Tree)</div>
+                <div class="viz-title">Graph Valid Tree (Union-Find)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <button onclick="setExample(1)">範例1 (是樹)</button>
-                        <button onclick="setExample(2)">範例2 (有環)</button>
-                        <button onclick="setExample(3)">範例3 (不連通)</button>
-                        <button onclick="resetVisualization()">↻ 重置</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Edges [[u,v],...]:</label>
+                            <textarea id="gridInput">[[0,1],[0,2],[0,3],[1,4]]</textarea>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Check</button>
+                            <div style="display:flex; gap:5px;">
+                                <button onclick="loadExample(1)" style="background:#475569; font-size:0.8rem; padding:5px;">Ex 1</button>
+                                <button onclick="loadExample(2)" style="background:#475569; font-size:0.8rem; padding:5px;">Cycle</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="graph-container" id="graphDisplay"></div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted);">邊</div>
-                <div class="edges-container" id="edgesDisplay"></div>
-                
-                <div class="conditions-container" id="conditionsDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:#475569"></div>Node</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Connected</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Cycle</div>
+                    </div>
+                    
+                    <div class="graph-viewport">
+                        <svg id="viz-svg"><g id="zoom-group"></g></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Condition 1</div>
+                            <div class="stat-val" id="cond1">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Condition 2</div>
+                            <div class="stat-val" id="cond2">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Result</div>
+                            <div class="stat-val" id="resultDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="800">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n·α(n)) ≈ O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'bool validTree(int n, vector<vector<int>>& edges) {', id: 0 },
-            { line: '    // 樹的條件:', id: 1 },
-            { line: '    // 1. 邊數 = n - 1', id: 2 },
-            { line: '    // 2. 無環 (Union-Find 檢測)', id: 3 },
-            { line: '    if (edges.size() != n - 1) return false;', id: 4 },
-            { line: '    vector<int> parent(n);', id: 5 },
-            { line: '    iota(parent.begin(), parent.end(), 0);', id: 6 },
-            { line: '    for (auto& e : edges) {', id: 7 },
-            { line: '        int p1 = find(e[0]), p2 = find(e[1]);', id: 8 },
-            { line: '        if (p1 == p2) return false;', id: 9 },
-            { line: '        parent[p1] = p2;', id: 10 },
-            { line: '    }', id: 11 },
-            { line: '    return true;', id: 12 },
-            { line: '}', id: 13 },
+            { line: '    if (edges.size() != n - 1) return false;', id: 1 },
+            { line: '    UnionFind uf(n);', id: 2 },
+            { line: '    for (auto& e : edges) {', id: 3 },
+            { line: '        int u = e[0], v = e[1];', id: 4 },
+            { line: '        // Check if u, v already connected', id: 5 },
+            { line: '        if (!uf.union(u, v)) return false;', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return true;', id: 8 },
+            { line: '}', id: 9 },
+            { line: 'class UnionFind {', id: 10 },
+            { line: '    bool union(int x, int y) {', id: 11 },
+            { line: '        int rootX = find(x), rootY = find(y);', id: 12 },
+            { line: '        if (rootX == rootY) return false;', id: 13 },
+            { line: '        parent[rootX] = rootY;', id: 14 },
+            { line: '        return true;', id: 15 },
+            { line: '    }', id: 16 },
+            { line: '}', id: 17 }
         ];
-        
-        const examples = {
-            1: { n: 5, edges: [[0,1],[0,2],[0,3],[1,4]], desc: '有效樹' },
-            2: { n: 5, edges: [[0,1],[1,2],[2,3],[1,3],[1,4]], desc: '有環 (5邊)' },
-            3: { n: 4, edges: [[0,1],[2,3]], desc: '不連通 (2邊)' }
-        };
-        
-        let currentExample = examples[1];
 
-        function setExample(n) {
-            currentExample = examples[n];
-            init();
+        let viz;
+
+        class UnionFind {
+            constructor(n) {
+                this.parent = Array.from({length: n}, (_, i) => i);
+            }
+            find(x) {
+                if (this.parent[x] !== x) this.parent[x] = this.find(this.parent[x]);
+                return this.parent[x];
+            }
+            union(x, y) {
+                let rx = this.find(x), ry = this.find(y);
+                if (rx === ry) return false;
+                this.parent[rx] = ry;
+                return true;
+            }
         }
 
-        function generateAlgorithmSteps(n, edges) {
+        function simulate(edges) {
             const steps = [];
             
-            // Check edge count
-            const edgeCountOk = edges.length === n - 1;
+            const nodesSet = new Set();
+            if(edges.length === 0) {
+               // n=1, edges=[] -> Tree
+               nodesSet.add(0); 
+            } else {
+               edges.forEach(e => { nodesSet.add(e[0]); nodesSet.add(e[1]); });
+            }
+            // Standard problem gives N. We infer N from edges or UI? UI infers.
+            // Let's assume nodes 0..max
+            let maxId = 0;
+            if(nodesSet.size > 0) maxId = Math.max(...Array.from(nodesSet));
+            const n = maxId + 1; // Assuming 0-indexed contiguous
             
-            steps.push({
-                connected: [], processedEdges: [],
-                cond1: null, cond2: null,
-                highlightLines: [0, 1, 2, 3, 4],
-                explanation: { 
-                    title: '初始化', 
-                    text: `n = ${n}, 邊數 = ${edges.length}<br><br>樹的條件:<br>1. 邊數 = n-1 = ${n-1}<br>2. 無環`,
-                    formula: 'setup'
-                }
-            });
+            const d3Nodes = Array.from({length:n}, (_,i) => ({id: i}));
+            const d3Links = edges.map((e, i) => ({source: e[0], target: e[1], id: i})); // Use index as ID for visual mapping
 
-            steps.push({
-                connected: [], processedEdges: [],
-                cond1: edgeCountOk, cond2: null,
-                highlightLines: [4],
-                explanation: { 
-                    title: '檢查邊數', 
-                    text: `邊數 = ${edges.length}, n-1 = ${n-1}<br>${edgeCountOk ? '✓ 符合' : '✗ 不符合'}`,
-                    formula: edgeCountOk ? 'pass' : 'return false'
-                }
-            });
-
-            if (!edgeCountOk) {
+            const pushState = (msg, hl, activeLinkIdx, processedLinks, cycleLinkIdx, c1, c2, res) => {
                 steps.push({
-                    connected: [], processedEdges: [],
-                    cond1: false, cond2: null, result: false, final: true,
-                    highlightLines: [4],
-                    explanation: { title: '不是樹!', text: '邊數 ≠ n-1', formula: 'return false' }
+                    graph: {nodes: d3Nodes, links: d3Links},
+                    activeLinkIdx,
+                    processedLinks: [...processedLinks],
+                    cycleLinkIdx,
+                    cond1: c1, // n-1 edges
+                    cond2: c2, // no cycle
+                    result: res,
+                    msg, highlightLines: hl
                 });
+            };
+
+            // Condition 1: Edge count
+            const cond1 = edges.length === n - 1;
+            pushState(`Check Edges: ${edges.length} == N-1 (${n-1})? ${cond1}`, [1], null, [], null, cond1, null, null);
+
+            if (!cond1) {
+                pushState("Condition 1 Failed. Not a Tree.", [1], null, [], null, false, null, false);
                 return steps;
             }
 
-            // Union-Find
-            const parent = Array.from({ length: n }, (_, i) => i);
-            function find(x) {
-                if (parent[x] !== x) parent[x] = find(parent[x]);
-                return parent[x];
-            }
-
+            // Condition 2: No cycles (Union Find)
+            const uf = new UnionFind(n);
+            const processed = [];
             let hasCycle = false;
-            const processedEdges = [];
-            const connected = new Set();
 
-            for (let i = 0; i < edges.length && !hasCycle; i++) {
-                const [a, b] = edges[i];
-                const p1 = find(a), p2 = find(b);
+            for(let i=0; i<edges.length; i++) {
+                const u = edges[i][0];
+                const v = edges[i][1];
+                
+                pushState(`Check Edge [${u}, ${v}]`, [3,4], i, processed, null, true, null, null);
+                
+                // Visualization detail: Show Find(u) Find(v)?
+                // Just cycle check result
+                const p1 = uf.find(u);
+                const p2 = uf.find(v);
                 
                 if (p1 === p2) {
                     hasCycle = true;
-                    steps.push({
-                        connected: [...connected], processedEdges: [...processedEdges, i],
-                        cond1: true, cond2: false, cycleEdge: i,
-                        highlightLines: [8, 9],
-                        explanation: { 
-                            title: `邊 [${a},${b}] - 環!`, 
-                            text: `find(${a}) = find(${b}) = ${p1}<br>已經連通，形成環!`,
-                            formula: 'return false'
-                        }
-                    });
+                    pushState(`Cycle Detected! ${u} and ${v} already connected via ${p1}`, [6, 13], i, processed, i, true, false, false);
+                    break; 
                 } else {
-                    parent[p1] = p2;
-                    connected.add(a);
-                    connected.add(b);
-                    processedEdges.push(i);
-                    
-                    steps.push({
-                        connected: [...connected], processedEdges: [...processedEdges],
-                        cond1: true, cond2: null, currentEdge: i,
-                        highlightLines: [7, 8, 10],
-                        explanation: { 
-                            title: `邊 [${a},${b}]`, 
-                            text: `find(${a})=${p1}, find(${b})=${p2}<br>不同集合，合併`,
-                            formula: `union(${a},${b})`
-                        }
-                    });
+                    uf.union(u, v);
+                    processed.push(i);
+                    pushState(`Merge ${u} and ${v}.`, [14], i, processed, null, true, null, null);
                 }
             }
 
-            const isTree = !hasCycle;
-            steps.push({
-                connected: [...connected], processedEdges,
-                cond1: true, cond2: !hasCycle, result: isTree, final: true,
-                highlightLines: isTree ? [12] : [9],
-                explanation: { 
-                    title: isTree ? '是有效樹!' : '不是樹!', 
-                    text: isTree ? '滿足所有條件' : '存在環',
-                    formula: `return ${isTree}`
-                }
-            });
+            if (!hasCycle) {
+                pushState("No Cycle Detected. All Connected. Valid Tree!", [8], null, processed, null, true, true, true);
+            }
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            const { n, edges } = currentExample;
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const gZoom = d3.select("#zoom-group");
+        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
+        svg.call(zoom);
+
+        // Force Sim
+        let simulation = d3.forceSimulation()
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("link", d3.forceLink().id(d => d.id).distance(80))
+            .force("center", d3.forceCenter(400, 200));
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('cond1').textContent = step.cond1 === null ? '-' : (step.cond1 ? "Pass" : "Fail");
+            document.getElementById('cond2').textContent = step.cond2 === null ? '-' : (step.cond2 ? "Pass" : "Fail");
             
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Nodes
-                    document.getElementById('graphDisplay').innerHTML = 
-                        Array.from({ length: n }, (_, i) => {
-                            const cls = step.connected?.includes(i) ? 'node connected' : 'node';
-                            return `<div class="${cls}">${i}</div>`;
-                        }).join('');
-                    
-                    // Edges
-                    document.getElementById('edgesDisplay').innerHTML = 
-                        edges.map((e, i) => {
-                            let cls = 'edge';
-                            if (step.processedEdges?.includes(i)) cls += ' added';
-                            if (step.currentEdge === i) cls += ' processing';
-                            if (step.cycleEdge === i) cls = 'edge processing';
-                            return `<span class="${cls}">[${e[0]},${e[1]}]</span>`;
-                        }).join('');
-                    
-                    // Conditions
-                    const c1 = step.cond1, c2 = step.cond2;
-                    document.getElementById('conditionsDisplay').innerHTML = `
-                        <div class="condition">
-                            <span class="condition-icon">${c1 === true ? '✅' : (c1 === false ? '❌' : '⏳')}</span>
-                            邊數 = n - 1 (${edges.length} = ${n - 1}?)
-                        </div>
-                        <div class="condition">
-                            <span class="condition-icon">${c2 === true ? '✅' : (c2 === false ? '❌' : '⏳')}</span>
-                            無環且全連通
-                        </div>
-                    `;
-                    
-                    // Result
-                    if (step.result !== undefined) {
-                        document.getElementById('resultDisplay').textContent = step.result ? 'True ✓' : 'False ✗';
-                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
-                    } else {
-                        document.getElementById('resultDisplay').textContent = '-';
-                        document.getElementById('resultDisplay').style.color = 'inherit';
-                    }
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(n, edges));
+            const resEl = document.getElementById('resultDisplay');
+            if (step.result === true) { resEl.textContent = "Tree ✓"; resEl.style.color = "#22c55e"; }
+            else if (step.result === false) { resEl.textContent = "Not Tree ✗"; resEl.style.color = "#ef4444"; }
+            else { resEl.textContent = "-"; resEl.style.color = "inherit"; }
+
+            // Nodes
+            // Color nodes connected by processed edges?
+            // Actually UF maintains components. We could color by component ID but strict visual requirements aren't there.
+            // Let's just keep nodes simple.
+            
+            gZoom.selectAll(".node-circle").attr("class", "node-circle normal");
+            
+            // Edges
+            gZoom.selectAll(".link")
+                .attr("class", (d, i) => {
+                    let c = "link";
+                    if (step.processedLinks.includes(i)) c += " processed";
+                    if (step.activeLinkIdx === i) c += " processing"; // override
+                    if (step.cycleLinkIdx === i) c += " cycle"; // override
+                    return c;
+                });
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        function initGraph(nodes, links) {
+            gZoom.selectAll("*").remove();
+            
+            simulation.nodes(nodes);
+            simulation.force("link").links(links);
+            simulation.alpha(1).restart();
+
+            const link = gZoom.append("g").selectAll(".link")
+                .data(links).enter().append("line")
+                .attr("class", "link");
+
+            const node = gZoom.append("g").selectAll(".node-g")
+                .data(nodes).enter().append("g")
+                .attr("class", "node-g")
+                .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+
+            node.append("circle").attr("r", 20).attr("class", "node-circle normal");
+            node.append("text").attr("class", "node-text").attr("dy", 1).text(d => d.id);
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+                node
+                    .attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+        }
+
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x; d.fy = d.y;
+        }
+        function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null; d.fy = null;
+        }
+
+        function runVisualizer() {
+            try {
+                const raw = document.getElementById('gridInput').value;
+                const edges = JSON.parse(raw);
+                
+                // Determine nodes
+                const nodesSet = new Set();
+                edges.forEach(e => { nodesSet.add(e[0]); nodesSet.add(e[1]); });
+                // If input "[[0,1]]" -> nodes 0,1. n=2.
+                // Standard problem input has n.
+                // We infer 'n' as max+1 for visual simplicity
+                let n = 0;
+                if (edges.length > 0) n = Math.max(...Array.from(nodesSet)) + 1;
+                else n = 1; // Edge case
+                
+                const nodes = Array.from({length:n}, (_, i) => ({id: i}));
+                const links = edges.map(e => ({source: e[0], target: e[1]}));
+                
+                initGraph(nodes, links);
+                
+                viz = new AlgorithmVisualizer({
+                    codeLines: codeStructure,
+                    onStepChange: render
+                });
+                viz.setSteps(simulate(edges));
+            } catch(e) {
+                alert("Invalid Input");
+                console.error(e);
+            }
+        }
+
+        const examples = {
+            1: "[[0,1],[0,2],[0,3],[1,4]]",
+            2: "[[0,1],[1,2],[2,3],[1,3],[1,4]]"
+        };
+        function loadExample(n) {
+            document.getElementById('gridInput').value = examples[n];
+            runVisualizer();
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

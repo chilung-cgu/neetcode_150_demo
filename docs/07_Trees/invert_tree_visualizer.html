@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invert Binary Tree - D3 Visualizer</title>
+    <title>Invert Binary Tree - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,28 +13,46 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
             min-height: 500px;
         }
-        
-        #viz-svg { width: 100%; height: 450px; }
 
-        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; stroke: #64748b; }
-        .node-circle.active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.1); }
-        .node-circle.swapped { stroke: #22c55e; fill: rgba(34, 197, 94, 0.1); }
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 450px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; pointer-events: none; dominant-baseline: middle; }
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; r: 20px; }
+        .node-text { fill: white; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
         
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
-        .link.active { stroke: #fbbf24; stroke-width: 3px; opacity: 1; }
+        .node-normal { fill: #334155; stroke: #64748b; }
+        .node-active { stroke: #fbbf24; stroke-width: 3px; filter: drop-shadow(0 0 5px #fbbf24); } /* Visiting */
+        .node-swapped { fill: #22c55e; stroke: #16a34a; } /* Just Swapped */
+        .node-done { fill: #22c55e; stroke: #16a34a; opacity: 0.8; } /* Processed */
+
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
+        .link-active { stroke: #fbbf24; stroke-width: 3px; opacity: 1; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -42,19 +60,30 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Invert Binary Tree (Recursive Swap)</div>
+                <div class="viz-title">Invert Binary Tree</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Tree:</label>
-                        <input type="text" id="treeInput" value="4,2,7,1,3,6,9" placeholder="Level order (null for empty)">
-                        <button onclick="runVisualizer()">Invert</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Tree (Level Order):</label>
+                            <input type="text" id="treeInput" value="4, 2, 7, 1, 3, 6, 9">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Invert</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <g id="main-group" transform="translate(40, 40)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Current</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Swapped</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <g id="main-group" transform="translate(40, 40)"></g>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -73,12 +102,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -92,178 +121,209 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'TreeNode* invertTree(root) {', id: 0 },
+            { line: 'TreeNode* invertTree(TreeNode* root) {', id: 0 },
             { line: '    if (!root) return nullptr;', id: 1 },
-            { line: '    TreeNode* temp = root->left;', id: 2 },
-            { line: '    root->left = root->right;', id: 3 },
-            { line: '    root->right = temp;', id: 4 },
-            { line: '    invertTree(root->left);', id: 5 },
-            { line: '    invertTree(root->right);', id: 6 },
-            { line: '    return root;', id: 7 },
-            { line: '}', id: 8 }
+            { line: '    // Swap children', id: 2 },
+            { line: '    TreeNode* temp = root->left;', id: 3 },
+            { line: '    root->left = root->right;', id: 4 },
+            { line: '    root->right = temp;', id: 5 },
+            { line: '    // Recursion', id: 6 },
+            { line: '    invertTree(root->left);', id: 7 },
+            { line: '    invertTree(root->right);', id: 8 },
+            { line: '    return root;', id: 9 },
+            { line: '}', id: 10 }
         ];
 
         let viz;
 
         // Tree Helper
         function buildTree(arr) {
-            if (!arr || arr.length === 0) return null;
-            const root = { id: 0, val: arr[0], children: [] };
-            const queue = [root];
+            if(arr.length===0) return null;
+            let root = {id: 0, val: arr[0], left: null, right: null};
+            let queue = [root];
             let i = 1;
-            while (i < arr.length) {
-                const parent = queue.shift();
-                
-                // Left
-                if (i < arr.length && arr[i] !== null) {
-                    const left = { id: i, val: arr[i], children: [] };
-                    parent.children[0] = left; // use index 0 for left
-                    queue.push(left);
+            let nextId = 1;
+            while(i < arr.length) {
+                let curr = queue.shift();
+                if(i < arr.length && arr[i] !== null) {
+                    curr.left = {id: nextId++, val: arr[i], left: null, right: null};
+                    queue.push(curr.left);
                 }
                 i++;
-                
-                // Right
-                if (i < arr.length && arr[i] !== null) {
-                    const right = { id: i, val: arr[i], children: [] };
-                    parent.children[1] = right; // use index 1 for right
-                    queue.push(right);
+                if(i < arr.length && arr[i] !== null) {
+                    curr.right = {id: nextId++, val: arr[i], left: null, right: null};
+                    queue.push(curr.right);
                 }
                 i++;
             }
             return root;
         }
 
-        function deepClone(node) {
+        // To D3 hierarchy
+        function toD3Base(node) {
             if(!node) return null;
-            const newNode = { ...node, children: [] };
-            if(node.children[0]) newNode.children[0] = deepClone(node.children[0]);
-            if(node.children[1]) newNode.children[1] = deepClone(node.children[1]);
-            return newNode;
+            return {
+                id: node.id,
+                name: node.val,
+                children: [
+                    node.left ? toD3Base(node.left) : null,
+                    node.right ? toD3Base(node.right) : null
+                ].filter(x=>x) // filter nulls for d3 layout? No, d3.tree handles missing? 
+                // Actually d3.tree needs children array. If standard d3 tree, we want to keep structure.
+                // However, D3 tree layout collapses if child is missing.
+                // To visualize "Empty" slot for swapping, we might need placeholders?
+                // Simplest: Just normal D3 tree.
+            };
+        }
+        
+        // We need a custom "flat node list" snapshot for our visualization
+        // because we physically swap positions which D3 doesn't handle natively in transitions unless re-computed.
+        // Step logic: We update the logical tree structure, then re-compute layout positions for each step.
+        
+        function getLayout(rootNode) {
+            if(!rootNode) return [];
+            // Convert to D3 hierarchy
+            const h = d3.hierarchy(rootNode, d => {
+                const c = [];
+                if(d.left) c.push(d.left);
+                if(d.right) c.push(d.right);
+                return c;
+            });
+            const treeLayout = d3.tree().size([500, 350]); // Width, Height
+            treeLayout(h);
+            
+            const nodes = [];
+            h.descendants().forEach(d => {
+                nodes.push({
+                    id: d.data.id,
+                    val: d.data.val,
+                    x: d.x + 50, // padding
+                    y: d.y + 50,
+                    parentId: d.parent ? d.parent.data.id : null
+                });
+            });
+            return nodes;
         }
 
         function simulate(arr) {
             const steps = [];
-            const root = buildTree(arr);
-            if(!root) return []; // Empty
-
-            // Initial State
-            // Helper to take snapshot
-            const snapshot = (node, msg, highlight, activeId=null, explanation=null) => {
-                // Must clone whole tree structure for D3 to compute layout independently per step
-                const treeCopy = deepClone(node);
-                steps.push({
-                    root: treeCopy,
-                    activeId,
-                    msg,
-                    highlightLines: highlight,
-                    explanation
-                });
+            let root = buildTree(arr);
+            
+            // Helper to grab deep copy of tree for snapshot
+            // We need to store structure to re-calculate layout
+            const clone = (n) => {
+                if(!n) return null;
+                return { id: n.id, val: n.val, left: clone(n.left), right: clone(n.right) };
             };
 
-            snapshot(root, "Initial Tree", [0], null, {
-                title: '初始化',
-                text: '遞迴函數 `invertTree` 從根節點開始。<br>目標是交換每個節點的左右子樹，並遞迴處理。',
-                formula: 'invertTree(root)'
+            const snap = (n, activeId, swappedIds, msg, lines, info) => ({
+                root: clone(n),
+                activeId, swappedIds,
+                msg, highlightLines: lines, explanation: info
             });
 
-            const invert = (node) => {
-                if (!node) return;
+            // Recursive function
+            const run = (node) => {
+                if(!node) {
+                     return;
+                }
                 
-                snapshot(root, `Visiting Node ${node.val}: Prepare Swap`, [1], node.id, {
-                    title: `訪問節點 ${node.val}`,
-                    text: `進入節點 ${node.val}。`,
-                    formula: 'root != null'
-                });
+                steps.push(snap(root, node.id, [], `Visit Node ${node.val}`, [0, 1], {
+                    title: "訪問節點", text: `遞歸訪問節點 ${node.val}。`, formula: "invert(root)"
+                }));
 
-                // Swap children in logic
-                const temp = node.children[0];
-                node.children[0] = node.children[1];
-                node.children[1] = temp;
+                // Swap
+                const tmp = node.left;
+                node.left = node.right;
+                node.right = tmp;
                 
-                snapshot(root, `Swapped children of ${node.val}`, [2, 3, 4], node.id, {
-                    title: '交換左右子樹',
-                    text: `將節點 ${node.val} 的左右指針互換。<br>左子樹變右子樹，右子樹變左子樹。`,
-                    formula: 'swap(left, right)'
-                });
+                // Track swapped children IDs for highlight
+                const sIds = [];
+                if(node.left) sIds.push(node.left.id);
+                if(node.right) sIds.push(node.right.id);
 
-                invert(node.children[0]); // New Left
-                invert(node.children[1]); // New Right
+                steps.push(snap(root, node.id, sIds, `Swap children of ${node.val}`, [3, 4, 5], {
+                    title: "交換子節點", text: `交換 ${node.val} 的左右子樹。`, formula: "swap(left, right)"
+                }));
+
+                if(node.left) run(node.left);
+                if(node.right) run(node.right);
             };
 
-            invert(root);
-            snapshot(root, "Inversion Complete", [7], -1, {
-                title: '完成',
-                text: '所有節點遍歷完畢，整棵樹已完成鏡像翻轉。',
-                formula: 'return root'
-            });
+            if(!root) return [];
+            run(root);
+            
+            steps.push(snap(root, null, [], "Done", [9, 10], {
+                title: "完成", text: "整棵樹已翻轉完成。", formula: "return root"
+            }));
             
             return steps;
         }
 
-        const svg = d3.select("#viz-svg");
-        const gMain = d3.select("#main-group");
-        const width = 600;
-        const height = 400;
-        const treeLayout = d3.tree().size([width, height]);
-
+        // --- Render ---
+        const svg = d3.select("#viz-svg").select("#main-group");
+        // We re-calc layout every render based on tree structure in step.root
+        
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
-            // Convert to D3 hierarchy
-            const clean = (n) => {
-                if(!n) return null;
-                const c = [];
-                if(n.children[0]) c.push(clean(n.children[0]));
-                if(n.children[1]) c.push(clean(n.children[1]));
-                return { ...n, children: c };
-            };
+            const nodesData = getLayout(step.root);
             
-            const root = d3.hierarchy(clean(step.root));
-            treeLayout(root);
-
-            // Nodes
-            const nodes = gMain.selectAll(".node-g").data(root.descendants(), d => d.data.id);
-            const nEnter = nodes.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-
-            const nUpdate = nodes.merge(nEnter).transition().duration(500)
-                .attr("transform", d => `translate(${d.x}, ${d.y})`);
-                
-            nUpdate.select("circle").attr("class", d => {
-                let c = "node-circle";
-                if(d.data.id === step.activeId) c += " active";
-                return c;
-            })
-            .style("stroke-width", d => d.data.id === step.activeId ? 4 : 3);
-
-            nUpdate.select("text").text(d => d.data.val);
-            
-            nodes.exit().remove();
-
             // Links
-            const links = gMain.selectAll(".link").data(root.links(), d => d.source.data.id + "-" + d.target.data.id);
-            links.enter().append("path").attr("class", "link")
-                .merge(links)
-                .transition().duration(500)
-                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
-            links.exit().remove();
+            const linksData = nodesData.filter(d => d.parentId !== null).map(d => {
+                const p = nodesData.find(x => x.id === d.parentId);
+                return { s: p, t: d, id: `${p.id}-${d.id}` };
+            });
+
+            // Draw Links
+            const linkSel = svg.selectAll(".link-path").data(linksData, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            linkSel.merge(linkEnter).transition().duration(500)
+                .attr("d", d => `M${d.s.x},${d.s.y} L${d.t.x},${d.t.y}`);
+            linkSel.exit().remove();
+            
+            // Draw Nodes
+            const nodeSel = svg.selectAll(".node-g").data(nodesData, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 20);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            nodeMerge.select("circle").attr("class", d => {
+                let c = "node-circle node-normal";
+                if(d.id === step.activeId) c = "node-circle node-active";
+                if(step.swappedIds && step.swappedIds.includes(d.id)) c = "node-circle node-swapped";
+                return c;
+            });
+            nodeMerge.select("text").text(d => d.val);
+            
+            nodeSel.exit().remove();
         }
 
         function runVisualizer() {
-            const valStr = document.getElementById('treeInput').value;
-            const arr = valStr.split(',').map(x => {
-                const t = x.trim();
-                return t === 'null' || t === '' ? null : parseInt(t);
+            const raw = document.getElementById('treeInput').value;
+            const vals = raw.split(',').map(x => {
+                const t = x.trim().toLowerCase();
+                if(t==='null' || t==='') return null;
+                return isNaN(parseInt(t)) ? null : parseInt(t);
             });
             
-            if(arr.length === 0) return;
+            if(vals.length === 0) return;
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(simulate(arr));
+            viz.setSteps(simulate(vals));
         }
 
         window.addEventListener('load', runVisualizer);

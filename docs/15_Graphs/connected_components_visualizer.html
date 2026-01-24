@@ -3,29 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connected Components - 視覺化</title>
+    <title>Connected Components - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .graph-container { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .node { 
-            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; border-radius: 50%; color: white; transition: all 0.3s;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
         }
-        .node.comp0 { background: #3b82f6; }
-        .node.comp1 { background: #22c55e; }
-        .node.comp2 { background: #f59e0b; }
-        .node.comp3 { background: #ef4444; }
-        .node.comp4 { background: #8b5cf6; }
-        .node.unassigned { background: var(--viz-bg-secondary); color: var(--viz-text-muted); }
 
-        .edges-container { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
-        .edge { padding: 6px 12px; background: var(--viz-bg-secondary); border-radius: 4px; font-size: 0.85rem; transition: all 0.3s; }
-        .edge.current { background: var(--viz-warning); color: #0f172a; }
-        .edge.processed { background: var(--viz-success); color: #0f172a; opacity: 0.7; }
+        /* SVG */
+        .graph-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        #viz-svg { width: 100%; height: 100%; cursor: grab; }
+        #viz-svg:active { cursor: grabbing; }
+
+        .node-circle { stroke: #fff; stroke-width: 2px; transition: fill 0.3s; }
+        .node-text { pointer-events: none; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; fill: white; }
+
+        .link { stroke: #94a3b8; stroke-width: 2px; opacity: 0.3; transition: all 0.3s; }
+        .link.processed { stroke-width: 3px; opacity: 1; }
+        .link.processing { stroke: #f59e0b; opacity: 1; stroke-width: 4px; filter: drop-shadow(0 0 4px #f59e0b); }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+        }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 220px; height: 60px; resize: none; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #fff; }
     </style>
 </head>
 <body>
@@ -33,195 +63,292 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">連通分量數 (Connected Components)</div>
+                <div class="viz-title">Connected Components (Disjoint Set)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <button onclick="setExample(1)">範例1 (2分量)</button>
-                        <button onclick="setExample(2)">範例2 (3分量)</button>
-                        <button onclick="resetVisualization()">↻ 重置</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Edges [[u,v],...]:</label>
+                            <textarea id="gridInput">[[0,1],[1,2],[3,4]]</textarea>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Count</button>
+                            <div style="display:flex; gap:5px;">
+                                <button onclick="loadExample(1)" style="background:#475569; font-size:0.8rem; padding:5px;">Ex 1</button>
+                                <button onclick="loadExample(2)" style="background:#475569; font-size:0.8rem; padding:5px;">Ex 2</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="graph-container" id="graphDisplay"></div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted);">邊</div>
-                <div class="edges-container" id="edgesDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                       <span style="color:#94a3b8; font-style:italic;">Nodes colored by Component ID</span>
+                    </div>
+                    
+                    <div class="graph-viewport">
+                        <svg id="viz-svg"><g id="zoom-group"></g></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Components</div>
+                            <div class="stat-val" id="countDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="800">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n·α(n)) ≈ O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">連通分量數</div><div class="state-value" id="countDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'int countComponents(int n, vector<vector<int>>& edges) {', id: 0 },
             { line: '    vector<int> parent(n);', id: 1 },
             { line: '    iota(parent.begin(), parent.end(), 0);', id: 2 },
-            { line: '    int components = n;', id: 3 },
+            { line: '    int count = n;', id: 3 },
             { line: '    for (auto& e : edges) {', id: 4 },
-            { line: '        int p1 = find(e[0]), p2 = find(e[1]);', id: 5 },
-            { line: '        if (p1 != p2) {', id: 6 },
-            { line: '            parent[p1] = p2;', id: 7 },
-            { line: '            components--;', id: 8 },
+            { line: '        int r1 = find(e[0]), r2 = find(e[1]);', id: 5 },
+            { line: '        if (r1 != r2) {', id: 6 },
+            { line: '            parent[r1] = r2;', id: 7 },
+            { line: '            count--;', id: 8 },
             { line: '        }', id: 9 },
             { line: '    }', id: 10 },
-            { line: '    return components;', id: 11 },
-            { line: '}', id: 12 },
+            { line: '    return count;', id: 11 },
+            { line: '}', id: 12 }
         ];
-        
-        const examples = {
-            1: { n: 5, edges: [[0,1],[1,2],[3,4]], desc: '{0,1,2}, {3,4}' },
-            2: { n: 6, edges: [[0,1],[2,3],[4,5]], desc: '{0,1}, {2,3}, {4,5}' }
-        };
-        
-        let currentExample = examples[1];
 
-        function setExample(n) {
-            currentExample = examples[n];
-            init();
+        let viz;
+
+        class UnionFind {
+            constructor(n) {
+                this.parent = Array.from({length: n}, (_, i) => i);
+                this.count = n;
+            }
+            find(x) {
+                if (this.parent[x] !== x) this.parent[x] = this.find(this.parent[x]);
+                return this.parent[x];
+            }
+            union(x, y) {
+                let rx = this.find(x), ry = this.find(y);
+                if (rx === ry) return false;
+                this.parent[rx] = ry;
+                this.count--;
+                return true;
+            }
         }
 
-        function generateAlgorithmSteps(n, edges) {
+        // Color palette for components
+        const COLORS = d3.schemeCategory10;
+
+        function simulate(edges) {
             const steps = [];
-            const parent = Array.from({ length: n }, (_, i) => i);
-            const nodeComponent = Array.from({ length: n }, (_, i) => i);
             
-            function find(x) {
-                if (parent[x] !== x) parent[x] = find(parent[x]);
-                return parent[x];
-            }
+            // Determine nodes
+            const nodesSet = new Set();
+            if(edges.length === 0) nodesSet.add(0);
+            else edges.forEach(e => { nodesSet.add(e[0]); nodesSet.add(e[1]); });
+            let maxId = 0;
+            if(nodesSet.size > 0) maxId = Math.max(...Array.from(nodesSet));
+            const n = maxId + 1;
             
-            let components = n;
-            
-            steps.push({
-                nodeComponent: [...nodeComponent], count: n, processedEdges: [],
-                highlightLines: [0, 1, 2, 3],
-                explanation: { 
-                    title: '初始化', 
-                    text: `n = ${n}, 邊數 = ${edges.length}<br><br>初始每個節點是獨立分量<br>分量數 = ${n}`,
-                    formula: 'setup'
-                }
-            });
+            const d3Nodes = Array.from({length:n}, (_,i) => ({id: i}));
+            const d3Links = edges.map((e, i) => ({source: e[0], target: e[1], id: i}));
 
-            const processedEdges = [];
-
-            for (let i = 0; i < edges.length; i++) {
-                const [a, b] = edges[i];
-                const p1 = find(a), p2 = find(b);
+            const pushState = (msg, hl, activeLinkIdx, parentState, countState, processedLinks) => {
+                // map parentState to component colors
+                // Need to do FIND for all nodes to get canonical root for coloring
+                // But simulator doesn't have object method.
+                // We'll trust parent array passed in is state of parents.
                 
-                if (p1 !== p2) {
-                    parent[p1] = p2;
-                    components--;
-                    
-                    // Update component assignment for visualization
-                    const targetComp = Math.min(nodeComponent[p1], nodeComponent[p2]);
-                    for (let j = 0; j < n; j++) {
-                        if (find(j) === find(p2)) {
-                            nodeComponent[j] = targetComp;
-                        }
-                    }
-                    
-                    processedEdges.push(i);
-                    
-                    steps.push({
-                        nodeComponent: [...nodeComponent], count: components, 
-                        processedEdges: [...processedEdges], currentEdge: i,
-                        highlightLines: [4, 5, 6, 7, 8],
-                        explanation: { 
-                            title: `邊 [${a},${b}]`, 
-                            text: `合併兩個分量<br>分量數 ${components + 1} → ${components}`,
-                            formula: `components = ${components}`
-                        }
-                    });
+                // Helper to resolve root from passed parent array without path compression side effects
+                const resolveRoot = (i, pArr) => {
+                    while (i !== pArr[i]) i = pArr[i];
+                    return i;
+                };
+                
+                const nodeRoots = d3Nodes.map(node => resolveRoot(node.id, parentState));
+                
+                steps.push({
+                    graph: {nodes: d3Nodes, links: d3Links},
+                    activeLinkIdx,
+                    processedLinks: [...processedLinks],
+                    nodeRoots,
+                    count: countState,
+                    msg, highlightLines: hl
+                });
+            };
+
+            const uf = new UnionFind(n);
+            const processed = [];
+            
+            // Init
+            pushState("Init: n components", [1,2,3], null, [...uf.parent], uf.count, []);
+
+            for(let i=0; i<edges.length; i++) {
+                const u = edges[i][0];
+                const v = edges[i][1];
+                
+                pushState(`Check Edge [${u}, ${v}]`, [5], i, [...uf.parent], uf.count, processed);
+                
+                if (uf.union(u, v)) {
+                    processed.push(i);
+                    pushState(`Union(${u}, ${v}) -> Count: ${uf.count}`, [7,8], i, [...uf.parent], uf.count, processed);
                 } else {
-                    processedEdges.push(i);
-                    
-                    steps.push({
-                        nodeComponent: [...nodeComponent], count: components,
-                        processedEdges: [...processedEdges], currentEdge: i,
-                        highlightLines: [4, 5, 6],
-                        explanation: { 
-                            title: `邊 [${a},${b}]`, 
-                            text: `已在同一分量，跳過`,
-                            formula: 'skip'
-                        }
-                    });
+                    processed.push(i);
+                    pushState(`${u}, ${v} already connected. Skip.`, [6], i, [...uf.parent], uf.count, processed);
                 }
             }
-
-            steps.push({
-                nodeComponent: [...nodeComponent], count: components, 
-                processedEdges, final: true,
-                highlightLines: [11],
-                explanation: { 
-                    title: '完成!', 
-                    text: `共 ${components} 個連通分量`,
-                    formula: `return ${components}`
-                }
-            });
+            
+            pushState(`Done. Total Components: ${uf.count}`, [11], null, [...uf.parent], uf.count, processed);
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            const { n, edges } = currentExample;
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const gZoom = d3.select("#zoom-group");
+        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
+        svg.call(zoom);
+
+        // Force Sim
+        let simulation = d3.forceSimulation()
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("link", d3.forceLink().id(d => d.id).distance(80))
+            .force("center", d3.forceCenter(400, 200));
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('countDisplay').textContent = step.count;
+
+            // Nodes
+            gZoom.selectAll(".node-circle")
+                .attr("fill", d => COLORS[step.nodeRoots[d.id] % 10]);
             
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Nodes with component colors
-                    document.getElementById('graphDisplay').innerHTML = 
-                        Array.from({ length: n }, (_, i) => {
-                            const comp = step.nodeComponent?.[i] ?? i;
-                            const cls = `node comp${comp % 5}`;
-                            return `<div class="${cls}">${i}</div>`;
-                        }).join('');
-                    
-                    // Edges
-                    document.getElementById('edgesDisplay').innerHTML = 
-                        edges.map((e, i) => {
-                            let cls = 'edge';
-                            if (step.currentEdge === i) cls += ' current';
-                            else if (step.processedEdges?.includes(i)) cls += ' processed';
-                            return `<span class="${cls}">[${e[0]},${e[1]}]</span>`;
-                        }).join('');
-                    
-                    document.getElementById('countDisplay').textContent = step.count ?? '-';
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(n, edges));
+            // Edges
+            gZoom.selectAll(".link")
+                .attr("class", (d, i) => {
+                    let c = "link";
+                    if (step.processedLinks.includes(i)) c += " processed";
+                    if (step.activeLinkIdx === i) c += " processing";
+                    return c;
+                })
+                .style("stroke", (d, i) => {
+                    // Start stroke only if processed or processing
+                    if (step.activeLinkIdx === i || step.processedLinks.includes(i)) {
+                       // Use color of Component (Root) of source?
+                       // Or just green for connected?
+                       return "#22c55e"; 
+                    }
+                    return "#94a3b8"; 
+                });
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        function initGraph(nodes, links) {
+            gZoom.selectAll("*").remove();
+            
+            simulation.nodes(nodes);
+            simulation.force("link").links(links);
+            simulation.alpha(1).restart();
+
+            const link = gZoom.append("g").selectAll(".link")
+                .data(links).enter().append("line")
+                .attr("class", "link");
+
+            const node = gZoom.append("g").selectAll(".node-g")
+                .data(nodes).enter().append("g")
+                .attr("class", "node-g")
+                .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+
+            node.append("circle").attr("r", 20).attr("class", "node-circle").attr("fill", "#475569");
+            node.append("text").attr("class", "node-text").attr("dy", 1).text(d => d.id);
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+                node
+                    .attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+        }
+
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x; d.fy = d.y;
+        }
+        function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null; d.fy = null;
+        }
+
+        function runVisualizer() {
+            try {
+                const raw = document.getElementById('gridInput').value;
+                const edges = JSON.parse(raw);
+                
+                // Determine nodes
+                const nodesSet = new Set();
+                edges.forEach(e => { nodesSet.add(e[0]); nodesSet.add(e[1]); });
+                let n = 0;
+                if (edges.length > 0) n = Math.max(...Array.from(nodesSet)) + 1;
+                else n = 1;
+                
+                const nodes = Array.from({length:n}, (_, i) => ({id: i}));
+                const links = edges.map((e, i) => ({source: e[0], target: e[1], id: i}));
+                
+                initGraph(nodes, links);
+                
+                viz = new AlgorithmVisualizer({
+                    codeLines: codeStructure,
+                    onStepChange: render
+                });
+                viz.setSteps(simulate(edges));
+            } catch(e) {
+                alert("Invalid Input");
+                console.error(e);
+            }
+        }
+
+        const examples = {
+            1: "[[0,1],[1,2],[3,4]]",
+            2: "[[0,1],[2,3],[4,5]]"
+        };
+        function loadExample(n) {
+            document.getElementById('gridInput').value = examples[n];
+            runVisualizer();
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

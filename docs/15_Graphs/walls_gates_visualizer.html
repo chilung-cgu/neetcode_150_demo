@@ -3,28 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Walls and Gates - 視覺化</title>
+    <title>Walls and Gates - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .grid-container { display: inline-grid; gap: 2px; margin: 20px auto; }
-        .cell { 
-            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; border-radius: 4px; font-size: 0.85rem; transition: all 0.3s;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
         }
-        .cell.wall { background: #333; color: #666; }
-        .cell.gate { background: var(--viz-success); color: #0f172a; }
-        .cell.empty { background: var(--viz-bg-secondary); color: var(--viz-text-muted); }
-        .cell.updated { background: var(--viz-warning); color: #0f172a; }
-        .cell.just-updated { animation: flash 0.4s; border: 2px solid white; }
-        @keyframes flash { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 
-        .legend-row { display: flex; gap: 15px; justify-content: center; margin: 10px 0; font-size: 0.85rem; }
+        /* SVG Grid */
+        .grid-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        #viz-svg { width: 100%; height: 100%; cursor: grab; }
+        #viz-svg:active { cursor: grabbing; }
+
+        .cell-rect { stroke: #334155; stroke-width: 1px; transition: fill 0.3s; }
+        .cell-rect.wall { fill: #1f2937; } /* Dark */
+        .cell-rect.gate { fill: #22c55e; } /* Green */
+        .cell-rect.empty { fill: #475569; } /* Grey */
+        /* Distance gradient handled in JS or specific classes */
+        .cell-rect.filled { fill: #3b82f6; opacity: 0.8; }
+        
+        .cell-text { pointer-events: none; font-size: 10px; fill: white; text-anchor: middle; dominant-baseline: middle; font-weight: bold; }
+
+        /* Highlight */
+        .highlight-rect { fill: none; stroke: #fbbf24; stroke-width: 3px; filter: drop-shadow(0 0 4px #fbbf24); animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+        }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 180px; height: 80px; resize: none; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; }
         .legend-item { display: flex; align-items: center; gap: 5px; }
-        .legend-box { width: 20px; height: 20px; border-radius: 4px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -32,208 +69,268 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">牆與門 (Walls and Gates)</div>
+                <div class="viz-title">Walls and Gates (Multi-Source BFS)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <button onclick="setExample(1)">範例1 (4x4)</button>
-                        <button onclick="setExample(2)">範例2 (多門)</button>
-                        <button onclick="resetVisualization()">↻ 重置</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Grid (-1=Wall, 0=Gate, INF=Empty):</label>
+                            <textarea id="gridInput">INF,-1,0,INF
+INF,INF,INF,-1
+INF,-1,INF,-1
+0,-1,INF,INF</textarea>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Run BFS</button>
+                            <button onclick="loadExample(2)" style="background:#475569">Ex 2</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="legend-row">
-                    <div class="legend-item"><div class="legend-box" style="background:#333"></div>牆 (-1)</div>
-                    <div class="legend-item"><div class="legend-box" style="background:var(--viz-success)"></div>門 (0)</div>
-                    <div class="legend-item"><div class="legend-box" style="background:var(--viz-bg-secondary)"></div>空房 (∞)</div>
-                    <div class="legend-item"><div class="legend-box" style="background:var(--viz-warning)"></div>已填充</div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:#1f2937"></div>Wall</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Gate</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#475569"></div>Empty</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Distance</div>
+                    </div>
+                    
+                    <div class="grid-viewport">
+                        <svg id="viz-svg"><g id="zoom-group"></g></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">BFS Layer (Dist)</div>
+                            <div class="stat-val" id="levelDisplay">0</div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div style="text-align: center;"><div class="grid-container" id="gridDisplay"></div></div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="800">2x</option>
-                            <option value="400">3x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="800" selected>1x</option>
+                            <option value="300">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(m×n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(m×n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">BFS 層數</div><div class="state-value" id="levelDisplay">0</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'void wallsAndGates(vector<vector<int>>& rooms) {', id: 0 },
-            { line: '    queue<pair<int,int>> q;', id: 1 },
-            { line: '    for (int i = 0; i < m; i++)', id: 2 },
-            { line: '        for (int j = 0; j < n; j++)', id: 3 },
-            { line: '            if (rooms[i][j] == 0) q.push({i, j});', id: 4 },
-            { line: '    int dirs[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};', id: 5 },
-            { line: '    while (!q.empty()) {', id: 6 },
-            { line: '        auto [r, c] = q.front(); q.pop();', id: 7 },
-            { line: '        for (auto& d : dirs) {', id: 8 },
-            { line: '            int nr = r + d[0], nc = c + d[1];', id: 9 },
-            { line: '            if (rooms[nr][nc] > rooms[r][c] + 1) {', id: 10 },
-            { line: '                rooms[nr][nc] = rooms[r][c] + 1;', id: 11 },
-            { line: '                q.push({nr, nc});', id: 12 },
-            { line: '            }', id: 13 },
-            { line: '        }', id: 14 },
-            { line: '    }', id: 15 },
-            { line: '}', id: 16 },
+            { line: '    queue<pair<int, int>> q;', id: 1 },
+            { line: '    // Add all gates to queue', id: 2 },
+            { line: '    for(r=0..m) for(c=0..n) if(rooms[r][c] == 0) q.push({r,c});', id: 3 },
+            { line: '    while (!q.empty()) {', id: 4 },
+            { line: '        auto [r, c] = q.front(); q.pop();', id: 5 },
+            { line: '        for (auto dir : directions) {', id: 6 },
+            { line: '            int nr = r+dr, nc = c+dc;', id: 7 },
+            { line: '            if (rooms[nr][nc] == INF) {', id: 8 },
+            { line: '                rooms[nr][nc] = rooms[r][c] + 1;', id: 9 },
+            { line: '                q.push({nr, nc});', id: 10 },
+            { line: '            }', id: 11 },
+            { line: '        }', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '}', id: 14 }
         ];
-        
+
+        let viz;
         const INF = 2147483647;
-        const examples = {
-            1: [[INF, -1, 0, INF], [INF, INF, INF, -1], [INF, -1, INF, -1], [0, -1, INF, INF]],
-            2: [[0, INF, INF, 0], [INF, INF, INF, INF], [INF, -1, -1, INF], [INF, INF, INF, 0]]
-        };
-        
-        let currentGrid = examples[1];
 
-        function setExample(n) {
-            currentGrid = examples[n].map(r => [...r]);
-            init();
-        }
-
-        function generateAlgorithmSteps(initialGrid) {
+        function simulate(gridInput) {
             const steps = [];
-            const m = initialGrid.length, n = initialGrid[0].length;
-            let grid = initialGrid.map(r => [...r]);
+            let grid = gridInput.map(r => [...r]);
+            const m = grid.length;
+            const n = grid[0].length;
             
-            // 找所有門
-            const queue = [];
-            for (let i = 0; i < m; i++) {
-                for (let j = 0; j < n; j++) {
-                    if (grid[i][j] === 0) queue.push([i, j, 0]);
+            const pushState = (msg, hl, activeCells=[], level=0) => {
+                steps.push({
+                    grid: grid.map(r => [...r]),
+                    activeCells, // For highlight layer
+                    level,
+                    msg, highlightLines: hl
+                });
+            };
+
+            const q = [];
+            pushState("Init: Find all Gates (0)", [2], [], 0);
+            
+            for(let r=0; r<m; r++) {
+                for(let c=0; c<n; c++) {
+                    if(grid[r][c] === 0) q.push({r, c});
                 }
             }
             
-            const gateCount = queue.length;
-            steps.push({
-                grid: grid.map(r => [...r]), level: 0, justUpdated: [],
-                highlightLines: [0, 1, 2, 3, 4],
-                explanation: { 
-                    title: '初始化', 
-                    text: `-1 = 牆<br>0 = 門 (共 ${gateCount} 個)<br>∞ = 空房<br><br>多源 BFS：從所有門同時開始`,
-                    formula: 'setup'
-                }
-            });
+            pushState(`Push ${q.length} Gates to Queue`, [3], [...q], 0);
 
-            const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
             let level = 0;
-            let levelStart = 0;
-
-            while (levelStart < queue.length) {
-                const levelEnd = queue.length;
-                const justUpdated = [];
+            // BFS by Level implies we process current Q size. 
+            // Standard BFS processes one by one, but for visual clarity, showing 'Frontier' expansion is nice.
+            // But code structure implies standard queue loop.
+            // We'll mimic standard queue loop step by step.
+            
+            // To visualize layers nicely, let's track distance implicitly via grid values.
+            
+            const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+            
+            while(q.length > 0) {
+                const {r, c} = q.shift();
+                const dist = grid[r][c]; // Should correspond to current processing level roughy
                 
-                for (let i = levelStart; i < levelEnd; i++) {
-                    const [r, c, dist] = queue[i];
-                    
-                    for (const [dr, dc] of dirs) {
-                        const nr = r + dr, nc = c + dc;
-                        if (nr >= 0 && nr < m && nc >= 0 && nc < n && grid[nr][nc] === INF) {
-                            grid[nr][nc] = dist + 1;
-                            queue.push([nr, nc, dist + 1]);
-                            justUpdated.push([nr, nc]);
-                        }
+                // Only highlight processing of this cell? 
+                // Too many steps if we do one by one.
+                // Optimizations: Do a 'batch' of neighbors for one cell?
+                
+                const updates = [];
+                for(let [dr, dc] of dirs) {
+                    const nr = r+dr, nc = c+dc;
+                    if(nr>=0 && nr<m && nc>=0 && nc<n && grid[nr][nc] === INF) {
+                        grid[nr][nc] = dist + 1;
+                        q.push({r:nr, c:nc});
+                        updates.push({r:nr, c:nc});
                     }
                 }
                 
-                if (justUpdated.length > 0) {
-                    level++;
-                    steps.push({
-                        grid: grid.map(r => [...r]), level, justUpdated,
-                        highlightLines: [6, 7, 8, 9, 10, 11, 12],
-                        explanation: { 
-                            title: `第 ${level} 層`, 
-                            text: `更新 ${justUpdated.length} 個房間<br>距離 = ${level}`,
-                            formula: `distance = ${level}`
-                        }
-                    });
+                if(updates.length > 0) {
+                    // Show expansion from (r,c) to neighbors
+                    pushState(`Expand from (${r},${c}) (Dist ${dist})`, [9, 10], updates, dist+1);
+                } else {
+                    // Just visiting, no expansion
+                    // Maybe skip visual step to save time? Or show "Checking neighbors..."
+                    // pushState(`Check neighbors of (${r},${c})`, [6], [{r,c}], dist); 
                 }
-                
-                levelStart = levelEnd;
             }
-
-            steps.push({
-                grid: grid.map(r => [...r]), level, justUpdated: [], final: true,
-                highlightLines: [15, 16],
-                explanation: { 
-                    title: '完成!', 
-                    text: `每個空房都填入最近門的距離<br>共執行 ${level} 層 BFS`,
-                    formula: 'done'
-                }
-            });
-
+            
+            pushState("BFS Complete", [14], [], 0);
             return steps;
         }
 
-        let viz;
-        function init() {
-            const m = currentGrid.length, n = currentGrid[0].length;
-            const gridEl = document.getElementById('gridDisplay');
-            gridEl.style.gridTemplateColumns = `repeat(${n}, 45px)`;
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const gZoom = d3.select("#zoom-group");
+        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
+        svg.call(zoom);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('levelDisplay').textContent = step.level || "-";
+
+            const grid = step.grid;
+            const m = grid.length;
+            const n = grid[0].length;
+            const cellSize = 45;
+
+            const cells = [];
+            for(let r=0; r<m; r++) for(let c=0; c<n; c++) cells.push({r, c, val: grid[r][c]});
+
+            const rects = gZoom.selectAll(".cell-rect").data(cells, d => `${d.r},${d.c}`);
             
+            rects.enter().append("rect")
+                .attr("class", "cell-rect")
+                .attr("x", d => d.c * cellSize).attr("y", d => d.r * cellSize)
+                .attr("width", cellSize).attr("height", cellSize)
+                .merge(rects)
+                .attr("class", d => {
+                    let c = "cell-rect";
+                    if(d.val === -1) c += " wall";
+                    else if(d.val === 0) c += " gate";
+                    else if(d.val === INF) c += " empty";
+                    else c += " filled";
+                    return c;
+                })
+                .style("fill", d => {
+                    if(d.val > 0 && d.val !== INF) {
+                        // Gradient blue based on distance? 
+                        // Max distance visualized approx 10-20?
+                        const intensity = Math.max(0.3, 1 - d.val/20);
+                        return d3.interpolateBlues(intensity); 
+                        // Use static class instead for simplicity if dynamic fill is tricky?
+                        // Let's rely on CSS class 'filled' + opacity overlay?
+                        // Or explicit fill here overrides CSS.
+                    }
+                    return null;
+                });
+            rects.exit().remove();
+
+            // Text
+            const texts = gZoom.selectAll(".cell-text").data(cells, d => `${d.r},${d.c}`);
+            texts.enter().append("text").attr("class", "cell-text")
+                .attr("x", d => d.c * cellSize + cellSize/2).attr("y", d => d.r * cellSize + cellSize/2)
+                .merge(texts)
+                .text(d => {
+                    if(d.val === -1) return "W"; // Wall
+                    if(d.val === 0) return "G"; // Gate
+                    if(d.val === INF) return "∞";
+                    return d.val;
+                });
+            texts.exit().remove();
+
+            // Highlight
+            const highlights = gZoom.selectAll(".highlight-rect").data(step.activeCells, d => `${d.r},${d.c}`);
+            highlights.enter().append("rect")
+                .attr("class", "highlight-rect")
+                .attr("width", cellSize).attr("height", cellSize)
+                .merge(highlights)
+                .attr("x", d => d.c * cellSize).attr("y", d => d.r * cellSize);
+            highlights.exit().remove();
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('gridInput').value;
+            const grid = raw.split('\n').map(l => l.split(',').map(x => {
+                x = x.trim();
+                if(x === 'INF') return INF;
+                return parseInt(x);
+            }));
+            
+            const cellSize = 45;
+            const w = grid[0].length * cellSize;
+            const h = grid.length * cellSize;
+            const scale = Math.min(1, 400 / Math.max(w, h));
+            const tx = (svg.node().clientWidth - w*scale)/2;
+            const ty = (svg.node().clientHeight - h*scale)/2;
+            svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    const grid = step.grid;
-                    let html = '';
-                    for (let r = 0; r < grid.length; r++) {
-                        for (let c = 0; c < grid[0].length; c++) {
-                            const val = grid[r][c];
-                            let cls = 'cell';
-                            
-                            if (val === -1) cls += ' wall';
-                            else if (val === 0) cls += ' gate';
-                            else if (val === INF) cls += ' empty';
-                            else cls += ' updated';
-                            
-                            if (step.justUpdated?.some(u => u[0] === r && u[1] === c)) {
-                                cls += ' just-updated';
-                            }
-                            
-                            let display;
-                            if (val === -1) display = '牆';
-                            else if (val === INF) display = '∞';
-                            else if (val === 0) display = '門';
-                            else display = val;
-                            
-                            html += `<div class="${cls}">${display}</div>`;
-                        }
-                    }
-                    gridEl.innerHTML = html;
-                    document.getElementById('levelDisplay').textContent = step.level ?? 0;
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentGrid));
+            viz.setSteps(simulate(grid));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        const examples = {
+            2: "0,INF,INF,0\nINF,INF,INF,INF\nINF,-1,-1,INF\nINF,INF,INF,0"
+        };
+        function loadExample(n) {
+            document.getElementById('gridInput').value = examples[n];
+            runVisualizer();
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

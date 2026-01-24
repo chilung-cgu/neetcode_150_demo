@@ -3,181 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Same Tree - 精緻視覺化</title>
+    <title>Same Tree - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
             border-radius: 16px;
-            padding: 30px 20px;
+            padding: 20px;
             margin: 15px 0;
-        }
-
-        .trees-container {
-            display: flex;
-            justify-content: center;
-            gap: 60px;
-            flex-wrap: wrap;
-        }
-
-        .tree-panel {
-            text-align: center;
-        }
-
-        .tree-label {
-            font-size: 0.85rem;
-            font-weight: 700;
-            padding: 6px 16px;
-            border-radius: 15px;
-            margin-bottom: 15px;
-            display: inline-block;
-        }
-
-        .tree-label.p { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-        .tree-label.q { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
-
-        .tree-nodes {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .tree-level {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .node {
-            width: 45px;
-            height: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.1rem;
-            border-radius: 50%;
-            color: white;
-            position: relative;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 3px solid transparent;
-        }
-
-        .node.p { background: linear-gradient(145deg, #3b82f6, #2563eb); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
-        .node.q { background: linear-gradient(145deg, #a855f7, #9333ea); box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3); }
-
-        .node.current {
-            border-color: #fbbf24;
-            box-shadow: 0 0 25px rgba(251, 191, 36, 0.6);
-            transform: scale(1.15);
-        }
-
-        .node.match {
-            background: linear-gradient(145deg, #22c55e, #16a34a) !important;
-            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
-        }
-
-        .node.mismatch {
-            background: linear-gradient(145deg, #ef4444, #dc2626) !important;
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
-        }
-
-        .node.null {
-            background: transparent !important;
-            border: 2px dashed #64748b;
-            color: #64748b;
-            font-size: 0.7rem;
-            box-shadow: none;
-        }
-
-        /* 比較指示器 */
-        .compare-indicator {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 20px 0;
-            font-size: 2rem;
-        }
-
-        .compare-indicator .icon {
-            padding: 10px 20px;
-            border-radius: 15px;
-        }
-
-        .compare-indicator .icon.matching {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-        }
-
-        .compare-indicator .icon.not-matching {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-        }
-
-        .compare-indicator .icon.pending {
-            background: rgba(100, 116, 139, 0.2);
-            color: #94a3b8;
-        }
-
-        /* 結果面板 */
-        .result-panel {
-            display: flex;
-            justify-content: center;
-            margin: 20px 0;
-        }
-
-        .result-badge {
-            padding: 12px 25px;
-            border-radius: 20px;
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        .result-badge.same { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 2px solid rgba(34, 197, 94, 0.4); }
-        .result-badge.different { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 2px solid rgba(239, 68, 68, 0.4); }
-        .result-badge.unknown { background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 2px solid rgba(100, 116, 139, 0.3); }
-
-        /* Step Breakdown */
-        .step-breakdown {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin-top: 15px;
-            border-left: 4px solid #3b82f6;
-        }
-
-        .step-breakdown-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
-        .step-breakdown-text { font-size: 0.95rem; color: #e2e8f0; font-family: 'Consolas', monospace; }
-
-        /* 圖例 */
-        .legend-bar {
-            display: flex;
-            justify-content: center;
             gap: 20px;
-            padding: 15px;
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 12px;
-            margin-top: 15px;
-            flex-wrap: wrap;
+            align-items: center;
+            min-height: 500px;
         }
 
-        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #94a3b8; }
-        .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
-        .legend-dot.p { background: linear-gradient(145deg, #3b82f6, #2563eb); }
-        .legend-dot.q { background: linear-gradient(145deg, #a855f7, #9333ea); }
-        .legend-dot.match { background: linear-gradient(145deg, #22c55e, #16a34a); }
-        .legend-dot.mismatch { background: linear-gradient(145deg, #ef4444, #dc2626); }
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 450px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
 
-        /* 自訂輸入 */
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-title { font-weight: bold; margin-bottom: 10px; color: var(--viz-text); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row label { font-size: 0.85rem; width: 60px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; flex: 1; min-width: 100px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; r: 18px; }
+        .node-text { fill: white; font-family: monospace; font-size: 13px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        
+        .node-p { fill: #334155; stroke: #3b82f6; }
+        .node-q { fill: #334155; stroke: #a855f7; }
+        
+        .node-active { stroke: #fbbf24; stroke-width: 3px; filter: drop-shadow(0 0 5px #fbbf24); } /* Visiting */
+        .node-match { fill: #22c55e; stroke: #16a34a; } /* True */
+        .node-mismatch { fill: #ef4444; stroke: #b91c1c; } /* False */
 
-        .code-line.active { background: rgba(251, 191, 36, 0.15) !important; border-left: 3px solid #fbbf24 !important; }
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
+
+        /* Badges (Return Values) */
+        .badge-rect { fill: #475569; rx: 4; stroke: white; stroke-width: 1px; }
+        .badge-rect.true { fill: #22c55e; }
+        .badge-rect.false { fill: #ef4444; }
+        .badge-text { fill: white; font-size: 10px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 180px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .labels-row { display: flex; justify-content: space-around; width: 100%; color: #94a3b8; font-weight: bold; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -185,300 +69,291 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Same Tree - 遞迴比較</div>
-
+                <div class="viz-title">Same Tree</div>
                 <div class="custom-input-section">
-                    <div class="input-title">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>Tree p:</label>
-                        <input type="text" id="customTreeP" value="1,2,3">
-                    </div>
-                    <div class="input-row">
-                        <label>Tree q:</label>
-                        <input type="text" id="customTreeQ" value="1,2,3">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#60a5fa;">Tree P:</label>
+                            <input type="text" id="pInput" value="1,2,3">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#a855f7;">Tree Q:</label>
+                            <input type="text" id="qInput" value="1,2,3">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Check</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <div class="trees-container" id="treesContainer"></div>
-
-                    <div class="compare-indicator">
-                        <span class="icon pending" id="compareIcon">？</span>
+                    <div class="labels-row">
+                        <span style="color:#60a5fa">Tree P</span>
+                        <span style="color:#a855f7">Tree Q</span>
+                    </div>
+                    
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Comparing</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Match (T)</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Mismatch (F)</div>
                     </div>
 
-                    <div class="result-panel">
-                        <div class="result-badge unknown" id="resultBadge">比較中...</div>
-                    </div>
-
-                    <div class="legend-bar">
-                        <div class="legend-item"><div class="legend-dot p"></div>Tree p</div>
-                        <div class="legend-item"><div class="legend-dot q"></div>Tree q</div>
-                        <div class="legend-item"><div class="legend-dot match"></div>匹配</div>
-                        <div class="legend-item"><div class="legend-dot mismatch"></div>不匹配</div>
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <!-- Two groups for two trees -->
+                            <g id="group-p" transform="translate(150, 40)"></g>
+                            <g id="group-q" transform="translate(450, 40)"></g>
+                        </svg>
                     </div>
                 </div>
 
                 <div class="step-breakdown">
-                    <div class="step-breakdown-title">Step Breakdown</div>
-                    <div class="step-breakdown-text" id="stepBreakdown">點擊「下一步」開始</div>
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="2000">0.5x</option>
-                            <option value="1500" selected>1x</option>
-                            <option value="1000">1.5x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(h)
-                </div>
             </div>
-
-            <div class="viz-card">
-                <div class="viz-title">演算法說明</div>
-                <div class="explanation" id="explanation"></div>
-            </div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
-
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">遞迴比較 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'bool isSameTree(TreeNode* p, TreeNode* q) {', id: 0 },
             { line: '    if (!p && !q) return true;', id: 1 },
-            { line: '    if (!p || !q) return false;', id: 2 },
-            { line: '    if (p->val != q->val) return false;', id: 3 },
-            { line: '', id: 4 },
-            { line: '    return isSameTree(p->left, q->left) &&', id: 5 },
-            { line: '    isSameTree(p->right, q->right);', id: 6 },
-            { line: '}', id: 7 },
+            { line: '    if (!p || !q || p->val != q->val) return false;', id: 2 },
+            { line: '    return isSameTree(p->left, q->left) &&', id: 3 },
+            { line: '           isSameTree(p->right, q->right);', id: 4 },
+            { line: '}', id: 5 }
         ];
 
-        let currentTreeP = [1, 2, 3];
-        let currentTreeQ = [1, 2, 3];
         let viz;
 
-        function parseTree(input) {
-            return input.split(',').map(x => {
-                const trimmed = x.trim();
-                return trimmed === 'null' || trimmed === '' ? null : parseInt(trimmed);
-            });
+        function buildTree(arr) {
+            if(arr.length===0) return null;
+            let root = {id: 0, val: arr[0], left: null, right: null};
+            let queue = [root];
+            let i = 1;
+            let nextId = 1;
+            while(i < arr.length) {
+                let curr = queue.shift();
+                if(i < arr.length && arr[i] !== null) {
+                    curr.left = {id: nextId++, val: arr[i], left: null, right: null};
+                    queue.push(curr.left);
+                }
+                i++;
+                if(i < arr.length && arr[i] !== null) {
+                    curr.right = {id: nextId++, val: arr[i], left: null, right: null};
+                    queue.push(curr.right);
+                }
+                i++;
+            }
+            return root;
         }
 
-        function generateAlgorithmSteps(treeP, treeQ) {
-            const steps = [];
-            const matched = [];
-            const mismatched = [];
+        function getLayout(rootNode, defaultX) {
+            if(!rootNode) return [];
+            const h = d3.hierarchy(rootNode);
+            const treeLayout = d3.tree().size([280, 300]); // smaller size for split
+            treeLayout(h);
+            const nodes = [];
+            h.descendants().forEach(d => {
+                nodes.push({
+                    id: d.data.id, val: d.data.val,
+                    x: d.x - 140, // Center around 0 relative to group
+                    y: d.y + 20, 
+                    parentId: d.parent ? d.parent.data.id : null
+                });
+            });
+            return nodes;
+        }
 
-            steps.push({
-                treeP: [...treeP], treeQ: [...treeQ],
-                currentIdx: null, matched: [], mismatched: [],
-                result: null,
-                highlightLines: [0],
-                stepText: 'isSameTree(p, q)',
-                explanation: {
-                    title: '開始比較',
-                    text: `樹 P 與 樹 Q 進行同步遍歷。<br>如果每個對應位置的節點都相同（值相同或都為空），則兩樹相同。`,
-                    formula: 'isSameTree(p, q)'
-                }
+        function simulate(pArr, qArr) {
+            const steps = [];
+            const pRoot = buildTree(pArr);
+            const qRoot = buildTree(qArr);
+            
+            const pLayout = getLayout(pRoot);
+            const qLayout = getLayout(qRoot);
+            
+            // Map: id -> badgeVal (true/false)
+            let pBadges = {};
+            let qBadges = {};
+            
+            const snap = (activeP, activeQ, msg, lines, info) => ({
+                pLayout, qLayout,
+                pBadges: JSON.parse(JSON.stringify(pBadges)),
+                qBadges: JSON.parse(JSON.stringify(qBadges)),
+                activeP, activeQ,
+                msg, highlightLines: lines, explanation: info
             });
 
-            const maxLen = Math.max(treeP.length, treeQ.length);
+            // DFS returns bool
+            const check = (nodeP, nodeQ) => {
+                const pid = nodeP ? nodeP.id : null;
+                const qid = nodeQ ? nodeQ.id : null;
+                const pVal = nodeP ? nodeP.val : 'null';
+                const qVal = nodeQ ? nodeQ.val : 'null';
 
-            function compare(idx) {
-                if (idx >= maxLen) return true;
+                steps.push(snap(pid, qid, `Comparing P(${pVal}) & Q(${qVal})`, [0], {
+                     title: "比較節點", text: `比較 P: ${pVal} 和 Q: ${qVal}`, formula: "isSameTree(p, q)"
+                }));
 
-                const pVal = idx < treeP.length ? treeP[idx] : null;
-                const qVal = idx < treeQ.length ? treeQ[idx] : null;
-
-                // Both null - match logic (implicitly) for children of leaves
-                // But for simulation we look at node existence in array
-                if (pVal === null && qVal === null) {
+                // Base Case 1: Both null
+                if (!nodeP && !nodeQ) {
+                    steps.push(snap(pid, qid, "Both NULL -> True", [1], {
+                        title: "皆為空", text: "兩者皆為空節點，匹配成功。", formula: "return true"
+                    }));
                     return true;
                 }
-
-                // One null, one not
-                if (pVal === null || qVal === null) {
-                    mismatched.push(idx);
-                    steps.push({
-                        treeP: [...treeP], treeQ: [...treeQ],
-                        currentIdx: idx, matched: [...matched], mismatched: [...mismatched],
-                        result: false,
-                        highlightLines: [2],
-                        stepText: `p[${idx}]=${pVal ?? 'null'}, q[${idx}]=${qVal ?? 'null'} → 不同`,
-                        explanation: {
-                            title: `結構不匹配 (節點 ${idx})`,
-                            text: `位置 ${idx} 上，一個節點存在而另一個為空。<br>結構不同，返回 false。`,
-                            formula: '!p || !q => return false'
-                        }
-                    });
+                
+                // Base Case 2: One null or Val diff
+                if (!nodeP || !nodeQ || nodeP.val !== nodeQ.val) {
+                    if(pid!==null) pBadges[pid] = false;
+                    if(qid!==null) qBadges[qid] = false;
+                    steps.push(snap(pid, qid, "Mismatch! -> False", [2], {
+                        title: "不匹配", text: `值不相同 (${pVal} != ${qVal}) 或結構不同。`, formula: "return false"
+                    }));
                     return false;
                 }
-
-                // Values differ
-                if (pVal !== qVal) {
-                    mismatched.push(idx);
-                    steps.push({
-                        treeP: [...treeP], treeQ: [...treeQ],
-                        currentIdx: idx, matched: [...matched], mismatched: [...mismatched],
-                        result: false,
-                        highlightLines: [3],
-                        stepText: `${pVal} ≠ ${qVal} → 不同`,
-                        explanation: {
-                            title: `數值不匹配 (節點 ${idx})`,
-                            text: `位置 ${idx} 上，P 的值為 ${pVal}，Q 的值為 ${qVal}。<br>數值不同，返回 false。`,
-                            formula: 'p->val != q->val => return false'
-                        }
-                    });
+                
+                // Recurse
+                // Left
+                const leftSame = check(nodeP.left, nodeQ.left);
+                if (!leftSame) {
+                    pBadges[pid] = false;
+                    qBadges[qid] = false;
                     return false;
                 }
-
-                // Match!
-                matched.push(idx);
-                steps.push({
-                    treeP: [...treeP], treeQ: [...treeQ],
-                    currentIdx: idx, matched: [...matched], mismatched: [...mismatched],
-                    result: null,
-                    highlightLines: [3, 5, 6],
-                    stepText: `${pVal} == ${qVal} ✓`,
-                    explanation: {
-                        title: `匹配成功 (節點 ${idx})`,
-                        text: `位置 ${idx} 上的值相同 (${pVal})。<br>繼續遞迴比較其左子樹與右子樹。`,
-                        formula: 'p->val == q->val'
-                    }
-                });
-
-                const leftResult = compare(2 * idx + 1);
-                if (!leftResult) return false;
-                return compare(2 * idx + 2);
-            }
-
-            const result = compare(0);
-
-            steps.push({
-                treeP: [...treeP], treeQ: [...treeQ],
-                currentIdx: null, matched: [...matched], mismatched: [...mismatched],
-                result,
-                final: true,
-                highlightLines: result ? [5, 6] : [2, 3],
-                stepText: `return ${result}`,
-                explanation: {
-                    title: result ? '判定結果：相同' : '判定結果：不同',
-                    text: result ? '所有節點及結構完全一致。' : '發現結構或數值差異。',
-                    formula: `return ${result}`
+                
+                // Right
+                const rightSame = check(nodeP.right, nodeQ.right);
+                if (!rightSame) {
+                    pBadges[pid] = false;
+                    qBadges[qid] = false;
+                    return false;
                 }
-            });
+                
+                // Match
+                pBadges[pid] = true;
+                qBadges[qid] = true;
+                steps.push(snap(pid, qid, `Match P(${pVal}) == Q(${qVal}) -> True`, [3, 4], {
+                     title: "匹配成功", text: `當前節點值相同，且左右子樹皆匹配。`, formula: "return true"
+                }));
+                
+                return true;
+            };
 
+            const res = check(pRoot, qRoot);
+            steps.push(snap(null, null, res ? "Trees are Identical" : "Trees Differ", [5], {
+                title: "最終結果", text: res ? "兩棵樹完全相同。" : "兩棵樹不相同。", formula: "Result"
+            }));
+            
             return steps;
         }
 
-        function renderTree(tree, label, step, treeType) {
-            let html = `<div class="tree-panel">
-                <div class="tree-label ${treeType}">${label}</div>
-                <div class="tree-nodes">`;
-
-            let idx = 0;
-            let levelSize = 1;
-
-            while (idx < tree.length) {
-                html += '<div class="tree-level">';
-                for (let i = 0; i < levelSize && idx < tree.length; i++, idx++) {
-                    const val = tree[idx];
-                    let cls = `node ${treeType}`;
-
-                    if (val === null) {
-                        cls = 'node null';
-                        html += `<div class="${cls}">∅</div>`;
-                    } else {
-                        if (step.matched?.includes(idx)) cls += ' match';
-                        if (step.mismatched?.includes(idx)) cls += ' mismatch';
-                        if (step.currentIdx === idx) cls += ' current';
-                        html += `<div class="${cls}">${val}</div>`;
-                    }
-                }
-                html += '</div>';
-                levelSize *= 2;
-            }
-
-            html += '</div></div>';
-            return html;
-        }
-
-        function renderStep(step) {
-            document.getElementById('treesContainer').innerHTML =
-                renderTree(step.treeP, 'Tree p', step, 'p') +
-                renderTree(step.treeQ, 'Tree q', step, 'q');
-
-            // 比較指示器
-            const icon = document.getElementById('compareIcon');
-            if (step.result === true) {
-                icon.textContent = '=';
-                icon.className = 'icon matching';
-            } else if (step.result === false) {
-                icon.textContent = '≠';
-                icon.className = 'icon not-matching';
-            } else {
-                icon.textContent = '？';
-                icon.className = 'icon pending';
-            }
-
-            // 結果
-            const badge = document.getElementById('resultBadge');
-            if (step.result === true) {
-                badge.textContent = 'true ✓';
-                badge.className = 'result-badge same';
-            } else if (step.result === false) {
-                badge.textContent = 'false ✗';
-                badge.className = 'result-badge different';
-            } else {
-                badge.textContent = '比較中...';
-                badge.className = 'result-badge unknown';
-            }
-
-            document.getElementById('stepBreakdown').textContent = step.stepText || '';
-        }
-
-        function init(treeP = currentTreeP, treeQ = currentTreeQ) {
-            currentTreeP = treeP;
-            currentTreeQ = treeQ;
-            const steps = generateAlgorithmSteps(treeP, treeQ);
-
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => renderStep(step)
+        const svg = d3.select("#viz-svg");
+        const gp = svg.select("#group-p");
+        const gq = svg.select("#group-q");
+        
+        // Helper Render
+        function renderTree(g, nodesData, activeId, badges, type) {
+            // Links
+            const linksData = nodesData.filter(d => d.parentId !== null).map(d => {
+                const par = nodesData.find(x => x.id === d.parentId);
+                return { s: par, t: d, id: `${par.id}-${d.id}` };
             });
 
-            viz.setSteps(steps);
+            const linkSel = g.selectAll(".link-path").data(linksData, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            linkSel.merge(linkEnter).transition().duration(500)
+                .attr("d", d => `M${d.s.x},${d.s.y} L${d.t.x},${d.t.y}`);
+            linkSel.exit().remove();
+            
+            // Nodes
+            const nodeSel = g.selectAll(".node-g").data(nodesData, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 18);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            nodeMerge.select("circle").attr("class", d => {
+                let c = "node-circle";
+                if (type === 'p') c += " node-p"; else c += " node-q";
+                
+                if (d.id === activeId) c = "node-circle node-active";
+                else if (badges[d.id] === true) c = "node-circle node-match";
+                else if (badges[d.id] === false) c = "node-circle node-mismatch";
+                return c;
+            });
+            nodeMerge.select("text").text(d => d.val);
+            nodeSel.exit().remove();
+            
+            // Badges
+            // ... omitting separate badges for now as color indicates T/F clearly enough
         }
 
-        function runCustomInput() {
-            const treeP = parseTree(document.getElementById('customTreeP').value);
-            const treeQ = parseTree(document.getElementById('customTreeQ').value);
-            init(treeP, treeQ);
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            renderTree(gp, step.pLayout, step.activeP, step.pBadges, 'p');
+            renderTree(gq, step.qLayout, step.activeQ, step.qBadges, 'q');
         }
 
-        function resetVisualization() { init(currentTreeP, currentTreeQ); }
-        window.addEventListener('load', () => init());
+        function runVisualizer() {
+            const rawP = document.getElementById('pInput').value;
+            const rawQ = document.getElementById('qInput').value;
+             const valsP = rawP.split(',').map(x => {
+                const t = x.trim().toLowerCase();
+                if(t==='null' || t==='') return null;
+                return isNaN(parseInt(t)) ? null : parseInt(t);
+            });
+            const valsQ = rawQ.split(',').map(x => {
+                const t = x.trim().toLowerCase();
+                if(t==='null' || t==='') return null;
+                return isNaN(parseInt(t)) ? null : parseInt(t);
+            });
+            
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(valsP, valsQ));
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

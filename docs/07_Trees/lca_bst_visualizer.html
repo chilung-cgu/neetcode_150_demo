@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LCA of BST - D3 精緻視覺化</title>
+    <title>LCA of BST - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,34 +13,54 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
             min-height: 500px;
         }
-        
-        #viz-svg { width: 100%; height: 450px; }
 
-        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; stroke: #64748b; }
-        .node-circle.p { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.2); }
-        .node-circle.q { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.2); }
-        .node-circle.active { stroke: #22c55e; fill: rgba(34, 197, 94, 0.1); filter: drop-shadow(0 0 5px #22c55e); }
-        .node-circle.lca { stroke: #22c55e; fill: #22c55e; filter: drop-shadow(0 0 10px #22c55e); }
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 450px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; r: 20px; }
+        .node-text { fill: white; font-family: monospace; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
         
+        .node-normal { fill: #334155; stroke: #64748b; }
+        /* P and Q style */
+        .node-p { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.1); stroke-width: 3px; }
+        .node-q { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.1); stroke-width: 3px; }
+        
+        .node-active { fill: #3b82f6; stroke: #60a5fa; } /* Current Pointer */
+        .node-lca { fill: #22c55e; stroke: #16a34a; filter: drop-shadow(0 0 10px #22c55e); } /* Result */
+
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
+        .link-active { stroke: #22c55e; stroke-width: 4px; opacity: 1; }
+
         /* Badges */
-        .node-badge { fill: #f97316; rx: 4; }
-        .badge-text { fill: white; font-size: 10px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
-
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
-        .link.path { stroke: #22c55e; stroke-width: 4px; opacity: 1; }
+        .badge-rect { fill: #fbbf24; rx: 4; }
+        .badge-text { fill: #0f172a; font-size: 10px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 100px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 220px; }
+        input[type=number] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 50px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -51,21 +71,37 @@
                 <div class="viz-title">Lowest Common Ancestor (BST)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Tree:</label>
-                        <input type="text" id="treeInput" value="6,2,8,0,4,7,9,null,null,3,5" style="width:200px">
-                        <label>P:</label>
-                        <input type="number" id="pInput" value="2" style="width:50px">
-                        <label>Q:</label>
-                        <input type="number" id="qInput" value="8" style="width:50px">
-                        <button onclick="runVisualizer()">Find LCA</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">BST:</label>
+                            <input type="text" id="treeInput" value="6, 2, 8, 0, 4, 7, 9, null, null, 3, 5">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">P:</label>
+                            <input type="number" id="pInput" value="2">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Q:</label>
+                            <input type="number" id="qInput" value="8">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Find LCA</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <g id="main-group" transform="translate(40, 40)"></g>
-                        <g id="badge-group" transform="translate(40, 40)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Target (P/Q)</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Current</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>LCA Found</div>
+                    </div>
+                    
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <g id="main-group" transform="translate(40, 40)"></g>
+                            <g id="badge-group" transform="translate(40, 40)"></g>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -84,12 +120,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -112,193 +148,191 @@
             { line: '        else', id: 6 },
             { line: '            return root;', id: 7 },
             { line: '    }', id: 8 },
-            { line: '    return nullptr;', id: 9 },
+            { line: '    return NULL;', id: 9 },
             { line: '}', id: 10 }
         ];
 
         let viz;
 
-        // Tree Helper
         function buildTree(arr) {
-            if (!arr || arr.length === 0) return null;
-            const root = { id: 0, val: arr[0], children: [] };
-            const queue = [root];
+            if(arr.length===0) return null;
+            let root = {id: 0, val: arr[0], left: null, right: null};
+            let queue = [root];
             let i = 1;
-            while (i < arr.length) {
-                const parent = queue.shift();
-                if (i < arr.length && arr[i] !== null) {
-                    const left = { id: i, val: arr[i], children: [] };
-                    parent.children[0] = left; 
-                    queue.push(left);
+            let nextId = 1;
+            while(i < arr.length) {
+                let curr = queue.shift();
+                if(i < arr.length && arr[i] !== null) {
+                    curr.left = {id: nextId++, val: arr[i], left: null, right: null};
+                    queue.push(curr.left);
                 }
                 i++;
-                if (i < arr.length && arr[i] !== null) {
-                    const right = { id: i, val: arr[i], children: [] };
-                    parent.children[1] = right;
-                    queue.push(right);
+                if(i < arr.length && arr[i] !== null) {
+                    curr.right = {id: nextId++, val: arr[i], left: null, right: null};
+                    queue.push(curr.right);
                 }
                 i++;
             }
             return root;
         }
 
-        // Just use simple object structure for visualization state
-        function cleanHierarchy(node) {
-            if(!node) return null;
-            const c = [];
-            if(node.children[0]) c.push(cleanHierarchy(node.children[0]));
-            if(node.children[1]) c.push(cleanHierarchy(node.children[1]));
-            return { ...node, children: c };
+        function getLayout(rootNode) {
+            if(!rootNode) return [];
+            const h = d3.hierarchy(rootNode);
+            const treeLayout = d3.tree().size([500, 350]);
+            treeLayout(h);
+            const nodes = [];
+            h.descendants().forEach(d => {
+                nodes.push({
+                    id: d.data.id, val: d.data.val,
+                    x: d.x + 50, y: d.y + 50,
+                    parentId: d.parent ? d.parent.data.id : null
+                });
+            });
+            return nodes;
         }
 
         function simulate(arr, pVal, qVal) {
             const steps = [];
             const root = buildTree(arr);
-            if(!root) return []; // Empty
-
-            // Track path
-            const path = []; 
-            let lcaId = -1;
-
-            const pushState = (msg, hl, activeId=null, status='searching', explanation=null) => {
-                steps.push({
-                    root: cleanHierarchy(root),
-                    path: [...path],
-                    activeId,
-                    lcaId,
-                    pVal, qVal,
-                    status,
-                    msg, highlightLines: hl,
-                    explanation
-                });
+            if(!root) return [];
+            const layout = getLayout(root);
+            
+            // Find Node IDs for P and Q for highlighting
+            // Since tree uses unique ID generation but we search by Val, we need to map Val -> ID.
+            // Assumption: unique values in BST (standard problem constraint). But if not, we pick first match.
+            const findNodeId = (val) => {
+                const n = layout.find(n => n.val === val);
+                return n ? n.id : null;
             };
-
-            let curr = root;
-            pushState("Start search from root", [0, 1], curr.id, 'searching', {
-                title: '開始搜尋',
-                text: `從根節點 ${curr.val} 開始。<br>目標：找到 ${pVal} 和 ${qVal} 的最低共同祖先 (LCA)。`,
-                formula: 'root = head'
+            const pId = findNodeId(pVal);
+            const qId = findNodeId(qVal);
+            
+            const snap = (currId, isLca, msg, lines, info) => ({
+                layout,
+                pId, qId,
+                currId, isLca,
+                msg, highlightLines: lines, explanation: info
             });
 
+            let curr = root;
+            
             while(curr) {
-                path.push(curr.id); // Add to path
+                steps.push(snap(curr.id, false, `Current Node: ${curr.val}`, [1], {
+                    title: "當前節點", text: `檢查節點 ${curr.val}。`, formula: "root"
+                }));
                 
-                pushState(`Visiting ${curr.val}`, [1], curr.id, 'searching', {
-                    title: `訪問節點 ${curr.val}`,
-                    text: `比較 p (${pVal}), q (${qVal}) 與當前節點 (${curr.val}) 的大小關係。`,
-                    formula: 'check(p, q, root)'
-                });
-
                 if (pVal < curr.val && qVal < curr.val) {
-                    pushState(`${pVal} < ${curr.val} && ${qVal} < ${curr.val} -> Go Left`, [2, 3], curr.id, 'searching', {
-                        title: '向左移動',
-                        text: `因為 p 和 q 都小於當前節點，說明 LCA 在左子樹。`,
-                        formula: 'root = root->left'
-                    });
-                    curr = curr.children[0];
+                    steps.push(snap(curr.id, false, `Both ${pVal} & ${qVal} < ${curr.val}. Go Left.`, [2, 3], {
+                        title: "向左移動", text: `P(${pVal}) 和 Q(${qVal}) 都小於當前節點。LCA 必定在左子樹。`, formula: "p < root && q < root"
+                    }));
+                    curr = curr.left;
                 } else if (pVal > curr.val && qVal > curr.val) {
-                    pushState(`${pVal} > ${curr.val} && ${qVal} > ${curr.val} -> Go Right`, [4, 5], curr.id, 'searching', {
-                        title: '向右移動',
-                        text: `因為 p 和 q 都大於當前節點，說明 LCA 在右子樹。`,
-                        formula: 'root = root->right'
-                    });
-                    curr = curr.children[1];
+                    steps.push(snap(curr.id, false, `Both ${pVal} & ${qVal} > ${curr.val}. Go Right.`, [4, 5], {
+                        title: "向右移動", text: `P(${pVal}) 和 Q(${qVal}) 都大於當前節點。LCA 必定在右子樹。`, formula: "p > root && q > root"
+                    }));
+                    curr = curr.right;
                 } else {
-                    lcaId = curr.id;
-                    pushState(`Split found at ${curr.val}! This is LCA.`, [6, 7], curr.id, 'found', {
-                        title: '找到分岔點 (LCA)',
-                        text: `p 和 q 分別位於當前節點的兩側 (或其中一個等於當前節點)。<br>因此 ${curr.val} 就是 LCA。`,
-                        formula: 'return root'
-                    });
+                    // Split
+                    steps.push(snap(curr.id, true, `Split found! LCA is ${curr.val}`, [6, 7], {
+                        title: "找到 LCA", text: `分支點！P 和 Q 分別位於兩側（或其中之一就是當前節點）。故 ${curr.val} 為 LCA。`, formula: "return root"
+                    }));
                     return steps;
                 }
             }
-            
             return steps;
         }
 
-        const width = 600;
-        const height = 400;
-        const treeLayout = d3.tree().size([width, height]);
-        const gMain = d3.select("#main-group");
-        const gBadge = d3.select("#badge-group");
-
+        const svg = d3.select("#viz-svg");
+        const mainG = svg.select("#main-group");
+        const badgeG = svg.select("#badge-group");
+        
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
-            const root = d3.hierarchy(step.root);
-            treeLayout(root);
-
+            const nodesData = step.layout;
+            
             // Links
-            const links = gMain.selectAll(".link").data(root.links(), d => d.source.data.id + "-" + d.target.data.id);
-            links.enter().append("path").attr("class", "link")
-                .merge(links)
-                .transition().duration(500)
-                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y))
-                .attr("class", d => {
-                    // Highlight path
-                    // A link is part of path if TARGET is in path (except root)
-                    if(step.path.includes(d.target.data.id)) return "link path";
-                    return "link";
-                });
-            links.exit().remove();
+            const linksData = nodesData.filter(d => d.parentId !== null).map(d => {
+                const p = nodesData.find(x => x.id === d.parentId);
+                return { s: p, t: d, id: `${p.id}-${d.id}` };
+            });
 
+            const linkSel = mainG.selectAll(".link-path").data(linksData, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            linkSel.merge(linkEnter).transition().duration(500)
+                .attr("d", d => `M${d.s.x},${d.s.y} L${d.t.x},${d.t.y}`);
+            linkSel.exit().remove();
+            
             // Nodes
-            const nodes = gMain.selectAll(".node-g").data(root.descendants(), d => d.data.id);
-            const nEnter = nodes.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-
-            const nUpdate = nodes.merge(nEnter).transition().duration(500)
-                .attr("transform", d => `translate(${d.x}, ${d.y})`);
-                
-            nUpdate.select("circle").attr("class", d => {
-                let c = "node-circle";
-                if(d.data.id === step.lcaId) return "node-circle lca"; // Final LCA overrides everything
-                
-                if(d.data.id === step.activeId) c += " active";
-                else if(d.data.val === step.pVal || d.data.val === step.qVal) c += " p"; // or q, same color
-                
-                return c;
-            })
-            .style("stroke-width", d => (d.data.id === step.lcaId) ? 0 : 3)
-            .style("r", d => (d.data.id === step.lcaId) ? 25 : 20); // Pop LCA
-
-            nUpdate.select("text").text(d => d.data.val);
-            nodes.exit().remove();
-
-            // Badges (P/Q labels)
-            // Just filter relevant nodes
-            const badgeData = root.descendants().filter(d => d.data.val === step.pVal || d.data.val === step.qVal);
-            const badges = gBadge.selectAll(".badge-g").data(badgeData, d => d.data.id);
-            const bEnter = badges.enter().append("g").attr("class", "badge-g");
-            bEnter.append("rect").attr("class", "node-badge").attr("width", 20).attr("height", 14).attr("x", 12).attr("y", -30);
-            bEnter.append("text").attr("class", "badge-text").attr("x", 22).attr("y", -22);
-
-            const bUpdate = badges.merge(bEnter).transition().duration(500)
+            const nodeSel = mainG.selectAll(".node-g").data(nodesData, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 20);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter).transition().duration(500)
                 .attr("transform", d => `translate(${d.x}, ${d.y})`);
             
-            bUpdate.select("text").text(d => d.data.val === step.pVal ? "P" : "Q");
-            badges.exit().remove();
+            nodeMerge.select("circle").attr("class", d => {
+                let c = "node-circle node-normal";
+                if (d.id === step.pId) c += " node-p";
+                if (d.id === step.qId) c += " node-q";
+                
+                if (d.id === step.currId) {
+                     if (step.isLca) c = "node-circle node-lca";
+                     else c = "node-circle node-active";
+                }
+                return c;
+            });
+            nodeMerge.select("text").text(d => d.val);
+            nodeSel.exit().remove();
+            
+            // Badges for P and Q labels
+            const badges = [];
+            if(step.pId !== null) {
+                const n = nodesData.find(x=>x.id===step.pId);
+                if(n) badges.push({id: 'badgeP', val: 'P', x: n.x, y: n.y});
+            }
+            if(step.qId !== null) {
+                const n = nodesData.find(x=>x.id===step.qId);
+                if(n) badges.push({id: 'badgeQ', val: 'Q', x: n.x, y: n.y});
+            }
+            
+            const bSel = badgeG.selectAll(".badge-g").data(badges, d => d.id);
+            const bEnter = bSel.enter().append("g").attr("class", "badge-g");
+            bEnter.append("rect").attr("class", "badge-rect").attr("width", 20).attr("height", 16).attr("x", 12).attr("y", -20);
+            bEnter.append("text").attr("class", "badge-text").attr("x", 22).attr("y", -11);
+            
+            const bMerge = bSel.merge(bEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            bMerge.select("text").text(d => d.val);
+            bSel.exit().remove();
         }
 
         function runVisualizer() {
-            const valStr = document.getElementById('treeInput').value;
+            const raw = document.getElementById('treeInput').value;
+             const vals = raw.split(',').map(x => {
+                const t = x.trim().toLowerCase();
+                if(t==='null' || t==='') return null;
+                return isNaN(parseInt(t)) ? null : parseInt(t);
+            });
             const p = parseInt(document.getElementById('pInput').value);
             const q = parseInt(document.getElementById('qInput').value);
             
-            const arr = valStr.split(',').map(x => {
-                const t = x.trim();
-                return t === 'null' || t === '' ? null : parseInt(t);
-            });
-            
-            if(arr.length === 0) return;
+            if(vals.length === 0) return;
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(simulate(arr, p, q));
+            viz.setSteps(simulate(vals, p, q));
         }
 
         window.addEventListener('load', runVisualizer);

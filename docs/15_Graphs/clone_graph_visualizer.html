@@ -3,33 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clone Graph - 視覺化</title>
+    <title>Clone Graph - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 600px;
+        }
 
-        .graphs-container { display: flex; gap: 40px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
-        .graph-box { text-align: center; min-width: 150px; }
-        .graph-label { color: var(--viz-text-muted); margin-bottom: 10px; font-size: 0.9rem; }
-        .nodes-container { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        .node { 
-            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; border-radius: 50%; transition: all 0.3s;
+        /* Graph SVG */
+        .graph-viewport {
+            width: 100%; height: 450px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }
-        .node.original { background: var(--viz-primary); color: white; }
-        .node.cloned { background: var(--viz-success); color: #0f172a; }
-        .node.current { border: 3px solid white; }
+        #viz-svg { width: 100%; height: 100%; cursor: grab; }
+        #viz-svg:active { cursor: grabbing; }
 
-        .hashmap-container { 
-            display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 15px 0; 
-            padding: 12px; background: var(--viz-bg-secondary); border-radius: 8px;
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; stroke: #fff; }
+        .node-circle.original { fill: #3b82f6; }
+        .node-circle.cloned { fill: #22c55e; }
+        .node-circle.active { stroke: #fbbf24; stroke-width: 4px; filter: drop-shadow(0 0 8px #fbbf24); }
+        
+        .link { stroke: #64748b; stroke-opacity: 0.6; stroke-width: 2px; }
+        
+        .node-label { fill: white; font-family: monospace; font-size: 12px; pointer-events: none; text-anchor: middle; dominant-baseline: middle; font-weight: bold; }
+        
+        .group-label { fill: #94a3b8; font-size: 14px; font-weight: bold; text-transform: uppercase; text-anchor: middle; }
+
+        /* Map Panel */
+        .map-panel {
+            width: 100%; background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 8px;
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 60px;
         }
-        .map-item { 
-            display: flex; align-items: center; gap: 5px; padding: 4px 10px; 
-            background: var(--viz-bg-primary); border-radius: 4px; font-size: 0.85rem;
+        .map-item {
+            background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4);
+            padding: 4px 10px; border-radius: 4px; color: #cbd5e1; font-family: monospace; font-size: 0.9rem;
+            animation: popIn 0.3s;
         }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 220px; height: 60px; resize: none; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -37,155 +67,326 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">克隆圖 (Clone Graph)</div>
+                <div class="viz-title">Clone Graph (BFS/DFS)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <button onclick="setExample(1)">範例1 (4節點)</button>
-                        <button onclick="setExample(2)">範例2 (單節點)</button>
-                        <button onclick="resetVisualization()">↻ 重置</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Adj List (1:[2,4], 2:[1,3]...):</label>
+                            <textarea id="adjInput">[[2,4],[1,3],[2,4],[1,3]]</textarea>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Clone</button>
+                        </div>
+                    </div>
+                    <div style="text-align:center; font-size:0.8rem; color:#64748b;">Node values are 1-indexed.</div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="map-panel" id="mapDisplay"></div>
+                    
+                    <div class="graph-viewport">
+                        <svg id="viz-svg">
+                            <g id="zoom-group">
+                                <text x="-200" y="-180" class="group-label">Original Graph</text>
+                                <text x="200" y="-180" class="group-label">Cloned Graph</text>
+                            </g>
+                        </svg>
                     </div>
                 </div>
-                
-                <div class="graphs-container">
-                    <div class="graph-box">
-                        <div class="graph-label">原圖</div>
-                        <div class="nodes-container" id="originalNodes"></div>
-                    </div>
-                    <div class="graph-box">
-                        <div class="graph-label">克隆圖</div>
-                        <div class="nodes-container" id="clonedNodes"></div>
-                    </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">HashMap: 原節點 → 克隆節點</div>
-                <div class="hashmap-container" id="hashmapDisplay"></div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="500">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(V+E)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(V)
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'Node* cloneGraph(Node* node) {', id: 0 },
             { line: '    if (!node) return nullptr;', id: 1 },
-            { line: '    unordered_map<Node*, Node*> cloned;', id: 2 },
+            { line: '    unordered_map<Node*, Node*> mp;', id: 2 },
             { line: '    queue<Node*> q;', id: 3 },
             { line: '    q.push(node);', id: 4 },
-            { line: '    cloned[node] = new Node(node->val);', id: 5 },
+            { line: '    mp[node] = new Node(node->val);', id: 5 },
             { line: '    while (!q.empty()) {', id: 6 },
-            { line: '        Node* cur = q.front(); q.pop();', id: 7 },
-            { line: '        for (Node* neighbor : cur->neighbors) {', id: 8 },
-            { line: '            if (!cloned.count(neighbor)) {', id: 9 },
-            { line: '                cloned[neighbor] = new Node(neighbor->val);', id: 10 },
+            { line: '        Node* curr = q.front(); q.pop();', id: 7 },
+            { line: '        for (Node* neighbor : curr->neighbors) {', id: 8 },
+            { line: '            if (mp.find(neighbor) == mp.end()) {', id: 9 },
+            { line: '                mp[neighbor] = new Node(neighbor->val);', id: 10 },
             { line: '                q.push(neighbor);', id: 11 },
             { line: '            }', id: 12 },
-            { line: '            cloned[cur]->neighbors.push_back(cloned[neighbor]);', id: 13 },
+            { line: '            mp[curr]->neighbors.push_back(mp[neighbor]);', id: 13 },
             { line: '        }', id: 14 },
             { line: '    }', id: 15 },
-            { line: '    return cloned[node];', id: 16 },
-            { line: '}', id: 17 },
+            { line: '    return mp[node];', id: 16 },
+            { line: '}', id: 17 }
         ];
-        
-        const examples = {
-            1: { nodes: [1,2,3,4], desc: '4 節點環形圖' },
-            2: { nodes: [1], desc: '單一節點' }
-        };
-        
-        let currentNodes = examples[1].nodes;
 
-        function setExample(n) {
-            currentNodes = examples[n].nodes;
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(nodes) {
+        function simulate(adjList) {
             const steps = [];
-            
-            steps.push({
-                original: nodes, cloned: [], map: {}, current: null,
-                highlightLines: [0, 1, 2, 3],
-                explanation: { title: '初始化', text: `圖: ${nodes.join('-')}<br>BFS 遍歷並克隆<br>HashMap 避免重複`, formula: 'setup' }
+            // Parse Adj List: index i is node i+1
+            // [[2,4],[1,3],...]
+            // Build Graph Objects
+            const nodes = [];
+            adjList.forEach((nbs, i) => {
+                nodes.push({ id: i+1, neighbors: nbs });
             });
 
-            const cloned = [];
-            const map = {};
+            // Graph State:
+            // Original Nodes (Existing at start)
+            // Cloned Nodes (Created during exec)
+            // Edges (Original edges always there, Cloned edges added)
+            // Map (Shown via list)
             
-            for (let i = 0; i < nodes.length; i++) {
-                cloned.push(nodes[i]);
-                map[nodes[i]] = nodes[i];
-                
-                steps.push({
-                    original: nodes, cloned: [...cloned], map: {...map}, current: nodes[i],
-                    highlightLines: i === 0 ? [4, 5] : [9, 10, 11],
-                    explanation: { 
-                        title: `克隆節點 ${nodes[i]}`, 
-                        text: `cloned[${nodes[i]}] = new Node(${nodes[i]})`,
-                        formula: `map[${nodes[i]}] = ${nodes[i]}'`
-                    }
+            const origNodes = nodes.map(n => ({...n, type: 'original'}));
+            const origLinks = [];
+            nodes.forEach(n => {
+                n.neighbors.forEach(nb => {
+                    if (n.id < nb) // Avoid dup edges for undirected graph visual
+                        origLinks.push({source: n.id, target: nb, type: 'original'});
                 });
-            }
-
-            steps.push({
-                original: nodes, cloned, map, final: true,
-                highlightLines: [16],
-                explanation: { title: '完成!', text: `所有 ${nodes.length} 個節點已克隆`, formula: 'return cloned[node]' }
             });
+
+            // Initial D3 items
+            const initialGraph = {
+                nodes: [...origNodes], // Clone list
+                links: [...origLinks]
+            };
+
+            const pushState = (msg, hl, activeId, clonedIds, clonedEdges, mapData) => {
+                // Construct full graph for D3
+                // Combine original + current cloned
+                const d3Nodes = [...origNodes];
+                const d3Links = [...origLinks];
+                
+                clonedIds.forEach(id => {
+                    d3Nodes.push({id: id + 100, val: id, type: 'cloned'}); // Offset ID for D3 key
+                });
+                
+                clonedEdges.forEach(e => {
+                    d3Links.push({source: e.from+100, target: e.to+100, type: 'cloned'});
+                });
+
+                steps.push({
+                    graph: {nodes: d3Nodes, links: d3Links},
+                    activeId,
+                    mapData: {...mapData},
+                    msg, highlightLines: hl
+                });
+            };
+
+            // Simulation Logic
+            if(nodes.length === 0) return steps; // Empty
+
+            const startNode = 1;
+            const visited = new Set();
+            const mapData = {};
+            const q = [startNode];
+            const clonedIds = new Set();
+            const clonedEdges = []; // {from, to}
+
+            // Init
+            clonedIds.add(startNode);
+            mapData[startNode] = startNode;
+            
+            pushState("Init: Clone Start Node 1", [4, 5], startNode, Array.from(clonedIds), [], mapData);
+
+            // Queue processing logic
+            // Since this is a simulation, we track Q manually
+            // But we need to simulate the 'pop' step.
+            // Queue is effectively [1] now.
+            
+            // Loop while queue not empty
+            // We'll mimic the loop.
+            const queueList = [startNode];
+            const processed = new Set();
+
+            // We need a loop that runs 'simulation steps'
+            // The BFS queue
+            
+            let head = 0;
+            while(head < queueList.length) {
+                const curr = queueList[head++];
+                pushState(`Pop Node ${curr} from Queue`, [7], curr, Array.from(clonedIds), [...clonedEdges], mapData);
+                
+                const neighbors = nodes[curr-1].neighbors;
+                for(let nb of neighbors) {
+                    pushState(`Check neighbor ${nb} of ${curr}`, [8], curr, Array.from(clonedIds), [...clonedEdges], mapData);
+                    
+                    if(!mapData[nb]) {
+                        mapData[nb] = nb;
+                        clonedIds.add(nb);
+                        queueList.push(nb);
+                        pushState(`Clone Node ${nb}, Add to Map & Queue`, [10, 11], curr, Array.from(clonedIds), [...clonedEdges], mapData);
+                    }
+                    
+                    // Add edge in cloned graph
+                    clonedEdges.push({from: curr, to: nb}); // Directed edge logic in sorting out undirected visual?
+                    // In BFS for graph clone, we add neighbors to the clone node's adjacency list.
+                    // This creates directed edges in implementation (A->B). Since undirected graph has A->B and B->A, both will be added.
+                    // For visualization, adding redundant edges is fine or filtered.
+                    pushState(`Add edge ${curr}' -> ${nb}'`, [13], curr, Array.from(clonedIds), [...clonedEdges], mapData);
+                }
+            }
+            
+            pushState("Cloning Complete", [16], null, Array.from(clonedIds), [...clonedEdges], mapData);
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    document.getElementById('originalNodes').innerHTML = (step.original || []).map(n => {
-                        let cls = 'node original';
-                        if (n === step.current) cls += ' current';
-                        return `<div class="${cls}">${n}</div>`;
-                    }).join('');
-                    
-                    document.getElementById('clonedNodes').innerHTML = (step.cloned || []).length > 0 
-                        ? step.cloned.map(n => `<div class="node cloned">${n}'</div>`).join('')
-                        : '<span style="color:var(--viz-text-muted)">空</span>';
-                    
-                    document.getElementById('hashmapDisplay').innerHTML = Object.entries(step.map || {}).length > 0
-                        ? Object.entries(step.map).map(([k,v]) => 
-                            `<div class="map-item"><span style="color:var(--viz-primary)">${k}</span>→<span style="color:var(--viz-success)">${v}'</span></div>`
-                        ).join('')
-                        : '<span style="color:var(--viz-text-muted)">空</span>';
+        // --- Render ---
+        const width = 800, height = 450;
+        const svg = d3.select("#viz-svg");
+        const gZoom = d3.select("#zoom-group");
+        
+        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
+        svg.call(zoom);
+        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.8)); // Center 0,0
+
+        // Force Simulation
+        let simulation = d3.forceSimulation()
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("link", d3.forceLink().id(d => d.id).distance(60))
+            .force("x", d3.forceX().x(d => d.type === 'original' ? -200 : 200).strength(0.8)) // Split Graphs
+            .force("y", d3.forceY(0).strength(0.1));
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            // Map
+            const mapDiv = document.getElementById('mapDisplay');
+            mapDiv.innerHTML = '';
+            Object.keys(step.mapData).forEach(k => {
+               const item = document.createElement('div');
+               item.className = 'map-item';
+               item.innerHTML = `${k} → ${k}'`;
+               mapDiv.appendChild(item);
+            });
+
+            const currentNodes = step.graph.nodes;
+            const currentLinks = step.graph.links;
+
+            // Update Force Layout Data
+            // We need to keep existing node positions if possible
+            // D3 Object Constancy by ID
+            
+            const oldNodes = new Map(simulation.nodes().map(d => [d.id, d]));
+            currentNodes.forEach(n => {
+                const old = oldNodes.get(n.id);
+                if (old) {
+                    n.x = old.x;
+                    n.y = old.y;
+                    n.vx = old.vx;
+                    n.vy = old.vy;
+                } else {
+                    // Initial positions for new nodes to avoid flying in from 0,0 too wildly
+                    n.x = n.type==='original' ? -200 : 200;
+                    n.y = 0;
                 }
             });
-            viz.setSteps(generateAlgorithmSteps(currentNodes));
+
+            simulation.nodes(currentNodes);
+            simulation.force("link").links(currentLinks);
+            simulation.alpha(0.5).restart();
+
+            // Draw Links
+            const links = gZoom.selectAll(".link").data(currentLinks, d => `${d.source.id||d.source}-${d.target.id||d.target}`);
+            links.enter().append("line").attr("class", "link")
+                .merge(links);
+            links.exit().remove();
+
+            // Draw Nodes
+            const nodes = gZoom.selectAll(".node-g").data(currentNodes, d => d.id);
+            const nEnter = nodes.enter().append("g").attr("class", "node-g")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+            
+            nEnter.append("circle").attr("r", 20).attr("class", d => `node-circle ${d.type}`);
+            nEnter.append("text").attr("class", "node-label").attr("dy", 1);
+
+            const nUpdate = nodes.merge(nEnter);
+            
+            nUpdate.select("circle").attr("class", d => {
+                let c = `node-circle ${d.type}`;
+                if (d.val === step.activeId || (d.val === step.activeId && d.type === 'cloned')) c += " active";
+                return c;
+            })
+            nUpdate.select("text").text(d => d.val + (d.type==='cloned'?"'":""));
+
+            nodes.exit().remove();
+
+            // Tick
+            simulation.on("tick", () => {
+                gZoom.selectAll(".link")
+                    .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+
+                gZoom.selectAll(".node-g")
+                    .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            });
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        // Drag functions
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        function runVisualizer() {
+            try {
+                const adj = JSON.parse(document.getElementById('adjInput').value);
+                viz = new AlgorithmVisualizer({
+                    codeLines: codeStructure,
+                    onStepChange: render
+                });
+                viz.setSteps(simulate(adj));
+            } catch(e) {
+                alert("Invalid JSON Input");
+            }
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

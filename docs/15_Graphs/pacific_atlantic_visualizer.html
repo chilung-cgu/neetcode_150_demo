@@ -3,29 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pacific Atlantic Water Flow - 視覺化</title>
+    <title>Pacific Atlantic Water Flow - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .grid-container { display: inline-grid; gap: 2px; margin: 15px auto; }
-        .cell { 
-            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; border-radius: 4px; background: var(--viz-bg-secondary); 
-            transition: all 0.3s; font-size: 0.9rem;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 550px;
         }
-        .cell.pacific { background: rgba(59, 130, 246, 0.5); color: white; }
-        .cell.atlantic { background: rgba(234, 179, 8, 0.5); color: #0f172a; }
-        .cell.both { background: var(--viz-success); color: #0f172a; font-weight: bold; }
-        .cell.current { border: 3px solid white; transform: scale(1.05); }
 
-        .legend-row { display: flex; gap: 15px; justify-content: center; margin: 10px 0; font-size: 0.85rem; flex-wrap: wrap; }
+        /* SVG */
+        .grid-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        #viz-svg { width: 100%; height: 100%; cursor: grab; }
+        #viz-svg:active { cursor: grabbing; }
+
+        .cell-rect { stroke: #334155; stroke-width: 1px; transition: fill 0.3s; }
+        .cell-rect.empty { fill: #1e293b; }
+        .cell-rect.p { fill: rgba(59, 130, 246, 0.6); } /* Pacific Blue */
+        .cell-rect.a { fill: rgba(234, 179, 8, 0.6); } /* Atlantic Gold */
+        .cell-rect.both { fill: #22c55e; } /* Green */
+        
+        .cell-text { pointer-events: none; font-size: 14px; text-anchor: middle; dominant-baseline: middle; fill: #cbd5e1; font-weight: bold; }
+
+        /* Highlight */
+        .highlight-rect { fill: none; stroke: #fff; stroke-width: 2px; filter: drop-shadow(0 0 4px white); }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+        }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 220px; height: 80px; resize: none; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; flex-wrap: wrap; justify-content: center; }
         .legend-item { display: flex; align-items: center; gap: 5px; }
-        .legend-box { width: 20px; height: 20px; border-radius: 4px; }
-
-        .ocean-labels { display: flex; justify-content: center; margin-bottom: 5px; font-size: 0.75rem; color: var(--viz-text-muted); }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
+        
+        .ocean-labels { position: absolute; font-size: 10px; color: rgba(255,255,255,0.3); font-weight: bold; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -33,228 +69,259 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">太平洋大西洋水流 (Pacific Atlantic)</div>
+                <div class="viz-title">Pacific Atlantic Water Flow</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <button onclick="setExample(1)">範例1 (5x5)</button>
-                        <button onclick="setExample(2)">範例2 (3x3)</button>
-                        <button onclick="resetVisualization()">↻ 重置</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Heights Grid:</label>
+                            <textarea id="gridInput">1,2,2,3,5
+3,2,3,4,4
+2,4,5,3,1
+6,7,1,4,5
+5,1,1,2,4</textarea>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Flow</button>
+                            <button onclick="loadExample(2)" style="background:#475569">Ex 2</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="legend-row">
-                    <div class="legend-item"><div class="legend-box" style="background:rgba(59,130,246,0.5)"></div>可達太平洋</div>
-                    <div class="legend-item"><div class="legend-box" style="background:rgba(234,179,8,0.5)"></div>可達大西洋</div>
-                    <div class="legend-item"><div class="legend-box" style="background:var(--viz-success)"></div>兩者皆可 ✓</div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:#1e293b; border:1px solid #475569"></div>Unreached</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Pacific (P)</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#eab308"></div>Atlantic (A)</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Both</div>
+                    </div>
+                    
+                    <div class="grid-viewport">
+                        <svg id="viz-svg"><g id="zoom-group"></g></svg>
+                        <div class="ocean-labels" style="top:5px; left:5px;">Pacific</div>
+                        <div class="ocean-labels" style="bottom:5px; right:5px;">Atlantic</div>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Both Oceans</div>
+                            <div class="stat-val" id="countDisplay">0</div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="ocean-labels">
-                    <span>← 太平洋 (上/左邊界) | 大西洋 (下/右邊界) →</span>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
-                <div style="text-align: center;"><div class="grid-container" id="gridDisplay"></div></div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="800">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="300">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(m×n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(m×n)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">結果數量</div><div class="state-value" id="countDisplay">0</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'vector<vector<int>> pacificAtlantic(heights) {', id: 0 },
-            { line: '    int m = heights.size(), n = heights[0].size();', id: 1 },
+            { line: '    // DFS from Ocean Edges inward (Reverse Flow)', id: 1 },
             { line: '    vector<vector<bool>> pacific(m, vector<bool>(n));', id: 2 },
             { line: '    vector<vector<bool>> atlantic(m, vector<bool>(n));', id: 3 },
-            { line: '    // 從邊界反向 DFS（往高處走）', id: 4 },
-            { line: '    for (int i = 0; i < m; i++) {', id: 5 },
-            { line: '        dfs(heights, pacific, i, 0);', id: 6 },
-            { line: '        dfs(heights, atlantic, i, n-1);', id: 7 },
-            { line: '    }', id: 8 },
-            { line: '    for (int j = 0; j < n; j++) {', id: 9 },
-            { line: '        dfs(heights, pacific, 0, j);', id: 10 },
-            { line: '        dfs(heights, atlantic, m-1, j);', id: 11 },
-            { line: '    }', id: 12 },
-            { line: '    // 找交集', id: 13 },
-            { line: '    for (each cell) if (pacific[i][j] && atlantic[i][j])', id: 14 },
-            { line: '        result.push_back({i, j});', id: 15 },
-            { line: '    return result;', id: 16 },
-            { line: '}', id: 17 },
+            { line: '    for (int i = 0; i < m; i++) {', id: 4 },
+            { line: '        dfs(heights, pacific, i, 0); // Left', id: 5 },
+            { line: '        dfs(heights, atlantic, i, n-1); // Right', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    for (int j = 0; j < n; j++) {', id: 8 },
+            { line: '        dfs(heights, pacific, 0, j); // Top', id: 9 },
+            { line: '        dfs(heights, atlantic, m-1, j); // Bottom', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    // Result intersection', id: 12 },
+            { line: '    for(i...) for(j...) if(pacific[i][j] && atlantic[i][j]) res.push({i,j});', id: 13 },
+            { line: '    return res;', id: 14 },
+            { line: '}', id: 15 },
+            { line: 'void dfs(ocean, r, c, prevH) {', id: 16 },
+            { line: '    if (bounds or ocean[r][c] or heights[r][c] < prevH) return;', id: 17 },
+            { line: '    ocean[r][c] = true;', id: 18 },
+            { line: '    dfs(ocean, neighbors);', id: 19 },
+            { line: '}', id: 20 },
         ];
-        
-        const examples = {
-            1: [[1,2,2,3,5],[3,2,3,4,4],[2,4,5,3,1],[6,7,1,4,5],[5,1,1,2,4]],
-            2: [[1,2,3],[4,5,6],[7,8,9]]
-        };
-        
-        let currentHeights = examples[1];
 
-        function setExample(n) {
-            currentHeights = examples[n].map(r => [...r]);
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(heights) {
+        function simulate(gridInput) {
             const steps = [];
-            const m = heights.length, n = heights[0].length;
-            const pacific = Array(m).fill(null).map(() => Array(n).fill(false));
-            const atlantic = Array(m).fill(null).map(() => Array(n).fill(false));
-            const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+            const grid = gridInput.map(r => [...r]);
+            const m = grid.length;
+            const n = grid[0].length;
             
-            steps.push({
-                pacific: [], atlantic: [], both: [],
-                highlightLines: [0, 1, 2, 3, 4],
-                explanation: { 
-                    title: '初始化', 
-                    text: `${m}×${n} 高度矩陣<br><br>關鍵思路：從海洋邊界<b>反向</b> DFS<br>（水往高處流 = 找能流到該海洋的格子）`,
-                    formula: 'reverse DFS'
-                }
-            });
+            // Track state: 0=None, 1=P, 2=A, 3=Both
+            // But visually we can just track the sets P and A.
+            
+            const pushState = (msg, hl, activeCells=[], pSet, aSet) => {
+                // Convert sets to simpler visual grid for render if needed, or pass sets directly
+                // Passing deep copies of sets or arrays of coords
+                steps.push({
+                    grid: grid.map(r => [...r]),
+                    activeCells,
+                    pSet: pSet.map(c=>({...c})),
+                    aSet: aSet.map(c=>({...c})),
+                    msg, highlightLines: hl
+                });
+            };
 
-            // DFS function
-            function dfs(ocean, i, j, prevHeight) {
-                if (i < 0 || i >= m || j < 0 || j >= n) return;
-                if (ocean[i][j] || heights[i][j] < prevHeight) return;
-                ocean[i][j] = true;
-                for (const [di, dj] of dirs) {
-                    dfs(ocean, i + di, j + dj, heights[i][j]);
-                }
+            const pacific = Array(m).fill(0).map(() => Array(n).fill(false));
+            const atlantic = Array(m).fill(0).map(() => Array(n).fill(false));
+            
+            // Helper to collect current true cells
+            const getSet = (boolGrid) => {
+                const res = [];
+                for(let i=0; i<m; i++) for(let j=0; j<n; j++) if(boolGrid[i][j]) res.push({r:i, c:j});
+                return res;
             }
 
-            // Pacific DFS from top and left
-            for (let i = 0; i < m; i++) dfs(pacific, i, 0, 0);
-            for (let j = 0; j < n; j++) dfs(pacific, 0, j, 0);
-            
-            const pacificCells = [];
-            for (let i = 0; i < m; i++) {
-                for (let j = 0; j < n; j++) {
-                    if (pacific[i][j]) pacificCells.push([i, j]);
-                }
+            function dfs(r, c, prevHeight, oceanGrid, oceanName) {
+                if(r<0||c<0||r>=m||c>=n) return;
+                if(oceanGrid[r][c] || grid[r][c] < prevHeight) return;
+                
+                oceanGrid[r][c] = true;
+                
+                // Visualization step for this visit?
+                // Too many steps if granular. Let's group or just show important ones.
+                // We'll show the state update.
+                
+                pushState(`${oceanName} flow reaches (${r},${c}) [H: ${grid[r][c]}]`, [18], [{r,c}], getSet(pacific), getSet(atlantic));
+                
+                dfs(r+1, c, grid[r][c], oceanGrid, oceanName);
+                dfs(r-1, c, grid[r][c], oceanGrid, oceanName);
+                dfs(r, c+1, grid[r][c], oceanGrid, oceanName);
+                dfs(r, c-1, grid[r][c], oceanGrid, oceanName);
             }
-            
-            steps.push({
-                pacific: pacificCells, atlantic: [], both: [],
-                highlightLines: [5, 6, 9, 10],
-                explanation: { 
-                    title: '太平洋 DFS', 
-                    text: `從上邊界和左邊界反向 DFS<br>找到 ${pacificCells.length} 個可達格子`,
-                    formula: `pacific: ${pacificCells.length}`
-                }
-            });
 
-            // Atlantic DFS from bottom and right
-            for (let i = 0; i < m; i++) dfs(atlantic, i, n - 1, 0);
-            for (let j = 0; j < n; j++) dfs(atlantic, m - 1, j, 0);
+            pushState("Start Pacific DFS (Top/Left)", [4], [], [], []);
             
-            const atlanticCells = [];
-            for (let i = 0; i < m; i++) {
-                for (let j = 0; j < n; j++) {
-                    if (atlantic[i][j]) atlanticCells.push([i, j]);
-                }
-            }
+            // Pacific
+            for(let i=0; i<m; i++) dfs(i, 0, -1, pacific, "Pacific");
+            for(let j=0; j<n; j++) dfs(0, j, -1, pacific, "Pacific");
             
-            steps.push({
-                pacific: pacificCells, atlantic: atlanticCells, both: [],
-                highlightLines: [5, 7, 9, 11],
-                explanation: { 
-                    title: '大西洋 DFS', 
-                    text: `從下邊界和右邊界反向 DFS<br>找到 ${atlanticCells.length} 個可達格子`,
-                    formula: `atlantic: ${atlanticCells.length}`
-                }
-            });
-
-            // Find intersection
-            const both = [];
-            for (let i = 0; i < m; i++) {
-                for (let j = 0; j < n; j++) {
-                    if (pacific[i][j] && atlantic[i][j]) {
-                        both.push([i, j]);
-                    }
-                }
-            }
+            pushState("Start Atlantic DFS (Bottom/Right)", [8], [], getSet(pacific), []);
             
-            steps.push({
-                pacific: pacificCells, atlantic: atlanticCells, both,
-                highlightLines: [13, 14, 15],
-                explanation: { 
-                    title: '找交集', 
-                    text: `能同時流到兩個海洋的格子<br>共 ${both.length} 個`,
-                    formula: `intersection: ${both.length}`
-                }
-            });
-
-            steps.push({
-                pacific: [], atlantic: [], both, final: true,
-                highlightLines: [16],
-                explanation: { 
-                    title: '完成!', 
-                    text: `結果: ${both.length} 個格子<br>位置: ${both.map(b => `[${b[0]},${b[1]}]`).slice(0, 5).join(', ')}${both.length > 5 ? '...' : ''}`,
-                    formula: `return ${both.length} cells`
-                }
-            });
-
+            // Atlantic
+            for(let i=0; i<m; i++) dfs(i, n-1, -1, atlantic, "Atlantic");
+            for(let j=0; j<n; j++) dfs(m-1, j, -1, atlantic, "Atlantic");
+            
+            pushState("Done. Intersecting...", [13], [], getSet(pacific), getSet(atlantic));
+            
             return steps;
         }
 
-        let viz;
-        function init() {
-            const m = currentHeights.length, n = currentHeights[0].length;
-            const gridEl = document.getElementById('gridDisplay');
-            gridEl.style.gridTemplateColumns = `repeat(${n}, 40px)`;
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const gZoom = d3.select("#zoom-group");
+        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
+        svg.call(zoom);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
             
+            const grid = step.grid;
+            const m = grid.length;
+            const n = grid[0].length;
+            const cellSize = 45;
+
+            // Compute cell states
+            const pMap = new Set(step.pSet.map(c => `${c.r},${c.c}`));
+            const aMap = new Set(step.aSet.map(c => `${c.r},${c.c}`));
+            let bothCount = 0;
+
+            const cells = [];
+            for(let r=0; r<m; r++) for(let c=0; c<n; c++) {
+                let status = 'empty';
+                const key = `${r},${c}`;
+                if (pMap.has(key) && aMap.has(key)) { status = 'both'; bothCount++; }
+                else if (pMap.has(key)) status = 'p';
+                else if (aMap.has(key)) status = 'a';
+                
+                cells.push({r, c, val: grid[r][c], status});
+            }
+            
+            document.getElementById('countDisplay').textContent = bothCount;
+
+            const rects = gZoom.selectAll(".cell-rect").data(cells, d => `${d.r},${d.c}`);
+            rects.enter().append("rect")
+                .attr("class", "cell-rect")
+                .attr("x", d => d.c * cellSize).attr("y", d => d.r * cellSize)
+                .attr("width", cellSize).attr("height", cellSize)
+                .merge(rects)
+                .attr("class", d => `cell-rect ${d.status}`);
+            rects.exit().remove();
+
+            // Text
+            const texts = gZoom.selectAll(".cell-text").data(cells, d => `${d.r},${d.c}`);
+            texts.enter().append("text").attr("class", "cell-text")
+                .attr("x", d => d.c * cellSize + cellSize/2).attr("y", d => d.r * cellSize + cellSize/2)
+                .merge(texts)
+                .text(d => d.val);
+            texts.exit().remove();
+
+            // Highlight
+            const highlights = gZoom.selectAll(".highlight-rect").data(step.activeCells, d => `${d.r},${d.c}`);
+            highlights.enter().append("rect")
+                .attr("class", "highlight-rect")
+                .attr("width", cellSize).attr("height", cellSize)
+                .merge(highlights)
+                .attr("x", d => d.c * cellSize).attr("y", d => d.r * cellSize);
+            highlights.exit().remove();
+        }
+
+        function runVisualizer() {
+            const raw = document.getElementById('gridInput').value;
+            const grid = raw.split('\n').map(l => l.split(',').map(x => parseInt(x.trim())));
+            
+            const cellSize = 45;
+            const w = grid[0].length * cellSize;
+            const h = grid.length * cellSize;
+            const scale = Math.min(1, 400 / Math.max(w, h));
+            const tx = (svg.node().clientWidth - w*scale)/2;
+            const ty = (svg.node().clientHeight - h*scale)/2;
+            svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
-                onStepChange: (step) => {
-                    let html = '';
-                    for (let r = 0; r < currentHeights.length; r++) {
-                        for (let c = 0; c < currentHeights[0].length; c++) {
-                            let cls = 'cell';
-                            const inP = step.pacific?.some(p => p[0] === r && p[1] === c);
-                            const inA = step.atlantic?.some(p => p[0] === r && p[1] === c);
-                            const inB = step.both?.some(p => p[0] === r && p[1] === c);
-                            
-                            if (inB) cls += ' both';
-                            else if (inP && inA) cls += ' both';
-                            else if (inP) cls += ' pacific';
-                            else if (inA) cls += ' atlantic';
-                            
-                            html += `<div class="${cls}">${currentHeights[r][c]}</div>`;
-                        }
-                    }
-                    gridEl.innerHTML = html;
-                    document.getElementById('countDisplay').textContent = step.both?.length ?? 0;
-                }
+                onStepChange: render
             });
-            viz.setSteps(generateAlgorithmSteps(currentHeights));
+            viz.setSteps(simulate(grid));
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        const examples = {
+            2: "1,2,3\n8,9,4\n7,6,5"
+        };
+        function loadExample(n) {
+            document.getElementById('gridInput').value = examples[n];
+            runVisualizer();
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

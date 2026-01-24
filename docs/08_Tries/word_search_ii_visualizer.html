@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Search II - D3 精緻視覺化</title>
+    <title>Word Search II - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -26,56 +26,62 @@
             background: rgba(30, 41, 59, 0.4); border-radius: 12px; padding: 15px;
             border: 1px solid rgba(148, 163, 184, 0.2);
             display: flex; flex-direction: column; align-items: center;
-            position: relative;
+            flex: 1; min-width: 300px;
         }
-        .view-title { font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .view-title { font-size: 0.9rem; color: #94a3b8; margin-bottom: 15px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; width: 100%; text-align: center; border-bottom: 1px solid #475569; padding-bottom: 8px; }
 
         /* Grid View */
         .grid-container {
-            display: grid; gap: 6px; 
-            padding: 10px;
+            display: grid; gap: 8px; 
+            padding: 20px;
         }
         .cell {
-            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;
-            background: #334155; border-radius: 8px; font-weight: 700; color: #cbd5e1; font-size: 1.2rem;
-            transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+            background: #334155; border-radius: 8px; font-weight: 700; color: #cbd5e1; font-size: 1.4rem;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
         }
-        .cell.visiting { background: #fbbf24; color: #0f172a; transform: scale(1.1); box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); z-index: 10; border: 2px solid #fff; }
-        .cell.backtrack { background: #ef4444; opacity: 0.8; }
-        .cell.visited-path { border: 2px solid #60a5fa; background: rgba(59, 130, 246, 0.2); }
-        .cell.found { background: #22c55e; color: white; animation: pulse 1se infinite; }
+        .cell.scanning { border-color: #fbbf24; } /* Just iterating */
+        .cell.visiting { background: #fbbf24; color: #0f172a; transform: scale(1.1); box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); z-index: 10; border-color: #fff; }
+        .cell.path { border-color: #60a5fa; background: rgba(59, 130, 246, 0.3); }
+        .cell.found-flash { background: #22c55e; color:white; animation: pulse 0.5s; }
+        
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
         /* Trie View */
-        #trie-svg { width: 350px; height: 350px; background: transparent; cursor: grab; }
+        #trie-svg { width: 100%; height: 350px; background: transparent; cursor: grab; }
         #trie-svg:active { cursor: grabbing; }
         
-        .node-circle { fill: #3b82f6; stroke: none; transition: fill 0.3s; }
-        .node-circle.current { fill: #fbbf24; stroke: #fff; stroke-width: 2px; filter: drop-shadow(0 0 8px #fbbf24); }
-        .node-circle.match { fill: #22c55e; stroke: #fff; stroke-width: 2px; }
-        .node-circle.start { fill: #475569; }
-        .node-text { fill: white; font-family: monospace; font-size: 12px; pointer-events: none; text-anchor: middle; dominant-baseline: middle; font-weight: bold;}
-        .link { stroke: #64748b; stroke-width: 1.5px; opacity: 0.3; transition: opacity 0.3s; }
-        .link.active { stroke: #fbbf24; stroke-width: 3px; opacity: 1; }
+        .node-circle { fill: #334155; stroke: #64748b; stroke-width: 2px; transition: all 0.3s; }
+        .node-circle.current { fill: #fbbf24; stroke: #fff; stroke-width: 3px; filter: drop-shadow(0 0 5px #fbbf24); }
+        .node-circle.found-word { stroke: #22c55e; stroke-width: 4px; }
+        .node-circle.root { fill: #475569; }
+        
+        .node-text { fill: white; font-family: monospace; font-size: 14px; pointer-events: none; text-anchor: middle; dominant-baseline: middle; font-weight: bold;}
+        
+        .link { stroke: #64748b; stroke-width: 2px; opacity: 0.3; transition: all 0.3s; fill: none; }
+        .link.active { stroke: #fbbf24; opacity: 1; stroke-width: 3px; }
 
         /* Found Words */
         .found-panel {
             width: 100%; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
-            min-height: 40px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;
+            min-height: 50px; padding: 15px; background: rgba(15, 23, 42, 0.6); border-radius: 8px; border: 1px solid #475569;
         }
+        .found-label { width: 100%; text-align: center; color: #94a3b8; font-size: 0.8rem; margin-bottom: 5px; font-weight: bold; }
         .found-tag {
-            padding: 5px 12px; border-radius: 15px; background: #22c55e; color: white; font-weight: bold; font-size: 0.9rem;
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 6px 14px; border-radius: 20px; background: #22c55e; color: white; font-weight: bold; font-size: 1rem;
+            animation: popTag 0.4s ease-out; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
-        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes popTag { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 15px; align-items: start; margin-bottom: 5px; flex-wrap: wrap; }
-        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        .input-row { display: flex; gap: 20px; align-items: start; margin-bottom: 5px; flex-wrap: wrap; justify-content: center; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
         .input-group label { font-size: 0.8rem; color: #94a3b8; font-weight: bold; }
-        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 140px; height: 80px; resize: none; }
-        input[type="text"] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 200px; }
-        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; align-self: flex-end; height: 40px; }
+        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 140px; height: 100px; resize: none; font-size: 1rem; text-transform: lowercase; }
+        input[type="text"] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
+        button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; align-self: flex-end; height: 40px; }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
     </style>
@@ -85,41 +91,41 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Word Search II (Trie + DFS)</div>
+                <div class="viz-title">Word Search II (Backtracking Trie)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
                         <div class="input-group">
-                            <label>Grid (CSV):</label>
+                            <label>Grid (csv rows):</label>
                             <textarea id="boardInput">o,a,a,n
 e,t,a,e
 i,h,k,r
 i,f,l,v</textarea>
                         </div>
                         <div class="input-group">
-                            <label>Words (comma):</label>
+                            <label>Words (comma sep):</label>
                             <input type="text" id="wordsInput" value="oath,pea,eat,rain">
+                            <button onclick="runVisualizer()">Start Search</button>
                         </div>
-                        <button onclick="runVisualizer()">Search</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
                     <div class="dual-view">
-                        <div class="view-panel">
+                        <div class="view-panel" style="flex: 0 0 auto;">
                             <div class="view-title">Board Traversal</div>
                             <div class="grid-container" id="gridDisplay"></div>
                         </div>
-                        <div class="view-panel">
-                            <div class="view-title">Trie Matching</div>
+                        <div class="view-panel" style="flex: 1;">
+                            <div class="view-title">Trie State</div>
                             <svg id="trie-svg">
-                                <g id="trie-main"></g>
+                                <g id="trie-group" transform="translate(0, 40)"></g>
                             </svg>
                         </div>
                     </div>
                     
-                    <div class="view-title" style="margin-top:10px;">Found Words</div>
-                    <div class="found-panel" id="foundList">
-                        <span style="color:#64748b; font-size:0.9rem;">Waiting...</span>
+                    <div class="found-panel">
+                        <div class="found-label">Found Words</div>
+                        <div id="foundList" style="display: flex; gap: 8px; justify-content: center; width: 100%;"></div>
                     </div>
                 </div>
 
@@ -139,12 +145,12 @@ i,f,l,v</textarea>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -158,265 +164,304 @@ i,f,l,v</textarea>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'vector<string> findWords(board, words) {', id: 0 },
+            { line: 'vector<string> findWords(vector<vector<char>>& board, vector<string>& words) {', id: 0 },
             { line: '    Trie* root = buildTrie(words);', id: 1 },
-            { line: '    for(r=0..m) for(c=0..n) {', id: 2 },
-            { line: '        if(root->next[board[r][c]])', id: 3 },
-            { line: '            dfs(r, c, root->next[board[r][c]]);', id: 4 },
-            { line: '    }', id: 5 },
+            { line: '    for(int r=0; r<rows; r++)', id: 2 },
+            { line: '        for(int c=0; c<cols; c++)', id: 3 },
+            { line: '            dfs(r, c, root);', id: 4 },
+            { line: '    return found;', id: 5 },
             { line: '}', id: 6 },
             { line: 'void dfs(r, c, node) {', id: 7 },
-            { line: '    if(node->word != "") { // Found', id: 8 },
-            { line: '        res.push_back(node->word);', id: 9 },
-            { line: '        node->word = ""; // Dedup', id: 10 },
-            { line: '    }', id: 11 },
-            { line: '    char temp = board[r][c];', id: 12 },
-            { line: '    board[r][c] = \'#\'; // Visited', id: 13 },
-            { line: '    for(dir : directions) {', id: 14 },
-            { line: '        int nr=r+dr, nc=c+dc;', id: 15 },
-            { line: '        if(valid(nr, nc) && node->next[board[nr][nc]])', id: 16 },
-            { line: '            dfs(nr, nc, node->next[board[nr][nc]]);', id: 17 },
-            { line: '    }', id: 18 },
-            { line: '    board[r][c] = temp; // Backtrack', id: 19 },
-            { line: '}', id: 20 }
+            { line: '    if (node->isEnd) { found.push(word); node->isEnd = false; }', id: 8 },
+            { line: '    if (outOfBounds || visited[r][c]) return;', id: 9 },
+            { line: '    char ch = board[r][c];', id: 10 },
+            { line: '    if (!node->child[ch]) return;', id: 11 },
+            { line: '    visited[r][c] = true;', id: 12 },
+            { line: '    dfs(..., node->child[ch]);', id: 13 },
+            { line: '    visited[r][c] = false;', id: 14 },
+            { line: '}', id: 15 }
         ];
 
         let viz;
-        let rootNode = null;
-        let nodeIdCounter = 0;
+        let nextNodeId = 1;
 
-        // --- Data Logic ---
+        // Build Trie from list of words
         function buildTrie(words) {
-            const root = { id: 0, char: '', children: {}, wordEnd: null };
-            let counter = 1;
-            
-            for(let w of words) {
+            let root = { id: 0, char: 'root', children: {}, isEnd: false, fullWord: null };
+            nextNodeId = 1;
+            words.forEach(w => {
                 let curr = root;
                 for(let c of w) {
-                    if(!curr.children[c]) curr.children[c] = { id: counter++, char: c, children: {}, wordEnd: null };
+                    if(!curr.children[c]) curr.children[c] = { id: nextNodeId++, char: c, children: {}, isEnd: false, fullWord: null };
                     curr = curr.children[c];
                 }
-                curr.wordEnd = w;
-            }
+                curr.isEnd = true;
+                curr.fullWord = w;
+            });
             return root;
         }
 
-        // Helper for D3 Hierarchy
-        function toHierarchy(node) {
-            const children = Object.values(node.children).map(toHierarchy);
-            return { 
-                id: node.id, 
-                name: node.char, 
-                isEnd: !!node.wordEnd,
-                children: children.length > 0 ? children : null 
+        // Layout helper
+        function getTreeLayout(root) {
+            const buildH = (node) => {
+                const children = Object.keys(node.children).sort().map(k => buildH(node.children[k]));
+                return { 
+                    id: node.id, char: node.char, isEnd: node.isEnd,
+                    children: children.length ? children : null
+                };
             };
+            const hData = buildH(root);
+            const h = d3.hierarchy(hData);
+            const treeLayout = d3.tree().size([300, 250]);
+            treeLayout(h);
+            return h;
         }
 
         function simulate(grid, words) {
             const steps = [];
+            
+            // Build Trie
             const trieRoot = buildTrie(words);
+            const trieLayout = getTreeLayout(trieRoot);
             
-            const rows = grid.length;
-            const cols = grid[0].length;
-            const visited = Array(rows).fill(0).map(() => Array(cols).fill(false));
-            const foundWords = [];
-            
-            // To visualize trie, we need its structure in every step? Or just static?
-            // Static structure + Highlight active node.
-            
-            const pushState = (msg, hl, activeR, activeC, activeTrieId, visitPath=[], explanation=null) => {
-                // visitPath: array of {r, c} involved in current DFS
-                steps.push({
-                    grid: grid.map(r => [...r]), // Copy
-                    trieRoot: trieRoot, // Ref is fine if immutable structure
-                    activeCell: {r: activeR, c: activeC},
-                    activeTrieId,
-                    currentPath: [...visitPath],
-                    foundWords: [...foundWords],
-                    msg, highlightLines: hl,
-                    explanation
-                });
-            };
-
-            pushState("Build Trie from words", [1], null, null, 0, [], {
-                title: '建立 Trie',
-                text: `將字典單詞 [${words.join(', ')}] 插入 Trie。`,
-                formula: 'Build Trie'
+            steps.push({
+                board: grid, 
+                trieLayout,
+                visited: [], // set of r,c 'r-c'
+                visiting: null, // current cell
+                activeTrieNode: trieRoot.id,
+                foundWords: [],
+                scan: null, // r, c just scanning loop
+                msg: "Trie Built. Start scanning grid.",
+                hl: [1], explanation: { title: "初始化", text: "構建 Trie 樹，包含所有目標單詞。", formula: "buildTrie()" }
             });
 
-            // DFS
-            function dfs(r, c, node, pathStack) {
-                const char = grid[r][c];
-                pathStack.push({r, c});
-                visited[r][c] = true;
-
-                pushState(`Visit (${r},${c}) '${char}'`, [7, 12], r, c, node.id, pathStack, {
-                    title: `訪問 Grid (${r},${c})`,
-                    text: `匹配字符 '${char}'，進入 Trie 對應節點。`,
-                    formula: `curr = trie->next['${char}']`
+            const R = grid.length;
+            const C = grid[0].length;
+            const foundSet = new Set(); // fullWords found
+            
+            // DFS with Simulation
+            // We need to carry state: visited set, current trie node
+            
+            const visited = new Set(); // strings "r,c"
+            
+            const dfs = (r, c, tNode, path) => {
+                // Pre-check match? (Usually done after visiting, but visualizer logic varies)
+                // We check if tNode has char at grid[r][c]
+                
+                // We are AT grid[r][c] and AT tNode (parent of grid char)
+                // No, standard logic: pass TrieNode corresponding to parent, verify grid[r][c] is child.
+                // Or: pass TrieNode corresponding TO grid[r][c].
+                
+                // Let's use: tNode is the node REPRESENTING grid[r][c].
+                
+                const snap = (msg, lines, expl) => ({
+                    board: grid, trieLayout,
+                    visited: Array.from(visited),
+                    visiting: {r, c},
+                    activeTrieNode: tNode.id,
+                    foundWords: Array.from(foundSet),
+                    scan: {r, c},
+                    msg, hl: lines, explanation: expl
                 });
 
-                if (node.wordEnd) {
-                    foundWords.push(node.wordEnd);
-                    const w = node.wordEnd;
-                    node.wordEnd = null; // Avoid duplicate
-                    pushState(`Found word: "${w}"!`, [8, 9, 10], r, c, node.id, pathStack, {
-                        title: '找到單詞',
-                        text: `Trie 節點標記單詞結束 "${w}"。加入結果並在本路徑去重。`,
-                        formula: 'res.push(word)'
+                if (tNode.isEnd && tNode.fullWord && !foundSet.has(tNode.fullWord)) {
+                    foundSet.add(tNode.fullWord);
+                    steps.push({
+                        ...snap(`Found word: ${tNode.fullWord}!`, [8], { title: "找到單詞", text: `匹配成功 "${tNode.fullWord}"`, formula: "found.push(word)" }),
+                        flashFound: true
                     });
+                     // In optimized Trie, we might set isEnd=false, but here we just mark found set
                 }
-
-                // Directions
-                const dr = [0, 0, 1, -1];
-                const dc = [1, -1, 0, 0];
-
-                for(let i=0; i<4; i++) {
-                    const nr = r + dr[i];
-                    const nc = c + dc[i];
-                    
-                    if(nr>=0 && nr<rows && nc>=0 && nc<cols && !visited[nr][nc]) {
+                
+                // Try neighbors
+                const dirs = [[0,1], [0,-1], [1,0], [-1,0]];
+                for(let [dr, dc] of dirs) {
+                    const nr = r + dr, nc = c + dc;
+                    if(nr >= 0 && nr < R && nc >= 0 && nc < C && !visited.has(`${nr},${nc}`)) {
                         const nextChar = grid[nr][nc];
-                        if(node.children[nextChar]) {
-                            // Valid next step
-                            pushState(`Try neighbor (${nr},${nc}) '${nextChar}'`, [16], nr, nc, node.children[nextChar].id, pathStack, {
-                                title: '嘗試鄰居',
-                                text: `鄰居 (${nr},${nc}) 是 '${nextChar}'，且 Trie 中有此子節點。`,
-                                formula: 'dfs(next)'
-                            });
-                            dfs(nr, nc, node.children[nextChar], pathStack);
+                        if(tNode.children[nextChar]) {
+                            // Valid Step
+                            visited.add(`${nr},${nc}`);
+                            const nextNode = tNode.children[nextChar];
                             
-                            // Backtrack visual
-                            pushState(`Backtrack to (${r},${c})`, [19], r, c, node.id, pathStack, {
-                                title: '回溯',
-                                text: '從遞迴返回。',
-                                formula: 'return'
+                            steps.push({
+                                board: grid, trieLayout, visited: Array.from(visited),
+                                visiting: {r: nr, c: nc},
+                                activeTrieNode: nextNode.id,
+                                foundWords: Array.from(foundSet),
+                                scan: {r,c},
+                                msg: `Match '${nextChar}' at (${nr},${nc}). Explore.`,
+                                hl: [13], explanation: { title: "延伸路徑", text: `網格鄰居 '${nextChar}' 存在於 Trie 中，繼續 DFS。`, formula: "dfs(next)" }
                             });
+                            
+                            dfs(nr, nc, nextNode, path + nextChar);
+                            
+                            visited.delete(`${nr},${nc}`);
+                            // Backtrack visual
+                            steps.push(snap(`Backtrack to (${r},${c})`, [14], { title: "回溯", text: "無路可走或路徑結束，退回上一步。", formula: "return" }));
                         }
                     }
                 }
+            };
 
-                visited[r][c] = false;
-                pathStack.pop();
-            }
-
-            // Iterate Grid
-            for(let r=0; r<rows; r++) {
-                for(let c=0; c<cols; c++) {
+            for(let r=0; r<R; r++) {
+                for(let c=0; c<C; c++) {
                     const char = grid[r][c];
+                    
+                    steps.push({
+                        board: grid, trieLayout, visited: [], visiting: null,
+                        activeTrieNode: trieRoot.id, foundWords: Array.from(foundSet),
+                        scan: {r, c},
+                        msg: `Scan (${r},${c}) '${char}'`,
+                        hl: [3, 4], explanation: { title: "掃描網格", text: `檢查起點 (${r},${c}) '${char}'`, formula: "iterate matrix" }
+                    });
+
                     if(trieRoot.children[char]) {
-                        // Start DFS
-                        dfs(r, c, trieRoot.children[char], []);
+                        visited.add(`${r},${c}`);
+                        const nextNode = trieRoot.children[char];
+                        
+                        steps.push({
+                            board: grid, trieLayout, visited: Array.from(visited),
+                            visiting: {r, c}, activeTrieNode: nextNode.id, foundWords: Array.from(foundSet),
+                            scan: {r, c},
+                            msg: `Start DFS at (${r},${c}) with '${char}'`,
+                            hl: [4], explanation: { title: "開始 DFS", text: `起點字符 '${char}' 在 Trie 中，進入遞歸。`, formula: "dfs(root)" }
+                        });
+                        
+                        dfs(r, c, nextNode, char);
+                        
+                        visited.delete(`${r},${c}`);
                     }
                 }
             }
-
-            pushState("Done", [6], null, null, null, [], {
-                title: '完成',
-                text: `搜尋結束。找到單詞: [${foundWords.join(', ')}]`,
-                formula: 'return res'
+            
+            steps.push({
+                board: grid, trieLayout, visited: [], visiting: null,
+                activeTrieNode: null, foundWords: Array.from(foundSet),
+                scan: null, msg: "Search Complete.",
+                hl: [5], explanation: { title: "完成", text: "所有單詞搜尋完畢。", formula: "return found" }
             });
-
+            
             return steps;
         }
 
-        // --- Render ---
-        const width = 350, height = 350;
-        const svg = d3.select("#trie-svg");
-        const gMain = d3.select("#trie-main");
-        const zoom = d3.zoom().on("zoom", (e) => gMain.attr("transform", e.transform));
-        svg.call(zoom);
-        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 40).scale(0.8)); // Initial zoom
+        const trieSvg = d3.select("#trie-svg");
+        const trieG = trieSvg.select("#trie-group");
 
-        const treeLayout = d3.tree().size([width-40, height-40]); // Compact
+        // Zoom/Pan for Trie
+        const zoom = d3.zoom().on("zoom", (e) => {
+            trieG.attr("transform", e.transform);
+        });
+        trieSvg.call(zoom);
+        const initTx = d3.zoomIdentity.translate(trieSvg.node().getBoundingClientRect().width/2, 40).scale(0.8);
+        trieSvg.call(zoom.transform, initTx);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-
-            // Render Grid
-            const gridContainer = document.getElementById('gridDisplay');
-            gridContainer.innerHTML = '';
-            
-            const rows = step.grid.length;
-            const cols = step.grid[0].length;
-            gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-
-            for(let r=0; r<rows; r++) {
-                for(let c=0; c<cols; c++) {
-                    const div = document.createElement('div');
-                    div.className = 'cell';
-                    div.textContent = step.grid[r][c];
-                    
-                    // Styles
-                    if(step.activeCell && step.activeCell.r === r && step.activeCell.c === c) {
-                        div.classList.add('visiting');
-                    } else if (step.currentPath.some(p => p.r===r && p.c===c)) {
-                        div.classList.add('visited-path');
-                    }
-                    
-                    gridContainer.appendChild(div);
-                }
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
             }
 
-            // Render Found Words
-            const foundContainer = document.getElementById('foundList');
-            foundContainer.innerHTML = '';
-            if(step.foundWords.length === 0) foundContainer.innerHTML = '<span style="color:#64748b; font-size:0.9rem;">None</span>';
+            // Grid Render
+            const gridContainer = document.getElementById('gridDisplay');
+            if(gridContainer.innerHTML === '' || step.msg.includes("Start")) { // Rebuild grid if needed
+                gridContainer.innerHTML = '';
+                const R = step.board.length;
+                const C = step.board[0].length;
+                gridContainer.style.gridTemplateColumns = `repeat(${C}, 50px)`;
+                
+                for(let r=0; r<R; r++) {
+                    for(let c=0; c<C; c++) {
+                        const el = document.createElement('div');
+                        el.id = `cell-${r}-${c}`;
+                        el.className = 'cell';
+                        el.textContent = step.board[r][c];
+                        gridContainer.appendChild(el);
+                    }
+                }
+            }
+            
+            // Update Grid Styles
+            document.querySelectorAll('.cell').forEach(el => {
+                el.className = 'cell'; // reset
+                // Re-apply static styles (found items?) No, we rely on step state
+            });
+            
+            // Scan highlight
+            if(step.scan) {
+                const el = document.getElementById(`cell-${step.scan.r}-${step.scan.c}`);
+                if(el) el.classList.add('scanning');
+            }
+            // Visited path
+            if(step.visited) {
+                step.visited.forEach(key => {
+                    const [r,c] = key.split(',');
+                    const el = document.getElementById(`cell-${r}-${c}`);
+                    if(el) el.classList.add('path');
+                });
+            }
+            // Active visiting
+            if(step.visiting) {
+                 const el = document.getElementById(`cell-${step.visiting.r}-${step.visiting.c}`);
+                 if(el) {
+                     el.classList.add('visiting');
+                     if(step.flashFound) el.classList.add('found-flash');
+                 }
+            }
+
+            // Trie Render
+            const root = step.trieLayout;
+            const nodes = root.descendants();
+            const links = root.links();
+            
+            const linkSel = trieG.selectAll(".link").data(links, d => d.target.data.id);
+            linkSel.enter().append("path").attr("class", "link")
+                .merge(linkSel).transition().duration(200)
+                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
+            linkSel.exit().remove();
+            
+            const nodeSel = trieG.selectAll(".node").data(nodes, d => d.data.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node")
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+            nodeEnter.append("circle").attr("r", 15).attr("class", "node-circle");
+            nodeEnter.append("text").attr("dy", 1).attr("class", "node-text");
+            
+            const nodeMerge = nodeSel.merge(nodeEnter).transition().duration(200)
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+            
+            nodeMerge.select("circle").attr("class", d => {
+                let c = "node-circle";
+                if(d.data.id === step.activeTrieNode) c += " current";
+                if(d.data.isEnd) c += " found-word";
+                return c;
+            });
+            nodeMerge.select("text").text(d => d.data.char === 'root' ? '*' : d.data.char);
+            nodeSel.exit().remove();
+            
+            // Found List
+            const listEl = document.getElementById('foundList');
+            listEl.innerHTML = '';
             step.foundWords.forEach(w => {
-               const tag = document.createElement('span');
+               const tag = document.createElement('div');
                tag.className = 'found-tag';
                tag.textContent = w;
-               foundContainer.appendChild(tag);
+               listEl.appendChild(tag);
             });
-
-            // Render Trie
-            if(!step.trieRoot) return;
-            const root = d3.hierarchy(toHierarchy(step.trieRoot));
-            treeLayout(root);
-
-            // Links
-            const links = gMain.selectAll(".link").data(root.links(), d => d.target.data.id);
-            links.enter().append("path").attr("class", "link")
-                .merge(links)
-                .transition().duration(200)
-                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y))
-                .attr("class", d => {
-                    // Highlight path to active node
-                    // We need to trace parents from active node? 
-                    // Or just highlight active node itself.
-                    // Let's keep it simple: highlight active node circle
-                    return "link";
-                });
-            links.exit().remove();
-
-            // Nodes
-            const nodes = gMain.selectAll(".node-g").data(root.descendants(), d => d.data.id);
-            const nEnter = nodes.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 15).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-
-            const nUpdate = nodes.merge(nEnter).transition().duration(200)
-                .attr("transform", d => `translate(${d.x}, ${d.y})`);
-            
-            nUpdate.select("circle").attr("class", d => {
-                let c = "node-circle";
-                if(d.data.id === step.activeTrieId) c += " current";
-                else if(d.data.isEnd) c += " match";
-                else if(d.data.id === 0) c += " start";
-                return c;
-            })
-            // Highlight if part of current word found? Complex step check
-            
-            nUpdate.select("text").text(d => d.data.name);
-            nodes.exit().remove();
         }
 
         function runVisualizer() {
             const boardStr = document.getElementById('boardInput').value;
             const wordsStr = document.getElementById('wordsInput').value;
             
-            const grid = boardStr.split('\n').map(line => line.split(',').map(c => c.trim()));
-            const words = wordsStr.split(',').map(w => w.trim());
+            const grid = boardStr.split('\n').map(row => row.split(',').map(c => c.trim().toLowerCase()));
+            const words = wordsStr.split(',').map(w => w.trim().toLowerCase());
+            
+            if(grid.length === 0 || words.length === 0) return;
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,

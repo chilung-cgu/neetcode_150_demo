@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subtree of Another Tree - D3 精緻視覺化</title>
+    <title>Subtree of Another Tree - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,34 +13,51 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
             min-height: 550px;
         }
-        
-        #viz-svg { width: 100%; height: 500px; }
 
-        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; stroke: #64748b; }
-        .node-circle.root { stroke: #3b82f6; fill: #1e293b; }
-        .node-circle.sub { stroke: #a855f7; fill: #1e293b; }
-        .node-circle.active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.1); }
-        .node-circle.match { stroke: #22c55e; fill: rgba(34, 197, 94, 0.1); }
-        .node-circle.mismatch { stroke: #ef4444; fill: rgba(239, 68, 68, 0.1); }
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 500px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: fill 0.3s; r: 18px; }
+        .node-text { fill: white; font-family: monospace; font-size: 13px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
         
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
+        .node-root { fill: #334155; stroke: #3b82f6; }
+        .node-sub { fill: #334155; stroke: #a855f7; }
         
-        /* Layout separators */
-        .separator { stroke: #475569; stroke-dasharray: 5; }
-        .label-text { font-size: 16px; font-weight: bold; fill: #94a3b8; }
+        .node-active { stroke: #fbbf24; stroke-width: 3px; filter: drop-shadow(0 0 5px #fbbf24); } /* Visiting */
+        .node-match { fill: #22c55e; stroke: #16a34a; } /* True */
+        .node-mismatch { fill: #ef4444; stroke: #b91c1c; } /* False */
+
+        /* Links */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
+        
+        /* Box */
+        .tree-box { fill: none; stroke: #475569; stroke-dasharray: 5; rx: 10; }
+        .label-text { fill: #94a3b8; font-weight: bold; font-family: sans-serif; text-anchor: middle; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 180px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -51,18 +68,32 @@
                 <div class="viz-title">Subtree of Another Tree</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Root:</label>
-                        <input type="text" id="rootInput" value="3,4,5,1,2">
-                        <label>SubRoot:</label>
-                        <input type="text" id="subInput" value="4,1,2">
-                        <button onclick="runVisualizer()">檢查</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#60a5fa;">Main Tree (S):</label>
+                            <input type="text" id="rootInput" value="3,4,5,1,2">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#a855f7;">Sub Tree (T):</label>
+                            <input type="text" id="subInput" value="4,1,2">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Check</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <g id="scene-group" transform="translate(0, 40)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Scanning</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Match</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Mismatch</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <g id="scene-group" transform="translate(0, 40)"></g>
+                        </svg>
+                    </div>
                 </div>
 
                 <div class="step-breakdown">
@@ -81,12 +112,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -106,238 +137,222 @@
             { line: '    return isSubtree(root->left, subRoot) ||', id: 3 },
             { line: '           isSubtree(root->right, subRoot);', id: 4 },
             { line: '}', id: 5 },
-            { line: 'bool isSameTree(p, q) {', id: 6 },
-            { line: '    if (!p && !q) return true;', id: 7 },
-            { line: '    if (!p || !q) return false;', id: 8 },
-            { line: '    if (p->val != q->val) return false;', id: 9 },
-            { line: '    return isSameTree(p->left, q->left) && isSameTree(p->right, q->right);', id: 10 },
-            { line: '}', id: 11 }
+            { line: 'bool isSameTree(p, q) { ... }', id: 6 }
         ];
 
         let viz;
 
-        // Helper to parsing tree array to node objects
         function buildTree(arr) {
-            if(!arr || arr.length === 0) return null;
-            const root = { id: 0, val: arr[0], children: [] };
-            const queue = [root];
+            if(arr.length===0) return null;
+            let root = {id: 0, val: arr[0], left: null, right: null};
+            let queue = [root];
             let i = 1;
+            let nextId = 1;
             while(i < arr.length) {
-                const p = queue.shift();
+                let curr = queue.shift();
                 if(i < arr.length && arr[i] !== null) {
-                    const l = { id: i, val: arr[i], children: [] };
-                    p.children[0] = l;
-                    queue.push(l);
+                    curr.left = {id: nextId++, val: arr[i], left: null, right: null};
+                    queue.push(curr.left);
                 }
                 i++;
                 if(i < arr.length && arr[i] !== null) {
-                    const r = { id: i, val: arr[i], children: [] };
-                    p.children[1] = r;
-                    queue.push(r);
+                    curr.right = {id: nextId++, val: arr[i], left: null, right: null};
+                    queue.push(curr.right);
                 }
                 i++;
             }
             return root;
         }
 
-        // Deep clone for snapshots
-        function deepClone(node) {
-            if(!node) return null;
-            const n = { ...node, children: [] };
-            if(node.children[0]) n.children[0] = deepClone(node.children[0]);
-            if(node.children[1]) n.children[1] = deepClone(node.children[1]);
-            return n;
+        function getLayout(rootNode, offsetX) {
+            if(!rootNode) return [];
+            const h = d3.hierarchy(rootNode);
+            const treeLayout = d3.tree().size([250, 250]);
+            treeLayout(h);
+            const nodes = [];
+            h.descendants().forEach(d => {
+                nodes.push({
+                    id: d.data.id, val: d.data.val,
+                    x: d.x + offsetX, y: d.y + 50,
+                    parentId: d.parent ? d.parent.data.id : null
+                });
+            });
+            return nodes;
         }
 
-        function simulate(rootArr, subArr) {
+        function simulate(rawS, rawT) {
             const steps = [];
-            const rootTree = buildTree(rootArr);
-            const subTree = buildTree(subArr); // subTree ID conflicts? 
+            const rootS = buildTree(rawS);
+            const rootT = buildTree(rawT);
             
-            // Fix IDs: We need unique IDs for subTree vs rootTree nodes
-            // Shift subTree IDs by rootArr.length + 100
-            const shiftIDs = (n, offset) => {
-                if(!n) return;
-                n.id += offset;
-                if(n.children[0]) shiftIDs(n.children[0], offset);
-                if(n.children[1]) shiftIDs(n.children[1], offset);
-            };
-            shiftIDs(subTree, 1000);
-
-            // Step helper
-            const pushState = (msg, hl, activeRootId=null, activeSubId=null, status='normal', explanation=null) => {
-                steps.push({
-                    root: deepClone(rootTree),
-                    sub: deepClone(subTree),
-                    activeRootId,
-                    activeSubId,
-                    status, // 'match', 'mismatch', 'checking'
-                    msg, highlightLines: hl,
-                    explanation
-                });
-            };
-
-            pushState("Initial State", [0], null, null, 'normal', {
-                title: '初始化',
-                text: '我們需要在 Root 樹中尋找是否存在與 SubRoot 完全相同的子樹。',
-                formula: 'isSubtree(root, subRoot)'
+            const layoutS = getLayout(rootS, 40); // Left side
+            const layoutT = getLayout(rootT, 340); // Right side
+            
+            // Map: id -> status (match/mismatch/none)
+            let sStates = {};
+            let tStates = {};
+            
+            const snap = (activeS, activeT, msg, lines, info) => ({
+                layoutS, layoutT,
+                sStates: JSON.parse(JSON.stringify(sStates)),
+                tStates: JSON.parse(JSON.stringify(tStates)),
+                activeS, activeT,
+                msg, highlightLines: lines, explanation: info
             });
 
-            // isSameTree simulation
-            const checkSame = (p, q) => {
+            // Same Tree Check (visualized)
+            const isSameTree = (p, q) => {
+                const pid = p ? p.id : null;
+                const qid = q ? q.id : null;
+                const pVal = p ? p.val : 'null';
+                const qVal = q ? q.val : 'null';
+                
+                // Active highlight
+                steps.push(snap(pid, qid, `Comparing Nodes ${pVal} and ${qVal}`, [6], {
+                    title: "比較節點", text: `正在比較 Main Tree 節點 ${pVal} 與 Sub Tree 節點 ${qVal}。`, formula: "isSameTree(p,q)"
+                }));
+
                 if (!p && !q) return true;
-                
-                // Visualization of comparison
-                let hl = [7];
-                let desc = "";
-                let expl = {title: '比較節點', text: '', formula: ''};
-                
-                if (!p || !q) {
-                    // One null
-                    pushState(`Mismatch: One is null`, [8], p?p.id:null, q?q.id:null, 'mismatch', {
-                        title: '結構不匹配',
-                        text: '其中一個節點為空，另一個不為空。',
-                        formula: '(!p || !q) -> false'
-                    });
+                if (!p || !q || p.val !== q.val) {
+                    if(pid!==null) sStates[pid] = 'mismatch';
+                    if(qid!==null) tStates[qid] = 'mismatch';
+                    steps.push(snap(pid, qid, "Mismatch!", [6], { title: "不匹配", text: "值不同或結構不同。", formula: "return false" }));
                     return false;
                 }
-
-                if (p.val !== q.val) {
-                    pushState(`Mismatch: ${p.val} != ${q.val}`, [9], p.id, q.id, 'mismatch', {
-                        title: '數值不匹配',
-                        text: `Root 節點值 (${p.val}) 與 SubRoot 節點值 (${q.val}) 不同。`,
-                        formula: 'p->val != q->val'
-                    });
-                    return false;
-                }
-
-                pushState(`Match: ${p.val} == ${q.val}`, [10], p.id, q.id, 'match', {
-                    title: '節點匹配',
-                    text: `值相同 (${p.val})。繼續遞迴檢查左右子樹。`,
-                    formula: 'match -> check children'
-                });
-
-                if (checkSame(p.children[0], q.children[0]) && checkSame(p.children[1], q.children[1])) {
-                    return true;
-                }
-                return false;
+                
+                // Match so far
+                sStates[pid] = 'match';
+                tStates[qid] = 'match';
+                
+                if (!isSameTree(p.left, q.left)) return false;
+                if (!isSameTree(p.right, q.right)) return false;
+                
+                return true;
             };
-
-            // Main loop (DFS traversal of Root)
+            
+            // Main Traversal
             const traverse = (node) => {
-                if (!node) return false;
+                if(!node) return false;
+                
+                steps.push(snap(node.id, null, `Visit Main Node ${node.val}. Candidate?`, [0, 1], {
+                    title: "遍歷主樹", text: `檢查節點 ${node.val} 是否可能是子樹的根。`, formula: "isSubtree(node)"
+                }));
+                
+                // Check if candidate
+                if(node.val === rootT.val) {
+                     // Reset visual states for check
+                     const savedS = JSON.parse(JSON.stringify(sStates));
+                     const savedT = JSON.parse(JSON.stringify(tStates));
+                     
+                     steps.push(snap(node.id, rootT.id, `Candidate Found (${node.val}). Start Check.`, [2], {
+                         title: "候選匹配", text: `發現值相同 (${node.val})，開始深度比較。`, formula: "isSameTree()"
+                     }));
 
-                pushState(`Visit Root Node ${node.val}`, [2], node.id, subTree.id, 'checking', {
-                    title: `檢查子樹根節點 ${node.val}`,
-                    text: `嘗試以 Root 的節點 ${node.val} 為起點，與 SubRoot 進行匹配。`,
-                    formula: 'isSameTree(root, subRoot)'
-                });
-
-                if (checkSame(node, subTree)) {
-                    pushState(`Subtree Found at ${node.val}!`, [2], node.id, null, 'found', {
-                        title: '找到子樹',
-                        text: `在節點 ${node.val} 處發現完全匹配的子樹。`,
-                        formula: 'return true'
-                    });
-                    return true;
+                     if (isSameTree(node, rootT)) {
+                         steps.push(snap(node.id, rootT.id, "Subtree Match Found!", [2], {
+                             title: "匹配成功", text: "兩棵樹結構完全一致。", formula: "return true"
+                         }));
+                         return true;
+                     }
+                     
+                     // Restore states if failed check (clean up mismatch red)
+                     sStates = savedS; 
+                     tStates = savedT;
+                     steps.push(snap(node.id, null, "Check Failed. Continue Traversal.", [3], {
+                         title: "檢查失敗", text: "結構不匹配，繼續遍歷主樹。", formula: "continue"
+                     }));
                 }
-
-                if (traverse(node.children[0])) return true;
-                if (traverse(node.children[1])) return true;
-
+                
+                if (traverse(node.left)) return true;
+                if (traverse(node.right)) return true;
+                
                 return false;
             };
 
-            if (!traverse(rootTree)) {
-                pushState("No subtree found", [5], null, null, 'mismatch', {
-                    title: '未找到',
-                    text: '遍歷完整棵樹，未發現匹配的子樹。',
-                    formula: 'return false'
-                });
-            }
+            const found = traverse(rootS);
+            
+            steps.push(snap(null, null, found ? "Subtree Found: True" : "Subtree Not Found: False", [5], {
+                title: "最終結果", text: found ? "主樹中包含該子樹。" : "未找到子樹。", formula: "Result"
+            }));
 
             return steps;
         }
 
         const svg = d3.select("#viz-svg");
-        const gScene = d3.select("#scene-group");
+        const scene = svg.select("#scene-group");
         
-        // Layout Config
-        const width = 800;
-        const height = 500;
-        const rootX = width * 0.3;
-        const subX = width * 0.75;
-        const startY = 50;
+        // Helper Render
+        function renderTree(g, nodesData, activeId, states, type, offsetX) {
+            // Links
+            const linksData = nodesData.filter(d => d.parentId !== null).map(d => {
+                const par = nodesData.find(x => x.id === d.parentId);
+                return { s: par, t: d, id: `${par.id}-${d.id}` };
+            });
+
+            const linkSel = g.selectAll(`.link-${type}`).data(linksData, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", `link-path link-${type}`);
+            linkSel.merge(linkEnter).transition().duration(500)
+                .attr("d", d => `M${d.s.x},${d.s.y} L${d.t.x},${d.t.y}`);
+            linkSel.exit().remove();
+            
+            // Nodes
+            const nodeSel = g.selectAll(`.node-${type}`).data(nodesData, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", `node-g node-${type}`);
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 18);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            nodeMerge.select("circle").attr("class", d => {
+                let c = "node-circle";
+                if (type === 'root') c += " node-root"; else c += " node-sub";
+                
+                if (d.id === activeId) c = "node-circle node-active";
+                else if (states[d.id] === 'match') c = "node-circle node-match";
+                else if (states[d.id] === 'mismatch') c = "node-circle node-mismatch";
+                return c;
+            });
+            nodeMerge.select("text").text(d => d.val);
+            nodeSel.exit().remove();
+        }
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            gScene.selectAll("*").remove(); // Clear all
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
+            // Draw Labels
+            scene.selectAll(".label-text").remove();
+            scene.append("text").attr("x", 140).attr("y", 20).text("Main Tree (S)").attr("class", "label-text");
+            scene.append("text").attr("x", 440).attr("y", 20).text("Sub Tree (T)").attr("class", "label-text");
+            
             // Draw Separator
-            gScene.append("line").attr("x1", width*0.55).attr("y1", 0).attr("x2", width*0.55).attr("y2", height)
-                .attr("class", "separator");
-            gScene.append("text").attr("x", rootX).attr("y", 20).attr("text-anchor", "middle").attr("class", "label-text").text("Main Tree");
-            gScene.append("text").attr("x", subX).attr("y", 20).attr("text-anchor", "middle").attr("class", "label-text").text("SubRoot Tree");
+            scene.selectAll(".separator").remove();
+            scene.append("line").attr("x1", 300).attr("y1", 0).attr("x2", 300).attr("y2", 450).attr("class", "separator");
 
-            // Draw function
-            const drawTree = (rootNode, offsetX) => {
-                if(!rootNode) return;
-                const root = d3.hierarchy(rootNode, d => d.children);
-                const treeLayout = d3.tree().size([350, 400]); // width, height
-                treeLayout(root);
-
-                // Offset
-                root.descendants().forEach(d => {
-                    d.x += offsetX - 175; // center around offsetX
-                    d.y += startY;
-                });
-
-                // Links
-                gScene.selectAll(".link-"+offsetX)
-                    .data(root.links())
-                    .enter().append("path")
-                    .attr("class", "link")
-                    .attr("d", d3.linkVertical().x(d=>d.x).y(d=>d.y));
-
-                // Nodes
-                const nodes = gScene.selectAll(".node-"+offsetX)
-                    .data(root.descendants())
-                    .enter().append("g")
-                    .attr("transform", d => `translate(${d.x},${d.y})`);
-
-                nodes.append("circle")
-                    .attr("r", 20)
-                    .attr("class", d => {
-                        let c = "node-circle";
-                        if(offsetX === rootX) c += " root"; else c += " sub";
-                        
-                        if(d.data.id === step.activeRootId || d.data.id === step.activeSubId) {
-                            if(step.status === 'match') c += " match";
-                            else if(step.status === 'mismatch') c += " mismatch";
-                            else c += " active";
-                        }
-                        return c;
-                    });
-
-                nodes.append("text")
-                    .attr("class", "node-text")
-                    .attr("dy", 1)
-                    .text(d => d.data.val);
-            };
-
-            drawTree(step.root, rootX);
-            drawTree(step.sub, subX);
+            renderTree(scene, step.layoutS, step.activeS, step.sStates, 'root');
+            renderTree(scene, step.layoutT, step.activeT, step.tStates, 'sub');
         }
 
         function runVisualizer() {
-            const rootStr = document.getElementById('rootInput').value.split(',').map(x=>x.trim()==='null'?null:parseInt(x));
-            const subStr = document.getElementById('subInput').value.split(',').map(x=>x.trim()==='null'?null:parseInt(x));
+            const rawS = document.getElementById('rootInput').value;
+            const rawT = document.getElementById('subInput').value;
+            const valsS = rawS.split(',').map(x => x.trim() === 'null' ? null : (isNaN(parseInt(x))?null:parseInt(x)));
+            const valsT = rawT.split(',').map(x => x.trim() === 'null' ? null : (isNaN(parseInt(x))?null:parseInt(x)));
+            
+            if(valsS.length === 0 || valsT.length === 0) return;
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(simulate(rootStr, subStr));
+            viz.setSteps(simulate(valsS, valsT));
         }
 
         window.addEventListener('load', runVisualizer);

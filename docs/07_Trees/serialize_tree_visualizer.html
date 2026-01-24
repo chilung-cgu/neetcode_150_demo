@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Serialize & Deserialize - D3 精緻視覺化</title>
+    <title>Serialize & Deserialize - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -13,67 +13,64 @@
             margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 20px;
             align-items: center;
             min-height: 600px;
         }
-        
-        #viz-svg { width: 100%; height: 400px; }
 
-        /* Tree Nodes */
-        .node-circle { stroke-width: 3px; transition: all 0.3s; fill: #334155; stroke: #64748b; }
-        .node-circle.active { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.2); }
-        .node-circle.processed { stroke: #22c55e; fill: #1e293b; }
-        .node-circle.null { stroke-dasharray: 4; fill: transparent; }
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
+        }
+        #viz-svg { width: 100%; height: 100%; }
+
+        /* Nodes */
+        .node-circle { stroke-width: 2px; transition: all 0.5s; fill: #334155; stroke: #64748b; }
+        .node-active { stroke: #fbbf24; stroke-width: 3px; filter: drop-shadow(0 0 5px #fbbf24); } 
+        .node-done { fill: #1e293b; stroke: #22c55e; }
+        .node-null { fill: transparent; stroke: #64748b; stroke-dasharray: 4; }
 
         .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-        
-        .link { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
+        .node-text-null { fill: #94a3b8; font-size: 12px; }
 
-        /* String / Queue Visualization */
+        .link-path { fill: none; stroke: #64748b; stroke-width: 2px; transition: all 0.5s; opacity: 0.6; }
+
+        /* Queue / String Panel */
         .data-panel {
-            width: 90%;
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            width: 95%; display: flex; flex-direction: column; gap: 10px;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 8px; border: 1px solid #475569;
         }
-        
-        .data-row {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid #475569;
-            border-radius: 8px;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            overflow-x: auto;
+        .data-row { display: flex; align-items: center; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+        .data-lbl { min-width: 80px; text-align: right; color: #94a3b8; font-weight: bold; font-size: 0.8rem; }
+        .token {
+            padding: 4px 8px; border: 1px solid #475569; border-radius: 4px;
+            color: #cbd5e1; font-family: monospace; font-size: 0.9rem; min-width: 30px; text-align: center;
+            transition: all 0.3s;
         }
-        .data-label { color: #94a3b8; font-size: 0.8rem; font-weight: bold; min-width: 80px; text-align: right; }
-        
-        .data-item {
-            padding: 5px 10px;
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid #3b82f6;
-            border-radius: 4px;
-            color: #e2e8f0;
-            font-family: monospace;
-            white-space: nowrap;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .data-item.active { background: #fbbf24; color: #0f172a; border-color: #fbbf24; font-weight: bold; }
-        .data-item.null { color: #94a3b8; border-color: #64748b; border-style: dashed; }
+        .token.active { background: #fbbf24; color: #0f172a; border-color: #f59e0b; font-weight: bold; transform: scale(1.1); }
+        .token.processed { background: #22c55e; color: #fff; border-color: #16a34a; opacity: 0.5; }
+        .token.null { border-style: dashed; color: #94a3b8; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .mode-toggle { display: flex; gap: 10px; margin-bottom: 10px; justify-content: center; }
-        .mode-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid #475569; background: transparent; color: #94a3b8; cursor: pointer; }
-        .mode-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
-        
         .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 300px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+        
+        .mode-toggle { display: flex; gap: 10px; margin-bottom: 10px; justify-content: center; }
+        .mode-btn { background: transparent; border: 1px solid #475569; color: #94a3b8; }
+        .mode-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -81,32 +78,35 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Serialize & Deserialize (BFS)</div>
+                <div class="viz-title">Serialize & Deserialize (Preorder DFS)</div>
                 <div class="custom-input-section">
                     <div class="mode-toggle">
-                        <button class="mode-btn active" id="btn-ser" onclick="setMode('serialize')">Serialize (Tree → String)</button>
-                        <button class="mode-btn" id="btn-des" onclick="setMode('deserialize')">Deserialize (String → Tree)</button>
+                        <button class="mode-btn active" id="btn-ser" onclick="setMode('ser')">Serialize</button>
+                        <button class="mode-btn" id="btn-des" onclick="setMode('des')">Deserialize</button>
                     </div>
                     <div class="input-row">
-                        <label id="inputLabel">Tree:</label>
+                        <label id="inputLabel" style="font-size:0.8rem; color:#94a3b8;">Tree:</label>
                         <input type="text" id="dataInput" value="1,2,3,null,null,4,5">
                         <button onclick="runVisualizer()">Run</button>
                     </div>
                 </div>
 
                 <div class="visualization-area">
-                    <svg id="viz-svg">
-                        <g id="main-group" transform="translate(40, 40)"></g>
-                    </svg>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Active</div>
+                       <div class="legend-item"><div class="legend-color" style="border:1px dashed #64748b"></div>Null "N"</div>
+                    </div>
+
+                    <div class="stage-viewport">
+                        <svg id="viz-svg">
+                            <g id="main-group" transform="translate(40, 40)"></g>
+                        </svg>
+                    </div>
                     
                     <div class="data-panel">
                         <div class="data-row">
-                            <div class="data-label">Queue</div>
-                            <div id="queueDisplay" style="display:flex; gap:5px;"></div>
-                        </div>
-                        <div class="data-row">
-                            <div class="data-label">Result String</div>
-                            <div id="stringDisplay" style="display:flex; gap:5px;"></div>
+                            <div class="data-lbl">String Data</div>
+                            <div class="data-row" id="stringData"></div>
                         </div>
                     </div>
                 </div>
@@ -127,12 +127,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -145,380 +145,325 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
-        const codeSerialize = [
-            { line: 'string serialize(root) {', id: 0 },
-            { line: '    if(!root) return "";', id: 1 },
-            { line: '    string res = "";', id: 2 },
-            { line: '    queue<Node*> q; q.push(root);', id: 3 },
-            { line: '    while(!q.empty()) {', id: 4 },
-            { line: '        Node* node = q.front(); q.pop();', id: 5 },
-            { line: '        if(node) {', id: 6 },
-            { line: '            res += to_string(node->val) + ",";', id: 7 },
-            { line: '            q.push(node->left);', id: 8 },
-            { line: '            q.push(node->right);', id: 9 },
-            { line: '        } else {', id: 10 },
-            { line: '            res += "null,";', id: 11 },
-            { line: '        }', id: 12 },
-            { line: '    }', id: 13 },
-            { line: '    return res;', id: 14 },
-            { line: '}', id: 15 }
+        // Preorder DFS
+        const codeStructure = [
+            { line: 'string serialize(TreeNode* root) {', id: 0 },
+            { line: '    if (!root) return "N";', id: 1 },
+            { line: '    return to_string(root->val) + "," +', id: 2 },
+            { line: '           serialize(root->left) + "," +', id: 3 },
+            { line: '           serialize(root->right);', id: 4 },
+            { line: '}', id: 5 },
+            { line: 'TreeNode* deserialize(string data) {', id: 6 },
+            { line: '    queue<string> q = split(data);', id: 7 },
+            { line: '    return build(q);', id: 8 },
+            { line: '}', id: 9 },
+            { line: 'TreeNode* build(queue<string>& q) {', id: 10 },
+            { line: '    string s = q.front(); q.pop();', id: 11 },
+            { line: '    if (s == "N") return NULL;', id: 12 },
+            { line: '    TreeNode* node = new TreeNode(stoi(s));', id: 13 },
+            { line: '    node->left = build(q);', id: 14 },
+            { line: '    node->right = build(q);', id: 15 },
+            { line: '    return node;', id: 16 },
+            { line: '}', id: 17 }
         ];
 
-        const codeDeserialize = [
-            { line: 'Node* deserialize(data) {', id: 0 },
-            { line: '    if(data.empty()) return nullptr;', id: 1 },
-            { line: '    stringstream ss(data); string str;', id: 2 },
-            { line: '    getline(ss, str, ",");', id: 3 },
-            { line: '    Node* root = new Node(stoi(str));', id: 4 },
-            { line: '    queue<Node*> q; q.push(root);', id: 5 },
-            { line: '    while(!q.empty()) {', id: 6 },
-            { line: '        Node* node = q.front(); q.pop();', id: 7 },
-            { line: '        getline(ss, str, ",");', id: 8 },
-            { line: '        if(str != "null") {', id: 9 },
-            { line: '            node->left = new Node(stoi(str));', id: 10 },
-            { line: '            q.push(node->left);', id: 11 },
-            { line: '        }', id: 12 },
-            { line: '        getline(ss, str, ",");', id: 13 },
-            { line: '        if(str != "null") {', id: 14 },
-            { line: '            node->right = new Node(stoi(str));', id: 15 },
-            { line: '            q.push(node->right);', id: 16 },
-            { line: '        }', id: 17 },
-            { line: '    }', id: 18 },
-            { line: '    return root;', id: 19 },
-            { line: '}', id: 20 }
-        ];
-
-        let mode = 'serialize';
         let viz;
+        let currentMode = 'ser'; // 'ser' or 'des'
 
-        function setMode(m) {
-            mode = m;
-            document.getElementById('btn-ser').classList.toggle('active', mode==='serialize');
-            document.getElementById('btn-des').classList.toggle('active', mode==='deserialize');
-            document.getElementById('inputLabel').textContent = mode === 'serialize' ? 'Tree:' : 'String:';
-            // Swap placeholder content logic is handled but assume user changes input manually or keeps standard
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('btn-ser').className = mode === 'ser' ? 'mode-btn active' : 'mode-btn';
+            document.getElementById('btn-des').className = mode === 'des' ? 'mode-btn active' : 'mode-btn';
+            
+            const inp = document.getElementById('dataInput');
+            const lbl = document.getElementById('inputLabel');
+            if(mode==='ser') {
+                lbl.textContent = 'Tree:';
+                inp.value = '1,2,3,null,null,4,5';
+                inp.placeholder = "Level order (e.g. 1,2,3)";
+            } else {
+                lbl.textContent = 'String:';
+                inp.value = '1,2,3,N,N,4,5,N,N,N,N'; // Preorder string with N
+                inp.placeholder = "Preorder string (e.g. 1,2,N,N,3,N,N)";
+            }
             runVisualizer();
         }
 
-        // Tree Helper
+        // --- Helpers ---
         function buildTree(arr) {
-            if (!arr || arr.length === 0) return null;
-            const root = { id: 0, val: arr[0], children: [] };
-            const queue = [root];
+            if(arr.length===0) return null;
+            let root = {id: 0, val: arr[0], left: null, right: null};
+            let queue = [root];
             let i = 1;
-            while (i < arr.length) {
-                const parent = queue.shift();
-                if (i < arr.length && arr[i] !== null) {
-                    const left = { id: i, val: arr[i], children: [] };
-                    parent.children[0] = left; 
-                    queue.push(left);
+            let nextId = 1;
+            while(i < arr.length) {
+                let curr = queue.shift();
+                if(i < arr.length && arr[i] !== null) {
+                    curr.left = {id: nextId++, val: arr[i], left: null, right: null};
+                    queue.push(curr.left);
                 }
                 i++;
-                if (i < arr.length && arr[i] !== null) {
-                    const right = { id: i, val: arr[i], children: [] };
-                    parent.children[1] = right;
-                    queue.push(right);
+                if(i < arr.length && arr[i] !== null) {
+                    curr.right = {id: nextId++, val: arr[i], left: null, right: null};
+                    queue.push(curr.right);
                 }
                 i++;
             }
             return root;
         }
 
-        function cleanHierarchy(node) {
-            if(!node) return null;
-            const c = [];
-            if(node.children[0]) c.push(cleanHierarchy(node.children[0]));
-            if(node.children[1]) c.push(cleanHierarchy(node.children[1]));
-            return { ...node, children: c };
+        function getLayout(rootNode) {
+            if(!rootNode) return [];
+            const h = d3.hierarchy(rootNode);
+            const treeLayout = d3.tree().size([500, 300]);
+            treeLayout(h);
+            const nodes = [];
+            h.descendants().forEach(d => {
+                nodes.push({
+                    id: d.data.id, val: d.data.val,
+                    x: d.x + 50, y: d.y + 50,
+                    parentId: d.parent ? d.parent.data.id : null
+                });
+            });
+            return nodes;
         }
 
-        // Simulation: Serialize
-        function simulateSerialize(arr) {
+        // --- Simulators ---
+        function simSerialize(arr) {
             const steps = [];
             const root = buildTree(arr);
-            if(!root) return []; 
-
-            // Initialize
-            const result = [];
-            const queue = [root]; // contains node objects
-            const queueVisual = [root.val]; // vals for display
-            const processedIds = [];
-
-            const pushState = (msg, hl, activeId=null, explanation=null) => {
-                steps.push({
-                    root: cleanHierarchy(root),
-                    queueVisual: [...queueVisual],
-                    resultString: [...result],
-                    processedIds: [...processedIds],
-                    activeId,
-                    msg, highlightLines: hl,
-                    explanation
-                });
-            };
-
-            pushState("Init: Push root to queue", [3], root.id, {
-                title: '初始化',
-                text: '將根節點加入 Queue。',
-                formula: 'q.push(root)'
+            if(!root) return [];
+            const layout = getLayout(root);
+            
+            let resString = []; // list of tokens
+            
+            const snap = (activeId, msg, lines, info) => ({
+                layout,
+                resString: [...resString],
+                activeId, activeTokenIdx: -1,
+                msg, highlightLines: lines, explanation: info
             });
 
-            while(queue.length > 0) {
-                const node = queue.shift();
-                queueVisual.shift(); // Remove from visual queue too
-                
-                if (node) {
-                    processedIds.push(node.id);
-                    result.push(node.val);
-                    
-                    pushState(`Pop ${node.val}, Add to Result`, [5, 6, 7], node.id, {
-                        title: `處理節點 ${node.val}`,
-                        text: `從 Queue 取出 ${node.val}，加入結果字串。同時將其左右子節點（含 null）加入 Queue。`,
-                        formula: `res += "${node.val},"`
-                    });
-
-                    // Add children
-                    if(node.children && node.children[0]) {
-                        queue.push(node.children[0]);
-                        queueVisual.push(node.children[0].val);
-                    } else {
-                        queue.push(null);
-                        queueVisual.push("null");
-                    }
-                    
-                    if(node.children && node.children[1]) {
-                        queue.push(node.children[1]);
-                        queueVisual.push(node.children[1].val);
-                    } else {
-                        queue.push(null);
-                        queueVisual.push("null");
-                    }
-                } else {
-                    result.push("null");
-                    pushState(`Pop null, Add to Result`, [10, 11], null, {
-                        title: '處理 null 節點',
-                        text: 'Queue 中取出 null，將 "null" 加入結果字串以標記空位。',
-                        formula: 'res += "null,"'
-                    });
+            const dfs = (node) => {
+                if(!node) {
+                    resString.push("N");
+                    steps.push(snap(null, "Hit NULL, append 'N'", [1], {
+                        title: "空節點", text: "遇到空節點，添加 'N' 到字符串。", formula: "return 'N'"
+                    }));
+                    return;
                 }
-            }
-            
+                
+                resString.push(node.val.toString());
+                steps.push(snap(node.id, `Visit ${node.val}, append to string`, [2], {
+                    title: "序列化節點", text: `處理節點 ${node.val}，添加到字符串。`, formula: "str += val"
+                }));
+                
+                dfs(node.left);
+                dfs(node.right);
+            };
+
+            dfs(root);
+            steps.push(snap(null, `Done. Result: ${resString.join(',')}`, [5], {
+                title: "完成", text: "序列化完成。", formula: "return string"
+            }));
+
             return steps;
         }
+        
+        // Custom tree builder logic for Preorder string
+        // Need to replicate "Preorder build" to get coordinates
+        // We will build the full tree object first, then layout, then simulate the "discovery"
+        function buildFromPreorder(tokens) {
+            let idx = 0;
+            const helper = () => {
+                if(idx >= tokens.length) return null;
+                const val = tokens[idx++];
+                if(val === 'N' || val === 'null') return null;
+                const node = { id: Math.random(), val: parseInt(val), left: null, right: null };
+                node.left = helper();
+                node.right = helper();
+                return node;
+            };
+            return helper();
+        }
 
-        // Simulation: Deserialize (simplified visual structure)
-        function simulateDeserialize(str) {
+        function simDeserialize(tokenStr) {
+            const tokens = tokenStr.split(',').map(s=>s.trim());
+            const fullTree = buildFromPreorder([...tokens]); // copy
+            if(!fullTree) return [];
+            const layout = getLayout(fullTree); // static final positions
+            
             const steps = [];
-            const vals = str.split(',').map(s => s.trim() === 'null' ? null : parseInt(s.trim()));
-            if(vals.length === 0) return [];
-
-            // We need to build the tree incrementally for visualization
-            // But D3 needs structure. We can pre-build full tree and hide/show nodes.
-            const fullTree = buildTree(vals);
-            const visibleIds = [];
-            const queueVisual = []; // Shows nodes currently in queue for child attachment
+            let visibleSet = new Set();
+            let processedTokens = 0; // index
             
-            const pushState = (msg, hl, activeId=null, explanation=null) => {
-                steps.push({
-                    root: cleanHierarchy(fullTree),
-                    visibleIds: [...visibleIds], // Mask for rendering
-                    queueVisual: [...queueVisual], // IDs
-                    resultString: vals.map(v => v===null?'null':v), // Static input
-                    processedIds: [], // Not really used in Deser
-                    activeId,
-                    msg, highlightLines: hl,
-                    explanation
-                });
-            };
-
-            // Start
-            if(vals[0] === null) return steps;
-            
-            const rootId = 0; // Assuming 0 is root if constructed by buildTree logic
-            visibleIds.push(rootId);
-            queueVisual.push(fullTree.val); 
-            
-            // We need to match logic exactly.
-            // Queue holds Nodes.
-            const q = [fullTree]; // Objects
-            let i = 1;
-
-            pushState("Init: Create Root and Queue", [4, 5], rootId, {
-                title: '初始化',
-                text: `讀取第一個值 ${fullTree.val}，建立根節點並加入 Queue。`,
-                formula: 'root = new Node(val)'
+            const snap = (activeId, tokenIdx, msg, lines, info) => ({
+                layout,
+                resString: tokens,
+                activeId, activeTokenIdx: tokenIdx,
+                visibleSet: new Set(visibleSet),
+                msg, highlightLines: lines, explanation: info
             });
-
-            while(q.length > 0 && i < vals.length) {
-                const parent = q.shift();
-                queueVisual.shift(); // Visual align
+            
+            let idx = 0; // global mutable for recursion simulation 
+            
+            // We need to trace identically to buildFromPreorder to match layout nodes
+            // But layout doesn't have "N" nodes. 
+            // We just need to track current layout node when not N.
+            
+            // Re-traverse layout-logic to map steps
+            const traverse = (node) => {
+                const currentTokenIdx = idx;
+                const token = tokens[idx];
+                idx++;
                 
-                pushState(`Pop Parent ${parent.val}`, [7], parent.id, {
-                    title: `處理父節點 ${parent.val}`,
-                    text: `從 Queue 取出 ${parent.val}，準備為其接上左右子節點。`,
-                    formula: 'node = q.pop()'
-                });
-
-                // Left
-                if(i < vals.length) {
-                    const lVal = vals[i];
-                    if(lVal !== null) {
-                        const lNode = parent.children[0];
-                        visibleIds.push(lNode.id);
-                        q.push(lNode);
-                        queueVisual.push(lNode.val);
-                        pushState(`Attach Left: ${lVal}`, [9, 10, 11], lNode.id, {
-                            title: '連接左子節點',
-                            text: `讀取下一個值 ${lVal}，建立節點並接在 ${parent.val} 的左邊。加入 Queue。`,
-                            formula: 'node->left = new Node()'
-                        });
-                    } else {
-                        pushState(`Left is null`, [9], parent.id, {
-                            title: '左子節點為空',
-                            text: '讀取到 null，跳過建立左子節點。',
-                            formula: 'str == "null"'
-                        });
-                    }
-                    i++;
+                steps.push(snap(node ? node.id : null, currentTokenIdx, `Read Token: ${token}`, [11], {
+                    title: "讀取 Token", text: `從 Queue 取出 ${token}。`, formula: "q.pop()"
+                }));
+                
+                if(token === 'N' || token === 'null') {
+                    steps.push(snap(null, currentTokenIdx, "Token is 'N' -> Return NULL", [12], {
+                        title: "空節點", text: "遇到 'N'，返回 NULL。", formula: "return NULL"
+                    }));
+                    return;
                 }
-
-                // Right
-                if(i < vals.length) {
-                    const rVal = vals[i];
-                    if(rVal !== null) {
-                        const rNode = parent.children[1];
-                        visibleIds.push(rNode.id);
-                        q.push(rNode);
-                        queueVisual.push(rNode.val);
-                        pushState(`Attach Right: ${rVal}`, [14, 15, 16], rNode.id, {
-                            title: '連接右子節點',
-                            text: `讀取下一個值 ${rVal}，建立節點並接在 ${parent.val} 的右邊。加入 Queue。`,
-                            formula: 'node->right = new Node()'
-                        });
-                    } else {
-                        pushState(`Right is null`, [14], parent.id, {
-                            title: '右子節點為空',
-                            text: '讀取到 null，跳過建立右子節點。',
-                            formula: 'str == "null"'
-                        });
-                    }
-                    i++;
-                }
-            }
+                
+                if(node) visibleSet.add(node.id);
+                steps.push(snap(node.id, currentTokenIdx, `Create Node ${token}`, [13], {
+                    title: "創建節點", text: `創建數值為 ${token} 的節點。`, formula: "new TreeNode(val)"
+                }));
+                
+                // Recurse Left
+                // Need to find left child in layout
+                 // Since layout is static, we can find child by layout logic or just assume order matches recursion
+                 // The 'node' passed here IS the correct layout node corresponding to this step from the outside call
+                 
+                // Find children in layout
+                const children = layout.filter(n => n.parentId === node.id).sort((a,b) => a.x - b.x); 
+                // Strict Preorder: Left is first child (if exists logic matches). 
+                // Wait. BuildFromPreorder logic guarantees left is processed first. 
+                // But layout children array order depends on D3. 
+                // Usually Left child has smaller X.
+                
+                // Tricky: if token sequence has N, left might be null.
+                // We need to know if 'node' actually has left/right children in the static tree.
+                // We can check fullTree structure again? Or rely on the simulation flow.
+                // Better: Pass the 'node's true children from fullTree structure down, but mapped to layout objects only for ID.
+                // Actually, fullTree has objects with IDs. Layout has same IDs. 
+                // Let's rely on fullTree structure which we traverse in sync with tokens.
+                
+                steps.push(snap(node.id, currentTokenIdx, "Recurse Left", [14], { title: "遞歸左側", text: "構建左子樹。", formula: "node->left = build()" }));
+                traverse(node.left); // node.left has correct ID
+                
+                steps.push(snap(node.id, currentTokenIdx, "Recurse Right", [15], { title: "遞歸右側", text: "構建右子樹。", formula: "node->right = build()" }));
+                traverse(node.right);
+                
+                steps.push(snap(node.id, currentTokenIdx, "Subtree Done", [16], { title: "返回節點", text: "子樹構建完成，返回節點。", formula: "return node" }));
+            };
             
-            pushState("Done", [19], null, {
-                title: '完成',
-                text: '字串解析完畢，樹重建完成。',
-                formula: 'return root'
-            });
-
+            // Start sync using fullTree (which has IDs matching layout)
+            traverse(fullTree);
+            
             return steps;
         }
 
-        const width = 600;
-        const height = 400;
-        const treeLayout = d3.tree().size([width, height]);
-        const gMain = d3.select("#main-group");
-
+        const svg = d3.select("#viz-svg");
+        const mainG = svg.select("#main-group");
+        
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-
-            // Render Queue
-            const qContainer = document.getElementById('queueDisplay');
-            qContainer.innerHTML = '';
-            if(step.queueVisual.length === 0) {
-                qContainer.innerHTML = '<span style="color:#64748b; font-size:0.8rem;">Empty</span>';
-            } else {
-                step.queueVisual.forEach(v => {
-                    const dim = document.createElement('div');
-                    dim.className = v === "null" || v === null ? 'data-item null' : 'data-item active';
-                    dim.textContent = v;
-                    qContainer.appendChild(dim);
-                });
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
             }
 
-            // Render Result String
-            const sContainer = document.getElementById('stringDisplay');
-            sContainer.innerHTML = '';
-            if(step.resultString.length === 0) {
-                sContainer.innerHTML = '<span style="color:#64748b; font-size:0.8rem;">Empty</span>';
-            } else {
-                step.resultString.forEach(v => {
-                    const dim = document.createElement('div');
-                    dim.className = v === "null" || v === null ? 'data-item null' : 'data-item';
-                    dim.textContent = v;
-                    sContainer.appendChild(dim);
-                });
-            }
+            // String Render
+            const strContainer = document.getElementById('stringData');
+            strContainer.innerHTML = '';
+            step.resString.forEach((s, i) => {
+                const el = document.createElement('div');
+                el.className = 'token';
+                if(s==='N' || s==='null') el.className += ' null';
+                if(i === step.activeTokenIdx) el.className += ' active';
+                else if(currentMode==='des' && i < step.activeTokenIdx) el.className += ' processed';
+                el.textContent = s;
+                strContainer.appendChild(el);
+            });
 
-            // Render Tree
-            if(!step.root) return;
+            const nodesData = step.layout;
             
-            const root = d3.hierarchy(step.root);
-            treeLayout(root);
+            // Filter visible nodes if in Deserialize mode
+            const isDes = (currentMode === 'des');
+            const showLink = (d) => {
+                if(!isDes) return true; // Serialize shows all
+                return step.visibleSet.has(d.s.id) && step.visibleSet.has(d.t.id);
+            };
+            const showNode = (d) => {
+                if(!isDes) return true;
+                return step.visibleSet.has(d.id);
+            };
 
             // Links
-            const links = gMain.selectAll(".link").data(root.links(), d => d.source.data.id + "-" + d.target.data.id);
-            links.enter().append("path").attr("class", "link")
-                .merge(links)
-                .transition().duration(300)
-                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y))
-                .style("opacity", d => {
-                    // In deserialize mode, hide invisible links
-                    if(mode === 'deserialize') {
-                        return step.visibleIds.includes(d.target.data.id) ? 0.6 : 0;
-                    }
-                    return 0.6;
-                });
-            links.exit().remove();
+            const linksData = nodesData.filter(d => d.parentId !== null).map(d => {
+                const p = nodesData.find(x => x.id === d.parentId);
+                return { s: p, t: d, id: `${p.id}-${d.id}` };
+            });
 
-            // Nodes
-            const nodes = gMain.selectAll(".node-g").data(root.descendants(), d => d.data.id);
-            const nEnter = nodes.enter().append("g").attr("class", "node-g");
-            nEnter.append("circle").attr("r", 20).attr("class", "node-circle");
-            nEnter.append("text").attr("class", "node-text").attr("dy", 1);
-
-            const nUpdate = nodes.merge(nEnter).transition().duration(300)
-                .attr("transform", d => `translate(${d.x}, ${d.y})`)
-                .style("opacity", d => {
-                    if(mode === 'deserialize') {
-                        return step.visibleIds.includes(d.data.id) ? 1 : 0;
-                    }
-                    return 1;
-                });
+            const linkSel = mainG.selectAll(".link-path").data(linksData, d => d.id);
+            const linkEnter = linkSel.enter().append("path").attr("class", "link-path");
+            linkSel.merge(linkEnter).transition().duration(500)
+                .attr("d", d => `M${d.s.x},${d.s.y} L${d.t.x},${d.t.y}`)
+                .style("opacity", d => showLink(d) ? 0.6 : 0);
+            linkSel.exit().remove();
             
-            nUpdate.select("circle").attr("class", d => {
-                let c = "node-circle";
-                if(d.data.id === step.activeId) c += " active";
-                else if(step.processedIds && step.processedIds.includes(d.data.id)) c += " processed";
-                else if(mode === 'deserialize' && step.visibleIds.includes(d.data.id)) c+= " processed";
+            // Nodes
+            const nodeSel = mainG.selectAll(".node-g").data(nodesData, d => d.id);
+            const nodeEnter = nodeSel.enter().append("g").attr("class", "node-g");
+            nodeEnter.append("circle").attr("class", "node-circle").attr("r", 18);
+            nodeEnter.append("text").attr("class", "node-text").attr("dy", 1);
+            
+            const nodeMerge = nodeSel.merge(nodeEnter).transition().duration(500)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`)
+                .style("opacity", d => showNode(d) ? 1 : 0);
+            
+            nodeMerge.select("circle").attr("class", d => {
+                let c = "node-circle node-normal";
+                if(d.id === step.activeId) c = "node-circle node-active";
+                else if(isDes && step.visibleSet.has(d.id)) c = "node-circle node-done";
                 return c;
-            })
-            .style("stroke-width", d => (d.data.id === step.activeId) ? 5 : 3);
-
-            nUpdate.select("text").text(d => d.data.val);
-            nodes.exit().remove();
+            });
+            nodeMerge.select("text").text(d => d.val);
+            nodeSel.exit().remove();
         }
 
         function runVisualizer() {
-            const inputVal = document.getElementById('dataInput').value;
+            const raw = document.getElementById('dataInput').value;
             
             viz = new AlgorithmVisualizer({
-                codeLines: mode === 'serialize' ? codeSerialize : codeDeserialize,
+                codeLines: codeStructure,
                 onStepChange: render
             });
-
-            if (mode === 'serialize') {
-                const arr = inputVal.split(',').map(x => {
-                    const t = x.trim();
-                    return t === 'null' || t === '' ? null : parseInt(t);
+            
+            if(currentMode === 'ser') {
+                 const vals = raw.split(',').map(x => {
+                    const t = x.trim().toLowerCase();
+                    if(t==='null' || t==='') return null;
+                    return isNaN(parseInt(t)) ? null : parseInt(t);
                 });
-                viz.setSteps(simulateSerialize(arr));
+                if(vals.length === 0) return;
+                viz.setSteps(simSerialize(vals));
             } else {
-                viz.setSteps(simulateDeserialize(inputVal));
+                if(!raw) return;
+                viz.setSteps(simDeserialize(raw));
             }
         }
 
-        window.addEventListener('load', runVisualizer);
+        window.addEventListener('load', () => {
+             setMode('ser');
+        });
     </script>
 </body>
 </html>

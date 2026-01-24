@@ -3,27 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Schedule - 視覺化</title>
+    <title>Course Schedule - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .courses-container { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .course { 
-            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; transition: all 0.3s;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 600px;
         }
-        .course.visiting { background: var(--viz-warning); color: #0f172a; }
-        .course.visited { background: var(--viz-success); color: #0f172a; }
-        .course.cycle { background: var(--viz-error); animation: shake 0.3s; }
-        @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
-        .prereqs-display { 
-            text-align: center; margin: 10px 0; padding: 12px; 
-            background: var(--viz-bg-secondary); border-radius: 8px; font-size: 0.9rem;
+        /* SVG */
+        .graph-viewport {
+            width: 100%; height: 450px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }
+        #viz-svg { width: 100%; height: 100%; cursor: grab; }
+        #viz-svg:active { cursor: grabbing; }
+
+        .node-circle { stroke: #fff; stroke-width: 2px; transition: fill 0.3s; }
+        .node-circle.unvisited { fill: #475569; }
+        .node-circle.visiting { fill: #f59e0b; stroke: #fcd34d; filter: drop-shadow(0 0 5px #f59e0b); }
+        .node-circle.visited { fill: #22c55e; }
+        .node-circle.cycle { fill: #ef4444; stroke: #fff; animation: pulse 0.5s infinite; }
+        
+        .node-text { pointer-events: none; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; fill: white; }
+
+        .link { stroke: #94a3b8; stroke-width: 2px; marker-end: url(#arrow); transition: stroke 0.3s; }
+        .link.active { stroke: #f59e0b; stroke-width: 3px; }
+        .link.cycle { stroke: #ef4444; stroke-width: 3px; }
+
+        @keyframes pulse { 0% { r: 20; } 50% { r: 25; } 100% { r: 20; } }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+        }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 220px; height: 60px; resize: none; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #fff; }
     </style>
 </head>
 <body>
@@ -31,180 +70,328 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">課程表 (Course Schedule)</div>
+                <div class="viz-title">Course Schedule (Cycle Detection)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <button onclick="setExample(1)">範例1 (可完成)</button>
-                        <button onclick="setExample(2)">範例2 (有環)</button>
-                        <button onclick="resetVisualization()">↻ 重置</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Prerequisites [course, pre]:</label>
+                            <textarea id="gridInput">[[1,0],[2,0],[3,1],[3,2]]</textarea>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Detect</button>
+                            <div style="display:flex; gap:5px;">
+                                <button onclick="loadExample(1)" style="background:#475569; font-size:0.8rem; padding:5px;">Ex 1</button>
+                                <button onclick="loadExample(2)" style="background:#475569; font-size:0.8rem; padding:5px;">Cycle</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="courses-container" id="coursesDisplay"></div>
-                <div class="prereqs-display" id="prereqsDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:#475569"></div>Unvisited</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Visiting</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Visited</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Cycle!</div>
+                    </div>
+                    
+                    <div class="graph-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="28" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#94a3b8"/>
+                                </marker>
+                            </defs>
+                            <g id="zoom-group"></g>
+                        </svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Result</div>
+                            <div class="stat-val" id="resultDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(V+E)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(V+E)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">結果</div><div class="state-value" id="resultDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'bool canFinish(int n, vector<vector<int>>& prereqs) {', id: 0 },
-            { line: '    vector<vector<int>> graph(n);', id: 1 },
-            { line: '    for (auto& p : prereqs) graph[p[1]].push_back(p[0]);', id: 2 },
-            { line: '    vector<int> state(n, 0); // 0:未訪 1:訪中 2:完成', id: 3 },
-            { line: '    function<bool(int)> dfs = [&](int course) {', id: 4 },
-            { line: '        if (state[course] == 1) return false; // 環!', id: 5 },
-            { line: '        if (state[course] == 2) return true;', id: 6 },
-            { line: '        state[course] = 1;', id: 7 },
-            { line: '        for (int next : graph[course])', id: 8 },
-            { line: '            if (!dfs(next)) return false;', id: 9 },
-            { line: '        state[course] = 2;', id: 10 },
-            { line: '        return true;', id: 11 },
-            { line: '    };', id: 12 },
-            { line: '    for (int i = 0; i < n; i++)', id: 13 },
-            { line: '        if (!dfs(i)) return false;', id: 14 },
-            { line: '    return true;', id: 15 },
-            { line: '}', id: 16 },
+            { line: '    vector<int> state(n, 0); // 0:Unvisited, 1:Visiting, 2:Visited', id: 1 },
+            { line: '    // Build Graph', id: 2 },
+            { line: '    vector<vector<int>> adj(n);', id: 3 },
+            { line: '    for(auto p : prereqs) adj[p[1]].push_back(p[0]);', id: 4 },
+            { line: '    for (int i = 0; i < n; i++) {', id: 5 },
+            { line: '        if (hasCycle(i, adj, state)) return false;', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    return true;', id: 8 },
+            { line: '}', id: 9 },
+            { line: 'bool hasCycle(u, adj, state) {', id: 10 },
+            { line: '    if (state[u] == 1) return true; // Cycle detected', id: 11 },
+            { line: '    if (state[u] == 2) return false; // Already safe', id: 12 },
+            { line: '    state[u] = 1; // Mark Visiting', id: 13 },
+            { line: '    for (int v : adj[u])', id: 14 },
+            { line: '        if (hasCycle(v, adj, state)) return true;', id: 15 },
+            { line: '    state[u] = 2; // Mark Visited', id: 16 },
+            { line: '    return false;', id: 17 },
+            { line: '}', id: 18 }
         ];
-        
-        const examples = {
-            1: { n: 4, prereqs: [[1,0],[2,0],[3,1],[3,2]], desc: '0→1→3, 0→2→3 (可完成)' },
-            2: { n: 2, prereqs: [[0,1],[1,0]], desc: '0↔1 (循環依賴)' }
-        };
-        
-        let currentExample = examples[1];
 
-        function setExample(n) {
-            currentExample = examples[n];
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(numCourses, prereqs) {
+        function simulate(prereqs) {
             const steps = [];
-            const state = Array(numCourses).fill(0);
-            const graph = Array(numCourses).fill(null).map(() => []);
             
-            for (const [a, b] of prereqs) {
-                graph[b].push(a);
-            }
-            
-            const prereqStr = prereqs.map(p => `${p[1]}→${p[0]}`).join(', ');
-            
-            steps.push({
-                state: [...state], current: null, prereqs: prereqStr,
-                highlightLines: [0, 1, 2, 3],
-                explanation: { title: '初始化', text: `${numCourses} 門課程<br>先修: ${prereqStr}<br>DFS 檢測環`, formula: 'setup' }
+            // Build Graph
+            const edges = [];
+            const nodes = new Set();
+            prereqs.forEach(p => {
+                nodes.add(p[0]); nodes.add(p[1]);
+                edges.push({source: p[1], target: p[0]});
             });
-
-            let hasCycle = false;
+            const n = Math.max(...Array.from(nodes), -1) + 1; // max ID + 1 if sequential?
+            // Actually just map IDs found or 0..max
+            const nodeList = Array.from(nodes).sort((a,b)=>a-b);
             
-            function dfs(course, path = []) {
-                if (hasCycle) return false;
-                if (state[course] === 1) {
-                    hasCycle = true;
-                    steps.push({
-                        state: [...state], current: course, cycle: true, prereqs: prereqStr,
-                        highlightLines: [5],
-                        explanation: { title: '發現環!', text: `課程 ${course} 正在訪問中<br>存在循環依賴`, formula: 'return false' }
-                    });
-                    return false;
-                }
-                if (state[course] === 2) return true;
-                
-                state[course] = 1;
+            // Re-map dense for array indices if sparse?
+            // Assuming simplified input 0..N-1
+            
+            const adj = {};
+            nodeList.forEach(id => adj[id] = []);
+            prereqs.forEach(p => adj[p[1]].push(p[0]));
+
+            // D3 Data
+            const d3Nodes = nodeList.map(id => ({id}));
+            const d3Links = edges.map(e => ({source: e.source, target: e.target})); // Using IDs for force layout later
+
+            const state = {}; // Map id -> 0,1,2
+            nodeList.forEach(id => state[id] = 0);
+
+            const pushState = (msg, hl, activeId, result=null) => {
                 steps.push({
-                    state: [...state], current: course, prereqs: prereqStr,
-                    highlightLines: [7, 8],
-                    explanation: { title: `DFS 課程 ${course}`, text: `state[${course}] = 1 (訪問中)`, formula: `visiting ${course}` }
+                    graph: { nodes: d3Nodes, links: d3Links },
+                    state: {...state},
+                    activeId,
+                    result,
+                    msg, highlightLines: hl
                 });
+            };
+
+            pushState("Initial Graph", [2,3,4], null);
+
+            let cycleFound = false;
+
+            function dfs(u) {
+                if (cycleFound) return true;
                 
-                for (const next of graph[course]) {
-                    if (!dfs(next)) return false;
+                if (state[u] === 1) { // Visiting
+                    cycleFound = true;
+                    // For visualization, highlight this node as cycle cause
+                    // Maybe state[u] = 3?
+                    // Let's just track result
+                    pushState(`Detailed: Node ${u} is already VISITING! Cycle detected!`, [11], u, false);
+                    return true;
                 }
-                
-                state[course] = 2;
-                return true;
+                if (state[u] === 2) return false;
+
+                state[u] = 1;
+                pushState(`DFS(${u}): Mark Visiting (Yellow)`, [13], u);
+
+                const neighbors = adj[u] || [];
+                for (let v of neighbors) {
+                    pushState(`Check neighbor ${v} of ${u}`, [14], u);
+                    if (dfs(v)) return true;
+                }
+
+                state[u] = 2;
+                pushState(`DFS(${u}) Done: Mark Visited (Green)`, [16], u);
+                return false;
             }
 
-            for (let i = 0; i < numCourses && !hasCycle; i++) {
+            for (let i of nodeList) {
                 if (state[i] === 0) {
-                    dfs(i);
+                    if (dfs(i)) {
+                        cycleFound = true;
+                        break;
+                    }
                 }
             }
 
-            const result = !hasCycle;
-            steps.push({
-                state: [...state], result, prereqs: prereqStr, final: true,
-                highlightLines: result ? [15] : [14],
-                explanation: { 
-                    title: result ? '完成!' : '失敗!', 
-                    text: result ? '可以修完所有課程' : '存在循環依賴',
-                    formula: `return ${result}`
-                }
-            });
+            pushState(cycleFound ? "Cycle Detected! Impossible." : "No Cycles! Possible.", cycleFound ? [6] : [8], null, !cycleFound);
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    const states = step.state || [];
-                    let html = '';
-                    for (let i = 0; i < states.length; i++) {
-                        let cls = 'course';
-                        if (states[i] === 1) cls += step.cycle && step.current === i ? ' cycle' : ' visiting';
-                        if (states[i] === 2) cls += ' visited';
-                        html += `<div class="${cls}">${i}</div>`;
-                    }
-                    document.getElementById('coursesDisplay').innerHTML = html;
-                    document.getElementById('prereqsDisplay').textContent = `先修關係: ${step.prereqs || ''}`;
-                    
-                    if (step.result !== undefined) {
-                        document.getElementById('resultDisplay').textContent = step.result ? 'True ✓' : 'False ✗';
-                        document.getElementById('resultDisplay').style.color = step.result ? 'var(--viz-success)' : 'var(--viz-error)';
-                    } else {
-                        document.getElementById('resultDisplay').textContent = '-';
-                        document.getElementById('resultDisplay').style.color = 'inherit';
-                    }
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(currentExample.n, currentExample.prereqs));
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const gZoom = d3.select("#zoom-group");
+        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
+        svg.call(zoom);
+
+        // Force Simulation
+        let simulation = d3.forceSimulation()
+            .force("charge", d3.forceManyBody().strength(-400))
+            .force("link", d3.forceLink().id(d => d.id).distance(100))
+            .force("center", d3.forceCenter(400, 225)); // Center of 800x450
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            if (step.result !== null && step.result !== undefined) {
+                const el = document.getElementById('resultDisplay');
+                el.textContent = step.result ? "Possible" : "Impossible";
+                el.style.color = step.result ? "#22c55e" : "#ef4444";
+            }
+
+            const currentNodes = step.graph.nodes; // Keep ref for transitions if needed
+            const currentLinks = step.graph.links;
+
+            // Reuse simulation nodes to keep positions?
+            // If nodes haven't changed array ref, simulation uses internal state.
+            // But we recreate `steps` every run. visualization `init` creates viz.
+            // On step change, we just update attributes.
+            // Simulation should run once or be updated if graph changes.
+            // Here graph structure is static for all steps!
+            
+            // Only update colors
+            gZoom.selectAll(".node-circle")
+                .attr("class", d => {
+                    let s = step.state[d.id]; // 0,1,2
+                    let c = "node-circle";
+                    if(s===0) c+= " unvisited";
+                    if(s===1) c+= " visiting";
+                    if(s===2) c+= " visited";
+                    if(step.result === false && s===1) c+= " cycle"; // Highlight logic cycle
+                    return c;
+                });
+            
+            // Highlight active links?
+            // If activeId, maybe highlight edges outgoing from activeId?
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        function initGraph(nodes, links) {
+            // Clear
+            gZoom.selectAll("*").remove(); // Clears arrow defs? No, defs is outside gZoom.
+            
+            simulation.nodes(nodes);
+            simulation.force("link").links(links);
+            simulation.alpha(1).restart();
+
+            const link = gZoom.append("g").selectAll(".link")
+                .data(links).enter().append("line")
+                .attr("class", "link");
+
+            const node = gZoom.append("g").selectAll(".node-g")
+                .data(nodes).enter().append("g")
+                .attr("class", "node-g")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+
+            node.append("circle")
+                .attr("r", 20)
+                .attr("class", "node-circle unvisited");
+
+            node.append("text")
+                .attr("class", "node-text")
+                .attr("dy", 1)
+                .text(d => d.id);
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+        }
+
+        // Drag
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        function runVisualizer() {
+            try {
+                const raw = document.getElementById('gridInput').value;
+                const prereqs = JSON.parse(raw);
+                
+                // Static Graph first
+                const nodesSet = new Set();
+                prereqs.forEach(p => { nodesSet.add(p[0]); nodesSet.add(p[1]); });
+                const nodes = Array.from(nodesSet).map(id => ({id}));
+                const links = prereqs.map(p => ({source: p[1], target: p[0]})); // p[1]->p[0]
+                
+                initGraph(nodes, links);
+
+                viz = new AlgorithmVisualizer({
+                    codeLines: codeStructure,
+                    onStepChange: render
+                });
+                viz.setSteps(simulate(prereqs));
+            } catch(e) {
+                alert("Invalid Input");
+                console.error(e);
+            }
+        }
+
+        const examples = {
+            1: "[[1,0],[2,0],[3,1],[3,2]]",
+            2: "[[1,0],[0,1]]"
+        };
+        function loadExample(n) {
+            document.getElementById('gridInput').value = examples[n];
+            runVisualizer();
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

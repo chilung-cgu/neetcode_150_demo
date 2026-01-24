@@ -3,38 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Schedule II - 視覺化</title>
+    <title>Course Schedule II - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 600px;
+        }
 
-        .graph-container { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .node { 
-            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; border-radius: 50%; background: var(--viz-primary); color: white; 
-            font-size: 1.1rem; transition: all 0.3s; border: 2px solid transparent;
+        /* SVG */
+        .graph-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }
-        .node.visited { background: var(--viz-success); color: #0f172a; }
-        .node.current { border-color: white; background: var(--viz-warning); color: #0f172a; transform: scale(1.1); }
+        #viz-svg { width: 100%; height: 100%; cursor: grab; }
+        #viz-svg:active { cursor: grabbing; }
 
-        .result-container { 
-            display: flex; gap: 8px; justify-content: center; margin: 15px 0; padding: 15px; 
-            background: var(--viz-bg-secondary); border-radius: 8px; min-height: 50px; align-items: center;
-        }
-        .result-label { color: var(--viz-text-muted); margin-right: 10px; }
-        .result-item { 
-            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; border-radius: 50%; background: var(--viz-success); color: #0f172a;
-        }
-        .result-arrow { color: var(--viz-text-muted); }
+        .node-circle { stroke: #fff; stroke-width: 2px; transition: fill 0.3s; }
+        .node-circle.normal { fill: #475569; }
+        .node-circle.queued { fill: #f59e0b; stroke: #fbbf24; } /* In Queue (0 indegree) */
+        .node-circle.done { fill: #22c55e; stroke: #86efac; } /* Processed */
+        
+        .node-text { pointer-events: none; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; fill: white; }
+        .indegree-badge { fill: #ef4444; font-size: 10px; font-weight: bold; text-anchor: middle; dominant-baseline: central; }
+        .indegree-bg { fill: white; stroke: #ef4444; stroke-width: 1px; }
 
-        .indegree-display { 
-            display: flex; gap: 10px; justify-content: center; margin: 10px 0; flex-wrap: wrap;
-            padding: 10px; background: var(--viz-bg-secondary); border-radius: 8px;
+        .link { stroke: #94a3b8; stroke-width: 2px; marker-end: url(#arrow); opacity: 0.6; }
+        .link.active { stroke: #fbbf24; opacity: 1; stroke-width: 3px; }
+
+        /* Order List */
+        .order-panel {
+            width: 100%; background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px;
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: flex-start;
+            min-height: 60px; border: 1px solid #475569;
         }
-        .indegree-item { padding: 5px 10px; border-radius: 4px; font-size: 0.85rem; background: var(--viz-bg-primary); }
+        .order-label { color: #94a3b8; font-weight: bold; margin-right: 10px; text-transform: uppercase; font-size: 0.9rem; }
+        .order-item {
+            width: 36px; height: 36px; border-radius: 50%; background: #22c55e; color: #0f172a;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+            animation: popIn 0.3s; font-family: monospace;
+        }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 220px; height: 60px; resize: none; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #fff; }
     </style>
 </head>
 <body>
@@ -42,209 +74,319 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">課程表 II (Course Schedule II)</div>
+                <div class="viz-title">Course Schedule II (Topological Sort)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <button onclick="setExample(1)">範例1 (4課程)</button>
-                        <button onclick="setExample(2)">範例2 (有環)</button>
-                        <button onclick="resetVisualization()">↻ 重置</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">Prerequisites [course, pre]:</label>
+                            <textarea id="gridInput">[[1,0],[2,0],[3,1],[3,2]]</textarea>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Sort</button>
+                            <div style="display:flex; gap:5px;">
+                                <button onclick="loadExample(1)" style="background:#475569; font-size:0.8rem; padding:5px;">Ex 1</button>
+                                <button onclick="loadExample(2)" style="background:#475569; font-size:0.8rem; padding:5px;">Ex 2</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="graph-container" id="graphDisplay"></div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted); font-size: 0.85rem;">入度 (In-degree)</div>
-                <div class="indegree-display" id="indegreeDisplay"></div>
-                
-                <div style="text-align: center; color: var(--viz-text-muted); margin-top: 10px;">修課順序</div>
-                <div class="result-container" id="resultDisplay"></div>
+
+                <div class="visualization-area">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-color" style="background:#475569"></div>Blocked (Indegree > 0)</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Queue (Indegree 0)</div>
+                        <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Done</div>
+                    </div>
+                    
+                    <div class="graph-viewport">
+                        <svg id="viz-svg">
+                            <defs>
+                                <marker id="arrow" viewBox="0 -5 10 10" refX="28" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0,-5L10,0L0,5" fill="#94a3b8"/>
+                                </marker>
+                            </defs>
+                            <g id="zoom-group"></g>
+                        </svg>
+                    </div>
+                    
+                    <div class="order-panel" id="orderDisplay">
+                        <div class="order-label">Order:</div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
-                            <option value="800">2x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(V+E)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(V+E)
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'vector<int> findOrder(int numCourses, prerequisites) {', id: 0 },
-            { line: '    vector<int> inDegree(numCourses, 0);', id: 1 },
-            { line: '    vector<vector<int>> graph(numCourses);', id: 2 },
-            { line: '    for (auto& p : prerequisites) {', id: 3 },
-            { line: '        graph[p[1]].push_back(p[0]);', id: 4 },
-            { line: '        inDegree[p[0]]++;', id: 5 },
-            { line: '    }', id: 6 },
-            { line: '    queue<int> q;', id: 7 },
-            { line: '    for (int i = 0; i < numCourses; i++)', id: 8 },
-            { line: '        if (inDegree[i] == 0) q.push(i);', id: 9 },
-            { line: '    vector<int> order;', id: 10 },
-            { line: '    while (!q.empty()) {', id: 11 },
-            { line: '        int course = q.front(); q.pop();', id: 12 },
-            { line: '        order.push_back(course);', id: 13 },
-            { line: '        for (int next : graph[course]) {', id: 14 },
-            { line: '            if (--inDegree[next] == 0) q.push(next);', id: 15 },
-            { line: '        }', id: 16 },
-            { line: '    }', id: 17 },
-            { line: '    return order.size() == numCourses ? order : {};', id: 18 },
-            { line: '}', id: 19 },
+            { line: 'vector<int> findOrder(int n, vector<vector<int>>& pre) {', id: 0 },
+            { line: '    vector<int> inDegree(n, 0);', id: 1 },
+            { line: '    vector<vector<int>> graph(n);', id: 2 },
+            { line: '    for(auto p: pre) { graph[p[1]].push_back(p[0]); inDegree[p[0]]++; }', id: 3 },
+            { line: '    queue<int> q;', id: 4 },
+            { line: '    for(int i=0; i<n; i++) if(inDegree[i] == 0) q.push(i);', id: 5 },
+            { line: '    vector<int> order;', id: 6 },
+            { line: '    while(!q.empty()) {', id: 7 },
+            { line: '        int u = q.front(); q.pop();', id: 8 },
+            { line: '        order.push_back(u);', id: 9 },
+            { line: '        for(int v : graph[u]) {', id: 10 },
+            { line: '            if(--inDegree[v] == 0) q.push(v);', id: 11 },
+            { line: '        }', id: 12 },
+            { line: '    }', id: 13 },
+            { line: '    return order.size() == n ? order : {};', id: 14 },
+            { line: '}', id: 15 }
         ];
-        
-        const examples = {
-            1: { n: 4, prereqs: [[1,0],[2,0],[3,1],[3,2]], desc: '0→{1,2}→3' },
-            2: { n: 3, prereqs: [[0,1],[1,2],[2,0]], desc: '環: 0→1→2→0' }
-        };
-        
-        let currentExample = examples[1];
 
-        function setExample(n) {
-            currentExample = examples[n];
-            init();
-        }
+        let viz;
 
-        function generateAlgorithmSteps(numCourses, prereqs) {
+        function simulate(prereqs) {
             const steps = [];
-            const inDegree = Array(numCourses).fill(0);
-            const graph = Array(numCourses).fill(null).map(() => []);
             
-            for (const [a, b] of prereqs) {
-                graph[b].push(a);
-                inDegree[a]++;
+            // Build Graph
+            const nodes = new Set();
+            prereqs.forEach(p => { nodes.add(p[0]); nodes.add(p[1]); });
+            // If empty or gaps? Assume 0..N-1
+            let n = 0;
+            if(prereqs.length > 0) {
+                n = Math.max(...Array.from(nodes)) + 1;
+            } else {
+               // Handle edge case of empty? Or just 1 node?
+               // Standard problem input gives N. Here we infer or assume.
+               // Let's infer.
+               n = nodes.size === 0 ? 1 : Math.max(...Array.from(nodes)) + 1;
             }
             
-            const prereqStr = prereqs.map(p => `${p[1]}→${p[0]}`).join(', ');
+            const adj = Array(n).fill(null).map(()=>[]);
+            const inDegree = Array(n).fill(0);
             
-            steps.push({
-                visited: [], order: [], inDegree: [...inDegree], current: null,
-                highlightLines: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                explanation: { 
-                    title: '初始化', 
-                    text: `${numCourses} 門課程<br>先修: ${prereqStr || '無'}<br>入度 0 的課程可以先修`,
-                    formula: 'setup'
-                }
+            const edges = [];
+            prereqs.forEach(p => {
+                adj[p[1]].push(p[0]); // p[1] -> p[0]
+                inDegree[p[0]]++;
+                edges.push({source: p[1], target: p[0]});
             });
 
-            const queue = [];
-            for (let i = 0; i < numCourses; i++) {
-                if (inDegree[i] === 0) queue.push(i);
-            }
+            // D3 State
+            const d3Nodes = Array.from({length:n}, (_,i) => ({id: i}));
             
-            const order = [];
-            const visited = [];
-
-            while (queue.length > 0) {
-                const course = queue.shift();
-                order.push(course);
-                visited.push(course);
-                
+            const pushState = (msg, hl, activeId, orderList, qList, currentInDegree) => {
                 steps.push({
-                    visited: [...visited], order: [...order], inDegree: [...inDegree], current: course,
-                    highlightLines: [11, 12, 13],
-                    explanation: { 
-                        title: `修課程 ${course}`, 
-                        text: `入度 = 0，可以修<br>加入順序`,
-                        formula: `order += ${course}`
-                    }
+                    graph: {nodes: d3Nodes, links: edges.map(e => ({...e}))},
+                    inDegree: [...currentInDegree],
+                    order: [...orderList],
+                    q: [...qList], // items in queue
+                    activeId,
+                    msg, highlightLines: hl
                 });
+            };
 
-                for (const next of graph[course]) {
-                    inDegree[next]--;
-                    if (inDegree[next] === 0) {
-                        queue.push(next);
-                        
-                        steps.push({
-                            visited: [...visited], order: [...order], inDegree: [...inDegree], current: course,
-                            highlightLines: [14, 15],
-                            explanation: { 
-                                title: `更新課程 ${next}`, 
-                                text: `入度 -1 = ${inDegree[next]}<br>現在可以修了！`,
-                                formula: `inDegree[${next}] = 0`
-                            }
-                        });
+            const q = [];
+            for(let i=0; i<n; i++) {
+                if(inDegree[i] === 0) q.push(i);
+            }
+            
+            pushState("Init: Calculate In-Degrees. Add 0-in-degree nodes to Queue.", [5], null, [], q, inDegree);
+
+            const order = [];
+            
+            while(q.length > 0) {
+                const u = q.shift();
+                order.push(u);
+                
+                pushState(`Pop ${u} (Indegree 0). Add to Order.`, [8, 9], u, order, q, inDegree);
+                
+                for(let v of adj[u]) {
+                    inDegree[v]--;
+                    pushState(`Decrement neighbor ${v}. Indegree: ${inDegree[v]}`, [11], u, order, q, inDegree);
+                    
+                    if(inDegree[v] === 0) {
+                        q.push(v);
+                        pushState(`${v} Indegree is 0! Add to Queue.`, [11], u, order, q, inDegree);
                     }
                 }
             }
-
-            const success = order.length === numCourses;
-            steps.push({
-                visited, order, inDegree, final: true, success,
-                highlightLines: [18],
-                explanation: { 
-                    title: success ? '完成!' : '失敗!', 
-                    text: success 
-                        ? `修課順序: [${order.join(', ')}]`
-                        : `無法完成所有課程<br>存在循環依賴`,
-                    formula: success ? `return [${order.join(',')}]` : 'return []'
-                }
-            });
+            
+            if(order.length === n) {
+                pushState("Done. Topological Order Found.", [14], null, order, [], inDegree);
+            } else {
+                pushState("Cycle Detected! Order incomplete.", [14], null, order, [], inDegree);
+            }
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            const { n, prereqs } = currentExample;
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const gZoom = d3.select("#zoom-group");
+        const zoom = d3.zoom().on("zoom", (e) => gZoom.attr("transform", e.transform));
+        svg.call(zoom);
+
+        // Force Sim
+        let simulation = d3.forceSimulation()
+            .force("charge", d3.forceManyBody().strength(-400))
+            .force("link", d3.forceLink().id(d => d.id).distance(80))
+            .force("center", d3.forceCenter(400, 200))
+            .on("tick", ticked);
+
+        function ticked() {
+            gZoom.selectAll(".link")
+                .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
             
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Nodes
-                    let html = '';
-                    for (let i = 0; i < n; i++) {
-                        let cls = 'node';
-                        if (step.visited?.includes(i)) cls += ' visited';
-                        if (i === step.current) cls += ' current';
-                        html += `<div class="${cls}">${i}</div>`;
-                    }
-                    document.getElementById('graphDisplay').innerHTML = html;
-                    
-                    // In-degree
-                    document.getElementById('indegreeDisplay').innerHTML = 
-                        (step.inDegree || []).map((deg, i) => 
-                            `<span class="indegree-item">${i}: ${deg}</span>`
-                        ).join('');
-                    
-                    // Result
-                    const order = step.order || [];
-                    if (order.length > 0) {
-                        document.getElementById('resultDisplay').innerHTML = 
-                            '<span class="result-label">順序:</span>' +
-                            order.map((c, i) => 
-                                `<div class="result-item">${c}</div>${i < order.length - 1 ? '<span class="result-arrow">→</span>' : ''}`
-                            ).join('');
-                    } else {
-                        document.getElementById('resultDisplay').innerHTML = 
-                            '<span style="color: var(--viz-text-muted)">等待...</span>';
-                    }
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(n, prereqs));
+            gZoom.selectAll(".node-g")
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
         }
-        
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            
+            // Order Panel
+            const orderDiv = document.getElementById('orderDisplay');
+            // Keep label
+            orderDiv.innerHTML = '<div class="order-label">Order:</div>';
+            step.order.forEach(id => {
+                const item = document.createElement('div');
+                item.className = 'order-item';
+                item.textContent = id;
+                orderDiv.appendChild(item);
+            });
+
+            // Update Nodes
+            // Colors:
+            // 0 Indegree & not processed yet = Queue (Orange)
+            // Processed (in Order) = Done (Green)
+            // Indegree > 0 = Blocked (Grey)
+            
+            const processedSet = new Set(step.order);
+            const queueSet = new Set(step.q); // items currently in step.q (which is snapshot)
+            // But wait, step.q reflects state at START of step or end?
+            // Simulation pushes snapshot.
+            
+            gZoom.selectAll(".node-circle")
+                .attr("class", d => {
+                    let c = "node-circle";
+                    if (processedSet.has(d.id)) return c + " done";
+                    if (queueSet.has(d.id)) return c + " queued"; // 0 indegree waiting
+                    if (d.id === step.activeId) return c + " done"; // currently processing
+                    return c + " normal";
+                });
+                
+            // Update Indegree Badges
+            // Data binding for badges?
+            // Just select all texts inside badges
+            // The simulation nodes order matches created order 0..N-1
+            // But d3 data binding might shuffle? rely on d.id
+            
+            // Re-bind to ensure updates
+            const nodes = gZoom.selectAll(".node-g");
+            nodes.select(".indegree-text")
+                .text(d => step.inDegree[d.id] > 0 ? step.inDegree[d.id] : "");
+            
+            nodes.select(".indegree-bg")
+                .attr("display", d => step.inDegree[d.id] > 0 ? "block" : "none");
+        }
+
+        function initGraph(nodes, links) {
+            gZoom.selectAll("*").remove();
+            
+            simulation.nodes(nodes);
+            simulation.force("link").links(links);
+            simulation.alpha(1).restart();
+
+            const link = gZoom.append("g").selectAll(".link")
+                .data(links).enter().append("line")
+                .attr("class", "link");
+
+            const node = gZoom.append("g").selectAll(".node-g")
+                .data(nodes).enter().append("g")
+                .attr("class", "node-g")
+                .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+
+            node.append("circle").attr("r", 20).attr("class", "node-circle normal");
+            node.append("text").attr("class", "node-text").attr("dy", 1).text(d => d.id);
+            
+            // Badge for Indegree
+            const badge = node.append("g").attr("transform", "translate(14, -14)");
+            badge.append("circle").attr("r", 8).attr("class", "indegree-bg").attr("display", "none");
+            badge.append("text").attr("class", "indegree-badge indegree-text").text("");
+        }
+
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x; d.fy = d.y;
+        }
+        function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null; d.fy = null;
+        }
+
+        function runVisualizer() {
+            try {
+                const raw = document.getElementById('gridInput').value;
+                const prereqs = JSON.parse(raw);
+                
+                // Set logic for nodes
+                const nodesSet = new Set();
+                prereqs.forEach(p => { nodesSet.add(p[0]); nodesSet.add(p[1]); });
+                const n = nodesSet.size === 0 ? 4 : Math.max(...Array.from(nodesSet)) + 1; // Default or calc
+                
+                const nodes = Array.from({length: n}, (_, i) => ({id: i}));
+                const links = prereqs.map(p => ({source: p[1], target: p[0]}));
+                
+                initGraph(nodes, links);
+                
+                viz = new AlgorithmVisualizer({
+                    codeLines: codeStructure,
+                    onStepChange: render
+                });
+                viz.setSteps(simulate(prereqs));
+            } catch(e) {
+                alert("Invalid Input");
+                console.error(e);
+            }
+        }
+
+        const examples = {
+            1: "[[1,0],[2,0],[3,1],[3,2]]",
+            2: "[[1,0],[2,1],[3,2],[1,3]]" // Cycle
+        };
+        function loadExample(n) {
+            document.getElementById('gridInput').value = examples[n];
+            runVisualizer();
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>
