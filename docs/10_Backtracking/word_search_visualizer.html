@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>Word Search (Grid DFS) - 精緻視覺化</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Search (Grid DFS) - D3 精緻視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -14,6 +15,7 @@
             flex-direction: column;
             gap: 20px;
             align-items: center;
+            min-height: 600px;
         }
 
         /* Grid */
@@ -21,6 +23,7 @@
             display: grid; gap: 6px; padding: 20px;
             background: rgba(30, 41, 59, 0.4); border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s;
         }
         .cell {
             width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
@@ -30,34 +33,38 @@
         
         /* States */
         .cell.visiting { background: #fbbf24; color: #0f172a; transform: scale(1.1); box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); z-index: 10; border-color: #f59e0b; }
-        .cell.visited { background: #475569; color: #94a3b8; border-color: #64748b; opacity: 0.8; } /* Path history */
+        .cell.visited { background: rgba(59, 130, 246, 0.3); border-color: #3b82f6; color: #93c5fd; } /* Path history */
         .cell.backtrack { background: #ef4444; color: white; animation: shake 0.4s; }
-        .cell.success { background: #22c55e; color: white; border-color: #16a34a; box-shadow: 0 0 15px rgba(34, 197, 94, 0.5); }
+        .cell.success { background: #22c55e; color: white; border-color: #16a34a; box-shadow: 0 0 15px rgba(34, 197, 94, 0.5); animation: pulse 1s infinite; }
         
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
         /* Word Progress */
         .word-progress {
             display: flex; gap: 5px; font-family: monospace; font-size: 1.5rem; color: #64748b;
+            margin-bottom: 10px;
         }
         .char-box {
             padding: 5px 10px; border-bottom: 3px solid #64748b; transition: all 0.3s;
         }
         .char-box.matched { color: #22c55e; border-color: #22c55e; transform: translateY(-3px); text-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
-        .char-box.current { color: #fbbf24; border-color: #fbbf24; }
+        .char-box.active { color: #fbbf24; border-color: #fbbf24; transform: scale(1.2); }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; }
-        .input-row textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 120px; height: 60px; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 100px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; flex-wrap: wrap; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        .input-group label { font-size: 0.8rem; color: #94a3b8; font-weight: bold; }
+        textarea { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 140px; height: 80px; resize: none; }
+        input[type="text"] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; align-self: flex-end; }
 
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; }
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -65,17 +72,21 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Word Search (Grid DFS)</div>
+                <div class="viz-title">Word Search (Backtracking Grid)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <textarea id="boardInput">A,B,C,E
+                        <div class="input-group">
+                            <label>Grid (CSV):</label>
+                            <textarea id="boardInput">A,B,C,E
 S,F,C,S
 A,D,E,E</textarea>
-                        <label>Word:</label>
-                        <input type="text" id="wordInput" value="ABCCED">
-                        <button onclick="runVisualizer()">搜尋</button>
+                        </div>
+                        <div class="input-group">
+                            <label>Target Word:</label>
+                            <input type="text" id="wordInput" value="ABCCED">
+                        </div>
+                        <button onclick="runVisualizer()">Search</button>
                     </div>
-                    <div style="font-size:0.8rem; color:#94a3b8; margin-top:5px;">每行用逗號分隔，換行輸入下一行</div>
                 </div>
 
                 <div class="visualization-area">
@@ -94,6 +105,14 @@ A,D,E,E</textarea>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
                     <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
                     <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
@@ -110,187 +129,165 @@ A,D,E,E</textarea>
     <script>
         const codeStructure = [
             { line: 'bool exist(board, word) {', id: 0 },
-            { line: '    for (r, c) if (dfs(r, c, 0)) return true;', id: 1 },
-            { line: '    return false;', id: 2 },
-            { line: '}', id: 3 },
-            { line: 'bool dfs(r, c, i) {', id: 4 },
-            { line: '    if (i == word.size()) return true;', id: 5 },
-            { line: '    if (outOfBound || board[r][c] != word[i])', id: 6 },
-            { line: '        return false;', id: 7 },
-            { line: '    char temp = board[r][c];', id: 8 },
-            { line: '    board[r][c] = \'#\'; // Mark Visited', id: 9 },
-            { line: '    bool res = dfs(r+1,c,i+1) || dfs(r-1...) ...', id: 10 },
-            { line: '    board[r][c] = temp; // Backtrack', id: 11 },
-            { line: '    return res;', id: 12 },
-            { line: '}', id: 13 }
+            { line: '    for(r=0..m) for(c=0..n) {', id: 1 },
+            { line: '        if(board[r][c] == word[0] && dfs(r, c, 0))', id: 2 },
+            { line: '            return true;', id: 3 },
+            { line: '    }', id: 4 },
+            { line: '    return false;', id: 5 },
+            { line: '}', id: 6 },
+            { line: 'bool dfs(r, c, i) {', id: 7 },
+            { line: '    if(i == word.size()) return true;', id: 8 },
+            { line: '    if(!valid(r, c) || board[r][c] != word[i]) return false;', id: 9 },
+            { line: '    char temp = board[r][c];', id: 10 },
+            { line: '    board[r][c] = \'#\'; // Visit', id: 11 },
+            { line: '    for(dir : directions) {', id: 12 },
+            { line: '        if(dfs(nr, nc, i+1)) return true;', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '    board[r][c] = temp; // Backtrack', id: 15 },
+            { line: '    return false;', id: 16 },
+            { line: '}', id: 17 }
         ];
 
         let viz;
 
-        function generateSteps(board, word) {
+        function simulate(grid, word) {
             const steps = [];
-            const R = board.length;
-            const C = board[0].length;
-            // Deep copy board logic for simulation? 
-            // Actually we need to track path state
+            const rows = grid.length;
+            const cols = grid[0].length;
+            // Use set to track visited for easy cloning in steps
+            // Or mutate a grid copy.
             
-            // Helper to snapshot
-            const pushStep = (msg, hl, activeRC, pathSet, matchedLen, success=false) => {
+            const pushState = (msg, hl, activeCell, visitedPath=[], matchedIdx=0, status='normal') => {
                 steps.push({
-                    board: JSON.parse(JSON.stringify(board)), // Board doesn't change chars in visualization except visual state
-                    activeRC: activeRC, // {r, c, status}
-                    pathSet: new Set(pathSet), // Set of "r,c" strings
-                    matchedLen: matchedLen, 
-                    success: success,
-                    msg: msg,
-                    highlightLines: hl
+                    grid: grid.map(r => [...r]), // copy content
+                    activeCell,
+                    visitedPath: [...visitedPath], // array of "r,c"
+                    matchedIdx,
+                    status, // normal, success, fail
+                    msg, highlightLines: hl
                 });
             };
 
-            pushStep(`Init: Board ${R}x${C}, Word "${word}"`, [0], null, [], 0);
+            const visited = new Set();
 
-            const dfs = (r, c, i, path) => {
-                const key = `${r},${c}`;
+            function dfs(r, c, i) {
+                if (i === word.length) return true;
                 
-                // Visualization: Entering (r, c)
-                // Note: path already contains previous cells.
+                const cellKey = `${r},${c}`;
                 
-                if (i === word.length) {
-                    pushStep(`找到完整單詞！`, [5], null, path, i, true);
-                    return true;
-                }
-
-                if (r < 0 || r >= R || c < 0 || c >= C || board[r][c] !== word[i]) {
-                    // Fail case visualization
-                    // If out of bound, hard to visualize "activeRC"
-                    // If mismatched char
-                    if (r >= 0 && r < R && c >= 0 && c < C) {
-                         // board[r][c] was '#' if visited? we handle visited check separately usually or inside '#' check
-                         if(board[r][c] === '#') {
-                             // Visited check
-                             // Implicitly visualizes as mismatch or skip?
-                         } else {
-                             pushStep(`檢查 (${r},${c}) '${board[r][c]}' != '${word[i]}'`, [6, 7], {r,c, status:'fail'}, path, i);
-                         }
-                    }
+                // Check bounds & content
+                if (r < 0 || r >= rows || c < 0 || c >= cols || visited.has(cellKey) || grid[r][c] !== word[i]) {
+                    // We only visualize "fail" if it was a candidate we explicitly checked
+                    // Logic usually checks before recursing, or at start of recursion
                     return false;
                 }
 
-                // Match
-                pushStep(`匹配 (${r},${c}) '${board[r][c]}'`, [8], {r,c, status:'visiting'}, path, i+1);
+                // Match found
+                visited.add(cellKey);
+                pushState(`Match '${word[i]}' at (${r},${c})`, [11], {r,c}, Array.from(visited), i+1);
 
-                const temp = board[r][c];
-                board[r][c] = '#';
-                path.add(key);
-                
-                pushStep(`標記 (${r},${c}) 為已訪問`, [9], {r,c, status:'visited'}, path, i+1);
+                if (i + 1 === word.length) {
+                    pushState(`Found complete word!`, [8], {r,c}, Array.from(visited), i+1, 'success');
+                    return true;
+                }
 
                 const dirs = [[0,1], [0,-1], [1,0], [-1,0]];
-                for (let [dr, dc] of dirs) {
-                    if (dfs(r + dr, c + dc, i + 1, path)) return true;
+                for (const [dr, dc] of dirs) {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    
+                    // Optimistic highlight of trying next
+                    if (nr>=0 && nr<rows && nc>=0 && nc<cols && !visited.has(`${nr},${nc}`)) {
+                        pushState(`Try neighbor (${nr},${nc}) for '${word[i+1]}'`, [12, 13], {r:nr, c:nc}, Array.from(visited), i+1);
+                        if (dfs(nr, nc, i + 1)) return true;
+                    }
                 }
 
                 // Backtrack
-                board[r][c] = temp;
-                path.delete(key);
-                pushStep(`回溯：恢復 (${r},${c}) '${board[r][c]}'`, [11], {r,c, status:'backtrack'}, path, i);
-                
+                visited.delete(cellKey);
+                pushState(`Backtrack from (${r},${c})`, [15], {r,c}, Array.from(visited), i, 'fail');
                 return false;
-            };
+            }
 
-            for (let r = 0; r < R; r++) {
-                for (let c = 0; c < C; c++) {
-                    // Try start
-                    // Only start if first char matches to reduce noise?
-                    if (board[r][c] === word[0]) {
-                        pushStep(`嘗試起點 (${r},${c})`, [1], {r,c, status:'start'}, new Set(), 0);
-                        if (dfs(r, c, 0, new Set())) {
-                            return steps; // Found
+            pushState("Start Search", [1], null, [], 0);
+
+            let found = false;
+            for(let r=0; r<rows; r++){
+                for(let c=0; c<cols; c++){
+                    if(grid[r][c] === word[0]) {
+                        pushState(`Start DFS from (${r},${c})`, [2], {r,c}, [], 0);
+                        if(dfs(r, c, 0)) {
+                            found = true;
+                            pushState("Word Found!", [3], null, Array.from(visited), word.length, 'success');
+                            break;
                         }
                     }
                 }
+                if(found) break;
             }
             
-            pushStep(`搜尋結束，未找到單詞`, [2], null, [], 0);
+            if(!found) pushState("Word Not Found", [5], null, [], 0, 'fail');
+
             return steps;
         }
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            const word = document.getElementById('wordInput').value.trim();
-            const R = step.board.length;
-            const C = step.board[0].length;
 
             // Render Progress Word
-            const pDiv = document.getElementById('progressDisplay');
-            pDiv.innerHTML = word.split('').map((char, idx) => {
-                let cls = 'char-box';
-                if (idx < step.matchedLen) cls += ' matched';
-                if (idx === step.matchedLen) cls += ' current';
-                return `<div class="${cls}">${char}</div>`;
-            }).join('');
+            const progressDiv = document.getElementById('progressDisplay');
+            const word = document.getElementById('wordInput').value;
+            progressDiv.innerHTML = '';
+            for(let i=0; i<word.length; i++) {
+                const charBox = document.createElement('div');
+                charBox.className = 'char-box';
+                charBox.textContent = word[i];
+                if(i < step.matchedIdx) charBox.classList.add('matched');
+                if(i === step.matchedIdx) charBox.classList.add('active'); // searching for this
+                progressDiv.appendChild(charBox);
+            }
 
             // Render Grid
-            const gDiv = document.getElementById('gridDisplay');
-            gDiv.style.gridTemplateColumns = `repeat(${C}, 50px)`;
-            gDiv.innerHTML = '';
+            const gridContainer = document.getElementById('gridDisplay');
+            gridContainer.innerHTML = '';
+            const rows = step.grid.length;
+            const cols = step.grid[0].length;
+            gridContainer.style.gridTemplateColumns = `repeat(${cols}, 50px)`; // Fixed cell size
 
-            for(let r=0; r<R; r++) {
-                for(let c=0; c<C; c++) {
-                    const cell = document.createElement('div');
-                    let cls = 'cell';
-                    const key = `${r},${c}`;
-                    const val = step.board[r][c];
+            for(let r=0; r<rows; r++) {
+                for(let c=0; c<cols; c++) {
+                    const div = document.createElement('div');
+                    div.className = 'cell';
+                    div.textContent = step.grid[r][c];
                     
-                    if (step.pathSet.has(key)) cls += ' visited';
-                    // We need to show original char even if visited in visualization (logic uses # but user wants to see char)
-                    // The simulation step.board snapshots the '#' state.
-                    // But maybe we should pass original board too?
-                    // Or we just rely on cell text? 
-                    // Wait, simulation modified `board` which is a snapshot in `steps`.
-                    // So `step.board[r][c]` will be `#`.
-                    // We should restore displaying the character from input if it is `#`.
-                    
-                    let displayChar = val;
-                    if (val === '#') {
-                        // Find original char from word? 
-                        // The pathSet tracks order? No.
-                        // Better to rely on the fact that if it's visited, it matched `word[pathIndex]`.
-                        // But pathSet is unsorted Set.
-                        // Easier: Simulation shouldn't corrupt the 'display board'.
-                        // Let's rely on the user input or a fresh copy of board at init.
-                        // For now, let's just show '#'? No, show blank or icon.
-                        displayChar = '✓'; 
+                    const cellKey = `${r},${c}`;
+                    if(step.visitedPath.includes(cellKey)) {
+                        div.classList.add('visited');
                     }
                     
-                    // Specific priority overrides
-                    if (step.activeRC && step.activeRC.r === r && step.activeRC.c === c) {
-                        if (step.activeRC.status === 'visiting') cls += ' visiting';
-                        if (step.activeRC.status === 'backtrack') cls += ' backtrack';
-                        if (step.activeRC.status === 'fail') cls += ' fail'; // defined in style? No, add one.
+                    // Active logic
+                    if(step.activeCell && step.activeCell.r === r && step.activeCell.c === c) {
+                        div.classList.remove('visited'); // Override
+                        if(step.status === 'success') div.classList.add('success');
+                        else if(step.status === 'fail') div.classList.add('backtrack');
+                        else div.classList.add('visiting');
                     }
                     
-                    if (step.success && step.pathSet.has(key)) cls += ' success';
-
-                    cell.className = cls;
-                    cell.textContent = displayChar;
-                    gDiv.appendChild(cell);
+                    gridContainer.appendChild(div);
                 }
             }
         }
 
         function runVisualizer() {
-            const bRaw = document.getElementById('boardInput').value.trim();
-            const word = document.getElementById('wordInput').value.trim();
+            const boardStr = document.getElementById('boardInput').value;
+            const word = document.getElementById('wordInput').value;
+            const grid = boardStr.split('\n').map(line => line.split(',').map(c => c.trim()));
             
-            const board = bRaw.split('\n').map(r => r.split(',').map(c => c.trim()));
-            if (!board.length || !word) return;
-
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
             });
-            viz.setSteps(generateSteps(board, word));
+            viz.setSteps(simulate(grid, word));
         }
 
         window.addEventListener('load', runVisualizer);
