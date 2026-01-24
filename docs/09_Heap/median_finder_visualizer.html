@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Median (Two Heaps) - D3 Dynamic Viz</title>
+    <link rel="stylesheet" href="../assets/visualizer/style.css">
+    <style>
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 600px;
+        }
+
+        /* Balance Scale Visual */
+        #scale-svg { width: 100%; height: 350px; cursor: grab; background: rgba(30, 41, 59, 0.2); border-radius: 12px; }
+        #scale-svg:active { cursor: grabbing; }
+        
+        .scale-bar { stroke: #64748b; stroke-width: 8px; stroke-linecap: round; transition: all 0.5s ease-out; }
+        .scale-pivot { fill: #94a3b8; }
+        .bucket-rope { stroke: #64748b; stroke-width: 2px; }
+        
+        .heap-container-g { transition: transform 0.5s ease-out; }
+        
+        /* Elements */
+        .node-circle { stroke-width: 2px; transition: all 0.3s; }
+        .node-circle.max { fill: #3b82f6; stroke: #fff; } /* Left: Small Half (Max Heap) */
+        .node-circle.min { fill: #a855f7; stroke: #fff; } /* Right: Large Half (Min Heap) */
+        .node-circle.active { stroke: #fbbf24; stroke-width: 4px; filter: drop-shadow(0 0 10px #fbbf24); }
+        .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; pointer-events: none; text-anchor: middle; dominant-baseline: middle; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 40px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 2rem; font-weight: bold; color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.3); font-family: monospace; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 100px; text-align: center; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="AlgorithmVisualizer.toggleTheme()" title="切換主題">🌓</button>
+    <div class="main-layout">
+        <div class="canvas-area">
+            <div class="viz-card">
+                <div class="viz-title">Find Median (Two Heaps Balance)</div>
+                <div class="custom-input-section">
+                    <div class="input-row">
+                        <label style="color:#94a3b8; font-weight:bold;">Add Number:</label>
+                        <input type="number" id="numInput" value="5">
+                        <button onclick="runAdd()">Add</button>
+                        <button onclick="resetViz()" style="background:#ef4444;">Reset</button>
+                    </div>
+                    <div style="text-align:center; font-size:0.85rem; color:#64748b; margin-top:8px;">
+                        Maintain two heaps: <b>Max-Heap</b> (Left, Small Half) and <b>Min-Heap</b> (Right, Large Half).
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Current Median</div>
+                            <div class="stat-val" id="medianDisplay">-</div>
+                        </div>
+                    </div>
+
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Small Half (Max Heap)</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#a855f7"></div>Large Half (Min Heap)</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Active Element</div>
+                    </div>
+
+                    <svg id="scale-svg" viewBox="0 0 600 350">
+                        <g id="scale-main" transform="translate(300, 50)">
+                            <!-- Pivot -->
+                            <path d="M -20 20 L 20 20 L 0 50 Z" class="scale-pivot" />
+                            <!-- Bar Group (Rotates) -->
+                            <g id="bar-group">
+                                <line x1="-150" y1="0" x2="150" y2="0" class="scale-bar" />
+                                
+                                <!-- Left Bucket (Max Heap) -->
+                                <g transform="translate(-150, 0)">
+                                    <line x1="0" y1="0" x2="0" y2="80" class="bucket-rope" />
+                                    <g id="left-heap-g" transform="translate(0, 80)"></g>
+                                </g>
+                                
+                                <!-- Right Bucket (Min Heap) -->
+                                <g transform="translate(150, 0)">
+                                    <line x1="0" y1="0" x2="0" y2="80" class="bucket-rope" />
+                                    <g id="right-heap-g" transform="translate(0, 80)"></g>
+                                </g>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">1.5x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+        </div>
+        <div class="code-area">
+            <div class="viz-card" style="height: 100%;">
+                <div class="viz-title">C++ Code</div>
+                <div class="code-panel" id="codeDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="../assets/visualizer/core.js"></script>
+    <script>
+        const codeStructure = [
+            { line: 'priority_queue<int> small; // Max Heap', id: 0 },
+            { line: 'priority_queue<int, vector<int>, greater<int>> large; // Min Heap', id: 1 },
+            { line: 'void addNum(int num) {', id: 2 },
+            { line: '    small.push(num);', id: 3 },
+            { line: '    // Balance order: Ensure Max(Small) <= Min(Large)', id: 4 },
+            { line: '    if (!small.empty() && !large.empty() && small.top() > large.top()) {', id: 5 },
+            { line: '        large.push(small.top()); small.pop();', id: 6 },
+            { line: '    }', id: 7 },
+            { line: '    // Balance sizes: Small can be +1 size', id: 8 },
+            { line: '    if (small.size() > large.size() + 1) {', id: 9 },
+            { line: '        large.push(small.top()); small.pop();', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    if (large.size() > small.size() + 1) {', id: 12 },
+            { line: '        small.push(large.top()); large.pop();', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '}', id: 15 },
+            { line: 'double findMedian() {', id: 16 },
+            { line: '    if (small.size() > large.size()) return small.top();', id: 17 },
+            { line: '    if (large.size() > small.size()) return large.top();', id: 18 },
+            { line: '    return (small.top() + large.top()) / 2.0;', id: 19 },
+            { line: '}', id: 20 }
+        ];
+
+        let viz;
+        let small = []; // Max Heap Logic
+        let large = []; // Min Heap Logic
+
+        const maxSort = (arr) => arr.sort((a,b) => b-a);
+        const minSort = (arr) => arr.sort((a,b) => a-b); // Sorted ascending, [0] is min
+
+        function simulate(num) {
+            const steps = [];
+            const initialSmall = [...small];
+            const initialLarge = [...large];
+            
+            const pushState = (msg, hl, activeVal=null, info={}) => {
+                let med = 0;
+                let sLen = small.length;
+                let lLen = large.length;
+                
+                if (sLen > lLen) med = small[0];
+                else if (lLen > sLen) med = large[0];
+                else if (sLen > 0) med = (small[0] + large[0]) / 2.0;
+                
+                // Tilt angle
+                let angle = 0;
+                if (sLen > lLen) angle = -10;
+                if (lLen > sLen) angle = 10;
+
+                steps.push({
+                    small: [...small],
+                    large: [...large],
+                    median: med,
+                    angle,
+                    activeVal,
+                    msg, highlightLines: hl, explanation: info
+                });
+            };
+
+            // 1. Push to Small
+            small.push(num);
+            maxSort(small);
+            pushState(`Push ${num} to Small Heap`, [3], num, { title: "新增數字", text: `總是先將數字 ${num} 放入 Small Heap (Max Heap)。`, formula: "small.push()" });
+
+            // 2. Ensure order (Max(Small) <= Min(Large))
+            if(small.length > 0 && large.length > 0 && small[0] > large[0]) {
+                const val = small.shift(); // Remove max
+                large.push(val);
+                minSort(large);
+                pushState(`${val} > ${large[0]} (Min of Large). Move to Large.`, [5, 6], val, { title: "順序調整", text: `Small 最大值大於 Large 最小值，移動 ${val} 到 Large 以維持順序。`, formula: "move small->large" });
+            }
+
+            // 3. Balance Sizes
+            if(small.length > large.length + 1) {
+                const val = small.shift();
+                large.push(val);
+                minSort(large);
+                pushState(`Small size > Large + 1. Move ${val} to Large.`, [9, 10], val, { title: "平衡大小", text: "Small 堆過大，移動最大值到 Large。", formula: "balance sizes" });
+            }
+            if(large.length > small.length + 1) { // Normally algo tries to keep small >= large, but this covers generic
+                const val = large.shift();
+                small.push(val);
+                maxSort(small);
+                pushState(`Large size > Small + 1. Move ${val} to Small.`, [12, 13], val, { title: "平衡大小", text: "Large 堆過大，移動最小值到 Small。", formula: "balance sizes" });
+            }
+            
+            // Final Median
+            let mTx = "";
+            let hl = [];
+            if(small.length > large.length) { mTx = `Median = Max(Small) = ${small[0]}`; hl=[17]; }
+            else if(large.length > small.length) { mTx = `Median = Min(Large) = ${large[0]}`; hl=[18]; }
+            else { mTx = `Median = ( ${small[0]} + ${large[0]} ) / 2 = ${(small[0]+large[0])/2}`; hl=[19]; }
+            
+            pushState(`${mTx}`, hl, null, { title: "計算中位數", text: "根據堆大小計算中位數。", formula: "return median" });
+
+            return steps;
+        }
+
+        // --- Render ---
+        const svg = d3.select("#scale-svg");
+        const zoom = d3.zoom().on("zoom", (e) => d3.select("#scale-main").attr("transform", e.transform));
+        svg.call(zoom);
+        svg.call(zoom.transform, d3.zoomIdentity.translate(300, 50).scale(1));
+
+        function renderHeap(g, data, colorClass, activeVal) {
+            g.selectAll("*").remove();
+            
+            const r = 20;
+            // Draw as a vertical stack hanging down
+            data.forEach((val, i) => {
+                const cx = (i % 2 === 0 ? -1 : 1) * (i*2); // Very slight wobble
+                const cy = i * 25; // Stack vertically
+                
+                const gNode = g.append("g");
+                gNode.append("circle")
+                    .attr("cx", cx).attr("cy", cy + 20).attr("r", r)
+                    .attr("class", `node-circle ${colorClass}`)
+                    .classed("active", val === activeVal);
+                
+                gNode.append("text")
+                    .attr("x", cx).attr("y", cy + 20)
+                    .attr("class", "node-text")
+                    .attr("dy", 1) // font dependent
+                    .text(val);
+            });
+        }
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('medianDisplay').textContent = Number.isInteger(step.median) ? step.median : step.median.toFixed(1);
+            
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            // Animate Scale
+            d3.select("#bar-group")
+                .transition().duration(500)
+                .attr("transform", `rotate(${step.angle})`);
+
+            renderHeap(d3.select("#left-heap-g"), step.small, "max", step.activeVal);
+            renderHeap(d3.select("#right-heap-g"), step.large, "min", step.activeVal);
+        }
+
+        function runAdd() {
+            const val = parseInt(document.getElementById('numInput').value);
+            const steps = simulate(val);
+            document.getElementById('numInput').value = Math.floor(Math.random() * 20); 
+            
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(steps);
+        }
+
+        function resetViz() {
+            small = [];
+            large = [];
+            
+            viz = new AlgorithmVisualizer({ codeLines: codeStructure, onStepChange: render });
+            viz.setSteps([{small:[], large:[], median:"-", angle:0, msg:"Reset", highlightLines:[], explanation:{title:"重置", text:"清空所有數據。", formula:"reset()"}}]);
+        }
+
+        window.addEventListener('load', () => {
+            small = [2]; 
+            large = [5]; 
+            // Add median calc
+            runAdd();
+        });
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kth Largest Element (QuickSelect) - D3 精緻視覺化</title>
+    <title>Kth Largest Element in an Array (QuickSelect) - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -20,50 +20,59 @@
 
         .array-container {
             display: flex; gap: 8px; justify-content: center; align-items: flex-end;
-            height: 300px; width: 100%; padding: 20px; box-sizing: border-box;
-            background: rgba(0,0,0,0.2); border-radius: 12px;
+            height: 320px; width: 100%; padding: 40px 20px 60px 20px; box-sizing: border-box;
+            background: rgba(30, 41, 59, 0.4); border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
 
         .bar {
-            width: 40px; background: #3b82f6; border-radius: 6px 6px 0 0;
-            transition: height 0.3s, background-color 0.3s;
+            width: 45px; background: #3b82f6; border-radius: 6px 6px 0 0;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             position: relative; display: flex; justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .bar-val { margin-top: -25px; color: white; font-weight: bold; font-family: monospace; font-size: 14px; }
-        .bar-idx { position: absolute; bottom: -25px; color: #64748b; font-size: 12px; font-family: monospace;}
+        .bar-val { margin-top: -28px; color: white; font-weight: bold; font-family: monospace; font-size: 14px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .bar-idx { position: absolute; bottom: -28px; color: #94a3b8; font-size: 12px; font-family: monospace;}
 
         /* States */
-        .bar.pivot { background: #fbbf24; border: 2px solid #fff; z-index: 10; }
-        .bar.less { background: #ef4444; opacity: 0.8; }
-        .bar.greater { background: #22c55e; opacity: 0.8; }
-        .bar.inactive { opacity: 0.2; } /* Out of range */
-        .bar.sorted { background: #a855f7; } /* Found */
+        .bar.pivot { background: #fbbf24; border: 2px solid #fff; z-index: 10; box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); }
+        .bar.less { background: #ef4444; opacity: 0.9; }
+        .bar.greater { background: #22c55e; opacity: 0.9; }
+        .bar.inactive { opacity: 0.2; transform: scaleY(0.95); filter: grayscale(0.8); }
+        .bar.sorted { background: #a855f7; border: 2px solid #fff; box-shadow: 0 0 15px rgba(168, 85, 247, 0.5); } /* The Kth element */
 
         /* Pointers */
         .pointer {
-            position: absolute; width: 40px; text-align: center;
-            transition: left 0.3s; font-size: 20px; font-weight: bold;
+            position: absolute; width: 45px; text-align: center;
+            transition: left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); font-size: 24px; font-weight: bold;
+            pointer-events: none;
         }
-        .ptr-p { bottom: -50px; color: #fbbf24; } /* Pivot store index */
-        .ptr-i { bottom: -50px; color: #cbd5e1; } /* Scan index */
+        .ptr-p { bottom: 10px; color: #fbbf24; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); } /* P pointer */
+        .ptr-i { bottom: -60px; color: #cbd5e1; font-size: 18px; } /* Scan index */
+        .ptr-label { font-size: 10px; display: block; margin-top: -5px; opacity: 0.8; font-family: monospace;}
 
         /* Stats */
         .stats-panel {
-            display: flex; gap: 30px;
-            background: rgba(15, 23, 42, 0.6); padding: 10px 20px; border-radius: 20px; border: 1px solid #475569;
+            display: flex; gap: 40px;
+            background: rgba(15, 23, 42, 0.6); padding: 12px 30px; border-radius: 50px; border: 1px solid #475569;
         }
         .stat-box { text-align: center; }
         .stat-val { font-size: 1.2rem; font-weight: bold; font-family: monospace; }
-        .stat-lbl { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; }
+        .stat-lbl { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
         .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
-        .input-row input[type=number] { width: 50px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 200px; }
+        input[type=number] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; text-align: center; }
+        button { padding: 8px 18px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -78,8 +87,9 @@
                         <input type="text" id="arrInput" value="3,2,1,5,6,4">
                         <label>K:</label>
                         <input type="number" id="kInput" value="2" min="1">
-                        <button onclick="runVisualizer()">Select</button>
+                        <button onclick="runVisualizer()">Find Kth Largest</button>
                     </div>
+                    <div style="text-align:center; font-size:0.85rem; color:#64748b; margin-top:8px;">Target Index = N - K. QuickSelect partitions array until Pivot lands on Target Index.</div>
                 </div>
 
                 <div class="visualization-area">
@@ -90,15 +100,22 @@
                         </div>
                         <div class="stat-box">
                             <div class="stat-lbl">Target Index (N-K)</div>
-                            <div class="stat-val" style="color:#22c55e" id="statIdx">4</div>
+                            <div class="stat-val" style="color:#22c55e" id="statIdx">-</div>
                         </div>
                         <div class="stat-box">
                             <div class="stat-lbl">Search Range</div>
-                            <div class="stat-val" id="statRange">[0, 5]</div>
+                            <div class="stat-val" id="statRange">[0, N-1]</div>
                         </div>
                     </div>
 
-                    <div class="array-container" id="barContainer"></div>
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Pivot</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Less</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Greater</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#a855f7"></div>Found</div>
+                    </div>
+
+                    <div class="array-container" id="arrayDisplay"></div>
                 </div>
 
                 <div class="step-breakdown">
@@ -117,16 +134,16 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">QuickSelect (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
@@ -135,140 +152,162 @@
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
-            { line: 'int findKthLargest(nums, k) {', id: 0 },
+            { line: 'int findKthLargest(vector<int>& nums, int k) {', id: 0 },
             { line: '    int target = nums.size() - k;', id: 1 },
-            { line: '    return quickSelect(nums, 0, n-1, target);', id: 2 },
-            { line: '}', id: 3 },
-            { line: 'int quickSelect(nums, l, r, k) {', id: 4 },
-            { line: '    int pivot = nums[r], p = l;', id: 5 },
-            { line: '    for (int i = l; i < r; i++) {', id: 6 },
-            { line: '        if (nums[i] <= pivot) {', id: 7 },
-            { line: '            swap(nums[p], nums[i]);', id: 8 },
-            { line: '            p++;', id: 9 },
+            { line: '    quickSelect(nums, 0, nums.size()-1, target);', id: 2 },
+            { line: '    return nums[target];', id: 3 },
+            { line: '}', id: 4 },
+            { line: 'void quickSelect(nums, L, R, k) {', id: 5 },
+            { line: '    int pivot = nums[R], p = L;', id: 6 },
+            { line: '    for (int i=L; i<R; i++) {', id: 7 },
+            { line: '        if (nums[i] <= pivot) {', id: 8 },
+            { line: '            swap(nums, p, i); p++;', id: 9 },
             { line: '        }', id: 10 },
             { line: '    }', id: 11 },
-            { line: '    swap(nums[p], nums[r]);', id: 12 },
-            { line: '    if (p > k) return quickSelect(nums, l, p-1, k);', id: 13 },
-            { line: '    if (p < k) return quickSelect(nums, p+1, r, k);', id: 14 },
-            { line: '    return nums[p];', id: 15 },
+            { line: '    swap(nums, p, R);', id: 12 },
+            { line: '    if (p > k) quickSelect(nums, L, p-1, k);', id: 13 },
+            { line: '    else if (p < k) quickSelect(nums, p+1, R, k);', id: 14 },
+            { line: '    else return;', id: 15 },
             { line: '}', id: 16 }
         ];
 
         let viz;
 
-        function simulate(nums, k) {
+        function simulate(arr, k) {
             const steps = [];
-            const n = nums.length;
-            const targetIdx = n - k;
+            const nums = [...arr];
+            const targetIdx = nums.length - k;
             
-            const pushState = (arr, l, r, pivotIdx, pIdx, iIdx, msg, hl, found=null) => {
-                steps.push({
-                    arr: [...arr],
-                    l, r,
-                    pivotIdx, // The original index of pivot (usually r)
-                    pIdx, // pointer p location
-                    iIdx, // current scan i
-                    targetIdx,
-                    found,
-                    msg, highlightLines: hl
-                });
-            };
+            const snap = (msg, hl, range, pointers, specialIdxs, info) => ({
+                arr: [...nums], 
+                targetIdx, 
+                range, // [L, R]
+                pointers, // {p: val, i: val, pivot: val} indices
+                specialIdxs, // {pivot: idx, less: [], greater: [], sorted: idx}
+                msg, highlightLines: hl, explanation: info
+            });
 
-            pushState(nums, 0, n-1, null, null, null, `Find K=${k} Largest => Target Index ${targetIdx} (N-K)`, [1]);
+            steps.push(snap(`Init: Target Index = ${nums.length} - ${k} = ${targetIdx}`, [1], [0, nums.length-1], {}, {}, { title: "初始化", text: `尋找第 K 大元素相當於尋找排好序後索引為 N-K 的元素。`, formula: "idx = N - K" }));
 
-            function quickSelect(l, r) {
-                const pivot = nums[r];
-                let p = l;
+            function quickSelect(L, R) {
+                steps.push(snap(`Range [${L}, ${R}]`, [5], [L, R], {}, {}, { title: "遞歸區間", text: `在區間 [${L}, ${R}] 內進行分區 (Partition)。`, formula: "quickSelect(L, R)" }));
                 
-                pushState(nums, l, r, r, p, l, `Partition [${l}, ${r}]. Pivot = ${pivot} (at ${r})`, [5]);
+                let pivot = nums[R];
+                let p = L;
+                
+                steps.push(snap(`Pivot = ${pivot} (at ${R}), P = ${L}`, [6], [L, R], {pivot: R, p: L}, {pivot: R}, { title: "選擇 Pivot", text: `選擇最右側元素 ${pivot} 作為 Pivot，P 指針初始化為 L。`, formula: "pivot = nums[R]" }));
 
-                for (let i = l; i < r; i++) {
-                    pushState(nums, l, r, r, p, i, `Check nums[${i}] = ${nums[i]} <= ${pivot}?`, [6, 7]);
+                for (let i = L; i < R; i++) {
+                    const info = { title: "遍歷", text: `檢查 nums[${i}] = ${nums[i]} 與 Pivot ${pivot} 的關係。`, formula: "nums[i] <= pivot?" };
+                    steps.push(snap(`Check nums[${i}]=${nums[i]} <= ${pivot}?`, [8], [L, R], {pivot: R, p, i}, {pivot: R}, info));
                     
-                    if (nums[i] <= pivot) {
-                        if(i !== p) {
+                    if (nums[i] <= pivot) { // Using <= for stability logic often, usually just < or <=
+                        if (i !== p) {
                             [nums[i], nums[p]] = [nums[p], nums[i]];
-                            pushState(nums, l, r, r, p, i, `Swap ${nums[i]} and ${nums[p]}`, [8]);
+                            steps.push(snap(`Swap nums[${i}] and nums[${p}]`, [9], [L, R], {pivot: R, p, i}, {pivot: R}, { title: "交換", text: `元素小於等於 Pivot，與 P 位置交換，P 前進。`, formula: "swap(i, p); p++" }));
                         }
                         p++;
-                        pushState(nums, l, r, r, p, i, `Increment p to ${p}`, [9]);
                     }
                 }
                 
-                [nums[p], nums[r]] = [nums[r], nums[p]];
-                pushState(nums, l, r, p, p, r, `Swap Pivot to final pos p=${p}`, [12]);
+                [nums[p], nums[R]] = [nums[R], nums[p]]; // Swap pivot to P
+                const pIdx = p; // Pivot final pos
+                
+                steps.push(snap(`Place Pivot at P=${pIdx}`, [12], [L, R], {pivot: pIdx}, {pivot: pIdx}, { title: "放置 Pivot", text: `將 Pivot 交換到最終位置 P。`, formula: "swap(p, R)" }));
 
-                if (p > targetIdx) {
-                    pushState(nums, l, r, p, p, null, `p (${p}) > target (${targetIdx}). Search Left.`, [13]);
-                    return quickSelect(l, p - 1);
-                } else if (p < targetIdx) {
-                    pushState(nums, l, r, p, p, null, `p (${p}) < target (${targetIdx}). Search Right.`, [14]);
-                    return quickSelect(p + 1, r);
+                if (pIdx > targetIdx) {
+                    steps.push(snap(`P (${pIdx}) > Target (${targetIdx}). Go Left.`, [13], [L, pIdx-1], {}, {sorted: pIdx}, { title: "向左搜尋", text: `Pivot 索引大於目標索引，目標在 Pivot 左側。`, formula: "recurse Left" }));
+                    quickSelect(L, pIdx - 1);
+                } else if (pIdx < targetIdx) {
+                    steps.push(snap(`P (${pIdx}) < Target (${targetIdx}). Go Right.`, [14], [pIdx+1, R], {}, {sorted: pIdx}, { title: "向右搜尋", text: `Pivot 索引小於目標索引，目標在 Pivot 右側。`, formula: "recurse Right" }));
+                    quickSelect(pIdx + 1, R);
                 } else {
-                    pushState(nums, l, r, p, p, null, `p (${p}) == target! Found ${nums[p]}`, [15], nums[p]);
-                    return nums[p];
+                    steps.push(snap(`P (${pIdx}) == Target (${targetIdx}). Found!`, [15], [L, R], {}, {sorted: pIdx}, { title: "找到目標", text: `Pivot 索引等於目標索引，找到第 K 大元素！`, formula: "return" }));
+                    return;
                 }
             }
 
-            const res = quickSelect(0, n - 1);
+            quickSelect(0, nums.length - 1);
             
-            steps.push({
-                arr: [...nums],
-                l: -1, r: -1, pivotIdx: null, pIdx: null, iIdx: null, targetIdx,
-                found: res,
-                msg: `Result: ${res}`,
-                highlightLines: [3]
-            });
-
+            steps.push(snap(`Result: ${nums[targetIdx]}`, [3], null, {}, {sorted: targetIdx}, { title: "完成", text: `最終結果為 ${nums[targetIdx]}。`, formula: "return nums[target]" }));
+            
             return steps;
         }
 
+        // --- Render ---
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
-            document.getElementById('statK').textContent = document.getElementById('kInput').value;
             document.getElementById('statIdx').textContent = step.targetIdx;
-            document.getElementById('statRange').textContent = (step.l!==-1) ? `[${step.l}, ${step.r}]` : "Done";
+            document.getElementById('statRange').textContent = step.range ? `[${step.range[0]}, ${step.range[1]}]` : '-';
 
-            const container = document.getElementById('barContainer');
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
+
+            const container = document.getElementById('arrayDisplay');
             container.innerHTML = '';
             
-            // Find max for height scaling
+            // Calc max for height scaling
             const maxVal = Math.max(...step.arr);
-            const minVal = Math.min(...step.arr); // For negative handling if needed, though usually pos
-            const range = maxVal - Math.min(0, minVal); // Scale from 0 (or neg min) to max
-
-            step.arr.forEach((val, i) => {
+            const minVal = Math.min(...step.arr);
+            const range = maxVal - Math.min(0, minVal); // Basic range handling
+            
+            step.arr.forEach((v, i) => {
+                const h = Math.max(10, (v / (maxVal || 1)) * 200); // 200px max height
+                
                 const bar = document.createElement('div');
                 bar.className = 'bar';
-                
-                // Height based on value
-                const h = Math.max(20, (val / maxVal) * 200); 
                 bar.style.height = `${h}px`;
-                bar.innerHTML = `<div class="bar-val">${val}</div><div class="bar-idx">${i}</div>`;
-
-                if (step.l !== -1) {
-                    // Out of range
-                    if (i < step.l || i > step.r) bar.classList.add('inactive');
-                    
-                    // Pivot
-                    if (i === step.pivotIdx) bar.classList.add('pivot');
-                    
-                    // Partition colors
-                    if (i >= step.l && i < step.pIdx && i !== step.pivotIdx) bar.classList.add('less'); // <= pivot (mostly)
-                    if (i >= step.pIdx && i < (step.iIdx ?? step.r) && i !== step.pivotIdx) bar.classList.add('greater'); // > pivot
+                
+                // Color Logic
+                if (step.specialIdxs) {
+                    if (i === step.specialIdxs.pivot) bar.classList.add('pivot');
+                    else if (i === step.specialIdxs.sorted) bar.classList.add('sorted');
                 }
                 
-                if (step.found !== null && val === step.found && i === step.targetIdx) {
-                    bar.classList.add('sorted');
+                // Inactive if out of range
+                if (step.range && (i < step.range[0] || i > step.range[1])) {
+                    bar.classList.add('inactive');
                 }
-
+                
+                bar.innerHTML = `<div class="bar-val">${v}</div><div class="bar-idx">${i}</div>`;
+                
+                // Pointers
+                if (step.pointers) {
+                    if (step.pointers.p === i) {
+                        const pEl = document.createElement('div');
+                        pEl.className = 'pointer ptr-p';
+                        pEl.innerHTML = 'P<span class="ptr-label">Store</span>';
+                        bar.appendChild(pEl);
+                    }
+                    if (step.pointers.i === i) {
+                        const iEl = document.createElement('div');
+                        iEl.className = 'pointer ptr-i';
+                        iEl.innerHTML = 'i<span class="ptr-label">Scan</span>';
+                        bar.appendChild(iEl);
+                    }
+                    if (step.pointers.pivot === i && !bar.classList.contains('pivot')) {
+                         // Fallback label if not colored pivot (e.g. initial select)
+                         // But usually we set pivot in specialIdxs
+                    }
+                }
+                
                 container.appendChild(bar);
             });
         }
 
         function runVisualizer() {
-            const arr = document.getElementById('arrInput').value.split(',').map(x => parseInt(x.trim()));
+            const raw = document.getElementById('arrInput').value;
             const k = parseInt(document.getElementById('kInput').value);
+            const arr = raw.split(',').map(x => parseInt(x.trim())).filter(n => !isNaN(n));
+            
+            if(arr.length === 0) return;
+            
+            document.getElementById('statK').textContent = k;
             
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,

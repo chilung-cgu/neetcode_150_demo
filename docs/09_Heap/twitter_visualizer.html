@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>Design Twitter - D3 精緻視覺化</title>
+    <title>Design Twitter - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -20,59 +20,69 @@
             display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%;
         }
 
-        /* Users Panel */
+        /* Panels */
         .panel {
             background: rgba(30, 41, 59, 0.4); border-radius: 12px; padding: 15px;
-            border: 1px solid rgba(148, 163, 184, 0.2); width: 320px;
+            border: 1px solid rgba(148, 163, 184, 0.2); width: 300px;
             display: flex; flex-direction: column; gap: 10px;
         }
-        .panel-title { font-size: 0.9rem; color: #94a3b8; font-weight: bold; text-transform: uppercase; text-align: center; }
+        .panel-title { font-size: 0.9rem; color: #94a3b8; font-weight: bold; text-transform: uppercase; text-align: center; border-bottom: 1px solid rgba(148, 163, 184, 0.2); padding-bottom: 8px; letter-spacing: 1px; }
 
-        .user-list { display: flex; flex-direction: column; gap: 8px; }
+        .user-list { display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; }
         .user-row {
             display: flex; align-items: start; gap: 10px; padding: 8px;
             background: rgba(59, 130, 246, 0.1); border-radius: 8px;
         }
         .avatar {
-            width: 30px; height: 30px; background: #3b82f6; border-radius: 50%;
+            width: 32px; height: 32px; background: #3b82f6; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .tweets-preview { flex: 1; display: flex; flex-wrap: wrap; gap: 4px; }
         .mini-tweet {
-            font-size: 0.7rem; padding: 2px 6px; background: rgba(30, 41, 59, 0.8); border: 1px solid #475569; border-radius: 4px; color: #cbd5e1;
-            transition: all 0.3s;
+            font-size: 0.7rem; padding: 2px 6px; background: rgba(30, 41, 59, 0.8); border: 1px solid #475569; border-radius: 3px; color: #cbd5e1;
+            transition: all 0.3s; cursor: default;
         }
-        .mini-tweet.active { background: #fbbf24; color: #0f172a; border-color: #fbbf24; transform: scale(1.1); }
-        .mini-tweet.picked { opacity: 0.4; text-decoration: line-through; }
+        .mini-tweet.active { background: #fbbf24; color: #0f172a; border-color: #fbbf24; transform: scale(1.15); font-weight: bold; z-index: 10; }
+        .mini-tweet.picked { opacity: 0.3; text-decoration: line-through; border-color: #22c55e; }
 
         /* Heap Panel */
-        .heap-container { width: 100%; height: 250px; position: relative; }
-        #heap-svg { width: 100%; height: 100%; }
+        .heap-container { width: 100%; height: 250px; position: relative; overflow: hidden; }
+        #heap-svg { width: 100%; height: 100%; cursor: grab; }
+        #heap-svg:active { cursor: grabbing; }
         
-        .node-rect { fill: #334155; stroke: #64748b; stroke-width: 2px; }
-        .node-rect.max { fill: #fbbf24; stroke: #fff; } /* Current max */
-        .node-text { fill: white; font-size: 10px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-        .link { stroke: #475569; stroke-width: 1px; }
+        .node-circle { fill: #334155; stroke: #64748b; stroke-width: 2px; transition: all 0.3s; }
+        .node-circle.max { stroke: #fbbf24; stroke-width: 3px; fill: rgba(251, 191, 36, 0.1); }
+        .node-text { fill: white; font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-weight: bold; }
+        .link { stroke: #475569; stroke-width: 2px; opacity: 0.4; fill: none; }
 
         /* Feed */
         .feed-container {
-            flex: 1; background: #0f172a; border-radius: 12px; padding: 10px;
-            display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; border: 2px solid #334155;
+            flex: 1; background: #0f172a; border-radius: 8px; padding: 10px;
+            display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; border: 1px solid #334155;
         }
         .feed-item {
-            display: flex; gap: 10px; padding: 8px; background: #1e293b; border-radius: 6px; border-left: 3px solid #22c55e;
-            align-items: center; animation: slideIn 0.3s;
+            display: flex; gap: 10px; padding: 8px 12px; background: #1e293b; border-radius: 6px; border-left: 4px solid #22c55e;
+            align-items: center; animation: slideIn 0.3s ease-out; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        .feed-time { font-size: 0.7rem; color: #64748b; margin-left: auto; }
+        .feed-time { font-size: 0.75rem; color: #94a3b8; margin-left: auto; font-family: monospace; }
         @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
-        .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 80px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .input-row { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; justify-content: center; }
+        .input-group { display: flex; align-items: center; gap: 5px; }
+        .input-group label { font-size: 0.9rem; color: #94a3b8; font-weight: bold; }
+        
+        input[type=number] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 60px; text-align: center; }
+        button { padding: 8px 18px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; transition: all 0.2s; }
+        button:hover { filter: brightness(1.1); }
 
         .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -80,40 +90,52 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">Design Twitter (Merge K Sorted Lists)</div>
+                <div class="viz-title">Design Twitter (Merge K Sorted Lists Algorithm)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>User ID:</label>
-                        <input type="number" id="uidInput" value="1" min="1" max="3">
-                        <label>Post ID:</label>
-                        <input type="number" id="tidInput" value="101" style="width:60px">
-                        <button onclick="doPost()">Post</button>
+                        <div class="input-group">
+                            <label>User ID:</label>
+                            <input type="number" id="uidInput" value="1" min="1" max="3">
+                        </div>
+                        <div class="input-group">
+                            <label>Post ID:</label>
+                            <input type="number" id="tidInput" value="101" style="width:70px">
+                        </div>
+                        <button onclick="doPost()">Post Tweet</button>
                     </div>
-                    <div class="input-row" style="margin-top:10px;">
-                        <label>Get Feed for User:</label>
-                        <input type="number" id="feedUidInput" value="1" min="1" max="3">
-                        <button onclick="doGetFeed()" style="background:#22c55e;">Get Feed</button>
+                    <div class="input-row" style="margin-top:10px; padding-top:10px; border-top:1px solid #334155;">
+                        <div class="input-group">
+                            <label>Get Feed for User:</label>
+                            <input type="number" id="feedUidInput" value="1" min="1" max="3">
+                        </div>
+                        <button onclick="doGetFeed()" style="background:#22c55e;">Generate Feed</button>
                         <button onclick="resetViz()" style="background:#ef4444;">Reset</button>
                     </div>
-                    <div style="text-align:center; font-size:0.8rem; color:#64748b; margin-top:5px;">Assuming User 1 follows User 2 & 3.</div>
+                    <div style="text-align:center; font-size:0.85rem; color:#64748b; margin-top:8px;">User 1 follows User 2 & 3. User 2 & 3 follow nobody.</div>
                 </div>
 
                 <div class="visualization-area">
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Active Tweet</div>
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #22c55e; background:transparent"></div>Added to Feed</div>
+                       <div class="legend-item"><div class="legend-color" style="border:2px solid #fbbf24; background:transparent"></div>Heap Root (Max)</div>
+                    </div>
+
                     <div class="dashboard">
                         <div class="panel">
-                            <div class="panel-title">User Tweets (Sorted by Time)</div>
+                            <div class="panel-title">User Tweets (Sorted Lists)</div>
                             <div class="user-list" id="usersList"></div>
                         </div>
                         
                         <div class="panel">
-                            <div class="panel-title">Max Heap (Sorted by Time)</div>
+                            <div class="panel-title">Max Heap (Merge Logic)</div>
                             <div class="heap-container">
                                 <svg id="heap-svg"><g id="heap-g"></g></svg>
                             </div>
                         </div>
                         
                         <div class="panel">
-                            <div class="panel-title">News Feed (Result)</div>
+                            <div class="panel-title">News Feed (Top 10)</div>
                             <div class="feed-container" id="feedList"></div>
                         </div>
                     </div>
@@ -134,12 +156,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -152,40 +174,35 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
-        // Simplified Code for visualization focus
         const codeStructure = [
             { line: 'vector<int> getNewsFeed(userId) {', id: 0 },
-            { line: '    priority_queue<Tweet> pq;', id: 1 },
-            { line: '    // Push head of tweet list for self + followees', id: 2 },
+            { line: '    priority_queue<Tweet> pq; // Max-Heap by time', id: 1 },
+            { line: '    // 1. Push head of tweet list for self + followees', id: 2 },
             { line: '    for (int uid : followees[userId]) {', id: 3 },
             { line: '        if (!tweets[uid].empty())', id: 4 },
-            { line: '            pq.push(tweets[uid].back()); // Newest', id: 5 },
+            { line: '            pq.push(tweets[uid].back()); // Push newest', id: 5 },
             { line: '    }', id: 6 },
             { line: '    vector<int> feed;', id: 7 },
-            { line: '    while (!pq.empty() && feed.size() < 10) {', id: 8 },
-            { line: '        Tweet t = pq.top(); pq.pop();', id: 9 },
-            { line: '        feed.push_back(t.id);', id: 10 },
-            { line: '        if (t.next_index >= 0) ', id: 11 },
-            { line: '            pq.push(tweets[t.uid][t.next_index]);', id: 12 },
-            { line: '    }', id: 13 },
-            { line: '    return feed;', id: 14 },
-            { line: '}', id: 15 }
+            { line: '    // 2. Merge K Sorted Lists', id: 8 },
+            { line: '    while (!pq.empty() && feed.size() < 10) {', id: 9 },
+            { line: '        Tweet t = pq.top(); pq.pop();', id: 10 },
+            { line: '        feed.push_back(t.id);', id: 11 },
+            { line: '        if (t.next_index >= 0) ', id: 12 },
+            { line: '            pq.push(tweets[t.uid][t.next_index]);', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '    return feed;', id: 15 },
+            { line: '}', id: 16 }
         ];
 
         let viz;
         let globalTime = 0;
-        // Data Model
-        // users: { id: 1, tweets: [{id, time}] }
         let users = {
             1: { id:1, tweets: [] },
             2: { id:2, tweets: [] },
             3: { id:3, tweets: [] }
         };
-        // Hardcoded follow graph: 1 follows 2, 3. 2 follows none. 3 follows none.
-        // So GetFeed(1) merges 1, 2, 3.
         const follows = { 1: [1, 2, 3], 2: [2], 3: [3] };
 
-        // Helper: Convert Heap Array to Tree for D3
         function heapToHierarchy(arr) {
             if (arr.length === 0) return null;
             function build(idx) {
@@ -200,124 +217,84 @@
             return build(0);
         }
 
-        // --- Simulation ---
         function simulateGetFeed(userId) {
             const steps = [];
             const followees = follows[userId] || [userId];
-            
-            // Build Initial Heap
-            // We need a Max Heap based on Time.
-            // Items in heap: { tweetId, time, uid, nextIdx }
-            
-            const pq = []; // Local simplistic Max Heap array
+            const pq = []; 
             const feed = [];
-            const processedTweets = new Set(); // To mark visually 'picked'
+            let processedTweets = []; // Array of IDs
 
             // Initial Push
             followees.forEach(uid => {
                 const uTweets = users[uid].tweets;
                 if(uTweets.length > 0) {
-                    const t = uTweets[uTweets.length - 1]; // Newest is at end (or push front? let's assume array push)
-                    // Wait, usually tweets are stored chronological. So newest is last.
-                    // But we traverse backwards? Or we store them reverse?
-                    // Let's assume uTweets[length-1] is newest. Next is length-2.
+                    const t = uTweets[uTweets.length - 1]; // Newest
                     pq.push({ ...t, uid, idx: uTweets.length - 1 });
                 }
             });
-            pq.sort((a,b) => b.time - a.time); // Initial sort
+            pq.sort((a,b) => b.time - a.time);
 
-            const pushState = (msg, hl, activeTid=null) => {
+            const pushState = (msg, hl, activeTid=null, info={}) => {
                 steps.push({
                     users: JSON.parse(JSON.stringify(users)),
                     pq: JSON.parse(JSON.stringify(pq)),
                     feed: [...feed],
-                    processedTweets: new Set(processedTweets), // Set copy? JSON sucks for Set
+                    processedTweets: [...processedTweets], 
                     activeTid,
-                    msg, highlightLines: hl
+                    msg, highlightLines: hl, explanation: info
                 });
             };
             
-            // Fix Set serialization for steps
-            // Actually just store array of processed IDs
-            
-            steps.push({
-                users: JSON.parse(JSON.stringify(users)),
-                pq: [...pq], feed: [], processedTweets: [],
-                activeTid: null,
-                msg: `Init Heap with newest tweets from User ${userId} and followees ${followees.join(',')}`,
-                highlightLines: [3, 4, 5]
-            });
+            pushState(`Init Heap with newest tweets`, [3, 4, 5], null, { title: "初始化 Heap", text: "將所有關注者最新的推文放入 Max-Heap。", formula: "pq.push(users[i].latest)" });
 
             while(pq.length > 0 && feed.length < 10) {
                 // Pop Max
-                const top = pq.shift(); // Remove first
+                const top = pq.shift(); 
                 feed.push(top);
-                const processedList = feed.map(f => f.id);
+                processedTweets.push(top.id);
                 
-                pushState(`Pop Tweet ${top.id} (Time ${top.time}) from User ${top.uid}`, [9, 10], top.id);
+                pushState(`Pop newest: T${top.id} (Time ${top.time})`, [9, 10], top.id, { title: "取出最新", text: `從 Heap 取出時間最大的推文 T${top.id} 加入 Feed。`, formula: "feed.push(pq.pop())" });
 
                 // Push Next
                 if (top.idx > 0) {
                     const nextIdx = top.idx - 1;
                     const nextTweet = users[top.uid].tweets[nextIdx];
                     pq.push({ ...nextTweet, uid: top.uid, idx: nextIdx });
-                    pq.sort((a,b) => b.time - a.time); // Re-sort (simulate heapify)
+                    pq.sort((a,b) => b.time - a.time); 
                     
-                    // We need to update processed list in the state object properly
-                    const currentStep = {
-                        users: JSON.parse(JSON.stringify(users)),
-                        pq: [...pq],
-                        feed: [...feed],
-                        processedTweets: processedList,
-                        activeTid: nextTweet.id, // Highlight the one being pushed
-                        msg: `Push next tweet ${nextTweet.id} from User ${top.uid}`,
-                        highlightLines: [11, 12]
-                    };
-                    steps.push(currentStep);
+                    pushState(`Push next from User ${top.uid}: T${nextTweet.id}`, [12, 13], nextTweet.id, { title: "推入下一條", text: `將該用戶的下一條較舊推文 T${nextTweet.id} 放入 Heap。`, formula: "pq.push(next_tweet)" });
                 } else {
-                    const currentStep = {
-                        users: JSON.parse(JSON.stringify(users)),
-                        pq: [...pq],
-                        feed: [...feed],
-                        processedTweets: processedList,
-                        activeTid: null,
-                        msg: `User ${top.uid} has no more tweets`,
-                        highlightLines: [11]
-                    };
-                    steps.push(currentStep);
+                    pushState(`User ${top.uid} done.`, [11], null, { title: "列表耗盡", text: `該用戶無更多推文。`, formula: "empty" });
                 }
             }
             
-            // Final
-            steps.push({
-                users: JSON.parse(JSON.stringify(users)),
-                pq: [...pq],
-                feed: [...feed],
-                processedTweets: feed.map(f=>f.id),
-                activeTid: null,
-                msg: "Feed Generation Complete",
-                highlightLines: [14]
-            });
+            pushState("Feed Generation Complete", [15], null, { title: "完成", text: "已生成 Top 10 最新動態。", formula: "return feed" });
 
             return steps;
         }
 
         // --- Render ---
-        const width = 250, height = 250;
+        const width = 300, height = 250;
         const svg = d3.select("#heap-svg");
         const gMain = d3.select("#heap-g");
         
-        // Zoom functionality
         const zoom = d3.zoom().on("zoom", (e) => gMain.attr("transform", e.transform));
         svg.call(zoom);
-        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 20).scale(0.9));
+        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, 30).scale(0.8));
 
-        const treeLayout = d3.tree().nodeSize([40, 50]);
+        const treeLayout = d3.tree().nodeSize([50, 60]);
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
-            // Render Users & Tweets
+            // Users
             const usersList = document.getElementById('usersList');
             usersList.innerHTML = '';
             Object.values(step.users).forEach(u => {
@@ -336,8 +313,7 @@
                     mini.className = 'mini-tweet';
                     mini.textContent = t.id;
                     if(t.id === step.activeTid) mini.classList.add('active');
-                    // Check if processed
-                    if(step.processedTweets && step.processedTweets.includes(t.id)) mini.classList.add('picked');
+                    if(step.processedTweets.includes(t.id)) mini.classList.add('picked');
                     preview.appendChild(mini);
                 });
                 
@@ -346,17 +322,17 @@
                 usersList.appendChild(row);
             });
 
-            // Render Feed
+            // Feed
             const feedList = document.getElementById('feedList');
             feedList.innerHTML = '';
             step.feed.forEach(f => {
                 const item = document.createElement('div');
                 item.className = 'feed-item';
-                item.innerHTML = `<div><b>U${f.uid}</b>: Tweet ${f.id}</div><div class="feed-time">T=${f.time}</div>`;
+                item.innerHTML = `<div><b style="color:#3b82f6">U${f.uid}</b>: Tweet ${f.id}</div><div class="feed-time">T=${f.time}</div>`;
                 feedList.appendChild(item);
             });
 
-            // Render Heap Tree
+            // Heap Tree
             gMain.selectAll("*").remove();
             if(step.pq.length > 0) {
                 const root = d3.hierarchy(heapToHierarchy(step.pq));
@@ -370,30 +346,30 @@
                 const nEnter = nodes.enter().append("g").attr("class", "node-g")
                     .attr("transform", d => `translate(${d.x}, ${d.y})`);
                 
-                nEnter.append("rect").attr("width", 36).attr("height", 24).attr("x", -18).attr("y", -12)
-                    .attr("class", d => d.depth === 0 ? "node-rect max" : "node-rect");
+                nEnter.append("circle").attr("r", 20)
+                    .attr("class", d => d.depth === 0 ? "node-circle max" : "node-circle");
                 
-                nEnter.append("text").attr("class", "node-text")
+                nEnter.append("text").attr("class", "node-text").attr("dy", 1)
                     .text(d => `T${d.data.id}`);
+                
+                // Show Time small below
+                nEnter.append("text").attr("class", "node-text").attr("dy", 14).style("font-size", "8px").style("fill", "#fbbf24")
+                    .text(d => `t=${d.data.time}`);
             }
         }
 
-        // --- Actions ---
         function doPost() {
             const uid = parseInt(document.getElementById('uidInput').value);
             const tid = parseInt(document.getElementById('tidInput').value);
             
-            // Add to state
             users[uid].tweets.push({ id: tid, time: ++globalTime });
-            document.getElementById('tidInput').value = tid + 1; // Auto increment
+            document.getElementById('tidInput').value = tid + 1;
             
-            // Dummy visual update (single step)
-            // Or just re-render current static view?
-            // Let's just create a quick 1-step logic
             viz = new AlgorithmVisualizer({ codeLines: codeStructure, onStepChange: render });
             viz.setSteps([{
                 users: JSON.parse(JSON.stringify(users)),
-                pq: [], feed: [], processedTweets: [], msg: `User ${uid} Posted ${tid}`, highlightLines:[]
+                pq: [], feed: [], processedTweets: [], msg: `User ${uid} Posted Tweet ${tid}`, highlightLines:[],
+                explanation: { title: "發推", text: `User ${uid} 發佈了新推文 T${tid} (Time ${globalTime})`, formula: "tweets[u].push()" }
             }]);
         }
 
@@ -411,13 +387,16 @@
         function resetViz() {
             users = { 1: {id:1, tweets:[]}, 2: {id:2, tweets:[]}, 3: {id:3, tweets:[]} };
             globalTime = 0;
-            // Pre-seed some tweets
+            // Pre-seed
             users[1].tweets.push({id:1, time:++globalTime});
             users[2].tweets.push({id:2, time:++globalTime});
             users[3].tweets.push({id:3, time:++globalTime});
             users[2].tweets.push({id:4, time:++globalTime});
+            users[3].tweets.push({id:5, time:++globalTime});
             
-            doGetFeed();
+            viz = new AlgorithmVisualizer({ codeLines: codeStructure, onStepChange: render });
+            viz.setSteps([{ users, pq:[], feed:[], processedTweets:[], msg:"Reset Complete", highlightLines:[], 
+                explanation: {title:"重置", text:"系統已重置，預設 User 1 關注 2 和 3。", formula:"reset()"}}]);
         }
 
         window.addEventListener('load', resetViz);

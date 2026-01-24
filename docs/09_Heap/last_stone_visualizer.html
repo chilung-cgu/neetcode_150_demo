@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Last Stone Weight (Max Heap) - D3 精緻視覺化</title>
+    <title>Last Stone Weight (Max Heap) - D3 Dynamic Viz</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
         .visualization-area {
@@ -25,49 +25,67 @@
         /* Heap Tree */
         .tree-panel {
             width: 100%; height: 350px;
-            background: rgba(30, 41, 59, 0.3);
-            border-radius: 12px;
-            position: relative;
+            background: rgba(30, 41, 59, 0.3); border-radius: 12px;
+            position: relative; overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.1);
         }
-        #tree-svg { width: 100%; height: 100%; }
+        #tree-svg { width: 100%; height: 100%; cursor: grab; }
+        #tree-svg:active { cursor: grabbing; }
 
         /* Smash Zone */
         .smash-zone {
-            height: 120px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 60px;
-            background: rgba(255,255,255,0.05); border-radius: 12px;
-            position: relative;
+            height: 140px; width: 95%; display: flex; align-items: center; justify-content: center; gap: 40px;
+            background: rgba(15, 23, 42, 0.6); border-radius: 12px; border: 1px solid #475569;
+            position: relative; overflow: hidden;
         }
-        .vs-label { font-size: 2rem; font-weight: 900; color: #ef4444; font-style: italic; }
+        .vs-label { 
+            font-size: 2.5rem; font-weight: 900; 
+            background: linear-gradient(135deg, #ef4444, #f59e0b); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-style: italic; z-index: 5;
+        }
         
         .stone-slot {
-            width: 70px; height: 70px; border: 2px dashed #475569; border-radius: 50%;
+            width: 90px; height: 90px; border: 2px dashed #475569; border-radius: 50%;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             color: #64748b; font-size: 0.8rem; position: relative;
+            background: rgba(0,0,0,0.2);
         }
         
         .stone-anim {
-            width: 70px; height: 70px; background: #fbbf24; border-radius: 50%;
+            width: 80px; height: 80px; background: #fbbf24; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 1.5rem; color: #0f172a;
-            box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
-            transition: all 0.3s;
+            font-weight: 800; font-size: 1.8rem; color: #0f172a;
+            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.3), 0 0 20px rgba(251, 191, 36, 0.4);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid rgba(255,255,255,0.4);
         }
-        .stone-anim.broken { opacity: 0.3; transform: scale(0.8); filter: grayscale(1); }
-        .stone-anim.result { background: #22c55e; box-shadow: 0 0 20px #22c55e; color: white; }
+        .stone-anim.broken { 
+            opacity: 0; transform: scale(0) rotate(180deg); filter: grayscale(1);
+        }
+        .stone-anim.result { 
+            background: #22c55e; box-shadow: 0 0 20px #22c55e; color: white; border-color: #fff;
+        }
 
         /* D3 Nodes */
-        .node-circle { fill: #3b82f6; stroke: #1e293b; stroke-width: 3px; transition: fill 0.3s; }
+        .node-circle { fill: #334155; stroke: #64748b; stroke-width: 2px; transition: all 0.3s; }
         .node-circle.root { stroke: #fbbf24; stroke-width: 4px; }
+        .node-circle.active { fill: #fbbf24; stroke: #fff; filter: drop-shadow(0 0 5px #fbbf24); }
+        
         .node-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-        .link { stroke: #64748b; stroke-width: 2px; opacity: 0.4; fill: none; }
+        .link { stroke: #64748b; stroke-width: 2px; opacity: 0.4; fill: none; transition: stroke 0.3s; }
 
         /* Controls */
         .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
         .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
         .input-row input { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 250px; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; }
-
-        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+        .input-row button { padding: 8px 20px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 38px; }
+        
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
+        
+        .legend { display: flex; gap: 15px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -78,17 +96,28 @@
                 <div class="viz-title">Last Stone Weight (Max Heap)</div>
                 <div class="custom-input-section">
                     <div class="input-row">
-                        <label>Stones:</label>
+                        <label style="font-weight:bold; color:#94a3b8">Stones:</label>
                         <input type="text" id="stonesInput" value="2, 7, 4, 1, 8, 1">
                         <button onclick="runVisualizer()">Smash!</button>
                     </div>
+                    <div style="text-align:center; font-size:0.85rem; color:#64748b; margin-top:8px;">Max-Heap pops two largest stones (Y, X). If Y > X, push (Y-X) back.</div>
                 </div>
 
                 <div class="visualization-area">
                     <div class="smash-zone">
-                        <div class="stone-slot" id="slotY"><span style="margin-bottom:5px;">Max (Y)</span></div>
+                        <div class="stone-slot" id="slotY">
+                            <span style="position:absolute; top:5px; font-size:0.75rem; color:#94a3b8; font-weight:bold;">MAX (Y)</span>
+                        </div>
                         <div class="vs-label">VS</div>
-                        <div class="stone-slot" id="slotX"><span style="margin-bottom:5px;">2nd Max (X)</span></div>
+                        <div class="stone-slot" id="slotX">
+                            <span style="position:absolute; top:5px; font-size:0.75rem; color:#94a3b8; font-weight:bold;">2ND MAX (X)</span>
+                        </div>
+                    </div>
+
+                    <div class="legend">
+                       <div class="legend-item"><div class="legend-color" style="border:3px solid #fbbf24; background:transparent"></div>Root (Max)</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Popped Stone</div>
+                       <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Survivor/Result</div>
                     </div>
 
                     <div class="tree-panel">
@@ -114,12 +143,12 @@
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
                             <option value="1500">0.5x</option>
                             <option value="1000" selected>1x</option>
-                            <option value="500">1.5x</option>
+                            <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
@@ -163,8 +192,7 @@
             return build(0);
         }
 
-        // --- Simulation ---
-        // Basic Max Heap Implementation for Simulation
+        // Basic Max Heap Implementation
         class MaxHeap {
             constructor(arr) {
                 this.heap = [];
@@ -210,79 +238,52 @@
 
         function simulate(stones) {
             const steps = [];
-            const pq = new MaxHeap(stones); // Init heap
             
-            // For animation, we need intermediate heap states.
-            // But implementing full heap visual steps (swap by swap) inside this loop is complex.
-            // We will simplify: Show "Pop Y" -> Heap State Update -> "Pop X" -> Heap State Update.
-            // We assume instant heapify for visual clarity unless we really want swap steps. 
-            // "Instant heapify" is acceptable if we focus on the logic Y vs X.
+            // Build Heap Visual Step
+            // We'll skip heapify steps unless requested, just show initial state
+            const pq = new MaxHeap(stones); 
             
-            steps.push({
+            const snap = (msg, hl, y, x, res, info={}) => ({
                 heap: pq.toArray(),
-                y: null, x: null, result: null,
-                msg: "Init Max Heap",
-                highlightLines: [1]
+                y, x, result: res,
+                msg, highlightLines: hl, explanation: info
             });
+
+            steps.push(snap("Initialized Max Heap", [1], null, null, null, { title: "初始化", text: "將所有石頭放入 Max-Heap。", formula: "priority_queue<int> pq" }));
 
             while(pq.size() > 1) {
                 // Peek Y
                 const y = pq.heap[0];
-                steps.push({
-                    heap: pq.toArray(),
-                    y: y, x: null, result: null,
-                    msg: `Pop Max (Y = ${y})`,
-                    highlightLines: [3]
-                });
+                steps.push(snap(`Peek Max (Y = ${y})`, [3], null, null, null, { title: "取出最大值", text: `目前最大石頭是 ${y}。`, formula: "y = pq.top()" }));
                 
-                // Actual pop logic (simplified visual)
-                pq.pop(); // Remove Y
+                // Pop Y
+                pq.pop(); 
+                
+                steps.push(snap(`Pop Y (${y}), waiting for X`, [3], y, null, null, { title: "移除 Y", text: `從 Heap 移除 ${y}。`, formula: "pq.pop()" }));
                 
                 // Peek X
-                const x = pq.heap[0]; // Next max
-                steps.push({
-                    heap: pq.toArray(),
-                    y: y, x: x, result: null,
-                    msg: `Pop 2nd Max (X = ${x})`,
-                    highlightLines: [4]
-                });
+                const x = pq.heap[0];
+                steps.push(snap(`Peek 2nd Max (X = ${x})`, [4], y, null, null, { title: "取出次大值", text: `目前最大 (原次大) 是 ${x}。`, formula: "x = pq.top()" }));
                 
-                pq.pop(); // Remove X
+                // Pop X
+                pq.pop();
+                
+                steps.push(snap(`Pop X (${x}) -> Smash!`, [4], y, x, null, { title: "移除 X", text: `從 Heap 移除 ${x}。兩石相撞！`, formula: "pq.pop()" }));
                 
                 // Clash
                 let diff = y - x;
-                steps.push({
-                    heap: pq.toArray(), // Both removed
-                    y: y, x: x, result: diff,
-                    msg: `Clash! ${y} - ${x} = ${diff}`,
-                    highlightLines: [5]
-                });
                 
                 if (x !== y) {
+                    steps.push(snap(`Result: ${y} - ${x} = ${diff}. Push back.`, [5, 6], y, x, diff, { title: "粉碎結果", text: `兩石重量不同，剩餘重量 ${diff} 放回 Heap。`, formula: "pq.push(y-x)" }));
                     pq.push(diff);
-                    steps.push({
-                        heap: pq.toArray(),
-                        y: y, x: x, result: diff,
-                        msg: `Push diff (${diff}) back`,
-                        highlightLines: [6]
-                    });
+                    steps.push(snap(`Heap Updated (Added ${diff})`, [6], null, null, null, { title: "更新 Heap", text: `${diff} 已加入並 Sift Up。`, formula: "push finished" }));
                 } else {
-                    steps.push({
-                        heap: pq.toArray(),
-                        y: y, x: x, result: 0,
-                        msg: `Both destroyed (${y} == ${x})`,
-                        highlightLines: [5] // else condition implied
-                    });
+                    steps.push(snap(`Result: ${y} - ${x} = 0. Both Destroyed.`, [5], y, x, 0, { title: "完全粉碎", text: `兩石重量相同，全部粉碎，無剩餘。`, formula: "diff == 0" }));
                 }
             }
             
             const final = pq.size() === 0 ? 0 : pq.heap[0];
-            steps.push({
-                heap: pq.toArray(),
-                y: null, x: null, result: final,
-                msg: `Final Result: ${final}`,
-                highlightLines: [9]
-            });
+            steps.push(snap(`Final Survivor: ${final}`, [9], null, null, final === 0 ? 0 : final, { title: "遊戲結束", text: `最後剩餘石頭重量：${final}。`, formula: "return result" }));
 
             return steps;
         }
@@ -299,14 +300,21 @@
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
+                `;
+            }
 
             // Render Stones in Slot
             const slotY = document.getElementById('slotY');
             const slotX = document.getElementById('slotX');
             
-            // Clear but keep labels
-            slotY.innerHTML = '<span style="margin-bottom:5px; font-size:0.8rem; color:#94a3b8">Max (Y)</span>';
-            slotX.innerHTML = '<span style="margin-bottom:5px; font-size:0.8rem; color:#94a3b8">2nd Max (X)</span>';
+            // Clear content but keep label spans if possible, actually we rebuild
+            slotY.innerHTML = '<span style="position:absolute; top:5px; font-size:0.75rem; color:#94a3b8; font-weight:bold;">MAX (Y)</span>';
+            slotX.innerHTML = '<span style="position:absolute; top:5px; font-size:0.75rem; color:#94a3b8; font-weight:bold;">2ND MAX (X)</span>';
             
             if(step.y !== null) {
                 const stone = document.createElement('div');
@@ -318,10 +326,21 @@
                 const stone = document.createElement('div');
                 stone.className = 'stone-anim';
                 stone.textContent = step.x;
-                // If destroyed
-                if(step.result === 0 && step.msg.includes('destroyed')) {
-                    stone.classList.add('broken');
-                    if(slotY.lastChild) slotY.lastChild.classList.add('broken');
+                
+                // Result animation logic
+               if(step.msg.includes('Result')) {
+                    if (step.result === 0) {
+                        stone.classList.add('broken');
+                        if(slotY.lastChild) slotY.lastChild.classList.add('broken');
+                    } else {
+                        // Assuming X is smaller, it's broken. Y becomes survivor.
+                        // Actually logic is: Y-X. Y is reduced.
+                        // Visual: Stone Y shrinks or is replaced.
+                        // Simple visual: Green stone appears in slot Y or X? Or distinct result?
+                        // Let's rely on text. But we can make stone green.
+                        // If we pushed back, the NEW stone is likely conceptually from Y-X.
+                        // We highlight the diff.
+                    }
                 }
                 slotX.appendChild(stone);
             }
@@ -346,7 +365,10 @@
         }
 
         function runVisualizer() {
-            const arr = document.getElementById('stonesInput').value.split(',').map(x => parseInt(x.trim()));
+            const val = document.getElementById('stonesInput').value;
+            if(!val) return;
+            const arr = val.split(',').map(x => parseInt(x.trim())).filter(n => !isNaN(n));
+            
             viz = new AlgorithmVisualizer({
                 codeLines: codeStructure,
                 onStepChange: render
