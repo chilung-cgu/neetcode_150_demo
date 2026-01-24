@@ -3,34 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>House Robber II - 視覺化</title>
+    <title>House Robber II - D3 環形視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 500px;
+        }
 
-        .houses { display: flex; gap: 10px; justify-content: center; margin: 20px 0; flex-wrap: wrap; padding: 10px; }
-        .house { 
-            width: 50px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            border-radius: 6px; background: var(--viz-bg-secondary); border: 2px solid var(--viz-border); transition: all 0.3s;
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 400px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
             position: relative;
         }
-        .house.active { border-color: var(--viz-primary); transform: scale(1.1); }
-        .house.robbed { background: var(--viz-success); border-color: var(--viz-success); color: #0f172a; }
-        .house.locked { background: var(--viz-error); opacity: 0.3; pointer-events: none; }
-        .house-val { font-weight: bold; font-size: 1.1rem; }
-        .house-idx { font-size: 0.7rem; opacity: 0.7; }
+        #viz-svg { width: 100%; height: 100%; }
 
-        .case-block { 
-            background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; margin-bottom: 10px;
-            display: flex; align-items: center; justify-content: space-between;
+        .house-circle { fill: #475569; stroke: #fff; stroke-width: 2px; transition: all 0.5s; cursor: pointer; }
+        .house-circle.active { stroke: #f59e0b; stroke-width: 4px; filter: drop-shadow(0 0 5px #f59e0b); }
+        .house-circle.robbed { fill: #22c55e; }
+        .house-circle.ignored { opacity: 0.2; }
+        
+        .house-text { fill: white; font-weight: bold; font-family: monospace; font-size: 14px; text-anchor: middle; pointer-events: none; }
+        
+        .case-label { font-size: 14px; font-weight: bold; fill: #94a3b8; }
+        .result-text { font-size: 16px; font-weight: bold; fill: #22c55e; }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
         }
-        .case-title { font-weight: bold; width: 150px; }
-        .case-val { font-family: monospace; font-size: 1.2rem; color: var(--viz-accent); }
+        .stat-box { display: flex; flex-direction: column; align-items: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
 
-        .circle-indicator { text-align: center; color: var(--viz-warning); margin-bottom: 10px; font-weight: bold; }
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 200px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -38,228 +62,319 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">打家劫舍 II (Circular House Robber)</div>
+                <div class="viz-title">House Robber II (Circular)</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>財物 (nums):</label>
-                        <input type="text" id="numsInput" value="2, 3, 2" style="width: 200px;">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">House Values:</label>
+                            <input type="text" id="numsInput" value="2, 3, 2, 5, 4">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Rob</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="circle-indicator">⟲ 環形房屋：不能同時搶第一和最後</div>
-                
-                <div class="houses" id="housesDisplay"></div>
-                
-                <div style="margin-top: 20px;">
-                    <div class="case-block" id="case1Block">
-                        <div class="case-title">Case 1: 不搶最後</div>
-                        <div class="case-val" id="case1Display">-</div>
+                <div class="visualization-area">
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
                     </div>
-                    <div class="case-block" id="case2Block">
-                        <div class="case-title">Case 2: 不搶第一</div>
-                        <div class="case-val" id="case2Display">-</div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Case 1 (Ignore Last)</div>
+                            <div class="stat-val" id="case1Display">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Case 2 (Ignore First)</div>
+                            <div class="stat-val" id="case2Display">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Max Profit</div>
+                            <div class="stat-val" id="totalDisplay">-</div>
+                        </div>
                     </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
                 </div>
 
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">最大收益</div><div class="state-value" id="resultDisplay">-</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'int rob(vector<int>& nums) {', id: 0 },
             { line: '    int n = nums.size();', id: 1 },
             { line: '    if (n == 1) return nums[0];', id: 2 },
-            { line: '    // 環形條件：拆解為兩個線性問題', id: 3 },
-            { line: '    return max(', id: 4 },
-            { line: '        robRange(nums, 0, n - 2), // Case 1: 忽略最後', id: 5 },
-            { line: '        robRange(nums, 1, n - 1)  // Case 2: 忽略第一', id: 6 },
-            { line: '    );', id: 7 },
-            { line: '}', id: 8 },
-            { line: 'int robRange(nums, start, end) {', id: 9 },
-            { line: '    // 線性 DP 邏輯', id: 10 },
-            { line: '    // ...', id: 11 },
-            { line: '}', id: 12 },
+            { line: '    return max(robRange(0, n-2), robRange(1, n-1));', id: 3 },
+            { line: '}', id: 4 },
+            { line: 'int robRange(start, end) {', id: 5 },
+            { line: '    int prev = 0, curr = 0;', id: 6 },
+            { line: '    for (int i = start; i <= end; i++) {', id: 7 },
+            { line: '        int temp = max(curr, prev + nums[i]);', id: 8 },
+            { line: '        prev = curr;', id: 9 },
+            { line: '        curr = temp;', id: 10 },
+            { line: '    }', id: 11 },
+            { line: '    return curr;', id: 12 },
+            { line: '}', id: 13 }
         ];
 
-        let currentNums = [2, 3, 2];
+        let viz;
 
-        function runCustomInput() {
-            const str = document.getElementById('numsInput').value;
-            const arr = str.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            if (arr.length < 1 || arr.length > 10) {
-                alert('請輸入 1-10 個數字');
-                return;
-            }
-            currentNums = arr;
-            init();
-        }
-
-        // Helper for linear rob
-        function linearRob(nums, start, end) {
-            let prev = 0, curr = 0;
-            const history = []; // To visualize steps inside linear
-            for (let i = start; i <= end; i++) {
-                let temp = Math.max(curr, prev + nums[i]);
-                history.push({ idx: i, val: temp, rob: temp > curr }); 
-                prev = curr;
-                curr = temp;
-            }
-            return { total: curr, steps: history };
-        }
-
-        function generateAlgorithmSteps(nums) {
+        function simulate(nums) {
             const steps = [];
             const n = nums.length;
             
+            // Initial
             steps.push({
-                hl: [0, 1, 2, 3],
-                expl: { title: '初始化', text: `Nums: [${nums.join(', ')}]<br>準備拆解環形問題`, formula: 'setup' }
+                stage: 'intro',
+                nums,
+                msg: "Circular House Robber: Nums " + nums.join(','),
+                highlightLines: [0, 1]
             });
 
             if (n === 1) {
                 steps.push({
-                    result: nums[0],
-                    hl: [2],
-                    expl: { title: '唯一房屋', text: '直接搶劫', formula: `return ${nums[0]}` }
+                    stage: 'single', nums, result: nums[0],
+                    msg: "Only 1 house. Rob it.", highlightLines: [2]
                 });
                 return steps;
             }
 
-            // Case 1
-            const case1Res = linearRob(nums, 0, n-2);
-            for (let s of case1Res.steps) {
-                steps.push({
-                    case: 1,
-                    idx: s.idx,
-                    runningVal: s.val,
-                    start: 0, end: n-2,
-                    hl: [5],
-                    expl: { title: 'Case 1: 忽略最後', text: `檢查房 ${s.idx}<br>當前累積最大: ${s.val}`, formula: `robRange(0, ${n-2})` }
-                });
-            }
+            // Case 1: 0 to n-2 (Ignore LAST)
+            const c1Start = 0, c1End = n-2;
+            let p1 = 0, c1 = 0;
+            
             steps.push({
-                case: 1, done: true, val: case1Res.total,
-                start: 0, end: n-2,
-                hl: [5],
-                expl: { title: 'Case 1 完成', text: `範圍 [0, ${n-2}] 最大收益: ${case1Res.total}`, formula: `res1 = ${case1Res.total}` }
+                stage: 'case1_start', nums, c1Start, c1End,
+                msg: "Case 1: Rob index 0 to N-2 (Ignore Last House)",
+                highlightLines: [3]
             });
 
-            // Case 2
-            const case2Res = linearRob(nums, 1, n-1);
-            for (let s of case2Res.steps) {
-                 steps.push({
-                    case: 2,
-                    idx: s.idx,
-                    runningVal: s.val,
-                    case1Val: case1Res.total,
-                    start: 1, end: n-1,
-                    hl: [6],
-                    expl: { title: 'Case 2: 忽略第一', text: `檢查房 ${s.idx}<br>當前累積最大: ${s.val}`, formula: `robRange(1, ${n-1})` }
+            for (let i = c1Start; i <= c1End; i++) {
+                let temp = Math.max(c1, p1 + nums[i]);
+                steps.push({
+                    stage: 'case1_step', nums, idx: i, current: c1, prev: p1, val: nums[i], temp,
+                    c1Start, c1End,
+                    msg: `C1 House ${i}: max(${c1}, ${p1}+${nums[i]}) = ${temp}`,
+                    highlightLines: [7, 8]
                 });
+                p1 = c1;
+                c1 = temp;
             }
+            // Result C1
+            const res1 = c1;
             steps.push({
-                case: 2, done: true, val: case2Res.total,
-                case1Val: case1Res.total,
-                start: 1, end: n-1,
-                hl: [6],
-                expl: { title: 'Case 2 完成', text: `範圍 [1, ${n-1}] 最大收益: ${case2Res.total}`, formula: `res2 = ${case2Res.total}` }
+                stage: 'case1_done', nums, res1, c1Start, c1End,
+                msg: `Case 1 Range [0..${n-2}] Max Profit: ${res1}`,
+                highlightLines: [12]
+            });
+
+            // Case 2: 1 to n-1 (Ignore FIRST)
+            const c2Start = 1, c2End = n-1;
+            let p2 = 0, c2 = 0;
+            
+            steps.push({
+                stage: 'case2_start', nums, c2Start, c2End, res1, // keep res1
+                msg: "Case 2: Rob index 1 to N-1 (Ignore First House)",
+                highlightLines: [3]
+            });
+
+            for (let i = c2Start; i <= c2End; i++) {
+                let temp = Math.max(c2, p2 + nums[i]);
+                steps.push({
+                    stage: 'case2_step', nums, idx: i, current: c2, prev: p2, val: nums[i], temp,
+                    res1, c2Start, c2End,
+                    msg: `C2 House ${i}: max(${c2}, ${p2}+${nums[i]}) = ${temp}`,
+                    highlightLines: [7, 8]
+                });
+                p2 = c2;
+                c2 = temp;
+            }
+            const res2 = c2;
+            steps.push({
+                stage: 'case2_done', nums, res1, res2, c2Start, c2End,
+                msg: `Case 2 Range [1..${n-1}] Max Profit: ${res2}`,
+                highlightLines: [12]
             });
 
             // Final
-            const finalRes = Math.max(case1Res.total, case2Res.total);
             steps.push({
-                result: finalRes,
-                case1Val: case1Res.total,
-                case2Val: case2Res.total,
-                hl: [7, 8],
-                expl: { title: '比較結果', text: `Max(${case1Res.total}, ${case2Res.total}) = ${finalRes}`, formula: `return ${finalRes}` }
+                stage: 'final', nums, res1, res2, total: Math.max(res1, res2),
+                msg: `Final Result: max(${res1}, ${res2}) = ${Math.max(res1, res2)}`,
+                highlightLines: [3]
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    // Update Value displays
-                    const c1Disp = document.getElementById('case1Display');
-                    const c2Disp = document.getElementById('case2Display');
-                    
-                    if (step.case === 1) {
-                        c1Disp.textContent = step.done ? step.val : step.runningVal;
-                    } else if (step.case1Val !== undefined) {
-                        c1Disp.textContent = step.case1Val;
-                    }
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 400;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
 
-                    if (step.case === 2) {
-                        c2Disp.textContent = step.done ? step.val : step.runningVal;
-                    } else if (step.case2Val !== undefined) {
-                        c2Disp.textContent = step.case2Val;
-                    }
-                    
-                    document.getElementById('resultDisplay').textContent = step.result !== undefined ? step.result : '-';
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('case1Display').textContent = step.res1 !== undefined ? step.res1 : '-';
+            document.getElementById('case2Display').textContent = step.res2 !== undefined ? step.res2 : '-';
+            document.getElementById('totalDisplay').textContent = step.total !== undefined ? step.total : '-';
 
-                    // Update Houses
-                    const container = document.getElementById('housesDisplay');
-                    container.innerHTML = '';
-                    currentNums.forEach((val, i) => {
-                        let cls = 'house';
-                        // Logic to show valid range
-                        if (step.start !== undefined) {
-                            if (i < step.start || i > step.end) cls += ' locked';
-                        }
-                        
-                        if (step.idx === i) cls += ' active';
-                        
-                        const div = document.createElement('div');
-                        div.className = cls;
-                        div.innerHTML = `<span class="house-val">${val}</span><span class="house-idx">${i}</span>`;
-                        container.appendChild(div);
+            const nums = step.nums;
+            const n = nums.length;
+            
+            // Layout: 
+            // Intro: Circle
+            // Case 1: Linear strip at top
+            // Case 2: Linear strip at bottom
+            
+            // We animate transition from Circle to Strips?
+            // That's complex. Let's show both strips statically, and highlight active one.
+            // Or show Circular layout on Left, and active Linear analysis on Right.
+            
+            const radius = 80;
+            const cx = 150;
+            const cy = height / 2;
+            
+            // Circle Data
+            const angleStep = (2 * Math.PI) / n;
+            const circleData = nums.map((v, i) => ({
+                i, v,
+                x: cx + radius * Math.cos(i * angleStep - Math.PI/2),
+                y: cy + radius * Math.sin(i * angleStep - Math.PI/2)
+            }));
+
+            // Linear Data (Dynamic position based on stage)
+            // Case 1 strip: center x=400, y=100
+            // Case 2 strip: center x=400, y=300
+            
+            let activeSet = [];
+            let activeY = 0;
+            let startIdx = 0;
+            let endIdx = 0;
+            
+            if (step.stage.startsWith('case1')) {
+                startIdx = 0; endIdx = n-2;
+                activeY = 120;
+            } else if (step.stage.startsWith('case2')) {
+                startIdx = 1; endIdx = n-1;
+                activeY = 280;
+            } else {
+                activeY = null;
+            }
+
+            // Draw Circle Houses
+            const circles = svg.selectAll(".house-circle").data(circleData);
+            const circlesG = circles.enter().append("g").attr("class", "house-g");
+            
+            circlesG.append("circle").attr("class", "house-circle").attr("r", 20);
+            circlesG.append("text").attr("class", "house-text").attr("dy", 1);
+            
+            const circlesMerge = circles.merge(circlesG);
+            circlesMerge.attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            circlesMerge.select(".house-circle")
+                .attr("class", d => {
+                    let c = "house-circle";
+                    // If processing specific cases, dim ignored ones
+                    if (step.stage.startsWith('case1') && d.i === n-1) c += " ignored";
+                    if (step.stage.startsWith('case2') && d.i === 0) c += " ignored";
+                    return c;
+                });
+                
+            circlesMerge.select(".house-text").text(d => d.v);
+            
+            // Draw Linear Progress
+            // We only draw linear strip if activeY is set
+            
+            const linearG = svg.selectAll(".linear-group").data(activeY ? [1] : []);
+            linearG.exit().remove();
+            
+            const linearEnter = linearG.enter().append("g").attr("class", "linear-group");
+            
+            if (activeY) {
+                const lin = linearG.merge(linearEnter);
+                
+                // Extract slice
+                const slice = nums.slice(startIdx, endIdx+1).map((v, i) => ({v, i: startIdx + i}));
+                const stripW = 300;
+                const cellW = stripW / slice.length;
+                const startX = 400 - stripW/2;
+                
+                const cells = lin.selectAll(".cell").data(slice, d => d.i);
+                
+                const cellEnter = cells.enter().append("g").attr("class", "cell");
+                cellEnter.append("rect").attr("width", 40).attr("height", 40).attr("rx", 4).attr("fill", "#334155").attr("stroke", "#fff");
+                cellEnter.append("text").attr("x", 20).attr("y", 25).attr("text-anchor", "middle").attr("fill", "white").style("font-family", "monospace");
+                
+                const cellMerge = cells.merge(cellEnter);
+                cellMerge.transition().duration(300)
+                    .attr("transform", (d, i) => `translate(${startX + i*cellW}, ${activeY})`);
+                
+                cellMerge.select("text").text(d => d.v);
+                
+                cellMerge.select("rect")
+                    .attr("stroke", d => d.i === step.idx ? "#f59e0b" : "#fff")
+                    .attr("stroke-width", d => d.i === step.idx ? 3 : 1)
+                    .attr("fill", d => {
+                        // Visualize Rob/Skip?
+                        // step.idx is current being considered
+                        if (d.i < step.idx) return "#475569"; // past
+                        return "#334155";
                     });
-                    
-                    // Highlight active case block
-                    document.getElementById('case1Block').style.borderColor = step.case === 1 ? 'var(--viz-primary)' : 'transparent';
-                    document.getElementById('case2Block').style.borderColor = step.case === 2 ? 'var(--viz-primary)' : 'transparent';
-                }
-            });
-            viz.setSteps(generateAlgorithmSteps(currentNums));
+                
+                cells.exit().remove();
+                
+                // Add Label
+                let label = lin.selectAll(".group-label").data([1]);
+                label.enter().append("text").attr("class", "group-label").attr("fill", "#fff").attr("text-anchor", "middle")
+                    .merge(label)
+                    .attr("x", 400).attr("y", activeY - 20)
+                    .text(step.stage.startsWith('case1') ? "Case 1: [0...N-2]" : "Case 2: [1...N-1]");
+            }
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runVisualizer() {
+            const raw = document.getElementById('numsInput').value;
+            const nums = raw.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+            if(nums.length === 0) { alert('nums?'); return; }
+            
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(nums));
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>

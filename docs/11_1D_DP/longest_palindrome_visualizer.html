@@ -3,29 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Longest Palindrome - 視覺化</title>
+    <title>Longest Palindromic Substring - D3 動態視覺化</title>
     <link rel="stylesheet" href="../assets/visualizer/style.css">
     <style>
-        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--viz-border); }
-        .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-        .input-row input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; }
-        .input-row button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; }
-
-        .str-container { display: flex; gap: 4px; justify-content: center; margin: 30px 0; min-height: 50px; }
-        .char-box { 
-            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: monospace; 
-            background: var(--viz-bg-secondary); border: 2px solid var(--viz-border); border-radius: 4px;
-            font-size: 1.2rem; transition: all 0.2s;
+        .visualization-area {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            min-height: 400px;
         }
-        .char-box.center { border-color: var(--viz-warning); box-shadow: 0 0 10px rgba(234, 179, 8, 0.4); z-index: 2; }
-        .char-box.match { background: var(--viz-success); color: #0f172a; border-color: var(--viz-success); }
-        .char-box.mismatch { background: var(--viz-error); opacity: 0.5; }
 
-        .pointer-label {
-            position: absolute; font-size: 10px; bottom: -15px; width: 100%; text-align: center; color: var(--viz-text-muted);
+        /* SVG */
+        .stage-viewport {
+            width: 100%; height: 250px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            position: relative;
         }
+        #viz-svg { width: 100%; height: 100%; }
+
+        .char-group rect { fill: #334155; stroke: #475569; stroke-width: 2px; rx: 4; transition: all 0.2s; }
+        .char-group text { fill: #f8fafc; font-family: monospace; font-size: 18px; font-weight: bold; text-anchor: middle; pointer-events: none; }
         
-        .result-highlight { font-size: 1.5rem; font-weight: bold; color: var(--viz-success); text-align: center; margin-bottom: 10px; min-height: 30px; }
+        .char-group.match rect { fill: #3b82f6; stroke: #60a5fa; }
+        .char-group.mismatch rect { fill: #ef4444; opacity: 0.5; }
+        .char-group.center rect { stroke: #f59e0b; stroke-width: 3px; filter: drop-shadow(0 0 5px #f59e0b); }
+        .char-group.best rect { fill: #22c55e; stroke: #86efac; }
+
+        .pointer { fill: #f59e0b; }
+        .pointer-text { fill: #f59e0b; font-size: 12px; text-anchor: middle; }
+        
+        .expand-line { stroke: #60a5fa; stroke-width: 2px; opacity: 0.5; marker-end: url(#arrow); }
+
+        /* Stats */
+        .stats-panel {
+            display: flex; gap: 30px; justify-content: center; width: 100%;
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 12px;
+        }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #22c55e; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* Controls */
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: start; justify-content: center; }
+        input[type=text] { padding: 8px; border-radius: 6px; border: 1px solid var(--viz-border); background: var(--viz-input-bg); color: var(--viz-text); font-family: monospace; width: 150px; }
+        button { padding: 8px 16px; border-radius: 6px; background: var(--viz-primary); color: white; border: none; cursor: pointer; font-weight: 600; height: 40px; }
+
+        .step-breakdown { background: rgba(30, 41, 59, 0.6); border-radius: 12px; border-left: 4px solid #3b82f6; padding: 15px 20px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -33,95 +64,99 @@
     <div class="main-layout">
         <div class="canvas-area">
             <div class="viz-card">
-                <div class="viz-title">最長回文子串 (Expand Center)</div>
+                <div class="viz-title">Longest Palindromic Substring</div>
                 <div class="custom-input-section">
-                    <div style="font-weight:bold; margin-bottom:5px;">🎮 自訂測試</div>
                     <div class="input-row">
-                        <label>字串 (s):</label>
-                        <input type="text" id="strInput" value="babad" style="width: 150px;" maxlength="15">
-                        <button onclick="runCustomInput()">執行</button>
+                        <div>
+                            <label style="font-size:0.8rem; color:#94a3b8;">String:</label>
+                            <input type="text" id="strInput" value="babad">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="runVisualizer()">Expand</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="result-highlight" id="bestDisplay"></div>
-                <div class="str-container" id="strDisplay"></div>
-                
+
+                <div class="visualization-area">
+                    <div class="stage-viewport">
+                        <svg id="viz-svg"></svg>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">Current Range</div>
+                            <div class="stat-val" id="currDisplay">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Max Length</div>
+                            <div class="stat-val" id="maxDisplay">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-breakdown">
+                    <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                    <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+
                 <div class="controls" style="margin-top: 15px;">
                     <button class="viz-btn" id="prevBtn">← 上一步</button>
                     <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
                     <button class="viz-btn primary" id="nextBtn">下一步 →</button>
-                    <button class="viz-btn" onclick="resetVisualization()">↻ 重置</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
                     <div class="speed-control">
                         <label>速度:</label>
                         <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
-                            <option value="1500">1x</option>
+                            <option value="1500">0.5x</option>
+                            <option value="1000" selected>1x</option>
                             <option value="500">2x</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="complexity-badge">
-                    <span class="label">Time:</span> O(n²)
-                    <span class="label" style="margin-left: 12px;">Space:</span> O(1)
-                </div>
-                <div class="state-grid">
-                    <div class="state-item"><div class="state-label">目前長度</div><div class="state-value" id="currLenDisplay">0</div></div>
-                    <div class="state-item"><div class="state-label">最大長度</div><div class="state-value" id="maxLenDisplay">0</div></div>
-                </div>
             </div>
-            <div class="viz-card"><div class="viz-title">演算法說明</div><div class="explanation" id="explanation"></div></div>
+            <div class="viz-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
         </div>
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
-                <div class="viz-title">演算法 (C++)</div>
+                <div class="viz-title">C++ Code</div>
                 <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="../assets/visualizer/core.js"></script>
     <script>
         const codeStructure = [
             { line: 'string longestPalindrome(string s) {', id: 0 },
-            { line: '    int start = 0, maxLen = 0;', id: 1 },
-            { line: '    for (int i = 0; i < s.size(); i++) {', id: 2 },
-            { line: '        // Odd length', id: 3 },
-            { line: '        expand(s, i, i, maxLen, start);', id: 4 },
-            { line: '        // Even length', id: 5 },
-            { line: '        expand(s, i, i + 1, maxLen, start);', id: 6 },
-            { line: '    }', id: 7 },
-            { line: '    return s.substr(start, maxLen);', id: 8 },
-            { line: '}', id: 9 },
-            { line: 'void expand(s, l, r, maxLen, start) {', id: 10 },
-            { line: '    while (l >= 0 && r < n && s[l] == s[r]) {', id: 11 },
-            { line: '        if (r - l + 1 > maxLen) {', id: 12 },
-            { line: '             maxLen = r - l + 1; start = l;', id: 13 },
-            { line: '        }', id: 14 },
-            { line: '        l--; r++;', id: 15 },
-            { line: '    }', id: 16 },
-            { line: '}', id: 17 },
+            { line: '    int maxLen = 0, start = 0;', id: 1 },
+            { line: '    for (int i = 0; i < s.length(); i++) {', id: 2 },
+            { line: '        expand(i, i); // Odd Length', id: 3 },
+            { line: '        expand(i, i + 1); // Even Length', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    return s.substr(start, maxLen);', id: 6 },
+            { line: '}', id: 7 },
+            { line: 'void expand(l, r) {', id: 8 },
+            { line: '    while (l >= 0 && r < n && s[l] == s[r]) {', id: 9 },
+            { line: '        if (r - l + 1 > maxLen) {', id: 10 },
+            { line: '            maxLen = r - l + 1; start = l;', id: 11 },
+            { line: '        }', id: 12 },
+            { line: '        l--; r++;', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '}', id: 15 }
         ];
 
-        let currentStr = "babad";
+        let viz;
 
-        function runCustomInput() {
-            const s = document.getElementById('strInput').value.trim();
-            if (!s || s.length > 15) {
-                alert('請輸入 1-15 個字元');
-                return;
-            }
-            currentStr = s;
-            init();
-        }
-
-        function generateAlgorithmSteps(s) {
+        function simulate(s) {
             const steps = [];
             let maxLen = 0;
             let startIdx = 0;
             
             steps.push({
-                centerL: -1, centerR: -1, range: [], bestStr: "",
-                highlightLines: [0, 1],
-                explanation: { title: '初始化', text: `Input: "${s}"<br>開始中心擴展`, formula: 'start=0, max=0' }
+                idx: -1, s, matchRange: null, 
+                msg: "Init search", highlightLines: [0, 1]
             });
 
             for (let i = 0; i < s.length; i++) {
@@ -130,91 +165,169 @@
                 // Even
                 expand(i, i + 1, 'Even');
             }
-
+            
             function expand(l, r, type) {
+                // Initial highlight center
+                steps.push({
+                    idx: i, s, center: [l, r], type,
+                    msg: `Check Center [${l}, ${r}] (${type})`, highlightLines: [3, 4]
+                });
+
                 while (l >= 0 && r < s.length && s[l] === s[r]) {
                     const len = r - l + 1;
-                    let newMax = false;
+                    let isNewMax = false;
                     if (len > maxLen) {
                         maxLen = len;
                         startIdx = l;
-                        newMax = true;
+                        isNewMax = true;
                     }
                     
                     steps.push({
-                        centerL: l, centerR: r, 
-                        range: [l, r], 
-                        bestStr: s.substr(startIdx, maxLen),
-                        currentLen: len, maxLen: maxLen,
-                        type: type,
-                        highlightLines: type === 'Odd' ? [4, 11] : [6, 11],
-                        explanation: { 
-                            title: `擴展 (${type})`, 
-                            text: `中心 L:${l}, R:${r}<br>匹配 "${s.substring(l, r+1)}"<br>${newMax ? '🎉 發現更長回文!' : ''}`, 
-                            formula: `s[${l}] == s[${r}]` 
-                        }
+                        idx: r, s, center: [l, r], matchRange: [l, r], type,
+                        maxLen, bestRange: [startIdx, startIdx+maxLen-1],
+                        msg: `Match s[${l}] == s[${r}] (${s.substring(l, r+1)}). Expand.`, 
+                        highlightLines: [9, 10, 11]
                     });
-                    l--; r++;
+                    
+                    l--; 
+                    r++;
                 }
-                // Mismatch or bound step
+                
+                // Final Check failed
                 if (l >= 0 && r < s.length) {
                      steps.push({
-                        centerL: l, centerR: r,
-                        range: [l+1, r-1], // Previous valid range
-                        mismatch: true, // Mark mismatch char
-                        bestStr: s.substr(startIdx, maxLen),
-                        currentLen: r-l-1, maxLen: maxLen,
-                        highlightLines: [11],
-                        explanation: { title: '停止擴展', text: `s[${l}] != s[${r}] 或邊界`, formula: 'Break' }
+                        idx: r, s, mismatch: [l, r], type,
+                        maxLen, bestRange: [startIdx, startIdx+maxLen-1],
+                        msg: `Mismatch s[${l}] != s[${r}]. Stop expansion.`,
+                        highlightLines: [9]
+                    });
+                } else {
+                     steps.push({
+                        idx: r, s, bound: true, type,
+                        maxLen, bestRange: [startIdx, startIdx+maxLen-1],
+                        msg: `Out of bounds. Stop expansion.`,
+                        highlightLines: [9]
                     });
                 }
             }
-
+            
             steps.push({
-                centerL: -1, centerR: -1, range: [], bestStr: s.substr(startIdx, maxLen),
-                final: true, maxLen: maxLen,
-                highlightLines: [8],
-                explanation: { title: '完成', text: `最長回文子串: "${s.substr(startIdx, maxLen)}"`, formula: 'Done' }
+                s, final: true, result: s.substr(startIdx, maxLen),
+                bestRange: [startIdx, startIdx+maxLen-1],
+                msg: `Done. Result: "${s.substr(startIdx, maxLen)}"`,
+                highlightLines: [6]
             });
 
             return steps;
         }
 
-        let viz;
-        function init() {
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: (step) => {
-                    document.getElementById('strDisplay').innerHTML = [...currentStr].map((c, i) => {
-                        let cls = 'char-box';
-                        if (step.range && i >= step.range[0] && i <= step.range[1]) {
-                             cls += ' match';
-                        }
-                        if (step.mismatch && (i === step.centerL || i === step.centerR)) {
-                             cls += ' mismatch';
-                        }
-                        // Visual Center
-                        // Center logic is simpler: if type Odd, center is i. Even: i, i+1
-                        // But step has exact L, R pointers
-                        
-                        let content = c;
-                        content += `<div class="pointer-label" style="display:block">
-                            ${i === step.centerL ? 'L' : ''}${i === step.centerR ? 'R' : ''}
-                        </div>`;
-                        
-                        return `<div class="${cls}" style="position:relative">${content}</div>`;
-                    }).join('');
-                    
-                    document.getElementById('bestDisplay').textContent = step.bestStr || "";
-                    document.getElementById('currLenDisplay').textContent = step.currentLen || 0;
-                    document.getElementById('maxLenDisplay').textContent = step.maxLen || 0;
+        // --- Render ---
+        const svg = d3.select("#viz-svg");
+        const width = 600;
+        const height = 250;
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        function render(step) {
+            document.getElementById('stepText').textContent = step.msg;
+            document.getElementById('maxDisplay').textContent = step.maxLen || 0;
+            
+            const s = step.s;
+            if(step.matchRange) {
+                document.getElementById('currDisplay').textContent = s.substring(step.matchRange[0], step.matchRange[1]+1);
+            } else {
+                document.getElementById('currDisplay').textContent = "-";
+            }
+
+            const itemW = 40;
+            const startX = (width - s.length * itemW) / 2;
+            const startY = height / 2 - 20;
+
+            const data = s.split('').map((c, i) => ({c, i}));
+
+            const groups = svg.selectAll(".char-group").data(data);
+            
+            const enter = groups.enter().append("g").attr("class", "char-group");
+            enter.append("rect").attr("width", itemW-4).attr("height", itemW).attr("rx", 4);
+            enter.append("text").attr("x", itemW/2 - 2).attr("y", itemW/2 + 6);
+            
+            const merge = groups.merge(enter)
+                .attr("transform", (d, i) => `translate(${startX + i*itemW}, ${startY})`);
+            
+            merge.select("text").text(d => d.c);
+            
+            merge.attr("class", d => {
+                let c = "char-group";
+                // Best Range (global)
+                if (step.bestRange && d.i >= step.bestRange[0] && d.i <= step.bestRange[1]) {
+                    c += " best";
                 }
-            });
-            viz.setSteps(generateAlgorithmSteps(currentStr));
+                
+                // Transient Match
+                if (step.matchRange && d.i >= step.matchRange[0] && d.i <= step.matchRange[1]) {
+                    c += " match";
+                }
+                
+                // Mismatch
+                if (step.mismatch && (d.i === step.mismatch[0] || d.i === step.mismatch[1])) {
+                    c += " mismatch";
+                }
+                
+                return c;
+            })
+            // Individual rect styling via CSS classes active above
+            
+            groups.exit().remove();
+
+            // Pointers L, R
+            // If scanning, show arrows below
+            const pointers = [];
+            if (step.matchRange) {
+                pointers.push({i: step.matchRange[0], label: "L"});
+                pointers.push({i: step.matchRange[1], label: "R"});
+            } else if (step.mismatch) {
+                pointers.push({i: step.mismatch[0], label: "L"});
+                pointers.push({i: step.mismatch[1], label: "R"});
+            } else if (step.center) {
+                pointers.push({i: step.center[0], label: "L"});
+                pointers.push({i: step.center[1], label: "R"});
+            }
+            
+            // Unique pointers (L might equal R)
+            const uniquePtrs = [];
+            if (pointers.length > 0) {
+                if (pointers[0].i === pointers[1].i) {
+                    uniquePtrs.push({i: pointers[0].i, label: "L,R"});
+                } else {
+                    uniquePtrs.push(pointers[0]);
+                    uniquePtrs.push(pointers[1]);
+                }
+            }
+            
+            const ptrSel = svg.selectAll(".pointer-g").data(uniquePtrs, d => d.label);
+            const ptrEnter = ptrSel.enter().append("g").attr("class", "pointer-g");
+            ptrEnter.append("path").attr("d", "M0,0 L-5,10 L5,10 Z").attr("class", "pointer"); // Up arrow
+            ptrEnter.append("text").attr("class", "pointer-text").attr("y", 22);
+            
+            const ptrMerge = ptrSel.merge(ptrEnter);
+            ptrMerge.transition().duration(200)
+                .attr("transform", d => `translate(${startX + d.i*itemW + itemW/2 - 2}, ${startY + itemW + 5})`);
+            
+            ptrMerge.select("text").text(d => d.label);
+            
+            ptrSel.exit().remove();
         }
 
-        function resetVisualization() { init(); }
-        window.addEventListener('load', init);
+        function runVisualizer() {
+            const s = document.getElementById('strInput').value;
+            if(!s) { alert("String?"); return; }
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate(s));
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>
