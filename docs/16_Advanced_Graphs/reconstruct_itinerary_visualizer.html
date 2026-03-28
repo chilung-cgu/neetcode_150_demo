@@ -28,7 +28,6 @@
         }
         #viz-svg { width: 100%; height: 100%; }
 
-        /* Graph Nodes */
         .node-circle { fill: #334155; stroke: #475569; stroke-width: 2px; transition: all 0.3s; }
         .node-circle.active { stroke: #fbbf24; stroke-width: 3px; filter: drop-shadow(0 0 5px #fbbf24); }
 
@@ -164,10 +163,8 @@
             const nodesSet = new Set();
             const edges = [];
             
-            // For Simulation logic, we need mutable Edge List (Multiset effectively)
-            // Use ID for edges to mark 'used' individually
             let edgeCounter = 0;
-            const adj = {}; // key -> [ {target: "MUC", id: 0}, ... ] sorted
+            const adj = {}; 
             
             tickets.forEach(t => {
                 nodesSet.add(t[0]); nodesSet.add(t[1]);
@@ -177,18 +174,16 @@
                 edges.push({source: t[0], target: t[1], id: edgeCounter-1});
             });
             
-            // Sort adjacency list (reverse for pop from back, or just sort and use shift/pop logic)
-            // C++ priority_queue (greater) means smallest first.
-            // Let's sort lexicographically.
             Object.keys(adj).forEach(k => {
                 adj[k].sort((a,b) => a.target.localeCompare(b.target));
             });
             
             const nodes = Array.from(nodesSet).map(id => ({id}));
             
-            // Layout
-             const simulation = d3.forceSimulation(nodes)
-                .force("link", d3.forceLink(edges).id(d => d.id).distance(100))
+            // Layout with Safe Deep Copy
+            const edgesCopy = edges.map(e => ({ source: e.source, target: e.target }));
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(edgesCopy).id(d => d.id).distance(100))
                 .force("charge", d3.forceManyBody().strength(-300))
                 .force("center", d3.forceCenter(0,0))
                 .stop();
@@ -199,9 +194,9 @@
 
             // DFS State
             const res = [];
-            const resultStack = []; // Visualizing the 'res' which is post-order
+            const resultStack = [];
             const usedEdges = new Set();
-            const activeStack = ["JFK"]; // Call stack
+            const activeStack = ["JFK"]; 
             
             steps.push({
                 layout, nodes, edges, usedEdges: new Set(usedEdges), resultStack: [...resultStack],
@@ -211,9 +206,8 @@
             });
             
             function dfs(u) {
-                // While has neighbors
                 while(adj[u] && adj[u].length > 0) {
-                    const nextEdge = adj[u].shift(); // Smallest lexical
+                    const nextEdge = adj[u].shift();
                     const v = nextEdge.target;
                     const eid = nextEdge.id;
                     
@@ -221,26 +215,25 @@
                     activeStack.push(v);
                     
                     steps.push({
-                         layout, nodes, edges, usedEdges: new Set(usedEdges), resultStack: [...resultStack],
-                         activeStack: [...activeStack],
-                         curr: u, processingEdgeId: eid,
-                         msg: `Take flight ${u} -> ${v}.`, highlightLines: [9, 10, 11],
-                         explanation: {title: "選擇路徑", text: `選擇最小詞法序的目的地 ${v}。標記邊為已使用。遞迴進入 ${v}。`, formula: "dfs(v)"}
+                        layout, nodes, edges, usedEdges: new Set(usedEdges), resultStack: [...resultStack],
+                        activeStack: [...activeStack],
+                        curr: u, processingEdgeId: eid,
+                        msg: `Take flight ${u} -> ${v}.`, highlightLines: [9, 10, 11],
+                        explanation: {title: "選擇路徑", text: `選擇最小詞法序的目的地 ${v}。標記邊為已使用。遞迴進入 ${v}。`, formula: "dfs(v)"}
                     });
                     
                     dfs(v);
                 }
                 
-                // No more outgoing edges (stuck)
                 resultStack.push(u);
-                activeStack.pop(); // finished u
+                activeStack.pop();
                 
                 steps.push({
-                     layout, nodes, edges, usedEdges: new Set(usedEdges), resultStack: [...resultStack],
-                     activeStack: [...activeStack],
-                     curr: u, stuck: true,
-                     msg: `Stuck at ${u}. Add to Result. Backtrack.`, highlightLines: [13],
-                     explanation: {title: "回溯", text: `節點 ${u} 無可用出邊，將 ${u} 加入結果列表 (逆序)。回溯到上一層。`, formula: "res.push_back(u)"}
+                    layout, nodes, edges, usedEdges: new Set(usedEdges), resultStack: [...resultStack],
+                    activeStack: [...activeStack],
+                    curr: u, stuck: true,
+                    msg: `Stuck at ${u}. Add to Result. Backtrack.`, highlightLines: [13],
+                    explanation: {title: "回溯", text: `節點 ${u} 無可用出邊，將 ${u} 加入結果列表 (逆序)。回溯到上一層。`, formula: "res.push_back(u)"}
                 });
             }
             
@@ -258,7 +251,6 @@
             return steps;
         }
 
-        // --- Render ---
         const svg = d3.select("#viz-svg");
         const width = 600;
         const height = 400;
@@ -266,6 +258,7 @@
 
         function render(step) {
             document.getElementById('stepText').textContent = step.msg;
+            
             if(step.finalRes) {
                 document.getElementById('resDisplay').textContent = "Itinerary: " + JSON.stringify(step.finalRes);
             } else {
@@ -284,14 +277,13 @@
             const centerX = width/2;
             const centerY = height/2;
             
-            // Links
             const paths = svg.selectAll(".link-line").data(step.edges);
             const pEnter = paths.enter().append("line").attr("class", "link-line");
             paths.merge(pEnter)
-                .attr("x1", d => centerX + step.layout[d.source].x)
-                .attr("y1", centerY + step.layout[d.source].y)
-                .attr("x2", d => centerX + step.layout[d.target].x)
-                .attr("y2", centerY + step.layout[d.target].y)
+                .attr("x1", d => centerX + step.layout[d.source.id||d.source].x)
+                .attr("y1", d => centerY + step.layout[d.source.id||d.source].y)
+                .attr("x2", d => centerX + step.layout[d.target.id||d.target].x)
+                .attr("y2", d => centerY + step.layout[d.target.id||d.target].y)
                 .attr("class", d => {
                      if(step.processingEdgeId === d.id) return "link-line highlight";
                      if(step.usedEdges.has(d.id)) return "link-line used";
@@ -299,7 +291,6 @@
                 });
             paths.exit().remove();
             
-            // Nodes
             const g = svg.selectAll(".node-g").data(step.nodes, d=>d.id);
             const gEnter = g.enter().append("g").attr("class", "node-g");
             
@@ -312,35 +303,37 @@
             gUpdate.select(".node-circle").attr("class", d => {
                  let c = "node-circle";
                  if(d.id === "JFK") c += " jfk";
-                 
-                 // Highlight current
                  if(step.curr === d.id && !step.final) c += " active";
                  return c;
             })
-            // Change color if in result stack?
             .style("fill", d => {
                  if(step.resultStack.includes(d.id)) return "#22c55e";
                  return null;
             });
             
             gUpdate.select(".node-text").text(d => d.id);
-            
             g.exit().remove();
         }
 
         function runVisualizer() {
-            const raw = document.getElementById('ticketsInput').value;
-            let tickets;
             try {
-                tickets = JSON.parse(raw);
-            } catch(e) { alert("Invalid JSON"); return; }
-            if(!Array.isArray(tickets)) return;
+                const raw = document.getElementById('ticketsInput').value;
+                let tickets;
+                try {
+                    tickets = JSON.parse(raw);
+                } catch(e) { alert("Invalid JSON tickets"); return; }
+                
+                if(!Array.isArray(tickets)) { alert("Tickets must be array"); return; }
 
-            viz = new AlgorithmVisualizer({
-                codeLines: codeStructure,
-                onStepChange: render
-            });
-            viz.setSteps(simulate(tickets));
+                viz = new AlgorithmVisualizer({
+                    codeLines: codeStructure,
+                    onStepChange: render
+                });
+                viz.setSteps(simulate(tickets));
+            } catch(err) {
+                alert("Visualizer Error: " + err.message);
+                console.error(err);
+            }
         }
 
         window.addEventListener('load', runVisualizer);

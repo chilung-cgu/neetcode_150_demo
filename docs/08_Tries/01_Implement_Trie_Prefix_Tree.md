@@ -11,7 +11,6 @@ difficulty: Medium
 
 > 📌 **LeetCode #208** — [題目連結](https://leetcode.com/problems/implement-trie-prefix-tree/) | [NeetCode 解說](https://neetcode.io/problems/implement-trie-prefix-tree)
 
-
 ## 1. 🧐 Problem Dissection (釐清問題)
 
 題目要求實作一個 `Trie` 類別 (Prefix Tree)，包含以下方法：
@@ -197,6 +196,10 @@ class Trie {
             isEnd = false;
             // 初始化指標為 nullptr (C++ 不會自動做)
             for(int i=0; i<26; i++) children[i] = nullptr;
+
+            // 絕大多數的硬體架構編譯器實作中，空指標 (Null Pointer) 在記憶體中的二進位表示法就是全 0。
+            // 所以直接把整個 children 陣列設為 0，效果等同於把每個指標都設為 nullptr。
+            // memset(children, 0, sizeof(children));
         }
     };
 
@@ -252,6 +255,23 @@ public:
 };
 ```
 
+## 💡 補充筆記：C++ 指標空值語法
+
+在 C++ 實作中，初始化指標為空值有以下幾種方式：
+
+- **`nullptr` (C++11 推薦)**：具備強型別檢查，是現代 C++ 的標準寫法，安全性最高。
+  ```cpp
+  Node* p = nullptr;
+  ```
+- **`NULL`**：傳統 C 語言風格的巨集，在 C++ 中通常被定義為整數 `0`。
+  ```cpp
+  Node* p = NULL;
+  ```
+- **`0` (整數常數)**：C++ 允許將整數 `0` 隱式轉換為指標類型的空值。
+  ```cpp
+  Node* p = 0;
+  ```
+
 ---
 
 ## 6. 📊 Rigorous Complexity Analysis (複雜度分析)
@@ -291,4 +311,5 @@ public:
 ## 📚 Related Problems (相關題目)
 
 ### 站內相關
+
 - [Design Add and Search Words Data Structure (設計新增與搜尋單字的資料結構)](02_Design_Add_Search_Words.md)

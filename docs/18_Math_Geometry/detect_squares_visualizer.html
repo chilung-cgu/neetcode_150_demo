@@ -15,7 +15,7 @@
             flex-direction: column;
             gap: 20px;
             align-items: center;
-            min-height: 500px;
+            min-height: 400px;
         }
 
         .stage-viewport {
@@ -24,18 +24,22 @@
             border-radius: 12px;
             position: relative;
             overflow: hidden;
-            cursor: crosshair;
         }
         #viz-svg { width: 100%; height: 100%; }
 
         .grid-line { stroke: rgba(148, 163, 184, 0.2); stroke-width: 1px; }
-        .axis-line { stroke: #64748b; stroke-width: 2px; }
         
-        .point-circle { fill: #3b82f6; stroke: #fff; stroke-width: 1px; transition: all 0.2s; }
-        .point-circle.query { fill: #fbbf24; stroke: #f59e0b; r: 6; }
-        .point-circle.partner { fill: #22c55e; stroke: #10b981; }
+        .point-circle { fill: #3b82f6; stroke: #fff; stroke-width: 1px; transition: all 0.3s; }
+        .point-circle.new { fill: #fbbf24; stroke: #f59e0b; r: 6; animation: pop 0.3s; }
+        .point-circle.query { fill: #f472b6; stroke: #ec4899; r: 6; }
         
-        .square-rect { fill: rgba(34, 197, 94, 0.1); stroke: #22c55e; stroke-width: 2px; stroke-dasharray: 4; }
+        .square-rect { fill: rgba(34, 197, 94, 0.2); stroke: #22c55e; stroke-width: 2px; stroke-dasharray: 4; transition: all 0.5s; }
+        
+        @keyframes pop {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
 
         .stats-panel {
             display: flex; gap: 30px; justify-content: center; width: 95%;
@@ -45,9 +49,8 @@
         .stat-val { font-size: 1.2rem; font-weight: bold; color: #3b82f6; font-family: monospace; }
         .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 
-        .mode-toggle { display: flex; gap: 10px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 6px; }
-        .mode-btn { padding: 5px 15px; border: 1px solid #475569; border-radius: 4px; color: #cbd5e1; cursor: pointer; }
-        .mode-btn.active { background: #3b82f6; color: #fff; border-color: #60a5fa; }
+        .custom-input-section { background: var(--viz-card-bg); border-radius: 8px; padding: 15px; border: 1px solid var(--viz-border); }
+        .input-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -56,14 +59,9 @@
             <div class="viz-card">
                 <div class="viz-title">Detect Squares</div>
                 <div class="custom-input-section">
-                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                        <div class="mode-toggle">
-                            <div class="mode-btn active" id="modeAdd" onclick="setMode('add')">Add Point</div>
-                            <div class="mode-btn" id="modeCount" onclick="setMode('count')">Count Squares</div>
-                        </div>
-                        <button onclick="clearPoints()">Clear All</button>
+                    <div class="input-row">
+                        <button onclick="runVisualizer()">Run Simulation: Add Points & Count</button>
                     </div>
-                    <div style="font-size:0.75rem; color:#94a3b8; margin-top:5px; text-align:center;">Click on grid to interact</div>
                 </div>
 
                 <div class="visualization-area">
@@ -73,8 +71,8 @@
                             <div class="stat-val" id="totalPoints">0</div>
                         </div>
                          <div class="stat-box">
-                            <div class="stat-label">Last Query Count</div>
-                            <div class="stat-val" id="lastCount">-</div>
+                            <div class="stat-label">Result (Squares)</div>
+                            <div class="stat-val" id="resCount">-</div>
                         </div>
                     </div>
 
@@ -84,8 +82,24 @@
                 </div>
 
                 <div class="step-breakdown">
-                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">操作說明</div>
-                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Select 'Add Point' and click logic. Then 'Count' to query.</div>
+                     <div style="font-size:0.75rem; font-weight:bold; color:#64748b;">當前步驟</div>
+                     <div id="stepText" style="font-size:0.95rem; font-family:monospace; color:#e2e8f0;">Ready.</div>
+                </div>
+                
+                 <div class="controls" style="margin-top: 15px;">
+                    <button class="viz-btn" id="prevBtn">← 上一步</button>
+                    <div class="step-indicator">步驟 <span id="currentStep">0</span> / <span id="totalSteps">0</span></div>
+                    <button class="viz-btn primary" id="nextBtn">下一步 →</button>
+                    <button class="viz-btn" onclick="runVisualizer()">↻ 重置</button>
+                    <button class="viz-btn play-btn" id="playBtn" onclick="viz.toggleAutoPlay()">▶ 自動播放</button>
+                    <div class="speed-control">
+                        <label>速度:</label>
+                        <select id="speedSelect" onchange="viz.setSpeed(Number(this.value))">
+                             <option value="1500">Slow</option>
+                             <option value="1000" selected>Normal</option>
+                             <option value="500">Fast</option>
+                        </select>
+                    </div>
                 </div>
             </div>
              <div class="viz-card logic-card"><div class="viz-title">邏輯解釋</div><div class="explanation" id="explanation"></div></div>
@@ -94,200 +108,204 @@
         <div class="code-area">
             <div class="viz-card" style="height: 100%;">
                 <div class="viz-title">C++ Code</div>
-                <div class="code-panel" id="codeDisplay">
-<pre style="margin:0; color:#d4d4d4"><span style="color:#569cd6">class</span> <span style="color:#4ec9b0">DetectSquares</span> {
-    <span style="color:#ce9178">map</span>&lt;<span style="color:#ce9178">pair</span>&lt;<span style="color:#b5cea8">int</span>,<span style="color:#b5cea8">int</span>&gt;, <span style="color:#b5cea8">int</span>&gt; pointCount;
-<span style="color:#569cd6">public</span>:
-    <span style="color:#569cd6">void</span> add(<span style="color:#ce9178">vector</span>&lt;<span style="color:#b5cea8">int</span>&gt; point) {
-        pointCount[{point[<span style="color:#b5cea8">0</span>], point[<span style="color:#b5cea8">1</span>]}]++;
-    }
-    <span style="color:#b5cea8">int</span> count(<span style="color:#ce9178">vector</span>&lt;<span style="color:#b5cea8">int</span>&gt; point) {
-        <span style="color:#b5cea8">int</span> res = <span style="color:#b5cea8">0</span>, x1 = point[<span style="color:#b5cea8">0</span>], y1 = point[<span style="color:#b5cea8">1</span>];
-        <span style="color:#569cd6">for</span> (<span style="color:#569cd6">auto</span>& [p3, cnt] : pointCount) {
-            <span style="color:#b5cea8">int</span> x3 = p3.first, y3 = p3.second;
-            <span style="color:#569cd6">if</span> (abs(x1-x3) == <span style="color:#b5cea8">0</span> || abs(x1-x3) != abs(y1-y3)) <span style="color:#569cd6">continue</span>; <span style="color:#6a9955">// Check calc diagonal</span>
-            res += cnt * pointCount[{x1, y3}] * pointCount[{x3, y1}];
-        }
-        <span style="color:#569cd6">return</span> res;
-    }
-};</pre>
-                </div>
+                <div class="code-panel" id="codeDisplay"></div>
             </div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="../assets/visualizer/core.js"></script>
     <script>
-        // Simple interactive viz logic, slightly different architecture than AlgorithmVisualizer (no step playback for interaction)
-        // But we can simulate "Count" operation as playback if needed.
-        // For now, implement direct interaction.
+        const codeStructure = [
+            { line: 'class DetectSquares {', id: 0 },
+            { line: '    map<pair<int,int>, int> pointCount;', id: 1 },
+            { line: 'public:', id: 2 },
+            { line: '    void add(vector<int> point) {', id: 3 },
+            { line: '        pointCount[{point[0], point[1]}]++;', id: 4 },
+            { line: '    }', id: 5 },
+            { line: '    int count(vector<int> point) {', id: 6 },
+            { line: '        int res = 0, x1 = point[0], y1 = point[1];', id: 7 },
+            { line: '        for (auto& [p3, cnt] : pointCount) {', id: 8 },
+            { line: '            int x3 = p3.first, y3 = p3.second;', id: 9 },
+            { line: '            if (abs(x1-x3) == 0 || abs(x1-x3) != abs(y1-y3)) continue;', id: 10 },
+            { line: '            res += cnt * pointCount[{x1, y3}] * pointCount[{x3, y1}];', id: 11 },
+            { line: '        }', id: 12 },
+            { line: '        return res;', id: 13 },
+            { line: '    }', id: 14 },
+            { line: '};', id: 15 }
+        ];
 
-        const svg = d3.select("#viz-svg");
-        const width = 600;
-        const height = 400;
-        svg.attr("viewBox", `0 0 ${width} ${height}`);
+        let viz;
         
-        let points = {}; // "x,y" -> count
-        let mode = 'add';
-        let queryPoint = null;
-        let drawnSquares = []; // list of rects
-        
-        // Grid System
-        const gridSize = 40;
-        const cols = width / gridSize;
-        const rows = height / gridSize;
-        
-        // Render Grid
-        for(let i=0; i<=cols; i++) {
-            svg.append("line").attr("class", "grid-line")
-                .attr("x1", i*gridSize).attr("y1", 0).attr("x2", i*gridSize).attr("y2", height);
-        }
-        for(let i=0; i<=rows; i++) {
-            svg.append("line").attr("class", "grid-line")
-                .attr("x1", 0).attr("y1", i*gridSize).attr("x2", width).attr("y2", i*gridSize);
-        }
-        
-        function setMode(m) {
-            mode = m;
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(m === 'add' ? 'modeAdd' : 'modeCount').classList.add('active');
+        function simulate() {
+            const steps = [];
+            let points = {}; // key "x,y" -> count
+            let totalPoints = 0;
             
-            document.getElementById('stepText').textContent = m === 'add' 
-                ? "Click on grid intersections to ADD points." 
-                : "Click on grid intersection to QUERY squares.";
+            // Scenario:
+            // 1. Add (3, 10)
+            // 2. Add (11, 2)
+            // 3. Add (3, 2)
+            // 4. Count (11, 10) -> Should detect square (3,10), (11,2), (3,2), (11,10)
+            // 5. Add (11, 2) again
+            // 6. Count (11, 10) again -> Should get 2
+            
+            const ops = [
+                { type: 'add', p: [3, 10] },
+                { type: 'add', p: [11, 2] },
+                { type: 'add', p: [3, 2] },
+                { type: 'query', p: [11, 10] },
+                { type: 'add', p: [11, 2] },
+                { type: 'query', p: [11, 10] }
+            ];
+            
+            steps.push({
+                points: {}, squares: [],
+                msg: "Init DetectSquares.", highlightLines: [0, 1],
+                explanation: {title: "初始化", text: "建立 DetectSquares 物件，準備 Hash Map。", formula: ""}
+            });
+            
+            function addP(p, stepsRef) {
+                const key = `${p[0]},${p[1]}`;
+                points[key] = (points[key] || 0) + 1;
+                totalPoints++;
                 
-            // Clear query highlights if switching
-            if(m === 'add') {
-                drawnSquares = [];
-                queryPoint = null;
-                render();
+                stepsRef.push({
+                    points: {...points}, squares: [], lastOp: {type: 'add', p},
+                    msg: `Add Point (${p[0]}, ${p[1]}).`, highlightLines: [3, 4],
+                    explanation: {title: "Add Point", text: `新增點 (${p[0]}, ${p[1]}) 到 Hash Map。`, formula: `count[(${p[0]},${p[1]})]++`}
+                });
             }
-        }
-        
-        function clearPoints() {
-            points = {};
-            drawnSquares = [];
-            queryPoint = null;
-            render();
-        }
-        
-        function getGridPos(x, y) {
-            // Snap to nearest grid intersection
-            const gx = Math.round(x / gridSize);
-            const gy = Math.round(y / gridSize);
-            return {x: gx, y: gy};
-        }
-        
-        svg.on("click", function(event) {
-             const coords = d3.pointer(event);
-             const pos = getGridPos(coords[0], coords[1]);
-             
-             if(mode === 'add') {
-                 const key = `${pos.x},${pos.y}`;
-                 points[key] = (points[key] || 0) + 1;
-                 render();
-                 showExplanation("Add Point", `Added point at (${pos.x}, ${pos.y}). Total here: ${points[key]}.`);
-             } else {
-                 // Query
-                 queryPoint = pos;
-                 findSquares(pos);
-                 render();
-             }
-        });
-        
-        function findSquares(q) {
-            drawnSquares = [];
-            let totalCount = 0;
-            const x1 = q.x, y1 = q.y;
             
-            // Iterate all potential p3 (diagonal)
-            // p3 must exist in `points`
-            for(let key in points) {
-                const [x3, y3] = key.split(',').map(Number);
-                const count3 = points[key];
+            function countP(p, stepsRef) {
+                const x1 = p[0], y1 = p[1];
+                let res = 0;
+                let foundSquares = [];
                 
-                // Diagonal check
-                if(Math.abs(x1 - x3) === 0 || Math.abs(x1 - x3) !== Math.abs(y1 - y3)) continue;
+                stepsRef.push({
+                    points: {...points}, squares: [], lastOp: {type: 'query', p},
+                    msg: `Count Squares containing (${x1}, ${y1}). Iterating points...`, highlightLines: [6, 7, 8],
+                    explanation: {title: "Count Query", text: `查詢包含 (${x1}, ${y1}) 的正方形數量。遍歷所有已存的點作為對角點 (p3)。`, formula: ""}
+                });
                 
-                // Check p2(x1, y3) and p4(x3, y1)
-                const p2Key = `${x1},${y3}`;
-                const p4Key = `${x3},${y1}`;
-                
-                const count2 = points[p2Key] || 0;
-                const count4 = points[p4Key] || 0;
-                
-                if(count2 > 0 && count4 > 0) {
-                    // Found Square
-                    const sqCount = count2 * count3 * count4;
-                    totalCount += sqCount;
+                for(let key in points) {
+                    const [x3, y3] = key.split(',').map(Number);
+                    const cnt3 = points[key];
                     
-                    drawnSquares.push({
-                        x: Math.min(x1, x3),
-                        y: Math.min(y1, y3),
-                        w: Math.abs(x1 - x3),
-                        h: Math.abs(y1 - y3)
-                    });
+                    if(Math.abs(x1-x3) === 0 || Math.abs(x1-x3) !== Math.abs(y1-y3)) continue;
+                    
+                    // Check p2, p4
+                    const p2Key = `${x1},${y3}`;
+                    const p4Key = `${x3},${y1}`;
+                    const cnt2 = points[p2Key] || 0;
+                    const cnt4 = points[p4Key] || 0;
+                    
+                    if(cnt2 > 0 && cnt4 > 0) {
+                         const sq = cnt2 * cnt4 * cnt3;
+                         res += sq;
+                         foundSquares.push({
+                             x: Math.min(x1, x3), y: Math.min(y1, y3),
+                             w: Math.abs(x1-x3), h: Math.abs(y1-y3)
+                         });
+                         
+                         stepsRef.push({
+                             points: {...points}, squares: [...foundSquares], lastOp: {type: 'query', p},
+                             res,
+                             msg: `Found Square! Diag (${x3}, ${y3}). +${sq} to res.`, highlightLines: [11],
+                             explanation: {title: "發現正方形", text: `找到對角點 (${x3}, ${y3})，且另外兩點都存在。`, formula: `res += ${cnt2}*${cnt4}*${cnt3}`}
+                         });
+                    }
                 }
+                
+                stepsRef.push({
+                    points: {...points}, squares: [...foundSquares], lastOp: {type: 'query', p},
+                    res, finalOp: true,
+                    msg: `Query Done. Total Squares: ${res}.`, highlightLines: [13],
+                    explanation: {title: "查詢完成", text: `共找到 ${res} 個正方形。`, formula: `return ${res}`}
+                });
             }
             
-            document.getElementById('lastCount').textContent = totalCount;
-            showExplanation("Count Squares", `Query (${x1}, ${y1}). Found ${totalCount} squares.`);
+            ops.forEach(op => {
+                if(op.type === 'add') addP(op.p, steps);
+                else countP(op.p, steps);
+            });
+            
+            return steps;
         }
+
+        // D3 Render
+        const svg = d3.select("#viz-svg").attr("viewBox", "0 0 600 400");
+        const gridSize = 30; // 20x13 grid roughly
         
-        function render() {
+        function render(step) {
+             document.getElementById('stepText').textContent = step.msg;
+             if(step.res !== undefined) document.getElementById('resCount').textContent = step.res;
+             else document.getElementById('resCount').textContent = "-";
+             
              // Points
-             // Flatten points map
-             const pointList = [];
              let totalP = 0;
-             for(let key in points) {
+             const pointList = [];
+             for(let key in step.points) {
                  const [x, y] = key.split(',').map(Number);
-                 pointList.push({x, y, count: points[key]});
-                 totalP += points[key];
+                 pointList.push({x, y, count: step.points[key]});
+                 totalP += step.points[key];
              }
              document.getElementById('totalPoints').textContent = totalP;
              
-             // Draw Squares (under points)
-             const rects = svg.selectAll(".square-rect").data(drawnSquares);
-             rects.enter().append("rect").attr("class", "square-rect")
-                 .merge(rects)
-                 .attr("x", d => d.x * gridSize)
-                 .attr("y", d => d.y * gridSize)
-                 .attr("width", d => d.w * gridSize)
-                 .attr("height", d => d.h * gridSize);
-             rects.exit().remove();
+             // Draw Grid Lines (Static? Or redraw?)
+             // Just redraw everything simply
+             svg.selectAll("*").remove(); // Clear
              
-             // Draw Points
-             const circs = svg.selectAll(".point-circle").data(pointList, d => `${d.x},${d.y}`);
-             circs.enter().append("circle").attr("class", "point-circle")
-                 .merge(circs)
-                 .attr("cx", d => d.x * gridSize)
-                 .attr("cy", d => d.y * gridSize)
-                 .attr("r", d => 4 + Math.min(d.count, 5)) // Size by count
-                 .append("title").text(d => `Count: ${d.count}`);
+             // Grid
+             for(let i=0; i<30; i++) svg.append("line").attr("class","grid-line").attr("x1",i*gridSize).attr("y1",0).attr("x2",i*gridSize).attr("y2",400);
+             for(let i=0; i<20; i++) svg.append("line").attr("class","grid-line").attr("x1",0).attr("y1",i*gridSize).attr("x2",600).attr("y2",i*gridSize);
              
-             circs.exit().remove();
+             // Squares
+             if(step.squares) {
+                 svg.selectAll("rect").data(step.squares).enter().append("rect")
+                    .attr("class", "square-rect")
+                    .attr("x", d => d.x * gridSize)
+                    .attr("y", d => d.y * gridSize)
+                    .attr("width", d => d.w * gridSize)
+                    .attr("height", d => d.h * gridSize);
+             }
              
+             // Points
+             svg.selectAll("circle").data(pointList).enter().append("circle")
+                .attr("class", d => {
+                    if(step.lastOp && step.lastOp.type === 'add' && d.x === step.lastOp.p[0] && d.y === step.lastOp.p[1]) return "point-circle new";
+                    return "point-circle";
+                })
+                .attr("cx", d => d.x * gridSize)
+                .attr("cy", d => d.y * gridSize)
+                .attr("r", d => 4 + Math.min(d.count, 5));
+                
              // Query Point
-             svg.selectAll(".query-circle").remove();
-             if(queryPoint) {
+             if(step.lastOp && step.lastOp.type === 'query') {
                  svg.append("circle").attr("class", "point-circle query")
-                     .attr("cx", queryPoint.x * gridSize)
-                     .attr("cy", queryPoint.y * gridSize)
+                     .attr("cx", step.lastOp.p[0] * gridSize)
+                     .attr("cy", step.lastOp.p[1] * gridSize)
                      .attr("r", 6);
              }
-        }
-        
-        function showExplanation(title, text) {
-             document.getElementById('explanation').innerHTML = `
-                    <div class="expl-title">${title}</div>
-                    <div class="expl-text">${text}</div>
+
+            if (step.explanation) {
+                document.getElementById('explanation').innerHTML = `
+                    <div class="expl-title">${step.explanation.title}</div>
+                    <div class="expl-text">${step.explanation.text}</div>
+                    <div class="expl-formula">${step.explanation.formula}</div>
                 `;
+            }
         }
-        
-        // Initial example points
-        points['3,3'] = 1; points['6,3'] = 1; points['3,6'] = 1;
-        render();
-        
+
+        function runVisualizer() {
+            viz = new AlgorithmVisualizer({
+                codeLines: codeStructure,
+                onStepChange: render
+            });
+            viz.setSteps(simulate());
+        }
+
+        window.addEventListener('load', runVisualizer);
     </script>
 </body>
 </html>
