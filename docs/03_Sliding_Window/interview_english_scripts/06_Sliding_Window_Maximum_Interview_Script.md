@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/03_Sliding_Window/06_Sliding_Window_Maximum.md`
 
+> Quick links: [Source Solution](../06_Sliding_Window_Maximum.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

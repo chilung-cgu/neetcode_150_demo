@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/01_Arrays_and_Hashing/06_Product_of_Array_Except_Self.md`
 
+> Quick links: [Source Solution](../06_Product_of_Array_Except_Self.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

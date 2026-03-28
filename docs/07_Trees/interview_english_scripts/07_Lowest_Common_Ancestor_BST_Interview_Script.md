@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/07_Trees/07_Lowest_Common_Ancestor_BST.md`
 
+> Quick links: [Source Solution](../07_Lowest_Common_Ancestor_BST.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

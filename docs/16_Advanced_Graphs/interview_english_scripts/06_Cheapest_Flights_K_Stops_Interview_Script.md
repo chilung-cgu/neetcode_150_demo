@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/16_Advanced_Graphs/06_Cheapest_Flights_K_Stops.md`
 
+> Quick links: [Source Solution](../06_Cheapest_Flights_K_Stops.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

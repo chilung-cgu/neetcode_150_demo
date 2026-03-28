@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/03_Sliding_Window/04_Permutation_in_String.md`
 
+> Quick links: [Source Solution](../04_Permutation_in_String.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/06_Linked_List/01_Reverse_Linked_List.md`
 
+> Quick links: [Source Solution](../01_Reverse_Linked_List.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

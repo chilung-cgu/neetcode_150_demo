@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/07_Trees/10_Count_Good_Nodes.md`
 
+> Quick links: [Source Solution](../10_Count_Good_Nodes.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/05_Binary_Search/03_Koko_Eating_Bananas.md`
 
+> Quick links: [Source Solution](../03_Koko_Eating_Bananas.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

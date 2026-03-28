@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/17_Math_Geometry/02_Spiral_Matrix.md`
 
+> Quick links: [Source Solution](../02_Spiral_Matrix.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

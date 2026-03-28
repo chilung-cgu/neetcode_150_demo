@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/07_Trees/02_Maximum_Depth_of_Binary_Tree.md`
 
+> Quick links: [Source Solution](../02_Maximum_Depth_of_Binary_Tree.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

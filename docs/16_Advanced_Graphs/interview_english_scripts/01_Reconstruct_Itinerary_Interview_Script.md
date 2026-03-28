@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/16_Advanced_Graphs/01_Reconstruct_Itinerary.md`
 
+> Quick links: [Source Solution](../01_Reconstruct_Itinerary.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/05_Binary_Search/02_Search_a_2D_Matrix.md`
 
+> Quick links: [Source Solution](../02_Search_a_2D_Matrix.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

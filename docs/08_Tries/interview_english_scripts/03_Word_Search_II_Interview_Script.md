@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/08_Tries/03_Word_Search_II.md`
 
+> Quick links: [Source Solution](../03_Word_Search_II.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

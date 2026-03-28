@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/03_Sliding_Window/03_Longest_Repeating_Character_Replacement.md`
 
+> Quick links: [Source Solution](../03_Longest_Repeating_Character_Replacement.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

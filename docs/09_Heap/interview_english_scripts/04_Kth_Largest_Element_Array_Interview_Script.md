@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/09_Heap/04_Kth_Largest_Element_Array.md`
 
+> Quick links: [Source Solution](../04_Kth_Largest_Element_Array.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

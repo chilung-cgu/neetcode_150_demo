@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/12_2D_DP/09_Edit_Distance.md`
 
+> Quick links: [Source Solution](../09_Edit_Distance.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

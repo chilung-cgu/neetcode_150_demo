@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/07_Trees/12_Kth_Smallest_Element_BST.md`
 
+> Quick links: [Source Solution](../12_Kth_Smallest_Element_BST.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

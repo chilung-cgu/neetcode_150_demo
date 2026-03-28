@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/13_Greedy/05_Hand_of_Straights.md`
 
+> Quick links: [Source Solution](../05_Hand_of_Straights.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

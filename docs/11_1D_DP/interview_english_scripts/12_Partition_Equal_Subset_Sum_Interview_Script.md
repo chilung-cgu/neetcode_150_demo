@@ -2,6 +2,8 @@
 
 > Source aligned with: `docs/11_1D_DP/12_Partition_Equal_Subset_Sum.md`
 
+> Quick links: [Source Solution](../12_Partition_Equal_Subset_Sum.md) · [Chapter Script Index](index.md) · [Global Index](../../interview_english_scripts/index.md)
+
 ## 1) 30-second problem restatement script
 
 | English line | Traditional Chinese meaning (short) | Interview stage |

@@ -1,18 +1,24 @@
-# Interview English Scripts
+# Bit Manipulation — Interview English Scripts
 
-章節：`18_Bit_Manipulation`
+- [⬅️ 回總覽](../../interview_english_scripts/index.md)
+- [📘 回本章索引](../index.md)
 
-## 題目清單
+本章共 `7` 題。
 
-- [01 Single Number](01_Single_Number_Interview_Script.md)
-- [02 Number of 1 Bits](02_Number_of_1_Bits_Interview_Script.md)
-- [03 Counting Bits](03_Counting_Bits_Interview_Script.md)
-- [04 Reverse Bits](04_Reverse_Bits_Interview_Script.md)
-- [05 Missing Number](05_Missing_Number_Interview_Script.md)
-- [06 Sum of Two Integers](06_Sum_of_Two_Integers_Interview_Script.md)
-- [07 Reverse Integer](07_Reverse_Integer_Interview_Script.md)
+## 題目對照表
+
+| # | Problem | Source | English Script |
+|---:|---|---|---|
+| 1 | Single Number | [題解](../01_Single_Number.md) | [講稿](01_Single_Number_Interview_Script.md) |
+| 2 | Number of 1 Bits | [題解](../02_Number_of_1_Bits.md) | [講稿](02_Number_of_1_Bits_Interview_Script.md) |
+| 3 | Counting Bits | [題解](../03_Counting_Bits.md) | [講稿](03_Counting_Bits_Interview_Script.md) |
+| 4 | Reverse Bits | [題解](../04_Reverse_Bits.md) | [講稿](04_Reverse_Bits_Interview_Script.md) |
+| 5 | Missing Number | [題解](../05_Missing_Number.md) | [講稿](05_Missing_Number_Interview_Script.md) |
+| 6 | Sum of Two Integers | [題解](../06_Sum_of_Two_Integers.md) | [講稿](06_Sum_of_Two_Integers_Interview_Script.md) |
+| 7 | Reverse Integer | [題解](../07_Reverse_Integer.md) | [講稿](07_Reverse_Integer_Interview_Script.md) |
 
 ## 說明
 
-- 每題皆使用同一口說模板與表格格式。
-- 若來源未明確定義，標記 `[CHECK]` 供面試時釐清。
+- 所有講稿採固定 10 段面試口述模板。
+- 英文句型偏短，適合即時口說。
+- `[CHECK]` 表示來源未明確定義，需面試時先問清楚。
