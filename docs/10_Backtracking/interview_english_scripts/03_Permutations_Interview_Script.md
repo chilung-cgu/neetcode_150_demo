@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Permutations. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Backtracking (Swap-based) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the permutations problem. | 我先重述 permutations 題目。 | Restatement |
+| We are given an array of distinct integers. | 題目給一個互異整數陣列。 | Restatement |
+| We need to return all possible orderings. | 要回傳所有可能排列。 | Restatement |
+| Each number must appear exactly once per permutation. | 每個排列中每個數字都必須且只能出現一次。 | Restatement |
+| Output order of permutations is not important. | 排列輸出順序不重要。 | Restatement |
+| I will use backtracking with in-place swap. | 我會用原地 swap 的回溯解法。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume all numbers are unique as stated? | 是否可依題意假設數字皆不重複？ | Clarify |
+| Is returning permutations in any order acceptable? | 任意順序回傳排列是否可接受？ | Clarify |
+| Do you prefer swap-based recursion over visited-array recursion? | 你偏好 swap 遞迴還是 visited 遞迴？ | Clarify |
+| Is in-place modification during recursion allowed? | 遞迴過程中可原地修改陣列嗎？ | Clarify |
+| Should I briefly compare both common implementations? | 是否要簡短比較兩種常見寫法？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N! \times N) from source. | 來源暴力時間約 O(N! \times N)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force can generate all permutations and store them. | 暴力法就是完整生成所有排列。 | Approach |
+| Total count is n factorial, so growth is very fast. | 總數是 n!，成長很快。 | Approach |
+| We still need systematic recursion to generate them correctly. | 仍需有系統遞迴來正確生成。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Backtracking (Swap-based). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N \times N!) from source. | 來源優化時間為 O(N \times N!)。 | Approach |
-| Optimized space is O(N) from source. | 來源優化空間為 O(N)。 | Approach |
+| In swap-based DFS, position start chooses one value each round. | swap DFS 中每輪決定 start 位置放誰。 | Approach |
+| Swap nums[start] with nums[i] for every i from start onward. | 對 i>=start，交換 nums[start] 與 nums[i]。 | Approach |
+| Recurse to start plus one to decide next position. | 遞迴到 start+1 決定下一格。 | Approach |
+| After recursion, swap back to restore previous state. | 遞迴後交換回來還原狀態。 | Approach |
+| This avoids extra visited array and stays memory efficient. | 這可免 visited 陣列，記憶體較省。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define recursive backtracking function. | 依來源步驟執行。 | Coding |
-| Next, I check base case and append answer. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I iterate choices for current position. | 依來源步驟執行。 | Coding |
-| Then, I choose one option and update state. | 依來源步驟執行。 | Coding |
-| Next, I recurse to next decision level. | 依來源步驟執行。 | Coding |
-| Then, I undo choice to restore state. | 依來源步驟執行。 | Coding |
-| Next, I return all collected combinations. | 依來源步驟執行。 | Coding |
+| I create result container and call backtrack with start zero. | 我建立結果容器並從 start=0 呼叫。 | Coding |
+| Base case is start equals nums size. | 基底條件是 start 等於陣列長度。 | Coding |
+| At base, current nums order is one full permutation. | 到基底時 nums 當前順序即一個排列。 | Coding |
+| For loop iterates i from start to end. | for 迴圈讓 i 從 start 到結尾。 | Coding |
+| I swap nums[start] and nums[i]. | 我交換 nums[start] 與 nums[i]。 | Coding |
+| Then I recurse with start plus one. | 接著以 start+1 遞迴。 | Coding |
+| After returning, I swap back for backtracking. | 回來後再 swap 回去完成回溯。 | Coding |
+| Finally all permutations are collected in result. | 最終結果中會收集所有排列。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: nums = [1,2,3]. | 範例輸入：nums = [1,2,3]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]. | 預期輸出：[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]。 | Dry-run |
+| Let me dry-run nums [1,2,3]. | 我手跑 nums=[1,2,3]。 | Dry-run |
+| At start zero, choose one first, then recurse on [2,3]. | start=0 先選 1，遞迴處理 [2,3]。 | Dry-run |
+| This branch yields [1,2,3] and [1,3,2]. | 此分支得到 [1,2,3] 與 [1,3,2]。 | Dry-run |
+| Backtrack and swap two to front for next branch. | 回溯後把 2 換到前面跑下一支。 | Dry-run |
+| That yields [2,1,3] and [2,3,1]. | 會得到 [2,1,3] 與 [2,3,1]。 | Dry-run |
+| Final branch with three in front gives last two permutations. | 最後 3 在前會給最後兩個排列。 | Dry-run |
+| Total is six permutations, equal to three factorial. | 總數為 6，等於 3!。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single element should return one permutation. | 案例一：單元素應只回一個排列。 | Edge test |
+| Case two: two elements should return exactly two permutations. | 案例二：兩元素應剛好回兩個排列。 | Edge test |
+| Case three: negative numbers should behave the same. | 案例三：含負數時行為應一致。 | Edge test |
+| Case four: verify count equals n factorial for small n. | 案例四：小 n 驗證數量等於 n!。 | Edge test |
+| Case five: verify no duplicates when input is distinct. | 案例五：互異輸入時不得有重複排列。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N \times N!). | 時間複雜度是 O(N \times N!)。 | Complexity |
-| Space complexity is O(N). | 空間複雜度是 O(N)。 | Complexity |
+| Time complexity is O(n times n factorial). | 時間複雜度是 O(n*n!)。 | Complexity |
+| Auxiliary recursion space is O(n), excluding output. | 不含輸出時輔助空間為 O(n)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N \times N!). | 來源主要時間為 O(N \times N!)。 | Complexity |
-| Extra memory from source is O(N). | 來源額外空間為 O(N)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| There are n factorial leaves because each ordering is unique. | 因每個排列唯一，所以有 n! 個葉節點。 | Complexity |
+| Copying one permutation into result costs O(n). | 每次把排列寫入結果要 O(n)。 | Complexity |
+| Multiply together gives O(n times n factorial). | 合併後得到 O(n*n!)。 | Complexity |
+| Recursion depth is n and swap uses constant extra storage. | 遞迴深度 n，swap 只用常數額外空間。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me think in terms of fixing one position at a time. | 我先用逐格固定位置的方式思考。 | If stuck |
+| At position start, I can place any remaining element. | 在 start 位置可放任一未固定元素。 | If stuck |
+| Swap is the simplest way to realize that choice. | swap 是實作此選擇最簡潔方式。 | If stuck |
+| After recurse, I must swap back. | 遞迴後我必須 swap 回來。 | If stuck |
+| Without swap-back, later branches become incorrect. | 不 swap 回來會讓後續分支錯亂。 | If stuck |
+| Base case should trigger when start reaches n. | 基底應在 start 到 n 時觸發。 | If stuck |
+| Then I store current array ordering. | 然後儲存當前陣列順序。 | If stuck |
+| Let me test quickly with [0,1]. | 我快速用 [0,1] 測試。 | If stuck |
+| I get [0,1] and [1,0], so logic is correct. | 得到 [0,1]、[1,0]，邏輯正確。 | If stuck |
+| Great, recursion invariants are now clear. | 很好，遞迴不變量已清楚。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N \times N!), space is O(N). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved permutations with swap-based backtracking. | 我用 swap 回溯解出 permutations。 | Wrap-up |
+| The algorithm fixes positions from left to right. | 演算法從左到右固定位置。 | Wrap-up |
+| Backtracking swap-back keeps state clean for siblings. | 回溯交換還原可保持同層狀態乾淨。 | Wrap-up |
+| Runtime is O(n times n factorial). | 時間複雜度是 O(n*n!)。 | Wrap-up |
+| I can also show visited-array implementation if needed. | 若需要我也可展示 visited 版本。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N \times N!). | 速記重點。 | Cheat sheet |
-| Report space complexity O(N). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Problem type: full permutation generation. | 題型：全排列生成。 | Cheat sheet |
+| Input values are distinct. | 輸入值互異。 | Cheat sheet |
+| Need all possible orders. | 要所有可能順序。 | Cheat sheet |
+| Use swap-based DFS. | 用 swap 型 DFS。 | Cheat sheet |
+| State variable is start index. | 狀態變數是 start 索引。 | Cheat sheet |
+| Base when start equals n. | start==n 時觸發基底。 | Cheat sheet |
+| Store nums snapshot at base. | 基底時儲存 nums 快照。 | Cheat sheet |
+| Loop i from start to n-1. | i 從 start 迴圈到 n-1。 | Cheat sheet |
+| Swap start with i before recurse. | 遞迴前 swap(start,i)。 | Cheat sheet |
+| Recurse with start+1. | 以 start+1 遞迴。 | Cheat sheet |
+| Swap back after recurse. | 遞迴後要 swap 回來。 | Cheat sheet |
+| Swap-back is mandatory invariant. | 交換還原是不變量。 | Cheat sheet |
+| Total results count n factorial. | 總結果數是 n!。 | Cheat sheet |
+| Time O(n*n!). | 時間 O(n*n!)。 | Cheat sheet |
+| Stack space O(n). | 堆疊空間 O(n)。 | Cheat sheet |
+| Output space O(n*n!). | 輸出空間 O(n*n!)。 | Cheat sheet |
+| Validate with [1,2,3] => 6. | [1,2,3] 驗證應得 6 筆。 | Cheat sheet |
+| Validate with [0,1] => 2. | [0,1] 驗證應得 2 筆。 | Cheat sheet |
+| Alternative: visited-array DFS. | 替代法：visited DFS。 | Cheat sheet |
+| Mention trade-off between readability and memory. | 補充可讀性與記憶體取捨。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Swap-based backtracking flow is preserved.
+- No hallucinated constraints: ✅ Uses distinct-input permutation semantics.
+- Language simplicity: ✅ Direct spoken narration tied to coding order.

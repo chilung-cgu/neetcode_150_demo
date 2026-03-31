@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Min Cost to Connect All Points. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Prim's Algorithm (Min-Heap) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate min cost to connect all points. | 我先重述 Min Cost to Connect All Points。 | Restatement |
+| We have points on two-dimensional plane. | 題目給二維平面上的多個點。 | Restatement |
+| Cost between two points is Manhattan distance. | 兩點連線成本是曼哈頓距離。 | Restatement |
+| We need connect all points with minimum total cost. | 要以最小總成本把所有點連通。 | Restatement |
+| This is minimum spanning tree problem on complete graph. | 這是完整圖上的最小生成樹問題。 | Restatement |
+| I will use Prim algorithm with min-heap. | 我會用 Prim 演算法加最小堆。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is points length up to around one thousand? | points 長度是否約到一千？ | Clarify |
+| Is Manhattan distance exactly abs dx plus abs dy? | 曼哈頓距離是否是 |dx|+|dy|？ | Clarify |
+| We only need total cost, not actual edges list, right? | 是否只需總成本，不需回邊清單？ | Clarify |
+| Can coordinates be negative values? | 座標值是否可能為負？ | Clarify |
+| Is O(n squared log n) acceptable for this constraint? | 在此限制下 O(n²logn) 是否可接受？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,56 +31,56 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N^2 \log(N^2) from source. | 來源暴力時間約 O(N^2 \log(N^2)。 | Approach |
-| Brute space is about O(N^2 \log N) from source. | 來源暴力空間約 O(N^2 \log N)。 | Approach |
+| Generate all edges of complete graph and run Kruskal. | 列舉完整圖所有邊再跑 Kruskal。 | Approach |
+| Edge count is O(n squared), sorting adds heavy cost. | 邊數 O(n²)，排序成本也高。 | Approach |
+| Prim avoids explicit full edge list creation. | Prim 可避免顯式建立全部邊清單。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Prim's Algorithm (Min-Heap). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N^2 \log N) from source. | 來源優化時間為 O(N^2 \log N)。 | Approach |
-| Optimized space is O(N^2) from source. | 來源優化空間為 O(N^2)。 | Approach |
+| Start from any point, usually index zero. | 從任一點起跑，通常 index 0。 | Approach |
+| Maintain visited set for points already in MST. | 維護已納入 MST 的 visited 集合。 | Approach |
+| Min-heap stores candidate edges as cost and destination index. | 最小堆存候選邊：成本與目的節點索引。 | Approach |
+| Each step picks cheapest edge reaching unvisited point. | 每一步選最便宜可達未訪點的邊。 | Approach |
+| Repeat until all points are included, summing costs. | 重複直到全點納入並累加成本。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I build graph adjacency structure first. | 依來源步驟執行。 | Coding |
-| Next, I initialize distance array and min heap. | 依來源步驟執行。 | Coding |
-| Then, I use unordered_set for membership checks. | 依來源步驟執行。 | Coding |
-| Next, I keep heap invariant after each operation. | 依來源步驟執行。 | Coding |
-| Then, I process nodes level by level with queue. | 依來源步驟執行。 | Coding |
-| Next, I pop smallest distance node from heap. | 依來源步驟執行。 | Coding |
-| Then, I skip stale states when needed. | 依來源步驟執行。 | Coding |
-| Next, I relax outgoing edges and update distances. | 依來源步驟執行。 | Coding |
-| Finally, I push improved states into heap. | 依來源步驟執行。 | Coding |
-| I return final shortest-path result. | 依來源步驟執行。 | Coding |
+| I initialize min-heap with pair zero and node zero. | 我先把 (0,0) 放入最小堆。 | Coding |
+| I prepare visited boolean array sized n. | 我準備大小 n 的 visited 布林陣列。 | Coding |
+| I keep totalCost and connectedCount as zero. | 我維護 totalCost 與 connectedCount 初值 0。 | Coding |
+| While connectedCount is less than n, pop heap top. | 當 connectedCount<n 時，彈出堆頂。 | Coding |
+| If node already visited, skip this entry. | 若節點已訪問，就略過該項。 | Coding |
+| Otherwise mark visited and add cost to totalCost. | 否則標記 visited 並把成本加到 totalCost。 | Coding |
+| Increase connectedCount by one. | connectedCount 加一。 | Coding |
+| For every unvisited point v, compute Manhattan distance from current node. | 對每個未訪點 v，計算到當前點的曼哈頓距離。 | Coding |
+| Push distance and v into heap as candidate edge. | 把距離與 v 作為候選邊推入堆。 | Coding |
+| After loop ends, return totalCost. | 迴圈結束後回傳 totalCost。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: points = [[0,0],[2,2],[3,10],[5,2],[7,0]]. | 範例輸入：points = [[0,0],[2,2],[3,10],[5,2],[7,0]]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 20. | 預期輸出：20。 | Dry-run |
+| Let me dry-run points [0,0],[2,2],[3,10],[5,2],[7,0]. | 我手跑 points [0,0],[2,2],[3,10],[5,2],[7,0]。 | Dry-run |
+| Start with point zero at cost zero. | 從點 0 成本 0 開始。 | Dry-run |
+| Cheapest next edge connects to point one with cost four. | 最便宜下一邊連到點 1，成本 4。 | Dry-run |
+| Continue selecting minimum edge crossing visited cut. | 持續選跨越 visited 邊界的最小邊。 | Dry-run |
+| Points join in order of cheapest available Manhattan links. | 各點依最便宜曼哈頓連結順序加入。 | Dry-run |
+| Total accumulated MST cost becomes twenty. | 最終 MST 累加成本為 20。 | Dry-run |
+| Output is twenty. | 輸出是 20。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single point returns zero. | 案例一：單一點回 0。 | Edge test |
+| Case two: two points returns their Manhattan distance. | 案例二：兩點回其曼哈頓距離。 | Edge test |
+| Case three: duplicate coordinates produce zero-cost edges. | 案例三：重複座標會出現零成本邊。 | Edge test |
+| Case four: points with negative coordinates. | 案例四：含負座標點集。 | Edge test |
+| Case five: collinear points with multiple equal choices. | 案例五：共線且有多個等價選擇。 | Edge test |
 
 ## 7) Complexity script
 
@@ -88,72 +88,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N^2 \log N). | 時間複雜度是 O(N^2 \log N)。 | Complexity |
-| Space complexity is O(N^2). | 空間複雜度是 O(N^2)。 | Complexity |
+| Time complexity is O(n squared log n). | 時間複雜度是 O(n²logn)。 | Complexity |
+| Space complexity is O(n squared) in heap worst case. | 空間最壞是 O(n²)（堆中候選邊）。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N^2 \log N). | 來源主要時間為 O(N^2 \log N)。 | Complexity |
-| Extra memory from source is O(N^2). | 來源額外空間為 O(N^2)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| For each accepted node, we may push distances to many unvisited nodes. | 每接納一個節點，可能推入多個未訪點距離。 | Complexity |
+| Total pushed candidate edges can be O(n squared). | 總候選邊推入量可達 O(n²)。 | Complexity |
+| Heap operations add logarithmic factor, giving O(n squared log n). | 堆操作帶對數因子，總時間 O(n²logn)。 | Complexity |
+| Visited array is O(n), heap dominates memory up to O(n squared). | visited 為 O(n)，堆最壞主導為 O(n²)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me reframe this as MST problem. | 我先把它重述成 MST 問題。 | If stuck |
+| We never need cycles in MST. | MST 中不需要任何環。 | If stuck |
+| Prim grows one connected tree gradually. | Prim 會逐步長出一棵連通樹。 | If stuck |
+| At each step choose cheapest edge to unvisited point. | 每步選到未訪點的最便宜邊。 | If stuck |
+| Min-heap helps retrieve that edge quickly. | 最小堆可快速取出該邊。 | If stuck |
+| Manhattan distance is computed on demand. | 曼哈頓距離可按需計算。 | If stuck |
+| Let me test quickly with two-point case. | 我快速驗證兩點案例。 | If stuck |
+| Result should equal direct distance. | 結果應等於直接距離。 | If stuck |
+| This confirms cost accumulation logic. | 這可確認成本累加邏輯。 | If stuck |
+| Great, now implementation is straightforward. | 很好，現在實作很直觀。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N^2 \log N), space is O(N^2). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it with Prim minimum spanning tree. | 我用 Prim 最小生成樹解題。 | Wrap-up |
+| Visited set tracks nodes already connected. | visited 集合追蹤已連入節點。 | Wrap-up |
+| Heap always picks cheapest edge into unvisited area. | 堆會持續挑最便宜跨界邊。 | Wrap-up |
+| Complexity is O(n squared log n) time. | 時間複雜度是 O(n²logn)。 | Wrap-up |
+| This is a standard MST approach for dense complete graph costs. | 這是稠密完整圖成本題的標準 MST 作法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N^2 \log N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(N^2). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: minimum total cost to connect all points. | 目標：最小總成本連通所有點。 | Cheat sheet |
+| Cost is Manhattan distance. | 成本是曼哈頓距離。 | Cheat sheet |
+| Model as MST problem. | 建模成 MST 問題。 | Cheat sheet |
+| Use Prim with min-heap. | 使用 Prim + 最小堆。 | Cheat sheet |
+| Start with node zero cost zero. | 從節點 0、成本 0 起跑。 | Cheat sheet |
+| Maintain visited nodes. | 維護 visited 節點。 | Cheat sheet |
+| Pop cheapest candidate edge. | 彈出最便宜候選邊。 | Cheat sheet |
+| Skip if destination already visited. | 目的節點已訪則略過。 | Cheat sheet |
+| Otherwise add cost and mark visited. | 否則加成本並標記 visited。 | Cheat sheet |
+| Push distances to all unvisited nodes. | 推入到所有未訪點距離。 | Cheat sheet |
+| Repeat until all n nodes connected. | 重複直到 n 點全連通。 | Cheat sheet |
+| Return totalCost. | 回傳 totalCost。 | Cheat sheet |
+| n=1 returns 0. | n=1 回 0。 | Cheat sheet |
+| Two points return direct Manhattan cost. | 兩點回直接曼哈頓成本。 | Cheat sheet |
+| Time O(n²logn). | 時間 O(n²logn)。 | Cheat sheet |
+| Heap memory can reach O(n²). | 堆記憶體最壞 O(n²)。 | Cheat sheet |
+| Common bug: forgetting visited skip. | 常見錯誤：忘記 visited skip。 | Cheat sheet |
+| Common bug: wrong Manhattan formula. | 常見錯誤：曼哈頓公式寫錯。 | Cheat sheet |
+| Kruskal is alternative but needs full edge list. | Kruskal 可行但需完整邊清單。 | Cheat sheet |
+| Explain cut property briefly if asked. | 若被追問可簡述割邊性質。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Prim min-heap MST approach preserved.
+- No hallucinated constraints: ✅ Manhattan-cost and full-connect target maintained.
+- Language simplicity: ✅ concise interview speaking style.

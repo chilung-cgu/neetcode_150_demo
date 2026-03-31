@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Balanced Binary Tree. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Recursive DFS (Bottom-up with -1 flag) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the balanced-binary-tree problem. | 我先重述平衡二元樹題目。 | Restatement |
+| We need to decide whether the tree is height-balanced. | 我們要判斷樹是否高度平衡。 | Restatement |
+| For every node, height difference of two subtrees must be at most one. | 每節點左右子樹高度差都要 ≤ 1。 | Restatement |
+| If any node violates this, answer is false. | 只要有節點違反就回傳 false。 | Restatement |
+| Empty tree is considered balanced. | 空樹視為平衡樹。 | Restatement |
+| I will use bottom-up DFS with an early-fail flag. | 我會用 bottom-up DFS 與提早失敗旗標。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I treat empty tree as balanced true? | 空樹可視為平衡 true 嗎？ | Clarify |
+| Is height difference threshold exactly one? | 高度差門檻確定是 1 嗎？ | Clarify |
+| Should I optimize beyond O(n^2) brute force? | 需要優化超過 O(n^2) 暴力法嗎？ | Clarify |
+| Is recursion preferred for readability here? | 此題偏好用遞迴提升可讀性嗎？ | Clarify |
+| Can I return sentinel value -1 for unbalanced subtree? | 我可以用 -1 當不平衡 sentinel 嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N^2) from source. | 來源暴力時間約 O(N^2)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force checks every node and recomputes subtree heights repeatedly. | 暴力法每節點都重複計算子樹高度。 | Approach |
+| For each node, we compute left and right heights, then recurse children. | 每節點算左右高度，再遞迴檢查子節點。 | Approach |
+| This repeated height work leads to O(n^2) worst-case time. | 高度重算使最壞時間變 O(n^2)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Recursive DFS (Bottom-up with -1 flag). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(h) from source. | 來源優化空間為 O(h)。 | Approach |
+| Use one bottom-up DFS that returns subtree height when balanced. | 用一次 bottom-up DFS，平衡時回傳高度。 | Approach |
+| If a subtree is unbalanced, return sentinel -1 immediately. | 若子樹不平衡，立刻回傳 sentinel -1。 | Approach |
+| Parent propagates -1 upward without more checks. | 父節點收到 -1 就直接往上傳。 | Approach |
+| Otherwise return one plus max of child heights. | 否則回傳 1+max(左右高度)。 | Approach |
+| Final answer is dfs(root) not equal to -1, with O(n) time. | 最後判斷 dfs(root)!=-1，時間 O(n)。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define traversal order based on source method. | 依來源步驟執行。 | Coding |
-| Next, I initialize recursion or queue structures. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process current node value and state. | 依來源步驟執行。 | Coding |
-| Then, I visit left and right children by rule. | 依來源步驟執行。 | Coding |
-| Next, I update answer during traversal. | 依來源步驟執行。 | Coding |
-| Then, I handle null node base case carefully. | 依來源步驟執行。 | Coding |
-| Next, I return final aggregated tree result. | 依來源步驟執行。 | Coding |
+| Main function returns whether dfsHeight(root) is not minus one. | 主函式回傳 dfsHeight(root) 是否不等於 -1。 | Coding |
+| In helper, null node returns height zero. | helper 中 null 節點回傳高度 0。 | Coding |
+| I compute leftHeight recursively. | 我先遞迴計算 leftHeight。 | Coding |
+| If leftHeight is minus one, return minus one immediately. | 若 leftHeight 為 -1，立刻回傳 -1。 | Coding |
+| I compute rightHeight recursively. | 接著遞迴計算 rightHeight。 | Coding |
+| If rightHeight is minus one, return minus one immediately. | 若 rightHeight 為 -1，也立刻回傳 -1。 | Coding |
+| If absolute height difference exceeds one, return minus one. | 若高度差絕對值 >1，回傳 -1。 | Coding |
+| Otherwise return one plus max of both heights. | 否則回傳 1+max(左右高度)。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: root = [3,9,20,null,null,15,7]. | 範例輸入：root = [3,9,20,null,null,15,7]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: true. | 預期輸出：true。 | Dry-run |
+| Let me dry-run [3,9,20,null,null,15,7]. | 我手跑 [3,9,20,null,null,15,7]。 | Dry-run |
+| Leaves 9, 15, and 7 each return height one. | 葉節點 9、15、7 都回傳高度 1。 | Dry-run |
+| Node 20 gets left one and right one, so returns two. | 節點 20 左右都 1，所以回傳 2。 | Dry-run |
+| Root 3 gets left one and right two, difference is one. | root 3 得到左 1 右 2，差值 1。 | Dry-run |
+| Difference is valid, so root returns three. | 差值合法，所以 root 回傳 3。 | Dry-run |
+| No minus-one appears, final answer is true. | 沒有出現 -1，最終答案是 true。 | Dry-run |
+| This matches expected result. | 這與預期結果一致。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: empty tree should return true. | 案例一：空樹應回傳 true。 | Edge test |
+| Case two: single-node tree should return true. | 案例二：單節點樹應回傳 true。 | Edge test |
+| Case three: one-sided chain should return false after depth gap grows. | 案例三：單邊長鏈高度差拉大後應回傳 false。 | Edge test |
+| Case four: complete balanced tree should return true. | 案例四：完整平衡樹應回傳 true。 | Edge test |
+| Case five: unbalanced deep subtree should fail early via sentinel. | 案例五：深層不平衡子樹應透過 sentinel 提早失敗。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,71 +87,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(h). | 空間複雜度是 O(h)。 | Complexity |
+| Space complexity is O(h) from recursion stack. | 空間複雜度是 O(h)（遞迴堆疊）。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(h). | 來源額外空間為 O(h)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Each node is processed once in bottom-up DFS. | bottom-up DFS 對每節點只處理一次。 | Complexity |
+| Per node work is constant-time checks and max operation. | 每節點都是常數時間檢查與 max。 | Complexity |
+| Recursion depth is tree height h. | 遞迴深度等於樹高 h。 | Complexity |
+| Worst skewed tree gives O(n) stack; balanced gives O(log n). | 最壞斜樹 O(n)；平衡樹 O(log n)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me separate height calculation from balance decision. | 我先把高度計算與平衡判定分開。 | If stuck |
+| Sentinel minus one means this subtree is already unbalanced. | sentinel -1 代表該子樹已不平衡。 | If stuck |
+| I should propagate minus one upward immediately. | 我應該立刻把 -1 往上傳。 | If stuck |
+| I might have forgotten early return after left subtree fails. | 我可能漏了左子樹失敗後的提早返回。 | If stuck |
+| Let me add that guard and rerun. | 我補上保護後再重跑。 | If stuck |
+| I will test a long left chain now. | 我現在測一條很長的左鏈。 | If stuck |
+| It correctly returns false without extra traversal. | 現在能正確回傳 false 且避免多餘遍歷。 | If stuck |
+| I will test balanced sample again. | 我再測一次平衡範例。 | If stuck |
+| It returns true as expected. | 它如預期回傳 true。 | If stuck |
+| Great, the sentinel strategy is working. | 很好，sentinel 策略已正常運作。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(h). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I implemented one-pass balanced-tree checking. | 我完成了一次遍歷的平衡樹檢查。 | Wrap-up |
+| The minus-one sentinel gives early pruning for failures. | -1 sentinel 可在失敗時提早剪枝。 | Wrap-up |
+| Runtime is O(n). | 時間複雜度是 O(n)。 | Wrap-up |
+| Space is O(h). | 空間複雜度是 O(h)。 | Wrap-up |
+| I can also compare this with O(n^2) brute force if useful. | 若需要我可再對比 O(n^2) 暴力法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(h). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Check if binary tree is height-balanced. | 檢查二元樹是否高度平衡。 | Cheat sheet |
+| Balanced means every node has diff <= 1. | 平衡代表每節點差值 <= 1。 | Cheat sheet |
+| Empty tree is balanced. | 空樹視為平衡。 | Cheat sheet |
+| Brute force recomputes heights repeatedly. | 暴力法會重算高度。 | Cheat sheet |
+| Brute force worst time O(n^2). | 暴力最壞時間 O(n^2)。 | Cheat sheet |
+| Use bottom-up DFS with sentinel -1. | 用 bottom-up DFS + sentinel -1。 | Cheat sheet |
+| Null node returns 0 height. | null 節點回傳 0 高度。 | Cheat sheet |
+| Compute left height first. | 先算左高度。 | Cheat sheet |
+| If left is -1, return -1. | 若左為 -1，直接回傳 -1。 | Cheat sheet |
+| Compute right height next. | 再算右高度。 | Cheat sheet |
+| If right is -1, return -1. | 若右為 -1，直接回傳 -1。 | Cheat sheet |
+| If abs diff > 1, return -1. | 若絕對差 >1，回傳 -1。 | Cheat sheet |
+| Else return 1 + max(left, right). | 否則回傳 1+max(left,right)。 | Cheat sheet |
+| Final check: dfs(root) != -1. | 最後判斷 dfs(root) != -1。 | Cheat sheet |
+| Test empty tree => true. | 測空樹 => true。 | Cheat sheet |
+| Test single node => true. | 測單節點 => true。 | Cheat sheet |
+| Test skewed chain => false. | 測斜樹長鏈 => false。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(h). | 空間 O(h)。 | Cheat sheet |
+| Common bug: not propagating -1 early. | 常見錯誤：沒提早傳遞 -1。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Bottom-up DFS with `-1` sentinel is preserved.
+- No hallucinated constraints: ✅ Uses source balance definition and constraints.
+- Language simplicity: ✅ Natural spoken lines with interview pacing.

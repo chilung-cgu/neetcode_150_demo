@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Task Scheduler. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Math / Greedy as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the task scheduler problem. | 我先重述任務排程題。 | Restatement |
+| We have task letters and cooldown n between same task types. | 有任務字母，且同類任務間隔至少 n。 | Restatement |
+| Each task takes one unit of CPU time. | 每個任務花 1 單位時間。 | Restatement |
+| CPU may be idle if no valid task is ready. | 若無合法任務可執行，CPU 可 idle。 | Restatement |
+| We need the minimum total intervals to finish all tasks. | 要求完成所有任務的最少總時間。 | Restatement |
+| I will use the frequency formula based greedy approach. | 我會用頻率公式的貪婪解法。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Are task labels limited to uppercase English letters? | 任務標籤是否限大寫英文字母？ | Clarify |
+| Is n allowed to be zero? | n 是否可能為 0？ | Clarify |
+| Do we only need length, not the actual schedule sequence? | 只需回傳長度，不需回傳排程序列嗎？ | Clarify |
+| Can multiple task types tie for maximum frequency? | 多種任務可能並列最大頻率嗎？ | Clarify |
+| Should I present both formula and simulation intuition? | 是否要同時說公式與模擬直覺？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about [CHECK] from source. | 來源暴力時間約 [CHECK]。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force simulates every interval and chooses feasible tasks. | 暴力法逐時間模擬並挑可執行任務。 | Approach |
+| This often uses max-heap plus cooldown queue. | 通常會用 max-heap 搭配冷卻佇列。 | Approach |
+| It works but is heavier than needed for this question. | 可行但對本題來說較笨重。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Math / Greedy. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N) from source. | 來源優化時間為 O(N)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Key is the most frequent task count, call it maxFreq. | 關鍵是最高頻率，記為 maxFreq。 | Approach |
+| We create maxFreq minus one full blocks of length n plus one. | 形成 maxFreq-1 個長度 n+1 的區塊。 | Approach |
+| Then add number of tasks that tie at maxFreq. | 再加上並列 maxFreq 的任務數。 | Approach |
+| Formula candidate is maxFreq minus one times n plus one plus ties. | 公式候選為 (maxFreq-1)*(n+1)+ties。 | Approach |
+| Final answer is max of this candidate and total task count. | 最後答案是候選值與任務總數取較大。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I sort intervals by start time first. | 依來源步驟執行。 | Coding |
-| Next, I initialize result with first interval. | 依來源步驟執行。 | Coding |
-| Then, I use unordered_map for constant-time lookup. | 依來源步驟執行。 | Coding |
-| Next, I iterate remaining intervals one by one. | 依來源步驟執行。 | Coding |
-| Then, I merge when current start overlaps last end. | 依來源步驟執行。 | Coding |
-| Next, I append interval when no overlap exists. | 依來源步驟執行。 | Coding |
-| Then, I update end boundary with max value. | 依來源步驟執行。 | Coding |
-| Next, I return merged or selected intervals. | 依來源步驟執行。 | Coding |
+| I count frequency of each task type first. | 我先統計每種任務頻率。 | Coding |
+| While counting, I track the maximum frequency value. | 統計同時追蹤最大頻率值。 | Coding |
+| Next I count how many task types equal that max frequency. | 接著算有幾種任務達到最大頻率。 | Coding |
+| I compute formula length with block structure. | 我用區塊結構計算公式長度。 | Coding |
+| Formula is maxFreq minus one times n plus one plus tie count. | 公式為 (maxFreq-1)*(n+1)+並列數。 | Coding |
+| Then I compare formula length with tasks size. | 然後把公式長度與 tasks.size() 比較。 | Coding |
+| I return the larger one as minimum intervals. | 回傳較大者作為最小總時間。 | Coding |
+| This handles both idle-heavy and fully packed schedules. | 這可同時涵蓋有 idle 與無 idle 情況。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: tasks = ["A","A","A","B","B","B"], n = 2. | 範例輸入：tasks = ["A","A","A","B","B","B"], n = 2。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 8. | 預期輸出：8。 | Dry-run |
+| Let me dry-run tasks A A A B B B with n equals 2. | 我手跑 tasks A A A B B B、n=2。 | Dry-run |
+| Frequencies are A three and B three, so maxFreq is three. | 頻率 A=3、B=3，所以 maxFreq=3。 | Dry-run |
+| Number of maxFreq task types is two. | 達最大頻率的種類數是 2。 | Dry-run |
+| Formula gives three minus one times three plus two equals eight. | 公式得 (3-1)*3+2=8。 | Dry-run |
+| Total tasks count is six, so answer is max of six and eight. | 任務總數是 6，答案取 max(6,8)。 | Dry-run |
+| Final answer is eight intervals. | 最終答案是 8 個時間單位。 | Dry-run |
+| This matches the expected sample output. | 這與範例預期輸出一致。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: n equals zero, answer should be tasks length. | 案例一：n=0 時答案應等於任務總數。 | Edge test |
+| Case two: single task type repeated many times. | 案例二：只有一種任務重複很多次。 | Edge test |
+| Case three: many task types with same maximum frequency. | 案例三：多種類並列最大頻率。 | Edge test |
+| Case four: enough filler tasks so no idle is needed. | 案例四：填充任務夠多，不需 idle。 | Edge test |
+| Case five: minimal input length one. | 案例五：最小輸入長度 1。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N). | 時間複雜度是 O(N)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time complexity is O(n) where n is number of tasks. | 時間複雜度是 O(n)。 | Complexity |
+| Space complexity is O(1) for fixed alphabet size. | 固定字母集下空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N). | 來源主要時間為 O(N)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We do one linear pass to count frequencies. | 我們做一次線性掃描統計頻率。 | Complexity |
+| Finding max frequency and tie count is constant over 26 letters. | 對 26 字母找最大與並列數是常數操作。 | Complexity |
+| So total runtime is O(n). | 因此總時間是 O(n)。 | Complexity |
+| Frequency array size is constant, so memory is O(1). | 頻率陣列大小固定，所以空間 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me avoid over-simulation and focus on frequency structure. | 我先避免過度模擬，聚焦頻率結構。 | If stuck |
+| The bottleneck is always the most frequent task type. | 瓶頸永遠是最高頻任務。 | If stuck |
+| I can build blocks around that bottleneck. | 我可用它建立區塊骨架。 | If stuck |
+| Block count is maxFreq minus one. | 區塊數是 maxFreq-1。 | If stuck |
+| Block width is n plus one. | 區塊寬度是 n+1。 | If stuck |
+| Then I add the number of tied max-frequency tasks. | 再加上並列最大頻率種類數。 | If stuck |
+| Final answer cannot be below total tasks count. | 最終答案不可能小於任務總數。 | If stuck |
+| So I take max between formula and tasks length. | 所以取公式與總數的較大值。 | If stuck |
+| Let me verify with A A A B B B, n equals 2. | 我用 A A A B B B、n=2 驗證。 | If stuck |
+| It gives eight correctly, so formula is consistent. | 得到 8，公式一致正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it using the max-frequency block formula. | 我用最大頻率區塊公式解出此題。 | Wrap-up |
+| This avoids heavy simulation while keeping correctness. | 這避免笨重模擬且保持正確性。 | Wrap-up |
+| We compute candidate idle-aware length from maxFreq and ties. | 用 maxFreq 與並列數算含 idle 候選長度。 | Wrap-up |
+| Final result is max of candidate and task count. | 最終結果是候選值與任務數取較大。 | Wrap-up |
+| Complexity is O(n) time and O(1) space. | 複雜度為 O(n) 時間、O(1) 空間。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Problem asks minimum total intervals. | 題目要最小總時間區間數。 | Cheat sheet |
+| Same task needs cooldown n. | 同任務間需冷卻 n。 | Cheat sheet |
+| Each task takes one interval. | 每任務耗時一格。 | Cheat sheet |
+| CPU can be idle if needed. | 必要時 CPU 可 idle。 | Cheat sheet |
+| Count frequency of each letter. | 先統計各字母頻率。 | Cheat sheet |
+| Find maxFreq. | 找出 maxFreq。 | Cheat sheet |
+| Count how many tasks tie maxFreq. | 計算並列 maxFreq 數量。 | Cheat sheet |
+| Build blocks: maxFreq minus one. | 建立區塊：maxFreq-1。 | Cheat sheet |
+| Block width: n plus one. | 區塊寬度：n+1。 | Cheat sheet |
+| Candidate length: blocks times width plus ties. | 候選長度：區塊乘寬再加並列數。 | Cheat sheet |
+| Candidate formula: (maxFreq-1)*(n+1)+ties. | 候選公式：(maxFreq-1)*(n+1)+ties。 | Cheat sheet |
+| Final answer is max(candidate, total tasks). | 最終答案 max(候選, 任務總數)。 | Cheat sheet |
+| n equals zero gives tasks length. | n=0 時答案即任務總數。 | Cheat sheet |
+| If fillers are enough, no idle needed. | 填充任務夠多就不需 idle。 | Cheat sheet |
+| If one task dominates, idle appears. | 單一任務過多就會出現 idle。 | Cheat sheet |
+| Baseline simulation is possible but heavier. | 基線可模擬，但較笨重。 | Cheat sheet |
+| Optimized runtime O(n). | 優化時間 O(n)。 | Cheat sheet |
+| Optimized space O(1). | 優化空間 O(1)。 | Cheat sheet |
+| Common bug: forgetting tie count term. | 常見錯誤：漏掉並列數項。 | Cheat sheet |
+| Common bug: not taking max with tasks length. | 常見錯誤：沒與任務總數取 max。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Math/greedy formula approach is preserved.
+- No hallucinated constraints: ✅ Uses source-defined task model and cooldown rule.
+- Language simplicity: ✅ Clear spoken lines suitable for interview narration.

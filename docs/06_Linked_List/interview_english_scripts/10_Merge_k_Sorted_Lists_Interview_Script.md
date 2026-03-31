@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Merge k Sorted Lists. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Divide and Conquer as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the merge-k-lists problem. | 我先重述合併 k 串列題。 | Restatement |
+| We receive k individually sorted linked lists. | 我們拿到 k 個各自排序好的串列。 | Restatement |
+| Need one globally sorted merged linked list. | 目標是合併成一個全域排序串列。 | Restatement |
+| Total nodes can be large while k may also be large. | 總節點數可能大，k 也可能大。 | Restatement |
+| A repeated pairwise merge pattern is suitable. | 反覆兩兩合併很適合這題。 | Restatement |
+| I will use divide-and-conquer merge strategy. | 我會使用 divide-and-conquer 合併策略。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can lists array be empty? | lists 陣列可能是空的嗎？ | Clarify |
+| Can some entries in lists be null? | lists 內個別項目可能是 null 嗎？ | Clarify |
+| Do you prefer divide-and-conquer over heap for main answer? | 主要答案偏好分治還是 heap？ | Clarify |
+| Is in-place node reuse acceptable? | 可接受重用原節點嗎？ | Clarify |
+| Should I discuss heap trade-off briefly after main solution? | 主解後要不要簡述 heap 取捨？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N \log N) from source. | 來源暴力時間約 O(N \log N)。 | Approach |
-| Brute space is about O(N) from source. | 來源暴力空間約 O(N)。 | Approach |
+| Baseline collects all node values then sorts them. | 基線是收集全部值後排序。 | Approach |
+| Rebuild a new linked list from sorted values. | 再用排序值重建新串列。 | Approach |
+| Time O(N log N), extra space O(N). | 時間 O(NlogN)，額外空間 O(N)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Divide and Conquer. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N \log k) from source. | 來源優化時間為 O(N \log k)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Merge lists in rounds with interval 1, 2, 4, and so on. | 以間距 1、2、4… 的輪次做兩兩合併。 | Approach |
+| Each round halves the number of active lists. | 每輪都把有效串列數大致減半。 | Approach |
+| Use standard merge-two-sorted-lists helper each pair. | 每對都用標準雙串列合併 helper。 | Approach |
+| Repeat until one list remains at index zero. | 重複直到只剩 index 0 一條串列。 | Approach |
+| Overall complexity becomes O(N log k). | 整體複雜度會是 O(Nlogk)。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I sort intervals by start time first. | 依來源步驟執行。 | Coding |
-| Next, I initialize result with first interval. | 依來源步驟執行。 | Coding |
-| Then, I iterate remaining intervals one by one. | 依來源步驟執行。 | Coding |
-| Next, I merge when current start overlaps last end. | 依來源步驟執行。 | Coding |
-| Then, I append interval when no overlap exists. | 依來源步驟執行。 | Coding |
-| Next, I update end boundary with max value. | 依來源步驟執行。 | Coding |
-| Then, I return merged or selected intervals. | 依來源步驟執行。 | Coding |
+| First, if lists is empty, return null immediately. | 先判斷 lists 為空就回傳 null。 | Coding |
+| I initialize interval as one. | interval 初始為 1。 | Coding |
+| While interval is less than k, I merge pairs. | 當 interval 小於 k 時進行成對合併。 | Coding |
+| For each i, merge lists[i] with lists[i plus interval]. | 對每個 i，把 lists[i] 與 lists[i+interval] 合併。 | Coding |
+| Store merged result back into lists[i]. | 把合併結果寫回 lists[i]。 | Coding |
+| After finishing one round, double interval. | 完成一輪後把 interval 乘以 2。 | Coding |
+| Continue until interval reaches or exceeds k. | 持續到 interval 達到或超過 k。 | Coding |
+| Return lists[0] as final merged head. | 回傳 lists[0] 作為最終 head。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: lists = [[1,4,5],[1,3,4],[2,6]]. | 範例輸入：lists = [[1,4,5],[1,3,4],[2,6]]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [1,1,2,3,4,4,5,6]. | 預期輸出：[1,1,2,3,4,4,5,6]。 | Dry-run |
+| Let me dry-run lists [[1,4,5],[1,3,4],[2,6]]. | 我手跑 lists=[[1,4,5],[1,3,4],[2,6]]。 | Dry-run |
+| Interval one: merge list0 and list1 into [1,1,3,4,4,5]. | interval=1 時，list0 與 list1 合成 [1,1,3,4,4,5]。 | Dry-run |
+| list2 remains unchanged in this round. | 本輪 list2 保持不變。 | Dry-run |
+| Double interval to two. | interval 加倍成 2。 | Dry-run |
+| Merge list0 with list2 to get [1,1,2,3,4,4,5,6]. | 將 list0 與 list2 合併得 [1,1,2,3,4,4,5,6]。 | Dry-run |
+| Now interval four exceeds k, stop loop. | interval=4 已超過 k，停止。 | Dry-run |
+| Return list0 as final answer. | 回傳 list0 即最終答案。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: empty lists array. | 案例一：lists 陣列為空。 | Edge test |
+| Case two: lists contains only null entries. | 案例二：lists 全是 null。 | Edge test |
+| Case three: one non-empty list only. | 案例三：只有一條非空串列。 | Edge test |
+| Case four: many short lists with duplicates. | 案例四：多條短串列且有重複值。 | Edge test |
+| Case five: highly imbalanced lengths among lists. | 案例五：各串列長度極不平均。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N \log k). | 時間複雜度是 O(N \log k)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time complexity is O(N log k). | 時間複雜度是 O(Nlogk)。 | Complexity |
+| Extra space is O(1) besides output-node links. | 除了輸出連結外，額外空間是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N \log k). | 來源主要時間為 O(N \log k)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| There are log k merge rounds in divide-and-conquer. | 分治法共有 log k 輪合併。 | Complexity |
+| In each round, all N nodes are processed once via merge operations. | 每輪透過合併操作會處理全部 N 節點一次。 | Complexity |
+| Multiplying gives O(N log k) total runtime. | 相乘得到總時間 O(Nlogk)。 | Complexity |
+| Iterative pointer rewiring keeps auxiliary memory constant. | 迭代指標重接讓輔助記憶體維持常數。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me step back to merge-two-lists helper first. | 我先退回確認 merge-two helper。 | If stuck |
+| If helper is correct, divide-and-conquer layering is straightforward. | helper 正確後，分治層次就很直觀。 | If stuck |
+| I might have wrong loop step for i increment. | 我可能把 i 的步長寫錯。 | If stuck |
+| It should jump by interval times two each round. | 應該每次跳 interval*2。 | If stuck |
+| I also need bound check i plus interval less than k. | 也要檢查 i+interval 小於 k。 | If stuck |
+| Let me fix index bounds and rerun sample. | 我修正索引邊界後重跑範例。 | If stuck |
+| Now every list pair is merged exactly once per round. | 現在每輪每對串列都只合併一次。 | If stuck |
+| Final sorted order looks correct. | 最終排序結果正確。 | If stuck |
+| Complexity target is also satisfied. | 複雜度目標也符合。 | If stuck |
+| Great, solution is stable now. | 很好，解法現在穩定。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N \log k), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I completed divide-and-conquer merge-k-lists implementation. | 我完成了分治合併 k 串列實作。 | Wrap-up |
+| I validated empty, null-list, and duplicate-heavy cases. | 我驗證了空輸入、null 串列與重複值案例。 | Wrap-up |
+| Runtime is O(N log k). | 時間複雜度是 O(Nlogk)。 | Wrap-up |
+| Extra space is O(1) for iterative version. | 迭代版額外空間是 O(1)。 | Wrap-up |
+| I can compare heap approach trade-offs if needed. | 若需要我可比較 heap 方案取捨。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N \log k). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Merge k sorted linked lists into one. | 把 k 條排序串列合併成一條。 | Cheat sheet |
+| Baseline sort-all-values is O(NlogN). | 基線全值排序是 O(NlogN)。 | Cheat sheet |
+| Better use divide-and-conquer merges. | 更好是分治兩兩合併。 | Cheat sheet |
+| interval starts at 1. | interval 從 1 開始。 | Cheat sheet |
+| Pair lists by i and i+interval. | 用 i 與 i+interval 成對。 | Cheat sheet |
+| Merge pair with mergeTwo helper. | 用 mergeTwo helper 合併每對。 | Cheat sheet |
+| Write merged head back to lists[i]. | 合併結果寫回 lists[i]。 | Cheat sheet |
+| Increment i by interval*2. | i 每次加 interval*2。 | Cheat sheet |
+| Double interval each round. | 每輪把 interval 加倍。 | Cheat sheet |
+| Stop when interval >= k. | interval>=k 時停止。 | Cheat sheet |
+| Return lists[0]. | 回傳 lists[0]。 | Cheat sheet |
+| Test empty lists input. | 測空 lists 輸入。 | Cheat sheet |
+| Test all-null entries input. | 測全 null 項目輸入。 | Cheat sheet |
+| Test one-list input. | 測單一串列輸入。 | Cheat sheet |
+| Test duplicate-heavy input. | 測重複值密集輸入。 | Cheat sheet |
+| Time O(Nlogk). | 時間 O(Nlogk)。 | Cheat sheet |
+| Space O(1) iterative. | 迭代空間 O(1)。 | Cheat sheet |
+| Bug risk: wrong interval step. | 風險：interval 步長寫錯。 | Cheat sheet |
+| Bug risk: out-of-range pair index. | 風險：成對索引越界。 | Cheat sheet |
+| Mention heap as alternative O(Nlogk), O(k) space. | 可提 heap 替代：O(Nlogk)、O(k) 空間。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Divide-and-conquer merge pipeline is preserved.
+- No hallucinated constraints: ✅ Uses source k/N constraints and list semantics.
+- Language simplicity: ✅ Interview-ready concise spoken lines.

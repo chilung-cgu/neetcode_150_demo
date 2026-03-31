@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Palindromic Substrings. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Expand Around Center as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate palindromic substrings counting problem. | 我先重述回文子字串計數題。 | Restatement |
+| We are given a string s. | 題目給一個字串 s。 | Restatement |
+| We need total number of palindromic substrings. | 要求回文子字串總數。 | Restatement |
+| Same letters at different positions count separately. | 相同內容但位置不同要分開計算。 | Restatement |
+| Single characters are all palindromes. | 每個單字元都算回文。 | Restatement |
+| I will use expand-around-center and count every valid expansion. | 我會用中心擴展並統計每次成功擴展。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Do repeated substrings at different indices count multiple times? | 不同索引的相同子字串是否重複計算？ | Clarify |
+| Are we returning only count, not actual substrings? | 是否只回傳數量，不回傳內容？ | Clarify |
+| Is empty string excluded by constraints? | 限制下是否不會給空字串？ | Clarify |
+| Can I reuse center-expansion idea from longest palindrome? | 可否沿用最長回文的中心擴展想法？ | Clarify |
+| Is O(n squared) expected and accepted? | O(n²) 是否為可接受解法？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N^2) from source. | 來源暴力時間約 O(N^2)。 | Approach |
-| Brute space is about O(N) from source. | 來源暴力空間約 O(N)。 | Approach |
+| Brute force enumerates all substrings and checks each palindrome. | 暴力法列舉所有子字串再逐一驗回文。 | Approach |
+| That is O(n cubed) in worst case. | 最壞複雜度是 O(n³)。 | Approach |
+| We can do better with center expansion. | 可用中心擴展做得更好。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Expand Around Center. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N^2) from source. | 來源優化時間為 O(N^2)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Each palindrome can be discovered from a center. | 每個回文都可由某中心找到。 | Approach |
+| For each index, expand odd center i,i and even center i,i+1. | 每個索引展開奇中心 i,i 與偶中心 i,i+1。 | Approach |
+| During expansion, every successful match adds one to count. | 擴展中每次匹配成功就加一。 | Approach |
+| Stop expanding when boundary fails or chars differ. | 越界或不相等時停止擴展。 | Approach |
+| Summing all centers gives total palindromic substrings. | 累加所有中心結果即總回文數。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define one-dimensional dp array. | 依來源步驟執行。 | Coding |
-| Next, I initialize base dp conditions. | 依來源步驟執行。 | Coding |
-| Then, I iterate indices in source order. | 依來源步驟執行。 | Coding |
-| Next, I compute transition from previous states. | 依來源步驟執行。 | Coding |
-| Then, I update dp with optimal value. | 依來源步驟執行。 | Coding |
-| Next, I keep best answer variable if needed. | 依來源步驟執行。 | Coding |
-| Then, I return final dp target value. | 依來源步驟執行。 | Coding |
+| I initialize total count to zero. | 我先把總計數設為 0。 | Coding |
+| I loop i from zero to s length minus one. | i 從 0 走到字串尾。 | Coding |
+| I add count from odd expansion at i,i. | 加上奇中心 i,i 的擴展數。 | Coding |
+| I add count from even expansion at i,i+1. | 加上偶中心 i,i+1 的擴展數。 | Coding |
+| Expansion helper starts with local counter zero. | 擴展 helper 先有區域計數 0。 | Coding |
+| While bounds valid and chars match, increment counter and expand. | 邊界合法且字元相同就加一並外擴。 | Coding |
+| Helper returns local count to caller. | helper 回傳該中心的計數。 | Coding |
+| Main function returns accumulated total count. | 主函式回傳累積總數。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: s = "abc". | 範例輸入：s = "abc"。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 3. | 預期輸出：3。 | Dry-run |
+| Let me dry-run s equals aaa. | 我手跑 s="aaa"。 | Dry-run |
+| Center at zero gives one odd palindrome a. | 中心 0 提供一個奇回文 a。 | Dry-run |
+| Even center zero-one gives one palindrome aa. | 偶中心 0,1 提供一個回文 aa。 | Dry-run |
+| Center at one gives odd palindromes a and aaa. | 中心 1 的奇擴展給 a 與 aaa。 | Dry-run |
+| Even center one-two gives another aa. | 偶中心 1,2 再給一個 aa。 | Dry-run |
+| Center at two gives one odd palindrome a. | 中心 2 再給一個奇回文 a。 | Dry-run |
+| Total count is six, matching expected result. | 總數為 6，符合預期。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single character should return one. | 案例一：單字元應回 1。 | Edge test |
+| Case two: all distinct chars like abc returns length count only. | 案例二：全不同如 abc 只回長度數量。 | Edge test |
+| Case three: all same chars gives maximal palindrome count. | 案例三：全同字元會有最大回文數。 | Edge test |
+| Case four: mixed odd and even palindromes in one string. | 案例四：同時有奇偶回文的混合字串。 | Edge test |
+| Case five: long repeated pattern stress test. | 案例五：長重複模式壓力測試。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N^2). | 時間複雜度是 O(N^2)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time complexity is O(n squared). | 時間複雜度是 O(n²)。 | Complexity |
+| Extra space complexity is O(1). | 額外空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N^2). | 來源主要時間為 O(N^2)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We evaluate around two centers per index. | 每個索引評估兩種中心。 | Complexity |
+| In worst case each expansion can travel O(n). | 最壞每次擴展可到 O(n)。 | Complexity |
+| Total runtime is therefore O(n squared). | 因此總時間為 O(n²)。 | Complexity |
+| We only store counters and pointers, so extra space is O(1). | 只用計數器與指標，額外空間 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me align with longest palindrome technique first. | 我先對齊最長回文那題技巧。 | If stuck |
+| The difference is we count all expansions, not only max length. | 差別是這題要數全部，不只最長。 | If stuck |
+| I must include both odd and even centers. | 必須包含奇偶兩種中心。 | If stuck |
+| Every successful expansion contributes one palindrome. | 每次成功擴展就貢獻一個回文。 | If stuck |
+| Stop as soon as mismatch or boundary break occurs. | 一旦不匹配或越界就停止。 | If stuck |
+| Let me verify quickly with abc. | 我快速用 abc 驗證。 | If stuck |
+| I get three from single letters only. | 只會得到三個單字元回文。 | If stuck |
+| For aaa I should get six. | 對 aaa 應得到六。 | If stuck |
+| That confirms counting logic is correct. | 這證明計數邏輯正確。 | If stuck |
+| Great, I can conclude confidently. | 很好，我可有把握收尾。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N^2), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved palindromic substring counting with center expansion. | 我用中心擴展解回文子字串計數。 | Wrap-up |
+| I sum counts from odd and even centers for each index. | 我對每個索引累加奇偶中心計數。 | Wrap-up |
+| Each successful expansion directly adds one to answer. | 每次成功擴展直接讓答案加一。 | Wrap-up |
+| Runtime is O(n squared) and extra space O(1). | 時間 O(n²)、額外空間 O(1)。 | Wrap-up |
+| This is clean and easy to explain in interviews. | 這在面試中清楚且易解釋。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N^2). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Problem asks count of palindromic substrings. | 題目要回文字串數量。 | Cheat sheet |
+| Position-distinct substrings count separately. | 不同位置要分開計算。 | Cheat sheet |
+| Use center expansion. | 使用中心擴展法。 | Cheat sheet |
+| Iterate each index i. | 迭代每個索引 i。 | Cheat sheet |
+| Expand odd center i,i. | 擴展奇中心 i,i。 | Cheat sheet |
+| Expand even center i,i+1. | 擴展偶中心 i,i+1。 | Cheat sheet |
+| Helper returns count from one center. | helper 回傳單一中心計數。 | Cheat sheet |
+| While s[l]==s[r], count++. | s[l]==s[r] 時 count++。 | Cheat sheet |
+| Move l-- and r++ each success. | 每次成功後 l--、r++。 | Cheat sheet |
+| Stop when mismatch or out of bounds. | 不符或越界即停止。 | Cheat sheet |
+| Add odd and even counts to total. | 把奇偶計數加到總數。 | Cheat sheet |
+| Single characters always contribute. | 單字元一定貢獻。 | Cheat sheet |
+| abc -> 3. | abc -> 3。 | Cheat sheet |
+| aaa -> 6. | aaa -> 6。 | Cheat sheet |
+| Time O(n^2). | 時間 O(n²)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Common bug: forgetting even centers. | 常見錯誤：漏掉偶中心。 | Cheat sheet |
+| Common bug: counting only max length. | 常見錯誤：只算最長不算全部。 | Cheat sheet |
+| Related to longest palindrome problem. | 與最長回文題高度相關。 | Cheat sheet |
+| Great quick interview implementation. | 是快速面試實作好選擇。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Center-expansion counting approach preserved.
+- No hallucinated constraints: ✅ Correct counting semantics for position-distinct substrings.
+- Language simplicity: ✅ Concise, spoken, and directly actionable.

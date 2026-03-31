@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Course Schedule II. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Kahn's Algorithm (BFS) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate course schedule two. | 我先重述 Course Schedule II。 | Restatement |
+| We have course count and prerequisite pairs. | 題目給課程數與先修配對。 | Restatement |
+| Pair [a,b] means b must be done before a. | [a,b] 表示先修 b 才能修 a。 | Restatement |
+| Now we need one valid course order, not just true or false. | 這題要回一個合法修課順序，不只是布林。 | Restatement |
+| If impossible because of cycle, return empty list. | 若因為有環不可行，就回空陣列。 | Restatement |
+| I will use Kahn topological BFS with indegree. | 我會用 Kahn 拓撲 BFS 加 indegree。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Any valid topological order is acceptable, right? | 任意合法拓撲序都可接受嗎？ | Clarify |
+| Should I return empty vector when cycle exists? | 若有環是否回空 vector？ | Clarify |
+| Are courses labeled from zero to n minus one? | 課號是否為 0 到 n-1？ | Clarify |
+| Can prerequisites list be empty? | prerequisites 是否可能為空？ | Clarify |
+| Is BFS topological sort preferred over DFS reverse-postorder? | BFS 拓撲是否比 DFS 後序反轉更偏好？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,55 +31,56 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N!) from source. | 來源暴力時間約 O(N!)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force tries all permutations of courses. | 暴力法會嘗試所有課程排列。 | Approach |
+| Validation per permutation is expensive. | 每個排列還要額外驗證，成本很高。 | Approach |
+| This is factorial and impractical. | 這是階乘級，完全不實際。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Kahn's Algorithm (BFS). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(V + E) from source. | 來源優化時間為 O(V + E)。 | Approach |
-| Optimized space is O(V + E) from source. | 來源優化空間為 O(V + E)。 | Approach |
+| Build adjacency list and indegree array. | 建立鄰接表與 indegree 陣列。 | Approach |
+| Push all courses with indegree zero into queue. | 把 indegree 為 0 的課程先入 queue。 | Approach |
+| Pop queue, append to result order, and decrement indegree of neighbors. | 逐一出隊加入結果，並遞減鄰居 indegree。 | Approach |
+| Whenever neighbor indegree becomes zero, push it. | 鄰居 indegree 變 0 就入隊。 | Approach |
+| If result size equals n, return order; otherwise cycle exists so return empty. | 若結果長度等於 n 回順序，否則有環回空。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I build adjacency list and indegree array. | 依來源步驟執行。 | Coding |
-| Next, I initialize queue with zero indegree nodes. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process nodes level by level with queue. | 依來源步驟執行。 | Coding |
-| Then, I pop queue and append ordering result. | 依來源步驟執行。 | Coding |
-| Next, I decrease indegree of outgoing neighbors. | 依來源步驟執行。 | Coding |
-| Then, I push neighbor when indegree becomes zero. | 依來源步驟執行。 | Coding |
-| Next, I continue until queue becomes empty. | 依來源步驟執行。 | Coding |
-| Finally, I validate ordering length then return. | 依來源步驟執行。 | Coding |
+| I create graph adjacency list for numCourses nodes. | 我先建立 numCourses 節點的鄰接表。 | Coding |
+| I initialize indegree array with zeros. | 我把 indegree 陣列初始化為 0。 | Coding |
+| For each prerequisite [a,b], add edge b to a and indegree[a]++. | 對每個 [a,b] 加 b->a，並 indegree[a]++。 | Coding |
+| I enqueue every node with indegree zero. | 我把所有 indegree=0 的節點入隊。 | Coding |
+| I maintain result vector order. | 我維護結果向量 order。 | Coding |
+| While queue not empty, pop course cur. | queue 非空時彈出課程 cur。 | Coding |
+| Append cur to result order. | 把 cur 加入結果順序。 | Coding |
+| For each neighbor, decrement indegree. | 對每個鄰居遞減 indegree。 | Coding |
+| If indegree hits zero, enqueue neighbor. | 若 indegree 變 0，就把鄰居入隊。 | Coding |
+| After BFS, return result if size equals numCourses else empty. | BFS 後若長度等於 numCourses 回結果，否則回空。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: numCourses = 2, prerequisites = [[1,0]]. | 範例輸入：numCourses = 2, prerequisites = [[1,0]]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [0,1]. | 預期輸出：[0,1]。 | Dry-run |
+| Let me dry-run n four with prerequisites [[1,0],[2,0],[3,1],[3,2]]. | 我手跑 n=4，先修為 [[1,0],[2,0],[3,1],[3,2]]。 | Dry-run |
+| Initial indegree is zero for course zero only. | 初始只有課程 0 的 indegree 為 0。 | Dry-run |
+| Queue starts with zero, result becomes [0]. | queue 起始 [0]，結果先成 [0]。 | Dry-run |
+| Decrement indegree of one and two, both become zero and enter queue. | 遞減 1 與 2 的 indegree，兩者變 0 並入隊。 | Dry-run |
+| Pop one then two, each decrements indegree of three. | 依序出 1、2，各自遞減 3 的 indegree。 | Dry-run |
+| Three becomes zero and is appended last. | 3 變 0 後最後加入結果。 | Dry-run |
+| Final valid order is [0,1,2,3] or [0,2,1,3]. | 最終合法順序可為 [0,1,2,3] 或 [0,2,1,3]。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: no prerequisites returns all courses in any order. | 案例一：無先修時可回任意全課程順序。 | Edge test |
+| Case two: simple cycle like zero to one and one to zero returns empty. | 案例二：0->1->0 的小環應回空。 | Edge test |
+| Case three: disconnected DAG components should both appear in result. | 案例三：非連通 DAG 分量都要出現在結果。 | Edge test |
+| Case four: single course n one returns [0]. | 案例四：單課 n=1 回 [0]。 | Edge test |
+| Case five: duplicate edges may inflate indegree and should be treated consistently. | 案例五：重複邊會影響 indegree，需一致處理。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,72 +88,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(V + E). | 時間複雜度是 O(V + E)。 | Complexity |
-| Space complexity is O(V + E). | 空間複雜度是 O(V + E)。 | Complexity |
+| Time complexity is O(V plus E). | 時間複雜度是 O(V+E)。 | Complexity |
+| Space complexity is O(V plus E). | 空間複雜度是 O(V+E)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(V + E). | 來源主要時間為 O(V + E)。 | Complexity |
-| Extra memory from source is O(V + E). | 來源額外空間為 O(V + E)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Building adjacency and indegree uses O(E). | 建鄰接表與 indegree 的成本是 O(E)。 | Complexity |
+| Each node enters and leaves queue at most once. | 每個節點最多入隊出隊各一次。 | Complexity |
+| Each edge is processed once when decreasing indegree. | 每條邊在遞減 indegree 時處理一次。 | Complexity |
+| So overall complexity is O(V plus E) time and O(V plus E) memory. | 整體即 O(V+E) 時間與 O(V+E) 記憶體。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me separate feasibility from ordering output. | 我先把可行性與輸出順序分開看。 | If stuck |
+| Kahn BFS gives both in one pass. | Kahn BFS 一次就能同時處理兩者。 | If stuck |
+| indegree zero means course has no remaining prerequisites. | indegree 為 0 代表沒有剩餘先修。 | If stuck |
+| Queue stores courses ready to take now. | queue 存目前可修的課。 | If stuck |
+| Popping one course unlocks its outgoing neighbors. | 出隊一門課會解鎖其後繼鄰居。 | If stuck |
+| If queue becomes empty too early, a cycle blocks progress. | 若 queue 太早清空，表示有環卡住。 | If stuck |
+| Result size check is the final cycle test. | 結果長度檢查就是最後環判定。 | If stuck |
+| Let me test quickly with two-node cycle. | 我快速測雙節點環。 | If stuck |
+| Size will be smaller than n, so return empty. | 結果長度會小於 n，因此回空。 | If stuck |
+| Great, now the flow is consistent. | 很好，流程一致了。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(V + E), space is O(V + E). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it with Kahn topological BFS. | 我用 Kahn 拓撲 BFS 解題。 | Wrap-up |
+| Queue starts from all indegree-zero courses. | queue 從所有 indegree=0 課程起跑。 | Wrap-up |
+| We build a valid order while reducing indegrees. | 我們在遞減 indegree 同時建立合法順序。 | Wrap-up |
+| If not all nodes are processed, cycle exists and result is empty. | 若非全部節點被處理，代表有環，結果為空。 | Wrap-up |
+| Complexity is O(V plus E) time and O(V plus E) space. | 複雜度是 O(V+E) 時間與 O(V+E) 空間。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(V + E). | 速記重點。 | Cheat sheet |
-| Report space complexity O(V + E). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: return one valid course order. | 目標：回傳一個合法修課順序。 | Cheat sheet |
+| If impossible, return empty list. | 不可行時回空陣列。 | Cheat sheet |
+| Build directed graph b->a for [a,b]. | [a,b] 轉成有向邊 b->a。 | Cheat sheet |
+| Compute indegree for each node. | 計算每節點 indegree。 | Cheat sheet |
+| Enqueue all indegree-zero courses. | 把 indegree=0 課程入隊。 | Cheat sheet |
+| Result vector starts empty. | 結果向量初始為空。 | Cheat sheet |
+| Pop queue front course. | 彈出隊首課程。 | Cheat sheet |
+| Append it to result. | 把它加入結果。 | Cheat sheet |
+| For each outgoing neighbor indegree--. | 對每個後繼鄰居做 indegree--。 | Cheat sheet |
+| If neighbor indegree becomes zero enqueue it. | 鄰居 indegree 變 0 就入隊。 | Cheat sheet |
+| Continue until queue empty. | 持續直到 queue 清空。 | Cheat sheet |
+| If result size == n return result. | 若結果長度==n，回結果。 | Cheat sheet |
+| Else return empty due to cycle. | 否則因有環回空。 | Cheat sheet |
+| Time O(V+E). | 時間 O(V+E)。 | Cheat sheet |
+| Space O(V+E). | 空間 O(V+E)。 | Cheat sheet |
+| Any valid topological order works. | 任一合法拓撲序都可。 | Cheat sheet |
+| Common bug: edge direction reversed. | 常見錯誤：邊方向反了。 | Cheat sheet |
+| Common bug: forgetting size check at end. | 常見錯誤：忘記最後長度檢查。 | Cheat sheet |
+| Mention DFS postorder as alternative. | 可補充 DFS 後序反轉替代法。 | Cheat sheet |
+| Validate with a cycle sample. | 用有環範例做驗證。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Kahn BFS indegree topological ordering preserved.
+- No hallucinated constraints: ✅ Return-empty-on-cycle behavior maintained.
+- Language simplicity: ✅ Interview-ready concise narration.

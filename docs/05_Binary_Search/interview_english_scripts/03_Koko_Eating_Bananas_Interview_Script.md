@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Koko Eating Bananas. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Binary Search on Answer as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the Koko problem. | 我先重述 Koko 這題。 | Restatement |
+| We have banana piles and h available hours. | 我們有多堆香蕉與 h 小時。 | Restatement |
+| Koko eats k bananas per hour from one pile only. | Koko 每小時以速度 k 吃一堆香蕉。 | Restatement |
+| I need the minimum integer k that finishes all piles in time. | 我要找能準時吃完的最小整數 k。 | Restatement |
+| Feasibility is monotonic with respect to k. | 可行性對 k 具有單調性。 | Restatement |
+| So I will binary search the answer space. | 所以我會對答案空間做二分。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume h is always at least number of piles? | 我可以假設 h 一定不小於堆數嗎？ | Clarify |
+| Are pile sizes and h within 32-bit integer limits? | pile 與 h 是否在 32 位整數範圍內？ | Clarify |
+| Should k be strictly positive integer? | k 是否必須是正整數？ | Clarify |
+| Is returning the minimum feasible k the only output? | 輸出是否只要最小可行 k？ | Clarify |
+| Should I use integer ceiling formula instead of floating point? | 你希望我用整數上取整公式嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(maxP \cdot n) from source. | 來源暴力時間約 O(maxP \cdot n)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Baseline tries k from one upward until feasible. | 基線是從 k=1 一路往上試到可行。 | Approach |
+| Each trial scans all piles to compute required hours. | 每次試值都要掃全部 piles 算總時數。 | Approach |
+| Time is O(maxPile * n), too slow. | 時間是 O(maxPile*n)，太慢。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Binary Search on Answer. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n \cdot \log(\max(P) from source. | 來源優化時間為 O(n \cdot \log(\max(P)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Search k in range [1, maxPile]. | 在 [1,maxPile] 範圍搜尋 k。 | Approach |
+| Mid speed gives required hours via sum of ceilings. | 用中速 mid 計算上取整總時數。 | Approach |
+| If hours <= h, this speed works, move left for smaller k. | 若 hours<=h，代表可行，往左找更小 k。 | Approach |
+| If hours > h, speed is too slow, move right side up. | 若 hours>h，速度太慢，要往右找更大 k。 | Approach |
+| This yields O(n*log(maxPile)) time and O(1) space. | 可達 O(n*log(maxPile)) 時間與 O(1) 空間。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I set low and high boundaries. | 依來源步驟執行。 | Coding |
-| Next, I loop while low is not greater than high. | 依來源步驟執行。 | Coding |
-| Then, I compute mid from low and high. | 依來源步驟執行。 | Coding |
-| Next, I check mid value against target condition. | 依來源步驟執行。 | Coding |
-| Then, I move low or high by condition result. | 依來源步驟執行。 | Coding |
-| Next, I update candidate answer when needed. | 依來源步驟執行。 | Coding |
-| Then, I continue until boundaries meet. | 依來源步驟執行。 | Coding |
-| Next, I return boundary or candidate result. | 依來源步驟執行。 | Coding |
+| First, I set left to one and right to maximum pile size. | 先設 left=1，right=最大 pile。 | Coding |
+| I keep an answer variable initialized as right. | 我用 answer 先初始化為 right。 | Coding |
+| While left is not greater than right, I test mid speed. | 當 left<=right 時測試 mid 速度。 | Coding |
+| I compute hours using (pile + mid - 1) divided by mid. | 我用 (pile+mid-1)/mid 算每堆時數。 | Coding |
+| If total hours fit in h, update answer and shrink right. | 若總時數符合 h，更新答案並縮 right。 | Coding |
+| Otherwise move left to mid plus one for faster speed. | 否則 left 移到 mid+1 找更快速度。 | Coding |
+| Loop ends when smallest feasible speed is isolated. | 迴圈結束時最小可行速度被定位。 | Coding |
+| Finally return answer. | 最後回傳 answer。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: piles = [3,6,7,11], h = 8. | 範例輸入：piles = [3,6,7,11], h = 8。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 4. | 預期輸出：4。 | Dry-run |
+| Let me dry-run piles [3,6,7,11] with h equals 8. | 我手跑 piles=[3,6,7,11]、h=8。 | Dry-run |
+| Initial range is k from 1 to 11. | 初始 k 範圍是 1 到 11。 | Dry-run |
+| Mid is 6, required hours become 6, so feasible. | mid=6，總時數為 6，可行。 | Dry-run |
+| I record 6 and continue searching left half. | 我記錄 6，繼續往左半邊找。 | Dry-run |
+| Mid becomes 3, required hours become 10, not feasible. | mid=3，總時數 10，不可行。 | Dry-run |
+| Move left up, then test 4, hours become exactly 8. | left 上移後測 4，時數剛好 8。 | Dry-run |
+| Four is minimum feasible speed, so answer is 4. | 4 是最小可行速度，所以答案是 4。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: one pile and one hour. | 案例一：一堆香蕉且只有一小時。 | Edge test |
+| Case two: h equals number of piles. | 案例二：h 等於 piles 數量。 | Edge test |
+| Case three: very large pile values near upper bound. | 案例三：pile 值接近上限的大數。 | Edge test |
+| Case four: answer equals one when hours are generous. | 案例四：時數很寬鬆時答案為 1。 | Edge test |
+| Case five: answer equals maxPile in tight schedule. | 案例五：時程很緊時答案等於 maxPile。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(n \cdot \log(\max(P). | 時間複雜度是 O(n \cdot \log(\max(P)。 | Complexity |
+| Time complexity is O(n * log(maxPile)). | 時間複雜度是 O(n*log(maxPile))。 | Complexity |
 | Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n \cdot \log(\max(P). | 來源主要時間為 O(n \cdot \log(\max(P)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Binary search runs over speed range from one to maxPile. | 二分搜尋在 1 到 maxPile 速度範圍進行。 | Complexity |
+| Number of trials is logarithmic in maxPile. | 試值次數是 maxPile 的對數級。 | Complexity |
+| Each trial computes hours by scanning all n piles once. | 每次試值都要掃 n 堆算時數。 | Complexity |
+| Only constant extra variables are used. | 只使用常數個額外變數。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| May I confirm the monotonic property first? | 我先確認單調性可以嗎？ | If stuck |
+| If speed works, any larger speed also works. | 若某速度可行，更大速度也可行。 | If stuck |
+| That means binary search on answer is valid. | 代表可用答案空間二分。 | If stuck |
+| I will re-check my ceiling-hours formula. | 我重檢上取整時數公式。 | If stuck |
+| It should be (pile + k - 1) divided by k. | 應該是 (pile+k-1)/k。 | If stuck |
+| Let me verify left and right movement again. | 我再確認 left/right 移動規則。 | If stuck |
+| Feasible should move right to mid minus one. | 可行時應把 right 移到 mid-1。 | If stuck |
+| Infeasible should move left to mid plus one. | 不可行時應把 left 移到 mid+1。 | If stuck |
+| I will rerun the sample after fixing this. | 修正後我會重跑範例。 | If stuck |
+| Great, now minimum k is stable. | 很好，最小 k 現在穩定。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n \cdot \log(\max(P), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished the binary-search-on-answer solution. | 我完成了答案空間二分解法。 | Wrap-up |
+| I checked feasible and infeasible branch behavior. | 我檢查了可行與不可行兩分支。 | Wrap-up |
+| Runtime is O(n * log(maxPile)). | 時間複雜度是 O(n*log(maxPile))。 | Wrap-up |
+| Extra space is O(1). | 額外空間是 O(1)。 | Wrap-up |
+| I can also discuss proof of monotonicity if needed. | 若需要我也可補充單調性證明。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n \cdot \log(\max(P). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Need minimum integer speed k. | 目標是最小整數速度 k。 | Cheat sheet |
+| Feasibility is monotonic over k. | 可行性對 k 單調。 | Cheat sheet |
+| Baseline tries every k from 1 upward. | 基線從 1 起逐個嘗試 k。 | Cheat sheet |
+| Baseline cost is O(maxPile*n). | 基線成本 O(maxPile*n)。 | Cheat sheet |
+| Use answer-space binary search instead. | 改用答案空間二分。 | Cheat sheet |
+| left = 1, right = maxPile. | left=1，right=maxPile。 | Cheat sheet |
+| mid is trial speed. | mid 是試驗速度。 | Cheat sheet |
+| hours += ceil(pile/mid) each pile. | 每堆累加 ceil(pile/mid)。 | Cheat sheet |
+| Integer ceil formula avoids floating point. | 用整數公式避免浮點誤差。 | Cheat sheet |
+| If hours <= h, speed is feasible. | 若 hours<=h，速度可行。 | Cheat sheet |
+| Record answer and move right leftward. | 記錄答案並把 right 左移。 | Cheat sheet |
+| Else move left rightward. | 否則把 left 右移。 | Cheat sheet |
+| End loop and return answer. | 結束迴圈回傳答案。 | Cheat sheet |
+| Test one-pile case. | 測試單堆案例。 | Cheat sheet |
+| Test h equals pile count case. | 測試 h=堆數案例。 | Cheat sheet |
+| Test huge values case. | 測試大數案例。 | Cheat sheet |
+| Time O(n*log(maxPile)). | 時間 O(n*log(maxPile))。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Common bug: wrong ceiling formula. | 常見 bug：上取整公式錯。 | Cheat sheet |
+| Common bug: wrong feasible branch move. | 常見 bug：可行分支移動錯。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Binary search on answer with feasibility check is preserved.
+- No hallucinated constraints: ✅ Uses source constraints and monotonic behavior.
+- Language simplicity: ✅ Compact spoken lines for interview usage.

@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Lowest Common Ancestor of a BST. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Iterative (O(1) Space) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the LCA-in-BST problem. | 我先重述 BST LCA 題目。 | Restatement |
+| We are given a BST root and two nodes p and q. | 題目給 BST root 與兩個節點 p、q。 | Restatement |
+| We need the lowest node that is ancestor of both. | 要找同時是兩者祖先的最低節點。 | Restatement |
+| BST ordering lets us decide direction at each step. | BST 排序性可讓每步都決定方向。 | Restatement |
+| If p and q split around current node, we found answer. | 若 p、q 在當前節點兩側，答案就在這裡。 | Restatement |
+| I will implement iterative O(1)-space traversal. | 我會實作迭代 O(1) 空間解法。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume p and q always exist in the BST? | 我可假設 p、q 一定存在於 BST 嗎？ | Clarify |
+| Are all BST values unique in this problem? | 這題 BST 值都唯一嗎？ | Clarify |
+| If one node equals current root, is root valid LCA? | 若其中一點等於當前 root，root 算有效 LCA 嗎？ | Clarify |
+| Should I prioritize iterative over recursive version? | 是否優先寫迭代而非遞迴版？ | Clarify |
+| Is balanced-vs-skewed complexity discussion expected? | 需要說明平衡與斜樹複雜度差異嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N) from source. | 來源暴力時間約 O(N)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Generic binary-tree LCA DFS can solve this in O(n). | 一般二元樹 LCA DFS 可用 O(n) 解。 | Approach |
+| It explores both subtrees and merges return signals. | 它會探索雙子樹並合併回傳訊號。 | Approach |
+| But it ignores BST ordering information. | 但這會浪費 BST 的排序資訊。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Iterative (O(1) Space). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(h) from source. | 來源優化時間為 O(h)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Start from root and inspect p and q values. | 從 root 開始觀察 p、q 的值。 | Approach |
+| If both are smaller than current, move left. | 若兩者都小於當前節點，就往左。 | Approach |
+| If both are larger than current, move right. | 若兩者都大於當前節點，就往右。 | Approach |
+| Otherwise current node is split point and LCA. | 否則當前節點就是分叉點與 LCA。 | Approach |
+| This takes O(h) time and O(1) extra space iteratively. | 迭代版時間 O(h)、額外空間 O(1)。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define traversal order based on source method. | 依來源步驟執行。 | Coding |
-| Next, I initialize recursion or queue structures. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process current node value and state. | 依來源步驟執行。 | Coding |
-| Then, I visit left and right children by rule. | 依來源步驟執行。 | Coding |
-| Next, I update answer during traversal. | 依來源步驟執行。 | Coding |
-| Then, I handle null node base case carefully. | 依來源步驟執行。 | Coding |
-| Next, I return final aggregated tree result. | 依來源步驟執行。 | Coding |
+| I set current pointer to root. | 我先把 current 指向 root。 | Coding |
+| While current is not null, I keep searching. | 只要 current 非 null 就持續搜尋。 | Coding |
+| If p and q are both less than current, go left. | 若 p、q 都小於 current，就往左。 | Coding |
+| Else if both are greater than current, go right. | 否則若都大於 current，就往右。 | Coding |
+| Else we reached split point, return current. | 否則到分叉點，回傳 current。 | Coding |
+| This else also covers current equals p or q. | 這個 else 也涵蓋 current 等於 p 或 q。 | Coding |
+| If loop ends unexpectedly, return null safeguard. | 若迴圈意外結束，回傳 null 保護值。 | Coding |
+| Under valid constraints, answer is found before null. | 在有效限制下通常會先找到答案。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: root = [6,2,8,0,4,7,9,null,null,3,5], p = 2, q = 8. | 範例輸入：root = [6,2,8,0,4,7,9,null,null,3,5], p = 2, q = 8。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 6 (因為 2 < 6 < 8，分叉點在 6). | 預期輸出：6 (因為 2 < 6 < 8，分叉點在 6)。 | Dry-run |
+| Let me dry-run root [6,2,8,0,4,7,9,3,5], p=2, q=8. | 我手跑 root [6,2,8,0,4,7,9,3,5]，p=2，q=8。 | Dry-run |
+| Start at current 6. | 從 current=6 開始。 | Dry-run |
+| p is smaller than 6, q is larger than 6. | p 小於 6，q 大於 6。 | Dry-run |
+| They split around current, so 6 is LCA. | 兩者分居兩側，所以 6 是 LCA。 | Dry-run |
+| No further traversal is needed. | 不需要再往下走。 | Dry-run |
+| Return node 6. | 回傳節點 6。 | Dry-run |
+| Output matches expected answer. | 輸出與預期一致。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: p is ancestor of q, answer should be p. | 案例一：p 是 q 祖先，答案應是 p。 | Edge test |
+| Case two: q is ancestor of p, answer should be q. | 案例二：q 是 p 祖先，答案應是 q。 | Edge test |
+| Case three: p and q on opposite sides of root. | 案例三：p、q 分別在 root 兩側。 | Edge test |
+| Case four: both deep in left subtree. | 案例四：兩者都在左子樹深處。 | Edge test |
+| Case five: skewed BST still follows one-way traversal. | 案例五：斜 BST 仍是單向遍歷。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,71 +87,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(h). | 時間複雜度是 O(h)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Space complexity is O(1) for iterative solution. | 迭代解法空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(h). | 來源主要時間為 O(h)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We move down one BST path without backtracking. | 我們沿 BST 單一路徑往下，不會回頭。 | Complexity |
+| Number of visited nodes is bounded by tree height h. | 造訪節點數受樹高 h 限制。 | Complexity |
+| Balanced BST gives O(log n) time. | 平衡 BST 時間是 O(log n)。 | Complexity |
+| Worst skewed BST gives O(n) time, still O(1) extra space. | 最壞斜樹時間 O(n)，額外空間仍 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me rely on BST ordering first. | 我先回到 BST 排序性。 | If stuck |
+| I only need three direction cases at each node. | 每個節點只要處理三種方向情況。 | If stuck |
+| Both smaller means move left. | 都比較小就往左。 | If stuck |
+| Both larger means move right. | 都比較大就往右。 | If stuck |
+| Otherwise this node is the split point. | 否則此節點就是分叉點。 | If stuck |
+| I might have used strict comparisons incorrectly. | 我可能把比較條件寫錯了。 | If stuck |
+| Let me ensure equals case returns current immediately. | 我確保相等情況立即回傳 current。 | If stuck |
+| I will rerun sample p=2 and q=4. | 我重跑 p=2、q=4 範例。 | If stuck |
+| It now returns node 2 correctly. | 現在可正確回傳節點 2。 | If stuck |
+| Great, branching logic is fixed. | 很好，分支邏輯已修正。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(h), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished iterative LCA search using BST properties. | 我完成利用 BST 性質的迭代 LCA 搜尋。 | Wrap-up |
+| The key is stopping at the first split point. | 核心是停在第一個分叉點。 | Wrap-up |
+| Runtime is O(h), O(log n) on balanced trees. | 時間 O(h)，平衡樹為 O(log n)。 | Wrap-up |
+| Extra space is O(1). | 額外空間是 O(1)。 | Wrap-up |
+| I can also provide recursive variant if needed. | 若需要我也可提供遞迴版本。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(h). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Find LCA of two nodes in BST. | 找 BST 兩節點的 LCA。 | Cheat sheet |
+| Use BST ordering property. | 利用 BST 排序性。 | Cheat sheet |
+| Start current at root. | current 從 root 開始。 | Cheat sheet |
+| If both target values smaller, go left. | 若兩值都較小，往左。 | Cheat sheet |
+| If both target values larger, go right. | 若兩值都較大，往右。 | Cheat sheet |
+| Otherwise current is LCA. | 否則 current 就是 LCA。 | Cheat sheet |
+| Equals case also returns current. | 相等情況也回傳 current。 | Cheat sheet |
+| Iterative loop avoids recursion stack. | 迭代迴圈避免遞迴堆疊。 | Cheat sheet |
+| Generic tree DFS is O(n). | 一般樹 DFS 是 O(n)。 | Cheat sheet |
+| BST-guided search is O(h). | BST 導引搜尋是 O(h)。 | Cheat sheet |
+| Balanced BST gives O(log n). | 平衡 BST 為 O(log n)。 | Cheat sheet |
+| Skewed BST gives O(n). | 斜 BST 為 O(n)。 | Cheat sheet |
+| Iterative extra space O(1). | 迭代額外空間 O(1)。 | Cheat sheet |
+| Test when p is ancestor of q. | 測 p 為 q 祖先。 | Cheat sheet |
+| Test when q is ancestor of p. | 測 q 為 p 祖先。 | Cheat sheet |
+| Test opposite-side split at root. | 測 root 兩側分叉情況。 | Cheat sheet |
+| Test deep-left subtree case. | 測深左子樹情況。 | Cheat sheet |
+| Common bug: missing equals branch. | 常見錯誤：漏相等分支。 | Cheat sheet |
+| Common bug: wrong comparison direction. | 常見錯誤：比較方向寫反。 | Cheat sheet |
+| End by stating split-point invariant. | 收尾強調分叉點不變量。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Iterative BST split-point traversal is preserved.
+- No hallucinated constraints: ✅ Complexity and assumptions align with source chapter.
+- Language simplicity: ✅ Interview-ready concise spoken lines.

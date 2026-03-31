@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Design Add and Search Words Data Structure. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Trie + DFS for Wildcard as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the word-dictionary design problem. | 我先重述 WordDictionary 設計題。 | Restatement |
+| We need addWord and search operations. | 要實作 addWord 與 search。 | Restatement |
+| search may contain dot wildcard matching any one character. | search 可能含 `.`，可匹配任一單字元。 | Restatement |
+| Exact letters must still follow trie edges normally. | 一般字母仍要依 trie 邊精確匹配。 | Restatement |
+| Wildcard may branch into multiple children paths. | wildcard 會分支到多個子路徑。 | Restatement |
+| I will use Trie plus DFS for wildcard matching. | 我會用 Trie 加 DFS 處理 wildcard。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Are addWord inputs always lowercase letters only? | addWord 輸入是否都只有小寫字母？ | Clarify |
+| Does search input allow only lowercase and dot? | search 是否只允許小寫與 `.`？ | Clarify |
+| Dot wildcard matches exactly one character, correct? | `.` 是匹配「一個」字元，對嗎？ | Clarify |
+| Should I return false when path ends before word length? | 路徑提前結束時應回傳 false 嗎？ | Clarify |
+| Is trie-based approach expected over hash-set scan? | 是否預期用 trie 而非 hash-set 全掃？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N \times L) from source. | 來源暴力時間約 O(N \times L)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force stores words in a set and scans candidates on wildcard search. | 暴力法把字存 set，遇 wildcard 就掃候選。 | Approach |
+| For each candidate, compare character by character. | 每個候選字都要逐字比對。 | Approach |
+| Worst-case cost becomes O(number of words times length). | 最壞成本變 O(字數*字長)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Trie + DFS for Wildcard. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(L) from source. | 來源優化時間為 O(L)。 | Approach |
-| Optimized space is O(N \times L \times 26) from source. | 來源優化空間為 O(N \times L \times 26)。 | Approach |
+| Build Trie to share prefixes among words. | 用 Trie 共享多單字前綴。 | Approach |
+| addWord is standard trie insertion in O(L). | addWord 是標準 trie 插入，O(L)。 | Approach |
+| For search, DFS from current node by index. | search 以索引在目前節點做 DFS。 | Approach |
+| Normal letter takes one edge, dot explores all non-null children. | 一般字母走單邊，`.` 探索所有非空子節點。 | Approach |
+| Return true once any wildcard branch reaches terminal word end. | 任一分支到達合法結尾即回 true。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize trie root node first. | 依來源步驟執行。 | Coding |
-| Next, I iterate characters in each word. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I create child node when missing. | 依來源步驟執行。 | Coding |
-| Then, I move pointer to child each step. | 依來源步驟執行。 | Coding |
-| Next, I mark end-of-word flag when needed. | 依來源步驟執行。 | Coding |
-| Then, I query trie path by source rules. | 依來源步驟執行。 | Coding |
-| Next, I return lookup or aggregate result. | 依來源步驟執行。 | Coding |
+| I define TrieNode with children array and end flag. | 我先定義含 children 陣列與 end 旗標的 TrieNode。 | Coding |
+| Constructor initializes all children pointers to null. | 建構子把所有子指標初始化為 null。 | Coding |
+| addWord walks characters and creates missing nodes. | addWord 逐字走訪並建立缺少節點。 | Coding |
+| At final node, I set end flag true. | 到最後節點時把 end 旗標設 true。 | Coding |
+| search calls DFS helper with index zero and root node. | search 以 index=0、root 呼叫 DFS helper。 | Coding |
+| If current char is dot, I recurse through all children. | 若當前字元是 `.`，就遞迴所有子節點。 | Coding |
+| If current char is letter, I recurse one matching child. | 若是一般字母，只遞迴對應子節點。 | Coding |
+| Base case returns node end flag when index reaches length. | base case 在 index 到尾時回傳節點 end 旗標。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: . | 範例輸入：。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [CHECK]. | 預期輸出：[CHECK]。 | Dry-run |
+| Let me dry-run add bad, dad, mad; then search pad, bad, .ad, b.. | 我手跑加入 bad、dad、mad；再查 pad、bad、.ad、b.. | Dry-run |
+| search pad fails at first character p path. | search pad 在首字 p 路徑就失敗。 | Dry-run |
+| search bad follows b-a-d and ends at terminal true. | search bad 走 b-a-d 並落在結尾 true。 | Dry-run |
+| search .ad explores b, d, and m branches. | search .ad 會探索 b、d、m 三個分支。 | Dry-run |
+| Branch b-a-d reaches terminal, so return true. | b-a-d 分支到達結尾，故回 true。 | Dry-run |
+| search b.. explores two wildcard levels under b. | search b.. 在 b 下面做兩層 wildcard 展開。 | Dry-run |
+| Path b-a-d exists and terminal true, so result is true. | b-a-d 路徑存在且結尾 true，所以結果 true。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: searching empty or shorter-than-inserted pattern boundaries. | 案例一：空字串或長度邊界查詢。 | Edge test |
+| Case two: wildcard-only query like three dots. | 案例二：全 wildcard 查詢如 `...`。 | Edge test |
+| Case three: query longer than any inserted word. | 案例三：查詢長度大於所有已插單字。 | Edge test |
+| Case four: repeated addWord on same word should remain valid. | 案例四：重複 addWord 同字應維持正確。 | Edge test |
+| Case five: wildcard branch exists but does not end as word. | 案例五：wildcard 有路但未落在單字結尾。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(L). | 時間複雜度是 O(L)。 | Complexity |
-| Space complexity is O(N \times L \times 26). | 空間複雜度是 O(N \times L \times 26)。 | Complexity |
+| addWord is O(L), exact-letter search is O(L). | addWord 為 O(L)，純字母 search 也是 O(L)。 | Complexity |
+| Wildcard search worst-case is exponential in pattern length. | wildcard 搜尋最壞會對字長呈指數展開。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(L). | 來源主要時間為 O(L)。 | Complexity |
-| Extra memory from source is O(N \times L \times 26). | 來源額外空間為 O(N \times L \times 26)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| addWord processes each character once, so O(L). | addWord 每字元處理一次，故 O(L)。 | Complexity |
+| search without dots also follows one path, O(L). | 不含 dot 的 search 走單一路徑，O(L)。 | Complexity |
+| search with many dots may branch up to 26 per level. | 含多個 dot 時每層最多分支到 26。 | Complexity |
+| Trie storage depends on total created nodes across all words. | Trie 儲存量取決於全部建立節點總數。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me treat wildcard logic separately from normal character logic. | 我先把 wildcard 與一般字母邏輯分開。 | If stuck |
+| Normal character should recurse only one child. | 一般字母只該遞迴一個子節點。 | If stuck |
+| Dot should iterate all existing children. | dot 則要遍歷所有存在子節點。 | If stuck |
+| I might have returned false too early in dot loop. | 我可能在 dot 迴圈中太早回 false。 | If stuck |
+| Let me return false only after all branches fail. | 我改成全部分支都失敗後才回 false。 | If stuck |
+| I will retest pattern .ad now. | 我現在重測 .ad。 | If stuck |
+| It now returns true correctly. | 現在能正確回傳 true。 | If stuck |
+| I will test b.. and ..z as contrast. | 我再測 b.. 與 ..z 做對照。 | If stuck |
+| b.. passes while ..z fails as expected. | b.. 通過而 ..z 失敗，符合預期。 | If stuck |
+| Great, wildcard DFS behavior is now correct. | 很好，wildcard DFS 行為已正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(L), space is O(N \times L \times 26). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I completed WordDictionary using Trie and DFS wildcard search. | 我完成了 Trie + DFS wildcard 的 WordDictionary。 | Wrap-up |
+| addWord is linear, while wildcard search explores necessary branches. | addWord 線性，wildcard 搜尋展開必要分支。 | Wrap-up |
+| Exact search path is O(L). | 精確搜尋路徑是 O(L)。 | Wrap-up |
+| Wildcard worst-case is branching exponential by depth. | wildcard 最壞是隨深度分支指數成長。 | Wrap-up |
+| I can also discuss pruning heuristics if needed. | 若需要我可補充剪枝策略。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(L). | 速記重點。 | Cheat sheet |
-| Report space complexity O(N \times L \times 26). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Design WordDictionary with addWord and search. | 設計含 addWord/search 的 WordDictionary。 | Cheat sheet |
+| search supports dot wildcard. | search 支援 dot wildcard。 | Cheat sheet |
+| Use Trie nodes with 26 children. | 使用 26 子節點 Trie。 | Cheat sheet |
+| Node stores end-of-word flag. | 節點保存結尾旗標。 | Cheat sheet |
+| addWord inserts characters sequentially. | addWord 逐字插入。 | Cheat sheet |
+| mark terminal node at end. | 最後節點標記終點。 | Cheat sheet |
+| search calls DFS(node, index). | search 呼叫 DFS(node,index)。 | Cheat sheet |
+| Base index==len => return end flag. | index 到尾就回 end 旗標。 | Cheat sheet |
+| Normal char => follow one edge. | 一般字母走單邊。 | Cheat sheet |
+| Dot => try all non-null children. | dot 嘗試全部非空子節點。 | Cheat sheet |
+| Any successful branch returns true. | 任一成功分支即回 true。 | Cheat sheet |
+| All branches fail => false. | 全分支失敗才回 false。 | Cheat sheet |
+| addWord time O(L). | addWord 時間 O(L)。 | Cheat sheet |
+| search no dot O(L). | search 無 dot 為 O(L)。 | Cheat sheet |
+| search many dots worst-case exponential. | 多 dot 最壞指數展開。 | Cheat sheet |
+| Trie memory grows with created nodes. | Trie 記憶體隨節點數增長。 | Cheat sheet |
+| Test exact match cases. | 測精確匹配案例。 | Cheat sheet |
+| Test wildcard mixed cases. | 測 wildcard 混合案例。 | Cheat sheet |
+| Common bug: early false in dot loop. | 常見錯誤：dot 迴圈過早 false。 | Cheat sheet |
+| End with complexity trade-off summary. | 收尾總結複雜度取捨。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Trie insertion + DFS wildcard branching is preserved.
+- No hallucinated constraints: ✅ Dot semantics and complexity follow source chapter.
+- Language simplicity: ✅ Concise spoken lines for interview delivery.

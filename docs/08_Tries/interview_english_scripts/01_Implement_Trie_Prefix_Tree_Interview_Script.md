@@ -1,4 +1,4 @@
-# 01 Implement Trie — Interview English Script (C++)
+# 01 Implement Trie (Prefix Tree) — Interview English Script (C++)
 
 > Source aligned with: `docs/08_Tries/01_Implement_Trie_Prefix_Tree.md`
 
@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Implement Trie. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Array for Children as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the implement-trie problem. | 我先重述 Trie 實作題目。 | Restatement |
+| We need to design a Trie with insert, search, and startsWith. | 要設計含 insert、search、startsWith 的 Trie。 | Restatement |
+| Input words contain lowercase letters only. | 輸入字串只含小寫字母。 | Restatement |
+| search should match full word, not just prefix. | search 要比對完整單字，不是前綴。 | Restatement |
+| startsWith only checks whether a prefix path exists. | startsWith 只確認前綴路徑是否存在。 | Restatement |
+| I will use trie nodes with 26 child pointers and end flag. | 我會用 26 子指標與結尾旗標的 trie node。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume all characters are lowercase a to z? | 我可假設字元都在 a 到 z 嗎？ | Clarify |
+| Should duplicate inserts keep behavior unchanged? | 重複 insert 是否維持相同行為即可？ | Clarify |
+| For search, must whole word end at terminal flag? | search 是否一定要落在結尾旗標？ | Clarify |
+| Is fixed array children preferred over hashmap here? | 此題是否偏好固定陣列而非 hashmap？ | Clarify |
+| Do we need to implement delete operation? | 需要實作刪除操作嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(1) from source. | 來源暴力時間約 O(1)。 | Approach |
-| Brute space is about O(L) from source. | 來源暴力空間約 O(L)。 | Approach |
+| Brute force stores all words in a hash set. | 暴力法把所有字存進 hash set。 | Approach |
+| insert and exact search are okay, but startsWith scans many words. | insert 與完整搜尋還行，但 startsWith 需掃大量字。 | Approach |
+| That can degrade to O(n times L) per prefix query. | 前綴查詢會退化成 O(n*L)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Array for Children. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(L) from source. | 來源優化時間為 O(L)。 | Approach |
-| Optimized space is O(N \times L \times 26) from source. | 來源優化空間為 O(N \times L \times 26)。 | Approach |
+| Use Trie where each edge corresponds to one character. | 使用 Trie，邊代表單一字元。 | Approach |
+| insert walks through characters and creates missing nodes. | insert 沿字元走訪並建立缺節點。 | Approach |
+| search walks path and checks terminal flag at end. | search 走完路徑後看結尾旗標。 | Approach |
+| startsWith only needs path existence, no terminal check. | startsWith 只需路徑存在，不看結尾旗標。 | Approach |
+| Each operation runs in O(L) where L is string length. | 每個操作皆為 O(L)。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize trie root node first. | 依來源步驟執行。 | Coding |
-| Next, I iterate characters in each word. | 依來源步驟執行。 | Coding |
-| Then, I create child node when missing. | 依來源步驟執行。 | Coding |
-| Next, I move pointer to child each step. | 依來源步驟執行。 | Coding |
-| Then, I mark end-of-word flag when needed. | 依來源步驟執行。 | Coding |
-| Next, I query trie path by source rules. | 依來源步驟執行。 | Coding |
-| Then, I return lookup or aggregate result. | 依來源步驟執行。 | Coding |
+| I define TrieNode with children array of size twenty-six. | 我定義含 26 子指標陣列的 TrieNode。 | Coding |
+| I also keep boolean isEndOfWord on each node. | 每節點再保留 isEndOfWord 旗標。 | Coding |
+| In constructor, I create root node. | 在建構子中建立 root。 | Coding |
+| For insert, I iterate each character and move pointer. | insert 逐字元迭代並移動指標。 | Coding |
+| If child does not exist, I allocate new TrieNode. | 若子節點不存在就新建 TrieNode。 | Coding |
+| After processing all characters, I mark end flag true. | 字串走完後把結尾旗標設 true。 | Coding |
+| For search, I traverse path and return false on missing edge. | search 走訪路徑，邊不存在就回 false。 | Coding |
+| After traversal, I return current node end flag. | 走完後回傳當前節點結尾旗標。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: . | 範例輸入：。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [CHECK]. | 預期輸出：[CHECK]。 | Dry-run |
+| Let me dry-run: insert apple, search apple, search app, startsWith app. | 我手跑：insert apple、search apple、search app、startsWith app。 | Dry-run |
+| Insert creates path a to p to p to l to e. | insert 會建立 a->p->p->l->e 路徑。 | Dry-run |
+| Node e is marked as end of word. | 節點 e 會被標為結尾。 | Dry-run |
+| search apple follows full path and ends at true flag. | search apple 走完整路徑且落在 true 旗標。 | Dry-run |
+| search app follows path but end flag is false now. | search app 雖有路徑，但目前結尾旗標是 false。 | Dry-run |
+| startsWith app returns true because path exists. | startsWith app 因路徑存在而回 true。 | Dry-run |
+| After insert app, search app becomes true. | 再 insert app 後，search app 變 true。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: insert single character word. | 案例一：插入單字元單字。 | Edge test |
+| Case two: search word never inserted should return false. | 案例二：搜尋未插入單字應回 false。 | Edge test |
+| Case three: inserted long word but searching its prefix only. | 案例三：已插長字，搜尋其前綴完整字應分辨。 | Edge test |
+| Case four: repeated insert of same word should stay stable. | 案例四：重複插入同字應維持穩定。 | Edge test |
+| Case five: startsWith on non-existing first character returns false. | 案例五：不存在首字前綴應回 false。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(L). | 時間複雜度是 O(L)。 | Complexity |
-| Space complexity is O(N \times L \times 26). | 空間複雜度是 O(N \times L \times 26)。 | Complexity |
+| Each operation runs in O(L) time. | 每個操作時間皆為 O(L)。 | Complexity |
+| Trie storage is O(total inserted characters). | Trie 儲存空間為 O(總插入字元數)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(L). | 來源主要時間為 O(L)。 | Complexity |
-| Extra memory from source is O(N \times L \times 26). | 來源額外空間為 O(N \times L \times 26)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| insert, search, and startsWith scan one character per step. | insert、search、startsWith 每步處理一字元。 | Complexity |
+| So per-operation runtime is O(L) with no full-dictionary scan. | 所以單次操作 O(L)，不需掃整個字典。 | Complexity |
+| Space grows with number of created trie nodes. | 空間隨建立的 trie 節點數增長。 | Complexity |
+| Using fixed 26-array trades memory for fast child access. | 固定 26 陣列是用空間換取快速存取。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me separate full-word and prefix semantics first. | 我先分清完整字與前綴語意。 | If stuck |
+| search needs end flag true at final node. | search 需最終節點 end flag 為 true。 | If stuck |
+| startsWith only needs path existence. | startsWith 只需路徑存在。 | If stuck |
+| I might have returned true too early in search. | 我可能在 search 太早回 true。 | If stuck |
+| Let me move true-return to after full traversal. | 我把 true 回傳移到完整走訪後。 | If stuck |
+| I will retest apple versus app behavior. | 我重測 apple 與 app 的差異行為。 | If stuck |
+| Now search app is false before insert app. | 現在 insert app 前 search app 為 false。 | If stuck |
+| And startsWith app remains true. | 且 startsWith app 維持 true。 | If stuck |
+| After insert app, search app is true. | insert app 後 search app 變 true。 | If stuck |
+| Great, semantics are now correct. | 很好，語意現在正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(L), space is O(N \times L \times 26). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I completed Trie with insert, search, and startsWith. | 我完成了含 insert/search/startsWith 的 Trie。 | Wrap-up |
+| The key distinction is terminal flag for full-word search. | 核心差異是完整搜尋要看結尾旗標。 | Wrap-up |
+| Runtime per call is O(L). | 每次呼叫時間是 O(L)。 | Wrap-up |
+| Space depends on total created trie nodes. | 空間取決於建立的 trie 節點總量。 | Wrap-up |
+| I can also discuss hashmap-children variant if needed. | 若需要我可補充 hashmap 子節點版本。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(L). | 速記重點。 | Cheat sheet |
-| Report space complexity O(N \times L \times 26). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Build Trie data structure. | 建立 Trie 資料結構。 | Cheat sheet |
+| Trie node has 26 children pointers. | Trie 節點有 26 子指標。 | Cheat sheet |
+| Trie node has end-of-word flag. | Trie 節點有結尾旗標。 | Cheat sheet |
+| Constructor creates root node. | 建構子建立 root。 | Cheat sheet |
+| insert walks each character. | insert 逐字元走訪。 | Cheat sheet |
+| create missing child nodes. | 缺節點時動態建立。 | Cheat sheet |
+| mark end flag at last node. | 最後節點設結尾旗標。 | Cheat sheet |
+| search traverses full word path. | search 走完整字路徑。 | Cheat sheet |
+| missing edge => false. | 邊不存在 => false。 | Cheat sheet |
+| final end flag decides true or false. | 最終以結尾旗標判定。 | Cheat sheet |
+| startsWith traverses prefix path only. | startsWith 只走前綴路徑。 | Cheat sheet |
+| no end flag check for startsWith. | startsWith 不檢查結尾旗標。 | Cheat sheet |
+| per operation time O(L). | 單操作時間 O(L)。 | Cheat sheet |
+| storage proportional to created nodes. | 儲存量與建立節點數成正比。 | Cheat sheet |
+| test full word versus prefix. | 測完整字與前綴差異。 | Cheat sheet |
+| test repeated insert stability. | 測重複插入穩定性。 | Cheat sheet |
+| common bug: search returns true on prefix. | 常見錯誤：search 對前綴誤回 true。 | Cheat sheet |
+| common bug: forgetting node initialization. | 常見錯誤：忘記節點初始化。 | Cheat sheet |
+| mention hashmap children alternative. | 可提 hashmap 子節點替代。 | Cheat sheet |
+| finish with complexity summary. | 最後總結複雜度。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Trie node array + end flag operations are preserved.
+- No hallucinated constraints: ✅ Operation semantics and constraints align with source.
+- Language simplicity: ✅ Spoken concise interview-ready lines.

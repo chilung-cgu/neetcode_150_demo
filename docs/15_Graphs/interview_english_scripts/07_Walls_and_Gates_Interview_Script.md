@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Walls and Gates. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Multi-source BFS as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate walls and gates. | 我先重述 Walls and Gates。 | Restatement |
+| Grid cells can be wall minus one, gate zero, or empty room INF. | 格子可能是牆 -1、門 0、或空房 INF。 | Restatement |
+| For each empty room, we need distance to nearest gate. | 每個空房要填入到最近門的距離。 | Restatement |
+| Unreachable rooms should stay INF. | 無法到達門的房間保持 INF。 | Restatement |
+| We must update the grid in place. | 題目要求原地更新網格。 | Restatement |
+| I will use multi-source BFS from all gates. | 我會從所有門做多源 BFS。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is INF represented by INT_MAX? | INF 是否以 INT_MAX 表示？ | Clarify |
+| Is movement limited to four directions? | 移動是否只限四方向？ | Clarify |
+| Should walls always remain minus one? | 牆是否永遠保持 -1？ | Clarify |
+| Can there be zero gates in the grid? | 網格中是否可能沒有門？ | Clarify |
+| Function should return void and mutate input only, right? | 函式是否回 void 並只改輸入？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,55 +31,56 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(m \times n) from source. | 來源暴力時間約 O(m \times n)。 | Approach |
-| Brute space is about O(k \times m \times n) from source. | 來源暴力空間約 O(k \times m \times n)。 | Approach |
+| Brute force runs BFS from every empty room to nearest gate. | 暴力法從每個空房各跑一次 BFS 找最近門。 | Approach |
+| This repeats huge traversal many times. | 這會大量重複遍歷。 | Approach |
+| Worst case is near O((mn) squared). | 最壞接近 O((mn)^2)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Multi-source BFS. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(M \times N) from source. | 來源優化時間為 O(M \times N)。 | Approach |
-| Optimized space is O(M \times N) from source. | 來源優化空間為 O(M \times N)。 | Approach |
+| Reverse search direction: start from all gates together. | 反向搜尋：從所有門同時出發。 | Approach |
+| Push all gate cells into queue initially. | 初始把所有門座標推入 queue。 | Approach |
+| BFS level expands shortest distance naturally. | BFS 分層天然對應最短距離。 | Approach |
+| When we first reach an INF room, assign current distance plus one. | 首次到達 INF 房時，填目前距離加一。 | Approach |
+| Since first visit is shortest, no further update is needed. | 首訪即最短，不需要再更新。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I build adjacency representation from input. | 依來源步驟執行。 | Coding |
-| Next, I initialize visited set or color state. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process nodes level by level with queue. | 依來源步驟執行。 | Coding |
-| Then, I start DFS or BFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process current node and neighbors. | 依來源步驟執行。 | Coding |
-| Then, I mark nodes to prevent repeated work. | 依來源步驟執行。 | Coding |
-| Next, I update answer during traversal. | 依來源步驟執行。 | Coding |
-| Finally, I return final graph result. | 依來源步驟執行。 | Coding |
+| I scan grid and enqueue every gate position. | 我先掃網格，把每個門加入 queue。 | Coding |
+| I keep four direction vectors. | 我準備四方向向量。 | Coding |
+| While queue is not empty, pop one position. | queue 非空時彈出一個位置。 | Coding |
+| For each neighbor, check boundary first. | 對每個鄰居先做邊界檢查。 | Coding |
+| If neighbor is not INF, skip it. | 鄰居若不是 INF 就跳過。 | Coding |
+| If neighbor is INF, set rooms[nr][nc] to rooms[r][c] plus one. | 鄰居若是 INF，就設為 rooms[r][c]+1。 | Coding |
+| Then enqueue this updated room. | 再把這個已更新房間入隊。 | Coding |
+| Continue until queue is empty. | 持續直到 queue 清空。 | Coding |
+| Walls and original gates remain unchanged. | 牆與原門都不會被改動。 | Coding |
+| End function with in-place updated grid. | 函式結束時網格已原地更新。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: . | 範例輸入：。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: . | 預期輸出：。 | Dry-run |
+| Let me dry-run the classic four by four sample. | 我手跑經典 4x4 範例。 | Dry-run |
+| Queue starts with both gate positions. | queue 初始含兩個門的位置。 | Dry-run |
+| First BFS layer fills adjacent INF rooms with one. | 第一層 BFS 先把相鄰 INF 填成 1。 | Dry-run |
+| Next layer fills reachable rooms with two. | 下一層把可達房間填成 2。 | Dry-run |
+| Walls block expansion and unreachable rooms stay INF. | 牆會阻擋擴散，不可達房間維持 INF。 | Dry-run |
+| Distances propagate outward level by level. | 距離會一層一層向外擴散。 | Dry-run |
+| Final grid matches expected shortest distances. | 最終網格符合預期最短距離。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: no gate at all, grid stays same. | 案例一：沒有門時網格維持原樣。 | Edge test |
+| Case two: all walls only, grid unchanged. | 案例二：全是牆，網格不變。 | Edge test |
+| Case three: all gates only, all zeros remain. | 案例三：全是門，0 全保留。 | Edge test |
+| Case four: one gate with straight open corridor. | 案例四：單門加直通走廊。 | Edge test |
+| Case five: isolated room behind walls remains INF. | 案例五：被牆隔離房間維持 INF。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,72 +88,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(M \times N). | 時間複雜度是 O(M \times N)。 | Complexity |
-| Space complexity is O(M \times N). | 空間複雜度是 O(M \times N)。 | Complexity |
+| Time complexity is O(rows times cols). | 時間複雜度是 O(rows*cols)。 | Complexity |
+| Space complexity is O(rows times cols) worst case queue. | 空間最壞是 O(rows*cols) 的 queue。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(M \times N). | 來源主要時間為 O(M \times N)。 | Complexity |
-| Extra memory from source is O(M \times N). | 來源額外空間為 O(M \times N)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Each cell can enter queue at most once when first assigned shortest distance. | 每格在首次賦值最短距離時最多入隊一次。 | Complexity |
+| Neighbor checks are constant work per pop. | 每次出隊只做常數次鄰居檢查。 | Complexity |
+| Therefore runtime is linear O(mn). | 因此總時間是線性 O(mn)。 | Complexity |
+| Queue can hold many cells at once, up to O(mn) in worst case. | queue 最壞可同時容納 O(mn) 個格子。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me connect this to rotting oranges pattern. | 我把它對應到 Rotting Oranges 模式。 | If stuck |
+| It is also multi-source BFS from all gates. | 它同樣是從所有門出發的多源 BFS。 | If stuck |
+| First reach to a room means shortest path. | 房間第一次被到達就是最短路。 | If stuck |
+| So each INF room should be assigned once. | 所以每個 INF 房只要賦值一次。 | If stuck |
+| We skip walls and already assigned rooms. | 跳過牆與已賦值房間。 | If stuck |
+| Distance transition is parent plus one. | 距離轉移是父節點加一。 | If stuck |
+| Let me test an isolated INF behind walls. | 我測一個被牆隔離的 INF。 | If stuck |
+| It should remain INF forever. | 它應永遠保持 INF。 | If stuck |
+| This confirms skip condition is correct. | 這可確認跳過條件正確。 | If stuck |
+| Great, now code flow is clear. | 很好，現在程式流程很清楚。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(M \times N), space is O(M \times N). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it with multi-source BFS from all gates. | 我用從所有門出發的多源 BFS 解題。 | Wrap-up |
+| BFS levels naturally encode shortest room distance. | BFS 分層自然對應最短房間距離。 | Wrap-up |
+| INF rooms are updated once on first reach. | INF 房間在首訪時更新一次。 | Wrap-up |
+| Complexity is O(mn) time and O(mn) space. | 複雜度是 O(mn) 時間與 O(mn) 空間。 | Wrap-up |
+| This is the canonical nearest-source grid pattern. | 這是網格最近來源題的典型模式。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: fill each INF with nearest gate distance. | 目標：每個 INF 填最近門距離。 | Cheat sheet |
+| Values: wall -1, gate 0, room INF. | 值定義：牆 -1、門 0、房 INF。 | Cheat sheet |
+| Use multi-source BFS. | 使用多源 BFS。 | Cheat sheet |
+| Enqueue all gates first. | 先把所有門入隊。 | Cheat sheet |
+| Keep four direction moves. | 使用四方向移動。 | Cheat sheet |
+| Pop one cell from queue. | 每次彈出一格。 | Cheat sheet |
+| Check each neighbor bounds. | 檢查鄰居邊界。 | Cheat sheet |
+| Process only INF neighbors. | 只處理 INF 鄰居。 | Cheat sheet |
+| Set neighbor = current + 1. | 鄰居值設為 current+1。 | Cheat sheet |
+| Enqueue updated neighbor. | 把更新後鄰居入隊。 | Cheat sheet |
+| Skip walls and non-INF cells. | 跳過牆與非 INF。 | Cheat sheet |
+| First update is shortest distance. | 首次更新即最短距離。 | Cheat sheet |
+| No gate means no changes. | 無門時不會變化。 | Cheat sheet |
+| Isolated INF stays INF. | 隔離 INF 保持 INF。 | Cheat sheet |
+| Time O(mn). | 時間 O(mn)。 | Cheat sheet |
+| Queue space O(mn). | queue 空間 O(mn)。 | Cheat sheet |
+| In-place update required. | 需要原地更新。 | Cheat sheet |
+| Common bug: running BFS from each room. | 常見錯誤：從每個房間分別跑 BFS。 | Cheat sheet |
+| Common bug: updating non-INF cell. | 常見錯誤：錯更新非 INF 格。 | Cheat sheet |
+| Mention relation to rotting oranges. | 可提與 Rotting Oranges 的關聯。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Multi-source BFS from all gates with INF-only expansion.
+- No hallucinated constraints: ✅ In-place mutation and value semantics preserved.
+- Language simplicity: ✅ Practical short interview lines.

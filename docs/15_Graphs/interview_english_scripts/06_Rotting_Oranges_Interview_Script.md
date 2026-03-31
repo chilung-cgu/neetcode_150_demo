@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Rotting Oranges. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Multi-source BFS as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate rotting oranges. | 我先重述 Rotting Oranges。 | Restatement |
+| Grid cells can be empty, fresh, or rotten. | 格子可能是空、鮮橘子或爛橘子。 | Restatement |
+| Every minute, rotten oranges infect adjacent fresh ones. | 每分鐘爛橘子會感染相鄰鮮橘子。 | Restatement |
+| We need minimum minutes until all reachable fresh oranges rot. | 要求讓所有可達鮮橘子腐爛的最短分鐘數。 | Restatement |
+| If some fresh orange can never rot, return minus one. | 若有鮮橘子永遠無法腐爛，回 -1。 | Restatement |
+| I will use multi-source BFS by minute levels. | 我會用多源 BFS 逐分鐘擴散。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is movement only in four directions? | 傳染是否只限四方向？ | Clarify |
+| If no fresh oranges initially, should answer be zero? | 一開始沒有鮮橘子是否回 0？ | Clarify |
+| Can grid be empty? | grid 是否可能為空？ | Clarify |
+| Are values strictly zero one two? | 值是否只會是 0、1、2？ | Clarify |
+| Do we return only time, not final grid? | 是否只回時間，不回最終網格？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,55 +31,56 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(K \times M \times N) from source. | 來源暴力時間約 O(K \times M \times N)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force repeatedly rescans grid each minute. | 暴力法每分鐘都重掃整張網格。 | Approach |
+| It tracks newly rotten cells layer by layer manually. | 它要手動追蹤每輪新腐爛格。 | Approach |
+| Repeated full scans are inefficient. | 重複全掃效率差。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Multi-source BFS. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(M \times N) from source. | 來源優化時間為 O(M \times N)。 | Approach |
-| Optimized space is O(M \times N) from source. | 來源優化空間為 O(M \times N)。 | Approach |
+| Put all initial rotten oranges into queue first. | 先把初始爛橘子全部放入佇列。 | Approach |
+| Count fresh oranges at initialization. | 初始化同時計算鮮橘子數。 | Approach |
+| BFS level represents one minute of spread. | BFS 每一層代表一分鐘擴散。 | Approach |
+| When a fresh neighbor is infected, decrement fresh count and push it. | 感染到鮮鄰居時，fresh-- 並入隊。 | Approach |
+| At end, return minutes if fresh is zero else minus one. | 結束時 fresh 為 0 回 minutes，否則回 -1。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I build adjacency representation from input. | 依來源步驟執行。 | Coding |
-| Next, I initialize visited set or color state. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process nodes level by level with queue. | 依來源步驟執行。 | Coding |
-| Then, I start DFS or BFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process current node and neighbors. | 依來源步驟執行。 | Coding |
-| Then, I mark nodes to prevent repeated work. | 依來源步驟執行。 | Coding |
-| Next, I update answer during traversal. | 依來源步驟執行。 | Coding |
-| Finally, I return final graph result. | 依來源步驟執行。 | Coding |
+| I scan the grid once to find rotten sources and fresh count. | 我先掃一遍網格找爛橘子來源與 fresh 計數。 | Coding |
+| I push each rotten position into queue. | 每個爛橘子座標都推進佇列。 | Coding |
+| If fresh count is zero, I return zero immediately. | 若 fresh 為 0，直接回 0。 | Coding |
+| I set minutes to zero. | 我把 minutes 初始化為 0。 | Coding |
+| While queue not empty and fresh still positive, process one BFS level. | 當 queue 非空且 fresh>0，處理一個 BFS 層。 | Coding |
+| For each cell in this level, check four neighbors. | 對本層每格檢查四個鄰居。 | Coding |
+| If neighbor is fresh, make it rotten, decrement fresh, and enqueue. | 鄰居是鮮橘子就腐爛它、fresh-- 並入隊。 | Coding |
+| After this level, increment minutes by one. | 本層處理完 minutes 加一。 | Coding |
+| After loop, if fresh is zero return minutes. | 迴圈後若 fresh 為 0，回 minutes。 | Coding |
+| Otherwise return minus one. | 否則回傳 -1。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: [[2,1,1],[1,1,0],[0,1,1]]. | 範例輸入：[[2,1,1],[1,1,0],[0,1,1]]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 4. | 預期輸出：4。 | Dry-run |
+| Let me dry-run [[2,1,1],[1,1,0],[0,1,1]]. | 我手跑 [[2,1,1],[1,1,0],[0,1,1]]。 | Dry-run |
+| Initial queue has one rotten at top-left and fresh count is six. | 初始 queue 有左上爛橘子，fresh=6。 | Dry-run |
+| Minute one rots two adjacent fresh oranges. | 第 1 分鐘會感染兩個相鄰鮮橘子。 | Dry-run |
+| Minute two continues from newly rotten oranges. | 第 2 分鐘由新爛橘子繼續擴散。 | Dry-run |
+| Spread proceeds level by level until fresh becomes zero. | 擴散按層進行直到 fresh 歸零。 | Dry-run |
+| Final minutes become four. | 最終分鐘數是 4。 | Dry-run |
+| Output is four as expected. | 輸出為 4，符合預期。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: no fresh oranges from start returns zero. | 案例一：起始無鮮橘子回 0。 | Edge test |
+| Case two: fresh oranges isolated by empty cells return minus one. | 案例二：鮮橘子被空格隔離時回 -1。 | Edge test |
+| Case three: one fresh next to one rotten returns one. | 案例三：一鮮一爛相鄰時回 1。 | Edge test |
+| Case four: all fresh with no rotten source returns minus one. | 案例四：全鮮且無來源時回 -1。 | Edge test |
+| Case five: single cell zero returns zero. | 案例五：單格 0 回 0。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,72 +88,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(M \times N). | 時間複雜度是 O(M \times N)。 | Complexity |
-| Space complexity is O(M \times N). | 空間複雜度是 O(M \times N)。 | Complexity |
+| Time complexity is O(rows times cols). | 時間複雜度是 O(rows*cols)。 | Complexity |
+| Space complexity is O(rows times cols) in worst case queue size. | 最壞佇列大小下空間是 O(rows*cols)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(M \times N). | 來源主要時間為 O(M \times N)。 | Complexity |
-| Extra memory from source is O(M \times N). | 來源額外空間為 O(M \times N)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Initial scan of grid is O(mn). | 初始掃描網格是 O(mn)。 | Complexity |
+| BFS visits each orange cell at most once when it becomes rotten. | BFS 中每顆橘子最多被處理一次。 | Complexity |
+| Thus total runtime is O(mn). | 因此總時間是 O(mn)。 | Complexity |
+| Queue can hold up to all cells in worst spread, so O(mn) space. | 最壞擴散下 queue 可達全部格子，空間 O(mn)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me model this as shortest time spread from many sources. | 我把這題建模成多源最短擴散時間。 | If stuck |
+| Multi-source BFS is natural for simultaneous infection. | 同步感染最適合多源 BFS。 | If stuck |
+| Queue starts with all rotten oranges. | 佇列起始放所有爛橘子。 | If stuck |
+| Fresh count tells me if goal is complete. | fresh 計數可判斷是否完成目標。 | If stuck |
+| One BFS level equals one minute. | 一個 BFS 層就是一分鐘。 | If stuck |
+| Infecting a fresh neighbor must decrement fresh. | 感染鮮鄰居時必須 fresh--。 | If stuck |
+| If fresh never reaches zero, answer is minus one. | 若 fresh 無法歸零，答案就是 -1。 | If stuck |
+| Let me test no-fresh case first. | 我先測無鮮橘子案例。 | If stuck |
+| That should return zero immediately. | 這應立即回傳 0。 | If stuck |
+| Great, now minute accounting is clear. | 很好，現在分鐘計算很清楚。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(M \times N), space is O(M \times N). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it with multi-source BFS over time layers. | 我用多源 BFS 時間分層解題。 | Wrap-up |
+| Initial rotten oranges are simultaneous start points. | 初始爛橘子是同步起點。 | Wrap-up |
+| Fresh count tracks completion exactly. | fresh 計數可精確追蹤完成度。 | Wrap-up |
+| Complexity is O(mn) time and O(mn) space. | 複雜度是 O(mn) 時間與 O(mn) 空間。 | Wrap-up |
+| This is the standard contagion-wave interview pattern. | 這是擴散波型題目的標準面試模式。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: minimum minutes to rot all reachable fresh oranges. | 目標：最短分鐘數讓可達鮮橘子全腐爛。 | Cheat sheet |
+| Use multi-source BFS. | 使用多源 BFS。 | Cheat sheet |
+| Queue starts with all rotten cells. | queue 起始放所有爛格。 | Cheat sheet |
+| Count fresh oranges initially. | 初始化統計 fresh。 | Cheat sheet |
+| If fresh is zero, return zero. | 若 fresh=0，回 0。 | Cheat sheet |
+| Process BFS level by level. | 逐層處理 BFS。 | Cheat sheet |
+| One level equals one minute. | 一層等於一分鐘。 | Cheat sheet |
+| For each rotten cell, check four neighbors. | 每個爛格檢查四鄰居。 | Cheat sheet |
+| If neighbor fresh, set to rotten. | 鄰居是鮮的就改成爛。 | Cheat sheet |
+| Decrement fresh and enqueue. | fresh-- 並入隊。 | Cheat sheet |
+| After level, minutes++. | 每層結束 minutes++。 | Cheat sheet |
+| Stop when queue empty or fresh zero. | queue 空或 fresh=0 時停止。 | Cheat sheet |
+| If fresh zero, return minutes. | fresh 為 0 回 minutes。 | Cheat sheet |
+| Else return minus one. | 否則回 -1。 | Cheat sheet |
+| Time O(mn). | 時間 O(mn)。 | Cheat sheet |
+| Space O(mn). | 空間 O(mn)。 | Cheat sheet |
+| Common bug: forgetting fresh decrement. | 常見錯誤：忘記遞減 fresh。 | Cheat sheet |
+| Common bug: wrong minute increment placement. | 常見錯誤：minutes++ 位置錯。 | Cheat sheet |
+| Test isolated fresh orange case. | 測隔離鮮橘子案例。 | Cheat sheet |
+| Test no-fresh-at-start case. | 測起始無鮮橘子案例。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Multi-source BFS layer expansion preserved.
+- No hallucinated constraints: ✅ Return-0 and return--1 conditions kept.
+- Language simplicity: ✅ Short, clear interview flow lines.

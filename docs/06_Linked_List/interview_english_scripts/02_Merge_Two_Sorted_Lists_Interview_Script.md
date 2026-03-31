@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Merge Two Sorted Lists. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Iterative with Dummy Node as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the merge-lists problem. | 我先重述合併串列題。 | Restatement |
+| We are given two sorted linked lists. | 我們有兩個已排序 linked list。 | Restatement |
+| I need one merged sorted list as output. | 我要輸出一個合併後仍排序的串列。 | Restatement |
+| I can reuse existing nodes, no value copying required. | 可重用原節點，不必複製值。 | Restatement |
+| I will use a dummy head and one tail pointer. | 我會用 dummy head 與 tail 指標。 | Restatement |
+| This should run in linear time over both lists. | 這題應該是兩串列總長的線性時間。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can either list be empty? | 任一串列可能是空的嗎？ | Clarify |
+| Should equal values preserve relative order from inputs? | 相等值是否要維持輸入相對順序？ | Clarify |
+| Is node reuse preferred over creating new nodes? | 是否偏好重用節點而非新建節點？ | Clarify |
+| Do you want iterative solution first? | 你希望先給迭代解法嗎？ | Clarify |
+| Should I mention recursive variant as follow-up? | 要不要補充遞迴版本當延伸？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O((n+m) from source. | 來源暴力時間約 O((n+m)。 | Approach |
-| Brute space is about O(n+m) from source. | 來源暴力空間約 O(n+m)。 | Approach |
+| Baseline can copy all values into an array and sort it. | 基線可把值拷到陣列後排序。 | Approach |
+| Then rebuild a new linked list from sorted values. | 再用排序結果重建新串列。 | Approach |
+| Time is O((m+n)log(m+n)), extra space is O(m+n). | 時間 O((m+n)log(m+n))，空間 O(m+n)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Iterative with Dummy Node. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n + m) from source. | 來源優化時間為 O(n + m)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Use two pointers over list1 and list2 heads. | 以兩指標分別掃 list1 與 list2。 | Approach |
+| Tail always points to last node in merged list. | tail 永遠指向合併串列最後節點。 | Approach |
+| Compare current node values and append smaller one. | 比較當前值，接上較小節點。 | Approach |
+| Move the pointer of the appended node forward. | 被接上的那一側指標往前移。 | Approach |
+| Attach remaining list once one side is exhausted. | 任一側耗盡後直接接上另一側剩餘。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize pointers and helper nodes. | 依來源步驟執行。 | Coding |
-| Next, I traverse list using pointer updates. | 依來源步驟執行。 | Coding |
-| Then, I keep node links valid at each step. | 依來源步驟執行。 | Coding |
-| Next, I use fast and slow pointers when required. | 依來源步驟執行。 | Coding |
-| Then, I reconnect nodes based on source logic. | 依來源步驟執行。 | Coding |
-| Next, I handle head or tail edge transitions. | 依來源步驟執行。 | Coding |
-| Then, I return final linked list head. | 依來源步驟執行。 | Coding |
+| First, I create a dummy node and set tail to dummy. | 先建 dummy 節點，tail 指向它。 | Coding |
+| I set p1 to list1 head and p2 to list2 head. | p1 指向 list1，p2 指向 list2。 | Coding |
+| While both pointers are non-null, I compare values. | 當兩者都非空時持續比較值。 | Coding |
+| I connect tail next to the smaller node. | 把 tail->next 接到較小節點。 | Coding |
+| I move that list pointer forward by one node. | 該側指標往前一個節點。 | Coding |
+| I advance tail to tail next. | tail 前進到 tail->next。 | Coding |
+| After loop, I connect tail next to non-null remainder. | 迴圈後把 tail 接到尚未空的一側。 | Coding |
+| Finally I return dummy next as merged head. | 最後回傳 dummy->next 作為答案。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: list1 = [1,2,4], list2 = [1,3,4]. | 範例輸入：list1 = [1,2,4], list2 = [1,3,4]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [1,1,2,3,4,4]. | 預期輸出：[1,1,2,3,4,4]。 | Dry-run |
+| Let me dry-run list1 [1,2,4] and list2 [1,3,4]. | 我手跑 list1=[1,2,4], list2=[1,3,4]。 | Dry-run |
+| Compare 1 and 1, choose list1 node first. | 比較 1 與 1，先接 list1 的 1。 | Dry-run |
+| Next compare 2 and 1, choose list2 node 1. | 接著比較 2 與 1，接 list2 的 1。 | Dry-run |
+| Then 2 beats 3, so append 2. | 然後 2 小於 3，接上 2。 | Dry-run |
+| Compare 4 and 3, append 3 next. | 比較 4 與 3，下一個接 3。 | Dry-run |
+| Remaining nodes are 4 and 4, append in order. | 剩下 4 與 4，依序接上。 | Dry-run |
+| Final merged list is [1,1,2,3,4,4]. | 最終合併結果是 [1,1,2,3,4,4]。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: both lists are empty. | 案例一：兩個串列都空。 | Edge test |
+| Case two: one list empty, one non-empty. | 案例二：一空一非空。 | Edge test |
+| Case three: all values in list1 are smaller than list2. | 案例三：list1 全部都比 list2 小。 | Edge test |
+| Case four: heavy duplicates across both lists. | 案例四：兩側都有大量重複值。 | Edge test |
+| Case five: one list has exactly one node. | 案例五：其中一側只有單節點。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(n + m). | 時間複雜度是 O(n + m)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time complexity is O(m+n). | 時間複雜度是 O(m+n)。 | Complexity |
+| Extra space is O(1) for iterative node-reuse version. | 迭代重用節點版額外空間是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n + m). | 來源主要時間為 O(n + m)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Each node from both lists is processed once. | 兩串列每個節點都只處理一次。 | Complexity |
+| Per node we do constant pointer operations. | 每個節點只做常數次指標操作。 | Complexity |
+| No auxiliary structure scales with input size. | 不需隨輸入成長的額外結構。 | Complexity |
+| Hence runtime is linear and extra memory is constant. | 所以時間線性、額外空間常數。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me check my loop condition first. | 我先檢查迴圈條件。 | If stuck |
+| It should continue only while both pointers exist. | 應該是兩個指標都存在才迴圈。 | If stuck |
+| Tail must always point to merged list end. | tail 必須永遠指向合併尾端。 | If stuck |
+| I should advance tail after every attachment. | 每次接節點後都要推進 tail。 | If stuck |
+| I may have forgotten to append the remainder list. | 我可能忘了接上剩餘串列。 | If stuck |
+| Let me add that after the loop. | 我把那段補在迴圈後。 | If stuck |
+| I will rerun empty-list and duplicate tests. | 我重跑空串列與重複值測試。 | If stuck |
+| Now all links are connected correctly. | 現在所有連結都正確。 | If stuck |
+| The merged order stays sorted. | 合併後順序保持排序。 | If stuck |
+| Great, solution is stable now. | 很好，解法現在穩定。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n + m), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished the iterative merge implementation. | 我完成了迭代合併實作。 | Wrap-up |
+| I verified empty, duplicate, and uneven-length cases. | 我驗證了空、重複與不等長案例。 | Wrap-up |
+| Runtime is O(m+n). | 時間複雜度是 O(m+n)。 | Wrap-up |
+| Extra memory is O(1) with node reuse. | 重用節點時額外空間是 O(1)。 | Wrap-up |
+| I can also provide recursive solution comparison. | 我也可補充遞迴版本比較。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n + m). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Merge two sorted linked lists. | 合併兩個排序 linked list。 | Cheat sheet |
+| Return merged sorted head. | 回傳合併後排序 head。 | Cheat sheet |
+| Baseline sort-all-values is expensive. | 基線全值排序成本較高。 | Cheat sheet |
+| Better use two pointers plus dummy. | 更好是雙指標加 dummy。 | Cheat sheet |
+| tail starts at dummy. | tail 起始在 dummy。 | Cheat sheet |
+| Compare p1 and p2 values. | 比較 p1 與 p2 的值。 | Cheat sheet |
+| Append smaller node to tail. | 把較小節點接到 tail。 | Cheat sheet |
+| Advance that source pointer. | 推進該來源指標。 | Cheat sheet |
+| Advance tail every step. | 每步都推進 tail。 | Cheat sheet |
+| Loop while both pointers exist. | 兩指標都存在時持續迴圈。 | Cheat sheet |
+| Attach remaining list once loop ends. | 結束後接上剩餘串列。 | Cheat sheet |
+| Return dummy->next. | 回傳 dummy->next。 | Cheat sheet |
+| Test both-empty case. | 測雙空案例。 | Cheat sheet |
+| Test one-empty case. | 測一空一非空案例。 | Cheat sheet |
+| Test duplicate-heavy case. | 測大量重複值案例。 | Cheat sheet |
+| Test uneven lengths. | 測不等長案例。 | Cheat sheet |
+| Time O(m+n). | 時間 O(m+n)。 | Cheat sheet |
+| Space O(1) iterative reuse. | 迭代重用版空間 O(1)。 | Cheat sheet |
+| Bug risk: forget remainder attachment. | 風險：忘記接剩餘串列。 | Cheat sheet |
+| Bug risk: not moving tail pointer. | 風險：忘記推進 tail。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Dummy-node iterative merge logic is preserved.
+- No hallucinated constraints: ✅ Script follows source list semantics and examples.
+- Language simplicity: ✅ Short lines optimized for interview speaking flow.

@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Kth Largest Element in an Array. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Quick Select (Optimal) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the kth-largest-in-array problem. | 我先重述陣列第 k 大問題。 | Restatement |
+| We are given an unsorted integer array and k. | 題目給未排序整數陣列與 k。 | Restatement |
+| We need the k-th largest value, counting duplicates normally. | 要找第 k 大值，重複值照常計算。 | Restatement |
+| This is selection, not full sorting requirement. | 這是選擇問題，不是一定要全排序。 | Restatement |
+| We can solve with quick select or heap. | 可以用 quick select 或 heap。 | Restatement |
+| I will present quick select as primary optimized approach. | 我會以 quick select 作主要優化法。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Are duplicates counted as separate positions? | 重複值是否分別計算名次？ | Clarify |
+| Is in-place modification of nums allowed? | 可以原地修改 nums 嗎？ | Clarify |
+| Do we always have one less than or equal k less than or equal n? | 是否保證 1 <= k <= n？ | Clarify |
+| Do you prefer average O(n) quick select discussion? | 你希望強調平均 O(n) quick select 嗎？ | Clarify |
+| Should I also mention heap O(n log k) alternative? | 是否也要提 heap O(n log k) 替代法？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N \log N) from source. | 來源暴力時間約 O(N \log N)。 | Approach |
-| Brute space is about O(1) from source. | 來源暴力空間約 O(1)。 | Approach |
+| Brute force sorts full array in ascending order. | 暴力法把整個陣列升序排序。 | Approach |
+| Then answer is at index n minus k. | 接著答案在索引 n-k。 | Approach |
+| Runtime is O(n log n), which is not optimal. | 時間 O(n log n)，不是最佳。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Quick Select (Optimal). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N) from source. | 來源優化時間為 O(N)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Optimized approach uses quick select partition idea. | 優化法用 quick select 的 partition 概念。 | Approach |
+| We can transform to finding index k minus one in descending order. | 轉成降序下找索引 k-1。 | Approach |
+| Each partition puts pivot near its final relative position. | 每次 partition 會把 pivot 放到相對正確區域。 | Approach |
+| We recurse or iterate only on one relevant side. | 只在有機會含答案的一側繼續。 | Approach |
+| Average runtime is O(n), worst case O(n squared). | 平均 O(n)，最壞 O(n²)。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize priority_queue with source ordering. | 依來源步驟執行。 | Coding |
-| Next, I push initial items into heap structure. | 依來源步驟執行。 | Coding |
-| Then, I sort data where source method requires ordering. | 依來源步驟執行。 | Coding |
-| Next, I pop or push by problem condition. | 依來源步驟執行。 | Coding |
-| Then, I keep heap size or priority invariant. | 依來源步驟執行。 | Coding |
-| Next, I update answer when top element changes. | 依來源步驟執行。 | Coding |
-| Then, I continue until all operations finish. | 依來源步驟執行。 | Coding |
-| Next, I return result built from heap state. | 依來源步驟執行。 | Coding |
+| I call nth_element with comparator greater for descending logic. | 我用 greater 比較器呼叫 nth_element。 | Coding |
+| Target iterator is nums begin plus k minus one. | 目標迭代器是 nums.begin()+k-1。 | Coding |
+| nth_element ensures that position has the correct element. | nth_element 會保證該位置元素正確。 | Coding |
+| Elements before target are not smaller than target by comparator. | 目標前元素依比較器不小於目標。 | Coding |
+| Elements after target are not larger than target by comparator. | 目標後元素依比較器不大於目標。 | Coding |
+| I then return nums at index k minus one. | 然後回傳 nums[k-1]。 | Coding |
+| This avoids full sorting overhead. | 這可避免完整排序成本。 | Coding |
+| I can mention heap variant if interviewer asks. | 若面試官問，我可補充 heap 版本。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: nums = [3,2,1,5,6,4], k = 2. | 範例輸入：nums = [3,2,1,5,6,4], k = 2。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 5. | 預期輸出：5。 | Dry-run |
+| Let me dry-run nums [3,2,1,5,6,4] with k equals 2. | 我手跑 nums [3,2,1,5,6,4]、k=2。 | Dry-run |
+| Target in descending index one should become second largest. | 降序索引 1 應成為第二大。 | Dry-run |
+| After nth_element, nums[1] is guaranteed to be correct answer. | 執行後 nums[1] 保證是正確答案。 | Dry-run |
+| For this sample, that value is five. | 這個範例該值是 5。 | Dry-run |
+| We do not care about full order of other positions. | 其他位置不需完全排序。 | Dry-run |
+| Returned result is five, matching expected output. | 回傳 5，與預期一致。 | Dry-run |
+| Duplicate handling stays natural in this formulation. | 這種作法對重複值處理自然。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: k equals one returns global maximum. | 案例一：k=1 回傳全域最大值。 | Edge test |
+| Case two: k equals n returns global minimum. | 案例二：k=n 回傳全域最小值。 | Edge test |
+| Case three: all numbers equal should return that value. | 案例三：全部相等應回同一值。 | Edge test |
+| Case four: duplicates around boundary rank. | 案例四：邊界名次附近有重複值。 | Edge test |
+| Case five: negative and positive mixed values. | 案例五：正負數混合情況。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N). | 時間複雜度是 O(N)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Average time complexity is O(n), worst case O(n squared). | 平均時間 O(n)，最壞 O(n²)。 | Complexity |
+| Extra space is O(1) excluding recursion stack internals. | 額外空間 O(1)（不含內部遞迴堆疊）。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N). | 來源主要時間為 O(N)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Quick select partitions array and only explores one side each step. | quick select 每步 partition 並只往一側繼續。 | Complexity |
+| Expected remaining size shrinks geometrically on average. | 平均下剩餘規模呈幾何縮小。 | Complexity |
+| So average runtime is O(n), but worst partition pattern can hit O(n squared). | 所以平均 O(n)，最壞切分會到 O(n²)。 | Complexity |
+| In-place rearrangement keeps auxiliary memory near O(1). | 原地重排讓輔助記憶體約 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me restate: I need one rank, not full sorted array. | 我先重述：只要一個名次，不要全排序。 | If stuck |
+| That suggests selection algorithm immediately. | 這立刻指向 selection 演算法。 | If stuck |
+| I can still mention sorting as baseline. | 我仍可先提排序作基線。 | If stuck |
+| Then I pivot to quick select for better average time. | 然後切到 quick select 取得較佳平均時間。 | If stuck |
+| I should be careful with k index conversion. | 我要小心 k 的索引轉換。 | If stuck |
+| With descending comparator, target is index k minus one. | 用降序比較器時目標是 k-1。 | If stuck |
+| Let me validate with sample where answer is five. | 我用答案為 5 的範例驗證。 | If stuck |
+| Result matches, so index mapping is correct. | 結果吻合，索引映射正確。 | If stuck |
+| If interviewer prefers, I can offer min-heap version. | 若面試官偏好，我可提供 min-heap 版本。 | If stuck |
+| Great, I am ready to finalize complexity and trade-offs. | 很好，我可收尾複雜度與取捨。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it with quick select style nth_element. | 我用 quick select 風格的 nth_element 解題。 | Wrap-up |
+| This targets kth largest directly without full sort. | 這能直接定位第 k 大，不用全排序。 | Wrap-up |
+| Average complexity is O(n), with worst-case O(n squared). | 平均複雜度 O(n)，最壞 O(n²)。 | Wrap-up |
+| Space overhead is minimal due to in-place partitioning. | 因原地切分，空間額外開銷很小。 | Wrap-up |
+| I can also provide heap alternative O(n log k). | 我也可提供 heap 替代法 O(n log k)。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Problem type: selection by rank. | 題型：按名次做 selection。 | Cheat sheet |
+| Need kth largest with duplicates counted. | 要找第 k 大，重複照算。 | Cheat sheet |
+| Baseline: sort then pick n-k. | 基線：排序後取 n-k。 | Cheat sheet |
+| Baseline runtime O(n log n). | 基線時間 O(n log n)。 | Cheat sheet |
+| Optimized: quick select partition. | 優化：quick select partition。 | Cheat sheet |
+| Use nth_element in C++. | C++ 可用 nth_element。 | Cheat sheet |
+| Comparator greater gives descending relation. | greater 比較器代表降序關係。 | Cheat sheet |
+| Target index is k minus one. | 目標索引是 k-1。 | Cheat sheet |
+| Return nums at target index. | 回傳目標索引元素。 | Cheat sheet |
+| Full array order is unnecessary. | 不需要整體完全有序。 | Cheat sheet |
+| Average runtime O(n). | 平均時間 O(n)。 | Cheat sheet |
+| Worst runtime O(n squared). | 最壞時間 O(n²)。 | Cheat sheet |
+| Aux space about O(1). | 輔助空間約 O(1)。 | Cheat sheet |
+| Edge: k equals one. | 邊界：k=1。 | Cheat sheet |
+| Edge: k equals n. | 邊界：k=n。 | Cheat sheet |
+| Handle duplicates naturally. | 重複值自然處理。 | Cheat sheet |
+| Handle negative values too. | 負數也可處理。 | Cheat sheet |
+| Common bug: wrong k index conversion. | 常見錯誤：k 索引轉換錯。 | Cheat sheet |
+| Alternative: min-heap size k. | 替代法：size-k min-heap。 | Cheat sheet |
+| Heap complexity O(n log k). | heap 複雜度 O(n log k)。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Quick select / `nth_element` primary approach preserved.
+- No hallucinated constraints: ✅ Uses source-defined semantics and duplicate handling.
+- Language simplicity: ✅ Natural interview phrasing with precise technical terms.

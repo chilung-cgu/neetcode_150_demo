@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Maximum Depth of Binary Tree. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Recursive DFS as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the max-depth problem. | 我先重述最大深度題。 | Restatement |
+| We need the number of nodes on the longest root-to-leaf path. | 要求 root 到最深 leaf 路徑上的節點數。 | Restatement |
+| Empty tree depth is zero. | 空樹深度定義為 0。 | Restatement |
+| Non-empty node depth depends on deeper subtree. | 非空節點深度取決於較深的子樹。 | Restatement |
+| This is a classic DFS recursion pattern. | 這是經典 DFS 遞迴模式。 | Restatement |
+| I will return one plus max of left and right depths. | 我會回傳 1+max(左深度,右深度)。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can root be null in test cases? | 測資中 root 可能為 null 嗎？ | Clarify |
+| Is depth measured by node count, not edge count? | 深度是用節點數而非邊數對嗎？ | Clarify |
+| Do you prefer recursive DFS as primary answer? | 主要答案偏好遞迴 DFS 嗎？ | Clarify |
+| Should I also mention iterative BFS level-order method? | 要不要也提 BFS 層序法？ | Clarify |
+| Is O(n) expected as optimal runtime? | 最佳時間是否就是 O(n)？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,55 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about [CHECK] from source. | 來源暴力時間約 [CHECK]。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| A naive thought is enumerating all root-to-leaf paths explicitly. | 直觀想法是枚舉所有 root-to-leaf 路徑。 | Approach |
+| Then choose the longest path length. | 再挑最長路徑長度。 | Approach |
+| It is unnecessary because DFS already captures this directly. | 但其實 DFS 可直接完成，不需額外枚舉。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Recursive DFS. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(h) from source. | 來源優化空間為 O(h)。 | Approach |
+| Use post-order DFS to get child depths first. | 用後序 DFS 先取得子樹深度。 | Approach |
+| Base case null returns zero. | base case：null 回傳 0。 | Approach |
+| For node, compute leftDepth and rightDepth recursively. | 對節點遞迴求 leftDepth 與 rightDepth。 | Approach |
+| Current depth is one plus max of two depths. | 當前深度是 1 加上兩者較大值。 | Approach |
+| Return this upward until root gives final answer. | 逐層回傳，root 即最終答案。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define traversal order based on source method. | 依來源步驟執行。 | Coding |
-| Next, I initialize recursion or queue structures. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process nodes level by level with queue. | 依來源步驟執行。 | Coding |
-| Then, I process current node value and state. | 依來源步驟執行。 | Coding |
-| Next, I visit left and right children by rule. | 依來源步驟執行。 | Coding |
-| Then, I update answer during traversal. | 依來源步驟執行。 | Coding |
-| Next, I handle null node base case carefully. | 依來源步驟執行。 | Coding |
-| Finally, I return final aggregated tree result. | 依來源步驟執行。 | Coding |
+| First, if root is null, return zero. | 先判斷 root 為 null 就回傳 0。 | Coding |
+| I recursively compute depth of root left subtree. | 遞迴計算 root 左子樹深度。 | Coding |
+| I recursively compute depth of root right subtree. | 遞迴計算 root 右子樹深度。 | Coding |
+| I compare the two depths and pick the larger one. | 比較兩側深度並取較大值。 | Coding |
+| I add one for current root node level. | 為當前節點層數再加 1。 | Coding |
+| I return that value to parent caller. | 把這個值回傳給上一層。 | Coding |
+| Recursion unwinds until original root call completes. | 遞迴回捲直到原始 root 呼叫完成。 | Coding |
+| Final returned value is maximum depth. | 最終回傳值就是最大深度。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: root = [3,9,20,null,null,15,7]. | 範例輸入：root = [3,9,20,null,null,15,7]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 3. | 預期輸出：3。 | Dry-run |
+| Let me dry-run root [3,9,20,null,null,15,7]. | 我手跑 root=[3,9,20,null,null,15,7]。 | Dry-run |
+| Node 9 has no children, so its depth is one. | 節點 9 無子節點，深度為 1。 | Dry-run |
+| Node 15 and node 7 are leaves, each depth is one. | 節點 15 與 7 都是葉節點，深度各為 1。 | Dry-run |
+| Node 20 depth becomes one plus max of one and one, so two. | 節點 20 深度是 1+max(1,1)=2。 | Dry-run |
+| Root 3 depth becomes one plus max of one and two, so three. | 根節點 3 深度是 1+max(1,2)=3。 | Dry-run |
+| Final answer is three. | 最終答案是 3。 | Dry-run |
+| This matches expected output. | 這與預期輸出一致。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: empty tree. | 案例一：空樹。 | Edge test |
+| Case two: single-node tree. | 案例二：單節點樹。 | Edge test |
+| Case three: completely skewed tree. | 案例三：完全斜樹。 | Edge test |
+| Case four: perfectly balanced tree. | 案例四：完美平衡樹。 | Edge test |
+| Case five: mixed null children at different levels. | 案例五：不同層級夾雜 null 子節點。 | Edge test |
 
 ## 7) Complexity script
 
@@ -88,71 +87,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(h). | 空間複雜度是 O(h)。 | Complexity |
+| Space complexity is O(h) due to recursion stack. | 空間複雜度是 O(h)（遞迴堆疊）。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(h). | 來源額外空間為 O(h)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Every node is visited exactly once by DFS. | DFS 對每個節點恰好訪問一次。 | Complexity |
+| Per node work is constant-time max and add operations. | 每節點只做常數時間比較與加法。 | Complexity |
+| Call-stack depth equals current tree height h. | 呼叫堆疊深度等於樹高 h。 | Complexity |
+| Worst skew gives O(n) stack, balanced gives O(log n). | 最壞斜樹是 O(n)，平衡樹是 O(log n)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me recheck the depth definition first. | 我先重檢深度定義。 | If stuck |
+| Here depth counts nodes, not edges. | 這題深度是數節點，不是數邊。 | If stuck |
+| Base case must return zero for null. | base case 對 null 必須回傳 0。 | If stuck |
+| I might have returned one for null by mistake. | 我可能誤把 null 回傳成 1。 | If stuck |
+| Let me fix that and rerun the sample. | 我修正後重跑範例。 | If stuck |
+| I also verify skewed-tree output. | 我也驗證斜樹輸出。 | If stuck |
+| Now recursion values propagate correctly. | 現在遞迴值傳遞正確。 | If stuck |
+| Root gets the proper maximum depth. | root 能拿到正確最大深度。 | If stuck |
+| Great, complexity target is still O(n). | 很好，複雜度仍是 O(n)。 | If stuck |
+| I can now finalize confidently. | 我現在可放心收尾。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(h). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished recursive maximum-depth implementation. | 我完成了遞迴最大深度實作。 | Wrap-up |
+| I validated empty, leaf, and skewed-tree cases. | 我驗證了空樹、葉節點與斜樹案例。 | Wrap-up |
+| Runtime is O(n). | 時間複雜度是 O(n)。 | Wrap-up |
+| Space is O(h) recursion stack. | 空間是 O(h) 遞迴堆疊。 | Wrap-up |
+| I can provide BFS level-order variant if needed. | 若需要我可提供 BFS 層序版本。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(h). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Find maximum depth of binary tree. | 求二元樹最大深度。 | Cheat sheet |
+| Empty tree depth is zero. | 空樹深度是 0。 | Cheat sheet |
+| Depth counts nodes on path. | 深度以路徑節點數計算。 | Cheat sheet |
+| Use recursive DFS. | 使用遞迴 DFS。 | Cheat sheet |
+| Base case null returns 0. | base case：null 回傳 0。 | Cheat sheet |
+| leftDepth = dfs(left). | leftDepth = dfs(left)。 | Cheat sheet |
+| rightDepth = dfs(right). | rightDepth = dfs(right)。 | Cheat sheet |
+| return 1 + max(leftDepth, rightDepth). | 回傳 1+max(leftDepth,rightDepth)。 | Cheat sheet |
+| Visit each node once. | 每個節點只訪問一次。 | Cheat sheet |
+| Time is O(n). | 時間是 O(n)。 | Cheat sheet |
+| Stack space is O(h). | 堆疊空間是 O(h)。 | Cheat sheet |
+| Test empty-tree case. | 測空樹案例。 | Cheat sheet |
+| Test single-node case. | 測單節點案例。 | Cheat sheet |
+| Test skewed-tree case. | 測斜樹案例。 | Cheat sheet |
+| Test balanced-tree case. | 測平衡樹案例。 | Cheat sheet |
+| Bug risk: wrong base return value. | 風險：base 回傳值寫錯。 | Cheat sheet |
+| Bug risk: using min instead of max. | 風險：誤用 min 而非 max。 | Cheat sheet |
+| Mention BFS alternative. | 可提 BFS 替代法。 | Cheat sheet |
+| Keep explanation bottom-up. | 說明採 bottom-up。 | Cheat sheet |
+| End with numeric depth confirmation. | 收尾確認深度數值。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Recursive depth formula is preserved.
+- No hallucinated constraints: ✅ Uses source depth definition and constraints.
+- Language simplicity: ✅ Concise spoken lines for interviews.

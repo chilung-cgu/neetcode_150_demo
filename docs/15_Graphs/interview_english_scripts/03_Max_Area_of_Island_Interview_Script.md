@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Max Area of Island. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use DFS (Recursive) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate max area of island. | 我先重述 Max Area of Island。 | Restatement |
+| We have a binary grid with land one and water zero. | 題目給二元網格，1 是陸地、0 是水。 | Restatement |
+| An island is four-direction connected land. | 島嶼定義為四方向連通陸地。 | Restatement |
+| We need the maximum area among all islands. | 要找所有島嶼中的最大面積。 | Restatement |
+| If there is no land, answer is zero. | 若完全沒有陸地，答案是 0。 | Restatement |
+| I will use DFS to compute each component area. | 我會用 DFS 計算每個連通分量面積。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I modify the grid in place for visited marking? | 可以原地修改 grid 做 visited 標記嗎？ | Clarify |
+| Are diagonals excluded from island connectivity? | 對角是否不算連通？ | Clarify |
+| Is grid guaranteed non-empty? | grid 是否保證非空？ | Clarify |
+| Are cell values strictly integers zero and one? | cell 是否只會是整數 0 與 1？ | Clarify |
+| Should I return area only, not coordinates? | 是否只回面積，不需回座標？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,55 +31,56 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about [CHECK] from source. | 來源暴力時間約 [CHECK]。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Recomputing area from many cells without proper marking repeats work. | 若未妥善標記，從多點重算面積會重複工作。 | Approach |
+| That leads to much higher cost than needed. | 這會導致不必要的高成本。 | Approach |
+| We should ensure each land cell is consumed once. | 我們應確保每塊陸地只被處理一次。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses DFS (Recursive). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(M \times N) from source. | 來源優化時間為 O(M \times N)。 | Approach |
-| Optimized space is O(M \times N) from source. | 來源優化空間為 O(M \times N)。 | Approach |
+| Scan all cells in the grid. | 掃描網格的所有格子。 | Approach |
+| When a land cell appears, run DFS to get this island area. | 遇到陸地就做 DFS 取得該島面積。 | Approach |
+| DFS returns one plus areas of four neighbors. | DFS 回傳 1 加上四個鄰居面積。 | Approach |
+| Mark visited land as zero to avoid recounting. | 把已訪問陸地標成 0 避免重算。 | Approach |
+| Track global maximum area over all DFS results. | 對所有 DFS 結果維護全域最大值。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I build adjacency representation from input. | 依來源步驟執行。 | Coding |
-| Next, I initialize visited set or color state. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process nodes level by level with queue. | 依來源步驟執行。 | Coding |
-| Then, I start DFS or BFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process current node and neighbors. | 依來源步驟執行。 | Coding |
-| Then, I mark nodes to prevent repeated work. | 依來源步驟執行。 | Coding |
-| Next, I update answer during traversal. | 依來源步驟執行。 | Coding |
-| Finally, I return final graph result. | 依來源步驟執行。 | Coding |
+| I initialize maxArea as zero. | 我先把 maxArea 初始化為 0。 | Coding |
+| I loop through every row and column cell. | 我遍歷每一列每一行格子。 | Coding |
+| If current cell is land one, I call dfs. | 若當前格為 1，我呼叫 dfs。 | Coding |
+| I update maxArea with max of itself and returned area. | 我用回傳面積更新 maxArea。 | Coding |
+| In dfs, out of bounds or water returns zero. | dfs 中越界或水直接回 0。 | Coding |
+| Otherwise mark current cell to zero immediately. | 否則立即把當前格標成 0。 | Coding |
+| Then compute area as one plus four recursive calls. | 面積計為 1 加四方向遞迴。 | Coding |
+| Return computed area to caller. | 把計算面積回傳給呼叫端。 | Coding |
+| Continue scan until all cells are processed. | 持續掃描直到所有格子處理完。 | Coding |
+| Return maxArea at the end. | 最後回傳 maxArea。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: . | 範例輸入：。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 6. | 預期輸出：6。 | Dry-run |
+| Let me dry-run the sample where answer is six. | 我手跑答案為 6 的範例。 | Dry-run |
+| Scan finds a land component in the middle-right region. | 掃描會找到中右區的一個陸地分量。 | Dry-run |
+| DFS expands through connected ones and counts cells. | DFS 會沿連通 1 擴展並累計格數。 | Dry-run |
+| That component area becomes six. | 那個分量面積會得到 6。 | Dry-run |
+| Other components are smaller than six. | 其他分量都小於 6。 | Dry-run |
+| maxArea stays six after full scan. | 全掃描後 maxArea 維持 6。 | Dry-run |
+| Final output is six. | 最終輸出為 6。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: all zeros returns zero. | 案例一：全 0 回 0。 | Edge test |
+| Case two: one single land cell returns one. | 案例二：單一陸地格回 1。 | Edge test |
+| Case three: all ones grid returns rows times cols. | 案例三：全 1 網格回 rows*cols。 | Edge test |
+| Case four: multiple islands with same area. | 案例四：多座島且面積相同。 | Edge test |
+| Case five: diagonal-only touching lands stay separate. | 案例五：僅對角接觸的陸地仍分開。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,72 +88,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(M \times N). | 時間複雜度是 O(M \times N)。 | Complexity |
-| Space complexity is O(M \times N). | 空間複雜度是 O(M \times N)。 | Complexity |
+| Time complexity is O(rows times cols). | 時間複雜度是 O(rows*cols)。 | Complexity |
+| Space complexity is O(rows times cols) worst case recursion depth. | 空間最壞是 O(rows*cols) 的遞迴深度。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(M \times N). | 來源主要時間為 O(M \times N)。 | Complexity |
-| Extra memory from source is O(M \times N). | 來源額外空間為 O(M \times N)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Each cell is visited at most once because visited land is turned to zero. | 每格最多訪問一次，因為訪問後會改成 0。 | Complexity |
+| So total operations are linear in number of cells. | 所以總操作量對格子數是線性。 | Complexity |
+| Recursive DFS stack is the main extra memory. | 遞迴 DFS 堆疊是主要額外記憶體。 | Complexity |
+| In worst case one huge island, stack can reach rows times cols. | 最壞單一大島時，堆疊可達 rows*cols。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me align this with number of islands pattern. | 我先把它對齊 Number of Islands 模式。 | If stuck |
+| Difference is we return largest component size. | 差別是這題回傳最大分量大小。 | If stuck |
+| DFS should return area, not just mark visited. | DFS 要回面積，不只是標記。 | If stuck |
+| Base case returns zero for water or boundary. | 基底情況對水或越界回 0。 | If stuck |
+| Current land contributes one area unit. | 當前陸地貢獻 1 單位面積。 | If stuck |
+| Add four recursive neighbor areas. | 再加上四方向遞迴面積。 | If stuck |
+| Mark current cell before recursive calls. | 在遞迴前先標記當前格。 | If stuck |
+| That prevents infinite revisits. | 這可避免無限重訪。 | If stuck |
+| Then update global max after each DFS. | 每次 DFS 後更新全域最大值。 | If stuck |
+| Great, now implementation is straightforward. | 很好，現在實作很直接。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(M \times N), space is O(M \times N). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it by DFS area computation on each island. | 我用每座島 DFS 面積計算解題。 | Wrap-up |
+| In-place marking ensures each land is counted once. | 原地標記確保每塊陸地只算一次。 | Wrap-up |
+| We keep the largest returned component area. | 持續保留最大分量面積。 | Wrap-up |
+| Complexity is O(mn) time and O(mn) worst-case stack space. | 複雜度是 O(mn) 時間與 O(mn) 最壞堆疊空間。 | Wrap-up |
+| This is the standard flood-fill maximum-component template. | 這是標準 flood-fill 最大分量模板。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: largest area among all islands. | 目標：所有島嶼中的最大面積。 | Cheat sheet |
+| One is land, zero is water. | 1 是陸地，0 是水。 | Cheat sheet |
+| Four-direction connectivity only. | 僅四方向連通。 | Cheat sheet |
+| Scan every cell in grid. | 掃描每個格子。 | Cheat sheet |
+| On land, run DFS. | 遇陸地就跑 DFS。 | Cheat sheet |
+| DFS base out of bounds returns zero. | DFS 越界回 0。 | Cheat sheet |
+| DFS base water returns zero. | DFS 遇水回 0。 | Cheat sheet |
+| Mark land as zero when visited. | 訪問時把陸地改 0。 | Cheat sheet |
+| Area = one plus four DFS calls. | 面積=1+四向 DFS。 | Cheat sheet |
+| Update maxArea after each DFS. | 每次 DFS 後更新 maxArea。 | Cheat sheet |
+| Return maxArea. | 回傳 maxArea。 | Cheat sheet |
+| All water means answer zero. | 全水答案為 0。 | Cheat sheet |
+| Single land means answer one. | 單陸地答案為 1。 | Cheat sheet |
+| Full land means answer rows*cols. | 全陸地答案 rows*cols。 | Cheat sheet |
+| Time O(mn). | 時間 O(mn)。 | Cheat sheet |
+| Stack worst O(mn). | 堆疊最壞 O(mn)。 | Cheat sheet |
+| BFS variant also works. | BFS 版本也可行。 | Cheat sheet |
+| Avoid diagonal connections. | 不要把對角當連通。 | Cheat sheet |
+| Mark before recursive expand. | 先標記再遞迴擴展。 | Cheat sheet |
+| Keep explanation centered on components. | 說明重點放在連通分量。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ DFS recursive area sum with in-place sink.
+- No hallucinated constraints: ✅ Four-direction and zero-land behavior preserved.
+- Language simplicity: ✅ Concise interview-safe steps.

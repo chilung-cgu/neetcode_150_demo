@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Surrounded Regions. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Boundary DFS as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate surrounded regions. | 我先重述 Surrounded Regions。 | Restatement |
+| We have a board with X and O. | 題目給一個只含 X 與 O 的棋盤。 | Restatement |
+| Any O fully surrounded by X should be flipped to X. | 被 X 完整包圍的 O 要翻成 X。 | Restatement |
+| Border-connected O cells should stay O. | 與邊界連通的 O 要保留。 | Restatement |
+| We modify the board in place. | 題目要求原地修改棋盤。 | Restatement |
+| I will mark safe border regions first, then flip others. | 我會先標安全邊界區，再翻其餘格子。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is board guaranteed non-empty? | board 是否保證非空？ | Clarify |
+| Is connectivity four directions only? | 連通是否只算四方向？ | Clarify |
+| Should diagonal O cells be treated as disconnected? | 對角 O 是否視為不連通？ | Clarify |
+| Can I use temporary marker like T for safe O? | 可以用暫存標記例如 T 嗎？ | Clarify |
+| Should function return void and mutate input? | 函式是否回 void 並直接改輸入？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,55 +31,56 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about [CHECK] from source. | 來源暴力時間約 [CHECK]。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force checks every O to see if it can reach border. | 暴力法對每個 O 都檢查能否連到邊界。 | Approach |
+| That repeats many searches across same regions. | 這會在相同區域重複搜尋。 | Approach |
+| We need one global border-driven traversal instead. | 我們需要一次全域邊界驅動遍歷。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Boundary DFS. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(M \times N) from source. | 來源優化時間為 O(M \times N)。 | Approach |
-| Optimized space is O(M \times N) from source. | 來源優化空間為 O(M \times N)。 | Approach |
+| Reverse viewpoint: first protect O connected to border. | 反向思考：先保護連到邊界的 O。 | Approach |
+| Run DFS from all border O and mark them as T. | 從所有邊界 O 做 DFS，標成 T。 | Approach |
+| After marking, all remaining O are truly surrounded. | 標記後剩下的 O 就是真正被包圍。 | Approach |
+| Flip remaining O to X. | 把剩餘 O 翻成 X。 | Approach |
+| Convert T back to O to restore safe regions. | 最後把 T 還原為 O。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I build adjacency representation from input. | 依來源步驟執行。 | Coding |
-| Next, I initialize visited set or color state. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process nodes level by level with queue. | 依來源步驟執行。 | Coding |
-| Then, I start DFS or BFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process current node and neighbors. | 依來源步驟執行。 | Coding |
-| Then, I mark nodes to prevent repeated work. | 依來源步驟執行。 | Coding |
-| Next, I update answer during traversal. | 依來源步驟執行。 | Coding |
-| Finally, I return final graph result. | 依來源步驟執行。 | Coding |
+| I get rows and cols from board. | 我先取得 rows 與 cols。 | Coding |
+| I scan first and last rows for border O. | 我掃第一列與最後一列的邊界 O。 | Coding |
+| I run DFS on each border O to mark T. | 對每個邊界 O 執行 DFS 標記 T。 | Coding |
+| I scan first and last columns similarly. | 第一欄與最後一欄也同樣處理。 | Coding |
+| DFS stops on out of bounds or non-O cell. | DFS 遇越界或非 O 就停止。 | Coding |
+| DFS marks O as T and expands four directions. | DFS 把 O 標成 T 並向四方向擴展。 | Coding |
+| After border marking, I scan whole board. | 邊界標記後我掃整張棋盤。 | Coding |
+| If cell is O, flip to X. | 若格子是 O，就翻成 X。 | Coding |
+| If cell is T, restore to O. | 若格子是 T，就還原成 O。 | Coding |
+| Done, board now satisfies surrounded rule. | 完成後棋盤就符合包圍規則。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: . | 範例輸入：。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: . | 預期輸出：。 | Dry-run |
+| Let me dry-run the classic four-by-four sample. | 我手跑經典 4x4 範例。 | Dry-run |
+| Border scan finds only the O at bottom row second column. | 邊界掃描只找到底列第二欄那個 O。 | Dry-run |
+| DFS marks that border-connected region as T. | DFS 把該邊界連通區標為 T。 | Dry-run |
+| Inner O cells not connected to border remain O for now. | 內部未連邊界的 O 暫時保持 O。 | Dry-run |
+| Full scan flips those inner O cells to X. | 全掃描時把這些內部 O 翻成 X。 | Dry-run |
+| T cells are restored back to O. | T 格子最後還原成 O。 | Dry-run |
+| Final board matches expected output. | 最終棋盤與預期輸出一致。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: all X board stays unchanged. | 案例一：全 X 棋盤不變。 | Edge test |
+| Case two: all O board keeps border-connected region, often all remain O. | 案例二：全 O 棋盤保留邊界連通區，常全部保留。 | Edge test |
+| Case three: single row board should never flip due to border contact. | 案例三：單列棋盤因都接邊界，通常不翻。 | Edge test |
+| Case four: single column board same behavior. | 案例四：單欄棋盤同理。 | Edge test |
+| Case five: isolated center O inside X should flip. | 案例五：被 X 包圍的中心 O 要翻。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,72 +88,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(M \times N). | 時間複雜度是 O(M \times N)。 | Complexity |
-| Space complexity is O(M \times N). | 空間複雜度是 O(M \times N)。 | Complexity |
+| Time complexity is O(rows times cols). | 時間複雜度是 O(rows*cols)。 | Complexity |
+| Space complexity is O(rows times cols) worst case recursion stack. | 空間最壞是 O(rows*cols) 的遞迴堆疊。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(M \times N). | 來源主要時間為 O(M \times N)。 | Complexity |
-| Extra memory from source is O(M \times N). | 來源額外空間為 O(M \times N)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Border DFS visits each cell at most once for marking. | 邊界 DFS 對每格最多標記一次。 | Complexity |
+| Final board conversion scan is linear in cell count. | 最後轉換掃描對格數是線性。 | Complexity |
+| Combined runtime is O(mn). | 合併後總時間是 O(mn)。 | Complexity |
+| Recursive DFS stack can reach O(mn) in worst connected case. | 最壞連通情況下遞迴堆疊可達 O(mn)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me avoid checking each O independently. | 我避免逐格獨立檢查每個 O。 | If stuck |
+| Border-connected O cells are the only safe ones. | 只有邊界連通 O 是安全區。 | If stuck |
+| I should mark safe cells first, not surrounded cells first. | 我應先標安全格，不是先找被包圍格。 | If stuck |
+| Temporary mark T helps separate two groups. | 暫存標記 T 可清楚分群。 | If stuck |
+| DFS from borders captures all safe O components. | 從邊界 DFS 可抓出全部安全 O 分量。 | If stuck |
+| Then flip remaining O to X confidently. | 然後可放心把剩餘 O 翻成 X。 | If stuck |
+| Restore T back to O at the end. | 最後把 T 還原成 O。 | If stuck |
+| Let me test with one center O example. | 我用中心單一 O 例子快速驗證。 | If stuck |
+| It should be flipped because no border path. | 它應被翻轉，因為無邊界路徑。 | If stuck |
+| Great, logic is now clear and robust. | 很好，邏輯已清楚且穩健。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(M \times N), space is O(M \times N). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it using border-first DFS marking. | 我用邊界優先 DFS 標記法解題。 | Wrap-up |
+| Border-connected O are preserved as safe cells. | 邊界連通 O 被保留為安全格。 | Wrap-up |
+| Unmarked O are surrounded and flipped to X. | 未標記 O 即被包圍，會翻成 X。 | Wrap-up |
+| Complexity is O(mn) time and O(mn) worst-case stack space. | 複雜度是 O(mn) 時間與 O(mn) 最壞堆疊空間。 | Wrap-up |
+| This is the standard reverse-thinking region-capture pattern. | 這是區域捕獲題的標準反向思考模式。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: flip surrounded O to X. | 目標：把被包圍 O 翻成 X。 | Cheat sheet |
+| Border-connected O must stay O. | 邊界連通 O 必須保留。 | Cheat sheet |
+| Reverse approach: mark safe first. | 反向法：先標安全區。 | Cheat sheet |
+| DFS from top and bottom borders. | 從上、下邊界做 DFS。 | Cheat sheet |
+| DFS from left and right borders. | 從左、右邊界做 DFS。 | Cheat sheet |
+| Only expand from O cells. | 只從 O 格擴展。 | Cheat sheet |
+| Mark safe O as T. | 安全 O 標成 T。 | Cheat sheet |
+| Scan entire board afterward. | 之後掃描整張棋盤。 | Cheat sheet |
+| O -> X for surrounded region. | O -> X 代表被包圍區。 | Cheat sheet |
+| T -> O restore safe region. | T -> O 還原安全區。 | Cheat sheet |
+| Do operation in place. | 原地修改。 | Cheat sheet |
+| Diagonal does not connect. | 對角不連通。 | Cheat sheet |
+| All X stays same. | 全 X 不變。 | Cheat sheet |
+| Single row often unchanged. | 單列通常不變。 | Cheat sheet |
+| Single column often unchanged. | 單欄通常不變。 | Cheat sheet |
+| Time O(mn). | 時間 O(mn)。 | Cheat sheet |
+| Stack worst O(mn). | 堆疊最壞 O(mn)。 | Cheat sheet |
+| Common bug: forgetting restore T. | 常見錯誤：忘記還原 T。 | Cheat sheet |
+| Common bug: starting DFS from every O. | 常見錯誤：從每個 O 啟 DFS。 | Cheat sheet |
+| Explain safe-versus-captured clearly. | 清楚說明安全區與被捕獲區。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Border DFS mark-then-flip strategy preserved.
+- No hallucinated constraints: ✅ In-place mutation and four-direction logic kept.
+- Language simplicity: ✅ Practical interview-style wording.

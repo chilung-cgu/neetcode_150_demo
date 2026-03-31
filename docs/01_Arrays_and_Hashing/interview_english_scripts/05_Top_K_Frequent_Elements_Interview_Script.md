@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Top K Frequent Elements. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Bucket Sort (O(n) - Best) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the problem first. | 我先重述題目。 | Restatement |
+| We need the k most frequent numbers. | 我們要找出前 k 個最高頻數字。 | Restatement |
+| Input is nums and integer k. | 輸入是 nums 和整數 k。 | Restatement |
+| Full sorting may be too slow here. | 全排序在這題可能太慢。 | Restatement |
+| I will use frequency map plus buckets. | 我會用頻率 map 加 buckets。 | Restatement |
+| Then I will verify with a sample. | 接著我會用範例驗證。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is k always between one and unique count? | k 一定介於 1 到 unique 數量嗎？ | Clarify |
+| If tie happens, can I return any order? | 若頻率同分，可以任意順序嗎？ | Clarify |
+| Do you want strictly better than O(n log n)? | 是否要求嚴格優於 O(n log n)？ | Clarify |
+| Can nums include negative numbers? | nums 可能包含負數嗎？ | Clarify |
+| Should I also mention heap alternative? | 也要補充 heap 替代法嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,55 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(n \log n) from source. | 來源暴力時間約 O(n \log n)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Baseline counts frequency, then sorts all pairs. | 基線是先統計頻率，再排序所有 pair。 | Approach |
+| We then take first k items. | 然後取前 k 個項目。 | Approach |
+| Time is O(n log n), not optimal here. | 時間是 O(n log n)，這題不夠好。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Bucket Sort (O(n) - Best). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(n) from source. | 來源優化空間為 O(n)。 | Approach |
+| I first build map from number to frequency. | 我先建立數字到頻率的 map。 | Approach |
+| Frequency range is one to n. | 頻率範圍是 1 到 n。 | Approach |
+| So I create buckets indexed by frequency. | 所以我建立以頻率為索引的 buckets。 | Approach |
+| I scan buckets from high to low frequency. | 我從高頻往低頻掃 buckets。 | Approach |
+| Stop when I collect k numbers. | 收滿 k 個數字就停止。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize priority_queue with source ordering. | 依來源步驟執行。 | Coding |
-| Next, I push initial items into heap structure. | 依來源步驟執行。 | Coding |
-| Then, I use unordered_map for constant-time lookup. | 依來源步驟執行。 | Coding |
-| Next, I sort data where source method requires ordering. | 依來源步驟執行。 | Coding |
-| Then, I pop or push by problem condition. | 依來源步驟執行。 | Coding |
-| Next, I keep heap size or priority invariant. | 依來源步驟執行。 | Coding |
-| Then, I update answer when top element changes. | 依來源步驟執行。 | Coding |
-| Next, I continue until all operations finish. | 依來源步驟執行。 | Coding |
-| Finally, I return result built from heap state. | 依來源步驟執行。 | Coding |
+| First, I create unordered_map<int,int> freq. | 先建立 unordered_map<int,int> freq。 | Coding |
+| Then I count each number in nums. | 然後統計 nums 每個數字。 | Coding |
+| Next, I create vector buckets of size n plus one. | 接著建立大小 n+1 的 buckets。 | Coding |
+| For each pair, push number into bucket[count]. | 對每個 pair，把數字放到 bucket[count]。 | Coding |
+| Then I prepare result vector. | 然後準備結果向量。 | Coding |
+| I scan i from n down to one. | 我讓 i 從 n 遞減到 1。 | Coding |
+| Append numbers in bucket[i] into result. | 把 bucket[i] 的數字加入結果。 | Coding |
+| If result size is k, return immediately. | 若結果大小等於 k，立刻回傳。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: nums = [1,1,1,2,2,3], k = 2. | 範例輸入：nums = [1,1,1,2,2,3], k = 2。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [1,2]. | 預期輸出：[1,2]。 | Dry-run |
+| Let me dry-run nums one, one, one, two, two, three. | 我手跑 nums = 1,1,1,2,2,3。 | Dry-run |
+| k is two. | k 是 2。 | Dry-run |
+| Frequency map becomes one to three, two to two, three to one. | 頻率 map 變成 1:3, 2:2, 3:1。 | Dry-run |
+| So bucket three has one, bucket two has two. | 所以 bucket[3] 有 1，bucket[2] 有 2。 | Dry-run |
+| Scan from high frequency, pick one first. | 從高頻掃描，先拿到 1。 | Dry-run |
+| Next pick two, now size reaches k. | 接著拿到 2，大小達到 k。 | Dry-run |
+| Return [1,2]. | 回傳 [1,2]。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: nums [1], k one, output [1]. | 案例一：nums [1], k=1，輸出 [1]。 | Edge test |
+| Case two: all same values, k one. | 案例二：全部相同值，k=1。 | Edge test |
+| Case three: negatives and positives mixed. | 案例三：正負值混合。 | Edge test |
+| Case four: k equals number of unique values. | 案例四：k 等於 unique 數量。 | Edge test |
+| Case five: tie frequencies, order can vary. | 案例五：同頻率時順序可不同。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(n). | 空間複雜度是 O(n)。 | Complexity |
+| Time is O(n). | 時間是 O(n)。 | Complexity |
+| Space is O(n). | 空間是 O(n)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(n). | 來源額外空間為 O(n)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Counting pass is O(n). | 計數那一輪是 O(n)。 | Complexity |
+| Filling buckets from map is O(n) total. | 從 map 填 bucket 合計 O(n)。 | Complexity |
+| Reverse bucket scan is also O(n). | 反向掃 bucket 也是 O(n)。 | Complexity |
+| Map and buckets both require linear extra space. | map 與 buckets 都需要線性額外空間。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| May I take fifteen seconds to think? | 可以給我十五秒想一下嗎？ | If stuck |
+| Let me confirm k range first. | 我先確認 k 的範圍。 | If stuck |
+| I can explain sort solution first. | 我可以先講排序解法。 | If stuck |
+| Then I switch to bucket solution. | 然後切到 bucket 解法。 | If stuck |
+| I forgot one loop bound only. | 我只是忘了迴圈邊界。 | If stuck |
+| The core idea is still clear. | 但核心概念仍清楚。 | If stuck |
+| Thanks, I will adjust this part. | 謝謝，我會調整這段。 | If stuck |
+| I found why k stopping failed. | 我找到 k 停止條件失敗原因。 | If stuck |
+| Let me rerun the sample quickly. | 我快速重跑範例。 | If stuck |
+| Now output size is exactly k. | 現在輸出大小剛好是 k。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(n). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished the implementation. | 我完成實作了。 | Wrap-up |
+| The bucket scan returns top k correctly. | bucket 掃描可正確回傳前 k。 | Wrap-up |
+| It meets the better-than-sort requirement. | 它符合優於全排序的要求。 | Wrap-up |
+| Time is O(n), space is O(n). | 時間 O(n)，空間 O(n)。 | Wrap-up |
+| I can discuss heap alternative if needed. | 需要的話我可補充 heap 替代法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(n). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Restate top-k-frequency target. | 重述前 k 頻率目標。 | Cheat sheet |
+| Ask if tie order matters. | 詢問同頻順序是否重要。 | Cheat sheet |
+| Baseline sort is O(n log n). | 基線排序是 O(n log n)。 | Cheat sheet |
+| Build frequency map first. | 先建立頻率 map。 | Cheat sheet |
+| Create n+1 frequency buckets. | 建立 n+1 個頻率桶。 | Cheat sheet |
+| Put number into bucket[count]. | 把數字放進 bucket[count]。 | Cheat sheet |
+| Scan buckets from high to low. | 從高頻往低頻掃描 buckets。 | Cheat sheet |
+| Stop exactly when size equals k. | 大小等於 k 就停止。 | Cheat sheet |
+| Dry-run [1,1,1,2,2,3], k=2. | 手跑 [1,1,1,2,2,3], k=2。 | Cheat sheet |
+| Verify single-element case. | 驗證單一元素情況。 | Cheat sheet |
+| Verify k equals unique count. | 驗證 k 等於 unique 數量。 | Cheat sheet |
+| Verify negative numbers case. | 驗證負數案例。 | Cheat sheet |
+| Mention heap as alternative. | 提及 heap 替代方案。 | Cheat sheet |
+| Counting pass is O(n). | 計數回合是 O(n)。 | Cheat sheet |
+| Bucket fill and scan are O(n). | 填桶與掃桶都是 O(n)。 | Cheat sheet |
+| Total time O(n). | 總時間 O(n)。 | Cheat sheet |
+| Extra space O(n). | 額外空間 O(n)。 | Cheat sheet |
+| Keep speaking in coding order. | 依照寫程式順序口述。 | Cheat sheet |
+| End with concise complexity summary. | 以精簡複雜度總結結尾。 | Cheat sheet |
+| Invite follow-up optimization discussion. | 邀請後續優化討論。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Bucket-sort main approach is preserved.
+- No hallucinated constraints: ✅ Ambiguous preferences are asked in clarification lines.
+- Language simplicity: ✅ Short spoken lines suitable for interview use.

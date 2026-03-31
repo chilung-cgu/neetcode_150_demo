@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Two Sum II - Input Array Is Sorted. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Two Pointers as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the problem first. | 我先重述題目。 | Restatement |
+| We have a sorted array called numbers. | 我們有一個已排序陣列 numbers。 | Restatement |
+| We need two values summing to target. | 我們要找兩個值加總等於 target。 | Restatement |
+| Return their one-based indices. | 回傳它們的一基索引。 | Restatement |
+| I will use two pointers from both ends. | 我會用頭尾雙指標。 | Restatement |
+| Then I will verify index format carefully. | 然後我會仔細驗證索引格式。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume exactly one valid solution exists? | 可以假設恰好一組解嗎？ | Clarify |
+| Should returned indices be one-based always? | 回傳索引是否固定一基？ | Clarify |
+| Can values be negative in this sorted array? | 這個排序陣列允許負數嗎？ | Clarify |
+| Is extra memory restricted to O(1)? | 額外記憶體是否限制 O(1)？ | Clarify |
+| Can I return early once pair is found? | 找到配對後可立即回傳嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(n^2) from source. | 來源暴力時間約 O(n^2)。 | Approach |
-| Brute space is about O(1) from source. | 來源暴力空間約 O(1)。 | Approach |
+| Baseline checks all pairs i and j. | 基線是檢查所有 i,j 配對。 | Approach |
+| If sum matches target, return indices. | 若加總符合 target 就回傳索引。 | Approach |
+| Time O(n^2), space O(1). | 時間 O(n^2)，空間 O(1)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Two Pointers. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Since array is sorted, two pointers are natural. | 因為已排序，雙指標很自然。 | Approach |
+| Left starts at zero, right starts at n minus one. | left 從 0，right 從 n-1 開始。 | Approach |
+| If sum is too big, move right leftward. | 若總和過大，right 往左移。 | Approach |
+| If sum is too small, move left rightward. | 若總和過小，left 往右移。 | Approach |
+| Match means return left+1 and right+1. | 相等時回傳 left+1、right+1。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize result and bit variables. | 依來源步驟執行。 | Coding |
-| Next, I apply bitwise operators from source logic. | 依來源步驟執行。 | Coding |
-| Then, I use unordered_map for constant-time lookup. | 依來源步驟執行。 | Coding |
-| Next, I shift bits to inspect each position. | 依來源步驟執行。 | Coding |
-| Then, I update result using xor or masks. | 依來源步驟執行。 | Coding |
-| Next, I loop until all relevant bits are processed. | 依來源步驟執行。 | Coding |
-| Then, I handle sign or overflow case when needed. | 依來源步驟執行。 | Coding |
-| Next, I return final computed integer result. | 依來源步驟執行。 | Coding |
+| First, I set left to zero and right to n minus one. | 先把 left 設 0、right 設 n-1。 | Coding |
+| While left is smaller than right, I compute sum. | 當 left 小於 right，就計算 sum。 | Coding |
+| If sum is greater than target, I decrement right. | 若 sum 大於 target，我遞減 right。 | Coding |
+| If sum is less than target, I increment left. | 若 sum 小於 target，我遞增 left。 | Coding |
+| If equal, I return one-based indices. | 若相等，我回傳一基索引。 | Coding |
+| I do not need extra hash map here. | 這裡不需要額外 hash map。 | Coding |
+| Sorted property drives each pointer decision. | 每次指標決策都靠已排序特性。 | Coding |
+| Fallback return can be empty if required. | 若需要可用空陣列做保底回傳。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: numbers = [2,7,11,15], target = 9. | 範例輸入：numbers = [2,7,11,15], target = 9。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [1,2]. | 預期輸出：[1,2]。 | Dry-run |
+| Let me dry-run numbers two, seven, eleven, fifteen. | 我手跑 numbers = 2,7,11,15。 | Dry-run |
+| Target is nine. | target 是 9。 | Dry-run |
+| left zero and right three gives sum seventeen. | left=0、right=3 時 sum 是 17。 | Dry-run |
+| Sum too large, so move right to index two. | 總和太大，所以 right 移到 2。 | Dry-run |
+| Sum is now thirteen, still too large. | 現在總和 13，仍過大。 | Dry-run |
+| Move right to index one, sum becomes nine. | right 移到 1，總和變 9。 | Dry-run |
+| Return [1,2] in one-based indexing. | 以一基索引回傳 [1,2]。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: smallest length two with direct match. | 案例一：最小長度 2 且直接匹配。 | Edge test |
+| Case two: negative and positive mixed values. | 案例二：正負值混合。 | Edge test |
+| Case three: duplicated values near target. | 案例三：接近 target 的重複值。 | Edge test |
+| Case four: verify one-based output indexing. | 案例四：驗證一基索引輸出。 | Edge test |
+| Case five: if no-solution allowed, return empty. | 案例五：若允許無解，回傳空陣列。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time is O(n). | 時間是 O(n)。 | Complexity |
+| Extra space is O(1). | 額外空間是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Each loop step moves one pointer inward. | 每次迴圈都會把其中一個指標內縮。 | Complexity |
+| Neither pointer moves backward. | 兩個指標都不會回頭。 | Complexity |
+| So total pointer moves are linear. | 因此總移動次數是線性的。 | Complexity |
+| We only keep a few integer variables. | 我們只維持少數整數變數。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| May I take fifteen seconds to think? | 可以給我十五秒想一下嗎？ | If stuck |
+| Let me recheck the sorted-array assumption. | 我先重確認已排序假設。 | If stuck |
+| I can explain brute force first. | 我可先解釋暴力法。 | If stuck |
+| Then I switch to two pointers. | 然後我切到雙指標。 | If stuck |
+| I forgot one-based return detail. | 我一時忘了一基回傳細節。 | If stuck |
+| Core pointer movement is still clear. | 核心指標移動仍清楚。 | If stuck |
+| Thanks, I will adjust this branch. | 謝謝，我會調整這個分支。 | If stuck |
+| I found why target compare failed. | 我找到 target 比較失敗原因。 | If stuck |
+| Let me rerun one sample quickly. | 我快速重跑一個範例。 | If stuck |
+| Now output format is correct. | 現在輸出格式正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished the implementation. | 我完成實作了。 | Wrap-up |
+| It uses sorted property effectively. | 它有效利用了已排序特性。 | Wrap-up |
+| It returns one-based indices correctly. | 它可正確回傳一基索引。 | Wrap-up |
+| Time is O(n), extra space O(1). | 時間 O(n)，額外空間 O(1)。 | Wrap-up |
+| I can compare with hash-map variant if needed. | 若需要我可比較 hash map 變體。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Restate sorted-array two-sum target. | 重述排序陣列 two-sum 目標。 | Cheat sheet |
+| Ask if one solution is guaranteed. | 詢問是否保證唯一解。 | Cheat sheet |
+| Mention one-based index requirement. | 提到一基索引要求。 | Cheat sheet |
+| Brute force is O(n^2). | 暴力法是 O(n^2)。 | Cheat sheet |
+| Two pointers give O(n). | 雙指標可達 O(n)。 | Cheat sheet |
+| Start from both ends. | 從陣列兩端開始。 | Cheat sheet |
+| If sum too large, move right. | 和過大就移動右指標。 | Cheat sheet |
+| If sum too small, move left. | 和過小就移動左指標。 | Cheat sheet |
+| Equal sum means return indices. | 和相等就回傳索引。 | Cheat sheet |
+| Convert to one-based output. | 轉成一基索引輸出。 | Cheat sheet |
+| Dry-run [2,7,11,15], target 9. | 手跑 [2,7,11,15], target 9。 | Cheat sheet |
+| Verify negative values case. | 驗證負值案例。 | Cheat sheet |
+| Verify duplicate values case. | 驗證重複值案例。 | Cheat sheet |
+| Mention O(1) extra space. | 提到 O(1) 額外空間。 | Cheat sheet |
+| Keep pointer invariants explicit. | 清楚說明指標不變量。 | Cheat sheet |
+| If stuck, restate move rule. | 卡住時重述移動規則。 | Cheat sheet |
+| Recheck output indexing before finish. | 收尾前重檢輸出索引。 | Cheat sheet |
+| Summarize complexity briefly. | 簡短總結複雜度。 | Cheat sheet |
+| Offer alternative discussion. | 提供替代方案討論。 | Cheat sheet |
+| End confidently and clearly. | 清楚自信地收尾。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Sorted two-pointer solution and 1-based output are preserved.
+- No hallucinated constraints: ✅ Uncertain assumptions are asked in clarification lines.
+- Language simplicity: ✅ Short spoken lines suitable for interview delivery.

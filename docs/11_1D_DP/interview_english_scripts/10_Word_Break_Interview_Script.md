@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Word Break. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use DP as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the word break problem. | 我先重述 Word Break 題目。 | Restatement |
+| We are given a string s and a dictionary of words. | 題目給字串 s 與字典 wordDict。 | Restatement |
+| We need to decide whether s can be segmented fully. | 要判斷 s 是否可被完整切分。 | Restatement |
+| Each segment must be a word from the dictionary. | 每個片段都必須在字典中。 | Restatement |
+| Words can be reused multiple times. | 同一單字可重複使用。 | Restatement |
+| I will use bottom-up DP on string indices. | 我會用索引上的自底向上 DP。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Do we return boolean only, not one valid segmentation? | 是否只回布林，不需回切分方案？ | Clarify |
+| Can dictionary words be reused unlimited times? | 字典單字是否可無限重用？ | Clarify |
+| Is matching case-sensitive? | 字串比對是否區分大小寫？ | Clarify |
+| Are there only lowercase English letters in input? | 輸入是否僅含小寫英文字母？ | Clarify |
+| Is O(n times wordCount times avgWordLen) acceptable? | O(n*字典數*平均字長) 可接受嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(2^N) from source. | 來源暴力時間約 O(2^N)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force tries every split position recursively. | 暴力法遞迴嘗試每個切點。 | Approach |
+| Many suffixes get recomputed repeatedly. | 很多後綴會被重複計算。 | Approach |
+| Worst-case runtime is exponential. | 最壞時間會是指數級。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses DP. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N^3) from source. | 來源優化時間為 O(N^3)。 | Approach |
-| Optimized space is O(N) from source. | 來源優化空間為 O(N)。 | Approach |
+| Define dp[i] as whether suffix s[i:] is segmentable. | 定義 dp[i] 為後綴 s[i:] 是否可切分。 | Approach |
+| Base case dp[n] is true for empty suffix. | 基底 dp[n]=true，代表空後綴可行。 | Approach |
+| Iterate i from n-1 down to 0. | i 從 n-1 反向走到 0。 | Approach |
+| For each word w, if s at i starts with w and dp[i+len] is true, set dp[i] true. | 對每個 w，若 i 位置可匹配且 dp[i+len] 為真，設 dp[i]=true。 | Approach |
+| Final answer is dp[0]. | 最終答案是 dp[0]。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define recursive backtracking function. | 依來源步驟執行。 | Coding |
-| Next, I check base case and append answer. | 依來源步驟執行。 | Coding |
-| Then, I use unordered_set for membership checks. | 依來源步驟執行。 | Coding |
-| Next, I iterate choices for current position. | 依來源步驟執行。 | Coding |
-| Then, I choose one option and update state. | 依來源步驟執行。 | Coding |
-| Next, I recurse to next decision level. | 依來源步驟執行。 | Coding |
-| Then, I undo choice to restore state. | 依來源步驟執行。 | Coding |
-| Next, I return all collected combinations. | 依來源步驟執行。 | Coding |
+| I get n as s length and create boolean dp of size n plus one. | 我先取 n=s 長度，建立 n+1 的布林 dp。 | Coding |
+| I set dp[n] to true as base case. | 設 dp[n]=true 當基底。 | Coding |
+| I iterate i from n minus one down to zero. | i 從 n-1 迭代到 0。 | Coding |
+| For each dictionary word w, I check bounds i plus len(w) <= n. | 對每個字 w，先檢查 i+len(w)<=n。 | Coding |
+| If substring s[i, len] equals w, I can use dp[i+len]. | 若 s 的該段等於 w，可參考 dp[i+len]。 | Coding |
+| I set dp[i] to dp[i+len] when matched. | 匹配後把 dp[i] 設為 dp[i+len]。 | Coding |
+| If dp[i] becomes true, I break inner loop early. | 若 dp[i] 成真，內層可提早 break。 | Coding |
+| After loops, I return dp[0]. | 迴圈結束回傳 dp[0]。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: s = "leetcode", wordDict = ["leet", "code"]. | 範例輸入：s = "leetcode", wordDict = ["leet", "code"]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: true. | 預期輸出：true。 | Dry-run |
+| Let me dry-run s equals leetcode and dict [leet, code]. | 我手跑 s=leetcode、dict=[leet,code]。 | Dry-run |
+| n is eight, so dp[8] starts as true. | n=8，所以 dp[8] 初始為 true。 | Dry-run |
+| At i equals four, word code matches and dp[8] is true, so dp[4] becomes true. | i=4 時 code 匹配且 dp[8] 為真，故 dp[4]=true。 | Dry-run |
+| At i equals zero, word leet matches and dp[4] is true, so dp[0] becomes true. | i=0 時 leet 匹配且 dp[4] 為真，故 dp[0]=true。 | Dry-run |
+| Other positions may remain false, that is fine. | 其他位置可為 false，這沒問題。 | Dry-run |
+| Final answer is true. | 最終答案為 true。 | Dry-run |
+| This matches expected output. | 與預期輸出一致。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: s is a single dictionary word. | 案例一：s 本身就是字典單字。 | Edge test |
+| Case two: impossible split like catsandog example. | 案例二：像 catsandog 無法切分。 | Edge test |
+| Case three: repeated-word usage like applepenapple. | 案例三：重複用詞如 applepenapple。 | Edge test |
+| Case four: overlapping choices such as car, ca, rs. | 案例四：重疊選擇如 car、ca、rs。 | Edge test |
+| Case five: long string with no valid suffix transition. | 案例五：長字串但沒有合法後綴轉移。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N^3). | 時間複雜度是 O(N^3)。 | Complexity |
-| Space complexity is O(N). | 空間複雜度是 O(N)。 | Complexity |
+| Time complexity is O(n times m times L). | 時間複雜度是 O(n*m*L)。 | Complexity |
+| Space complexity is O(n). | 空間複雜度是 O(n)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N^3). | 來源主要時間為 O(N^3)。 | Complexity |
-| Extra memory from source is O(N). | 來源額外空間為 O(N)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We evaluate n positions in the string. | 我們會評估字串的 n 個位置。 | Complexity |
+| At each position we may try m words in dictionary. | 每個位置最多嘗試 m 個字典單字。 | Complexity |
+| Matching each word costs up to its length L. | 每次匹配成本最多是字長 L。 | Complexity |
+| So runtime is O(n*m*L), and dp array uses O(n) memory. | 因此時間 O(n*m*L)，dp 記憶體 O(n)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me define the DP state first. | 我先定義 DP 狀態。 | If stuck |
+| dp[i] means whether suffix starting at i is breakable. | dp[i] 代表從 i 開始後綴能否切分。 | If stuck |
+| Base case is dp[n] equals true. | 基底是 dp[n]=true。 | If stuck |
+| I should iterate from right to left. | 迭代方向應該由右往左。 | If stuck |
+| For each index, I test every dictionary word. | 每個索引都測試所有字典單字。 | If stuck |
+| Only when prefix matches I consult dp[i+len]. | 只有前綴匹配才看 dp[i+len]。 | If stuck |
+| If any word makes dp[i] true, I can break early. | 只要有字讓 dp[i] 為真就可提早停止。 | If stuck |
+| Let me sanity-check with leetcode quickly. | 我快速用 leetcode 做健全檢查。 | If stuck |
+| dp[4] and dp[0] become true in that example. | 該例中 dp[4] 與 dp[0] 會成真。 | If stuck |
+| Great, recurrence and direction are consistent. | 很好，遞推與方向都一致。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N^3), space is O(N). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved word break using bottom-up DP on indices. | 我用索引自底向上 DP 解出 Word Break。 | Wrap-up |
+| State dp[i] represents segmentability of suffix s[i:]. | 狀態 dp[i] 代表後綴 s[i:] 的可切分性。 | Wrap-up |
+| We use dp[n] as base and fill from right to left. | 以 dp[n] 為基底，從右到左填表。 | Wrap-up |
+| Complexity is O(n*m*L) time and O(n) space. | 複雜度為 O(n*m*L) 時間、O(n) 空間。 | Wrap-up |
+| This handles repeated words and impossible cases cleanly. | 可乾淨處理重複單字與無解情況。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N^3). | 速記重點。 | Cheat sheet |
-| Report space complexity O(N). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: can s be fully segmented by dictionary words. | 目標：s 能否被字典單字完整切分。 | Cheat sheet |
+| Return boolean only. | 只回傳布林值。 | Cheat sheet |
+| Words may be reused. | 單字可重複使用。 | Cheat sheet |
+| Define dp[i] for suffix s[i:]. | 定義 dp[i] 對應後綴 s[i:]。 | Cheat sheet |
+| Base dp[n]=true. | 基底 dp[n]=true。 | Cheat sheet |
+| Iterate i from n-1 down to 0. | i 從 n-1 走到 0。 | Cheat sheet |
+| For each word w, check boundary first. | 對每個 w 先做邊界檢查。 | Cheat sheet |
+| If substring matches w, use dp[i+len(w)]. | 若子字串匹配 w，使用 dp[i+len(w)]。 | Cheat sheet |
+| Set dp[i]=true when any valid word found. | 找到任一合法字就設 dp[i]=true。 | Cheat sheet |
+| Break inner loop after success. | 成功後可提前離開內層。 | Cheat sheet |
+| Final answer is dp[0]. | 最終答案是 dp[0]。 | Cheat sheet |
+| Example leetcode -> true. | 範例 leetcode -> true。 | Cheat sheet |
+| Example catsandog -> false. | 範例 catsandog -> false。 | Cheat sheet |
+| Time O(n*m*L). | 時間 O(n*m*L)。 | Cheat sheet |
+| Space O(n). | 空間 O(n)。 | Cheat sheet |
+| Common bug: wrong DP direction. | 常見錯誤：DP 方向寫反。 | Cheat sheet |
+| Common bug: forgetting boundary i+len<=n. | 常見錯誤：忘記邊界 i+len<=n。 | Cheat sheet |
+| Common bug: not breaking after dp[i] true. | 常見錯誤：dp[i] 成真後未提前停止。 | Cheat sheet |
+| Recheck state meaning if confused. | 若混亂先重申狀態定義。 | Cheat sheet |
+| Keep explanation tied to suffix transitions. | 說明時聚焦後綴轉移邏輯。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Suffix DP recurrence and right-to-left traversal preserved.
+- No hallucinated constraints: ✅ Uses source semantics (boolean decision, reusable words).
+- Language simplicity: ✅ Clean interview lines with explicit state and transition wording.

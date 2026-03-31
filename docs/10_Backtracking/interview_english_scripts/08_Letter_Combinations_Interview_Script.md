@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Letter Combinations of a Phone Number. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Backtracking as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the phone-letter combinations problem. | 我先重述電話字母組合題。 | Restatement |
+| Input is a digit string from two to nine. | 輸入是由 2 到 9 組成的字串。 | Restatement |
+| Each digit maps to several letters on keypad. | 每個數字對應按鍵上的多個字母。 | Restatement |
+| We need all possible letter combinations. | 我們要回傳所有可能字母組合。 | Restatement |
+| If input is empty, result should be empty list. | 若輸入為空，結果應是空陣列。 | Restatement |
+| I will use DFS backtracking over digit positions. | 我會用 DFS 回溯逐位展開。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume digits contain only two through nine? | 可否假設 digits 只含 2~9？ | Clarify |
+| Should empty input return empty vector instead of one empty string? | 空輸入要回空陣列而非含空字串嗎？ | Clarify |
+| Is output order arbitrary as long as all combinations exist? | 只要完整，輸出順序可任意嗎？ | Clarify |
+| Is recursive backtracking preferred for readability? | 面試中是否偏好遞迴回溯表達？ | Clarify |
+| Can I use array lookup table for digit-to-letters mapping? | 可否用陣列查表做數字到字母映射？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(4^N \times N) from source. | 來源暴力時間約 O(4^N \times N)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force concept is cartesian product of letter groups. | 暴力概念是各位字母集合的笛卡兒積。 | Approach |
+| We can build iteratively or recursively. | 可用迭代或遞迴建構。 | Approach |
+| Backtracking gives the cleanest interview narrative. | 回溯最適合面試口述。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Backtracking. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(4^N \times N) from source. | 來源優化時間為 O(4^N \times N)。 | Approach |
-| Optimized space is O(N) from source. | 來源優化空間為 O(N)。 | Approach |
+| Create mapping table from digit to letters. | 建立 digit 到 letters 的映射表。 | Approach |
+| DFS state is index in digits and current string path. | DFS 狀態為 digits 索引與當前字串。 | Approach |
+| For current digit, try each mapped letter. | 對當前數字嘗試每個對應字母。 | Approach |
+| Append letter, recurse index plus one, then remove letter. | 加字母後遞迴 index+1，再移除字母。 | Approach |
+| When path length equals digits length, record one result. | 當路徑長度等於 digits 長度就記錄結果。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define recursive backtracking function. | 依來源步驟執行。 | Coding |
-| Next, I check base case and append answer. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I iterate choices for current position. | 依來源步驟執行。 | Coding |
-| Then, I choose one option and update state. | 依來源步驟執行。 | Coding |
-| Next, I recurse to next decision level. | 依來源步驟執行。 | Coding |
-| Then, I undo choice to restore state. | 依來源步驟執行。 | Coding |
-| Next, I return all collected combinations. | 依來源步驟執行。 | Coding |
+| I define keypad mapping array from zero to nine. | 我先定義 0~9 的按鍵映射陣列。 | Coding |
+| If digits is empty, I return empty result immediately. | 若 digits 為空就直接回空結果。 | Coding |
+| I prepare result vector and mutable current string. | 我準備結果向量與可變 current 字串。 | Coding |
+| I call backtrack starting at index zero. | 我從 index=0 呼叫 backtrack。 | Coding |
+| Base case is index equals digits length. | 基底條件是 index 等於 digits 長度。 | Coding |
+| At base, push current string into result. | 基底時把 current 放進結果。 | Coding |
+| Otherwise iterate letters mapped from current digit. | 否則迭代當前 digit 對應字母。 | Coding |
+| Push char recurse pop char for backtracking. | push 字元、遞迴、再 pop 字元。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: digits = "23". | 範例輸入：digits = "23"。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: ["ad","ae","af","bd","be","bf","cd","ce","cf"]. | 預期輸出：["ad","ae","af","bd","be","bf","cd","ce","cf"]。 | Dry-run |
+| Let me dry-run digits twenty-three. | 我手跑 digits="23"。 | Dry-run |
+| Digit two maps to a b c. | 數字 2 對應 a b c。 | Dry-run |
+| For prefix a, digit three gives ad ae af. | 前綴 a 搭配 3 會得到 ad ae af。 | Dry-run |
+| For prefix b, we get bd be bf. | 前綴 b 會得到 bd be bf。 | Dry-run |
+| For prefix c, we get cd ce cf. | 前綴 c 會得到 cd ce cf。 | Dry-run |
+| Total nine combinations are generated. | 總共生成九個組合。 | Dry-run |
+| This matches expected sample output exactly. | 這與範例預期完全一致。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: empty digits should return empty list. | 案例一：空字串應回空陣列。 | Edge test |
+| Case two: one digit like seven returns four letters. | 案例二：單一 7 應回四個字母。 | Edge test |
+| Case three: mixed three-letter and four-letter digits. | 案例三：混合 3 字母與 4 字母按鍵。 | Edge test |
+| Case four: repeated same digit like twenty-two. | 案例四：重複同數字如 "22"。 | Edge test |
+| Case five: maximum length input within constraints. | 案例五：限制內最大長度輸入。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(4^N \times N). | 時間複雜度是 O(4^N \times N)。 | Complexity |
-| Space complexity is O(N). | 空間複雜度是 O(N)。 | Complexity |
+| Time complexity is O(four to the n times n) in worst case. | 最壞時間複雜度為 O(4^n*n)。 | Complexity |
+| Recursion depth and auxiliary stack are O(n). | 遞迴深度與輔助堆疊是 O(n)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(4^N \times N). | 來源主要時間為 O(4^N \times N)。 | Complexity |
-| Extra memory from source is O(N). | 來源額外空間為 O(N)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Each digit contributes up to four branches for seven or nine. | 每個 digit 最多帶來 4 個分支（7/9）。 | Complexity |
+| So total combinations are bounded by four to the n. | 因此組合數上界為 4^n。 | Complexity |
+| Building each output string takes O(n). | 生成每個輸出字串成本 O(n)。 | Complexity |
+| Recursion stack depth is n, excluding result storage. | 不含結果儲存時遞迴深度是 n。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me map this to a decision tree per digit position. | 我先把它映射成每一位數字的決策樹。 | If stuck |
+| At each level I choose one letter from current digit. | 每一層從當前 digit 選一個字母。 | If stuck |
+| Path length should equal processed digit count. | 路徑長度應等於已處理位數。 | If stuck |
+| Base case triggers when index reaches digits length. | index 到 digits 長度時觸發基底。 | If stuck |
+| I must return empty list for empty input. | 空輸入必須回空陣列。 | If stuck |
+| Mapping table avoids repeated switch statements. | 查表映射可避免重複 switch。 | If stuck |
+| Let me test quickly with digits twenty-three. | 我快速用 "23" 驗證。 | If stuck |
+| I see nine outputs from three times three choices. | 會得到 3*3 共九個輸出。 | If stuck |
+| That confirms recursion branching is correct. | 這證明遞迴分支正確。 | If stuck |
+| Great, I can summarize complexity now. | 很好，我可以收尾複雜度。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(4^N \times N), space is O(N). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved this with DFS backtracking and keypad mapping. | 我用 DFS 回溯與按鍵映射解題。 | Wrap-up |
+| Each recursion level handles one digit position. | 每層遞迴處理一個 digit 位置。 | Wrap-up |
+| Push recurse pop forms the full combination tree. | push-recuse-pop 組成完整組合樹。 | Wrap-up |
+| Empty input is handled explicitly as special case. | 空輸入以特例顯式處理。 | Wrap-up |
+| Complexity is exponential in digit length as expected. | 複雜度如預期對位數呈指數。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(4^N \times N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(N). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Problem type: keypad cartesian product. | 題型：按鍵字母笛卡兒積。 | Cheat sheet |
+| Input digits range two to nine. | 輸入數字範圍 2 到 9。 | Cheat sheet |
+| Build digit-to-letter mapping first. | 先建立 digit-letter 映射。 | Cheat sheet |
+| Empty input returns empty result. | 空輸入回空結果。 | Cheat sheet |
+| Use DFS backtracking by index. | 用依索引 DFS 回溯。 | Cheat sheet |
+| State: index and current string. | 狀態：index 與 current 字串。 | Cheat sheet |
+| Base when index equals length. | index 等於長度即基底。 | Cheat sheet |
+| Push current string to result at base. | 基底時把字串放入結果。 | Cheat sheet |
+| Get mapped letters for digits[index]. | 取出 digits[index] 的字母群。 | Cheat sheet |
+| Loop each letter choice. | 迴圈嘗試每個字母。 | Cheat sheet |
+| Append letter then recurse. | 先附加字母再遞迴。 | Cheat sheet |
+| Pop letter on backtrack. | 回溯時移除字母。 | Cheat sheet |
+| Sample twenty-three gives nine outputs. | "23" 範例會產生九個。 | Cheat sheet |
+| Worst branches up to four per level. | 每層最壞 4 分支。 | Cheat sheet |
+| Runtime O(4^n * n). | 時間 O(4^n*n)。 | Cheat sheet |
+| Stack O(n). | 堆疊 O(n)。 | Cheat sheet |
+| Output size dominates overall memory. | 整體記憶體常由輸出主導。 | Cheat sheet |
+| Common bug: return [empty string] for empty input. | 常見錯誤：空輸入回 ["" ]。 | Cheat sheet |
+| Common bug: wrong mapping for seven nine. | 常見錯誤：7/9 映射寫錯。 | Cheat sheet |
+| Mention iterative queue alternative if asked. | 被問可補充迭代 queue 作法。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ DFS keypad mapping approach is preserved.
+- No hallucinated constraints: ✅ Uses 2-9 mapping and empty-input behavior correctly.
+- Language simplicity: ✅ Interview-friendly concise lines with concrete flow.

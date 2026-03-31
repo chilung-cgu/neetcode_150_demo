@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Climbing Stairs. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use DP (Space Optimized) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the climbing stairs problem. | 我先重述爬樓梯題目。 | Restatement |
+| We need the number of ways to reach step n. | 要求到第 n 階的方法數。 | Restatement |
+| At each move we can climb one or two steps. | 每一步可爬 1 階或 2 階。 | Restatement |
+| This is a counting problem, not path listing. | 這是計數題，不需列出路徑。 | Restatement |
+| The recurrence is Fibonacci-like. | 其遞推關係類似 Fibonacci。 | Restatement |
+| I will use O(1) space dynamic programming. | 我會用 O(1) 空間的 DP。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is n always at least one? | n 是否保證至少為 1？ | Clarify |
+| Do we only return count, not actual sequences? | 是否只回傳數量，不回傳路徑？ | Clarify |
+| Can I assume answer fits 32-bit integer under constraints? | 在此限制下是否可假設 32-bit 足夠？ | Clarify |
+| Is recursive explanation okay before optimized DP? | 是否可先解釋遞迴再轉 DP？ | Clarify |
+| Should I prioritize constant-space implementation? | 是否優先展示常數空間實作？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(2^n) from source. | 來源暴力時間約 O(2^n)。 | Approach |
-| Brute space is about O(2^n) from source. | 來源暴力空間約 O(2^n)。 | Approach |
+| Brute force recursion tries one-step and two-step branches every time. | 暴力遞迴每次分成走 1 階與 2 階。 | Approach |
+| This repeats the same subproblems many times. | 這會重複計算大量子問題。 | Approach |
+| Time grows exponentially, around O(two to the n). | 時間會指數成長，約 O(2^n)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses DP (Space Optimized). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N) from source. | 來源優化時間為 O(N)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Define ways[i] as ways to reach step i. | 定義 ways[i] 為到第 i 階的方法數。 | Approach |
+| Transition is ways[i] equals ways[i-1] plus ways[i-2]. | 轉移為 ways[i]=ways[i-1]+ways[i-2]。 | Approach |
+| Base values are ways[1] equals one and ways[2] equals two. | 基底是 ways[1]=1、ways[2]=2。 | Approach |
+| We only need previous two values at each iteration. | 每次迭代只需要前兩個值。 | Approach |
+| So we keep rolling variables and achieve O(1) space. | 用滾動變數即可達成 O(1) 空間。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define recursive backtracking function. | 依來源步驟執行。 | Coding |
-| Next, I check base case and append answer. | 依來源步驟執行。 | Coding |
-| Then, I iterate choices for current position. | 依來源步驟執行。 | Coding |
-| Next, I choose one option and update state. | 依來源步驟執行。 | Coding |
-| Then, I recurse to next decision level. | 依來源步驟執行。 | Coding |
-| Next, I undo choice to restore state. | 依來源步驟執行。 | Coding |
-| Then, I return all collected combinations. | 依來源步驟執行。 | Coding |
+| I handle base cases n equals one and n equals two first. | 我先處理 n=1 與 n=2 的基底。 | Coding |
+| I initialize twoStepsBefore as one and oneStepBefore as two. | 我設 twoStepsBefore=1、oneStepBefore=2。 | Coding |
+| Then I iterate i from three to n. | 接著 i 從 3 迭代到 n。 | Coding |
+| Current ways is oneStepBefore plus twoStepsBefore. | current 方式數是前兩者相加。 | Coding |
+| I shift twoStepsBefore to oneStepBefore. | 我把 twoStepsBefore 更新為舊 oneStepBefore。 | Coding |
+| I shift oneStepBefore to current. | 我把 oneStepBefore 更新為 current。 | Coding |
+| After loop, oneStepBefore stores answer for n. | 迴圈後 oneStepBefore 即 n 的答案。 | Coding |
+| I return that value. | 我回傳該值。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: n = 2. | 範例輸入：n = 2。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 2. | 預期輸出：2。 | Dry-run |
+| Let me dry-run n equals three. | 我手跑 n=3。 | Dry-run |
+| Base gives twoStepsBefore one and oneStepBefore two. | 基底得到 twoStepsBefore=1、oneStepBefore=2。 | Dry-run |
+| At i equals three, current is two plus one equals three. | i=3 時 current=2+1=3。 | Dry-run |
+| Update rolling values and finish loop. | 更新滾動值後迴圈結束。 | Dry-run |
+| Final answer is three ways. | 最終答案是 3 種。 | Dry-run |
+| The three ways are one-one-one, one-two, and two-one. | 三種方式為 1+1+1、1+2、2+1。 | Dry-run |
+| This matches expected output. | 與預期輸出一致。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: n equals one should return one. | 案例一：n=1 應回 1。 | Edge test |
+| Case two: n equals two should return two. | 案例二：n=2 應回 2。 | Edge test |
+| Case three: n equals three should return three. | 案例三：n=3 應回 3。 | Edge test |
+| Case four: a larger n like five should return eight. | 案例四：較大 n 如 5 應回 8。 | Edge test |
+| Case five: verify monotonic increase for positive n. | 案例五：正整數 n 下答案應單調增加。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N). | 時間複雜度是 O(N)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
+| Extra space complexity is O(1). | 額外空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N). | 來源主要時間為 O(N)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We run one loop from three up to n. | 我們只跑一個從 3 到 n 的迴圈。 | Complexity |
+| Each iteration does constant arithmetic and assignments. | 每次迭代只有常數次運算與指定。 | Complexity |
+| Therefore runtime is linear O(n). | 因此時間是線性 O(n)。 | Complexity |
+| We store only two previous states and one current value, so O(1) space. | 只存前兩狀態與 current，因此空間 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me express this as recurrence first. | 我先把它寫成遞推式。 | If stuck |
+| To reach step i, I must come from i minus one or i minus two. | 到 i 階只能從 i-1 或 i-2 來。 | If stuck |
+| So ways[i] equals ways[i-1] plus ways[i-2]. | 所以 ways[i]=ways[i-1]+ways[i-2]。 | If stuck |
+| Base values are simple: one and two. | 基底值很簡單：1 與 2。 | If stuck |
+| I do not need full DP array here. | 這題不需要完整 DP 陣列。 | If stuck |
+| Rolling two variables is enough. | 兩個滾動變數就足夠。 | If stuck |
+| Let me verify with n equals four quickly. | 我快速驗證 n=4。 | If stuck |
+| Sequence becomes one, two, three, five. | 序列會是 1、2、3、5。 | If stuck |
+| Result five is correct for n four. | n=4 答案 5 正確。 | If stuck |
+| Great, I can finalize confidently. | 很好，我可以有把握收尾。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved climbing stairs with Fibonacci-style DP. | 我用 Fibonacci 風格 DP 解出爬樓梯。 | Wrap-up |
+| The key recurrence is ways[i] equals ways[i-1] plus ways[i-2]. | 核心遞推是 ways[i]=ways[i-1]+ways[i-2]。 | Wrap-up |
+| Base cases handle n one and n two. | 基底處理 n=1 與 n=2。 | Wrap-up |
+| Rolling variables give O(1) space. | 滾動變數可達 O(1) 空間。 | Wrap-up |
+| Runtime is linear in n. | 執行時間對 n 為線性。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Problem asks count of ways. | 題目要方法數。 | Cheat sheet |
+| Move options are one or two steps. | 每步可走 1 或 2。 | Cheat sheet |
+| Recurrence is Fibonacci-like. | 遞推類 Fibonacci。 | Cheat sheet |
+| ways[i] = ways[i-1] + ways[i-2]. | ways[i]=ways[i-1]+ways[i-2]。 | Cheat sheet |
+| Base: ways[1]=1. | 基底：ways[1]=1。 | Cheat sheet |
+| Base: ways[2]=2. | 基底：ways[2]=2。 | Cheat sheet |
+| Handle n<=2 directly. | n<=2 直接回傳。 | Cheat sheet |
+| Use two rolling vars. | 使用兩個滾動變數。 | Cheat sheet |
+| Iterate from 3 to n. | 從 3 迭代到 n。 | Cheat sheet |
+| current = prev1 + prev2. | current=prev1+prev2。 | Cheat sheet |
+| Shift prev2=prev1. | 更新 prev2=prev1。 | Cheat sheet |
+| Shift prev1=current. | 更新 prev1=current。 | Cheat sheet |
+| Return prev1 at end. | 結尾回傳 prev1。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| n=3 -> 3. | n=3 得 3。 | Cheat sheet |
+| n=4 -> 5. | n=4 得 5。 | Cheat sheet |
+| Common bug: wrong base values. | 常見錯誤：基底值寫錯。 | Cheat sheet |
+| Common bug: off-by-one loop bounds. | 常見錯誤：迴圈邊界 off-by-one。 | Cheat sheet |
+| Mention memoization alternative briefly. | 可簡述 memoization 替代法。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Space-optimized DP recurrence is preserved.
+- No hallucinated constraints: ✅ Uses source movement and counting semantics.
+- Language simplicity: ✅ Short, interview-spoken, and easy to deliver.

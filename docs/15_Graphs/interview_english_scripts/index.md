@@ -1,13 +1,10 @@
 # Graphs — Interview English Scripts
 
-- [⬅️ 回總覽](../../interview_english_scripts/index.md)
-- [📘 回本章索引](../index.md)
-
-本章共 `13` 題。
+> Quick links: [⬅️ 回總覽](../../interview_english_scripts/index.md) · [📘 回本章索引](../index.md)
 
 ## 題目對照表
 
-| # | Problem | Source | English Script |
+| # | Problem | Source | Interview Script |
 |---:|---|---|---|
 | 1 | Number of Islands | [題解](../01_Number_of_Islands.md) | [講稿](01_Number_of_Islands_Interview_Script.md) |
 | 2 | Clone Graph | [題解](../02_Clone_Graph.md) | [講稿](02_Clone_Graph_Interview_Script.md) |
@@ -23,8 +20,8 @@
 | 12 | Graph Valid Tree | [題解](../12_Graph_Valid_Tree.md) | [講稿](12_Graph_Valid_Tree_Interview_Script.md) |
 | 13 | Word Ladder | [題解](../13_Word_Ladder.md) | [講稿](13_Word_Ladder_Interview_Script.md) |
 
-## 說明
+## 章節說明
 
-- 所有講稿採固定 10 段面試口述模板。
-- 英文句型偏短，適合即時口說。
-- `[CHECK]` 表示來源未明確定義，需面試時先問清楚。
+- 本章 13 份講稿都使用同一格式。
+- 每份含 1-10 節與 Quality check。
+- 所有表格皆為固定三欄口說模板。

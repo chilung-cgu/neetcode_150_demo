@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Search in Rotated Sorted Array. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use One-pass Binary Search as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the rotated search problem. | 我先重述旋轉搜尋題。 | Restatement |
+| The original sorted array is rotated at some pivot. | 原本排序陣列在某個 pivot 旋轉。 | Restatement |
+| All values are unique in this version. | 這一版數值都不重複。 | Restatement |
+| I need to return target index, or minus one if absent. | 我要回傳 target index，找不到就 -1。 | Restatement |
+| Required runtime is O(log n). | 題目要求時間 O(log n)。 | Restatement |
+| I will do one-pass binary search with sorted-half checks. | 我會用一次二分加有序半邊判斷。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume there are no duplicate values? | 我可以假設沒有重複值嗎？ | Clarify |
+| Do you want index only, not boolean existence? | 你要的是索引，不是布林值對嗎？ | Clarify |
+| Is returning any index impossible issue since values are unique? | 因為值唯一，不會有多個索引問題對嗎？ | Clarify |
+| Should I keep iterative style for clarity? | 我用迭代寫法可以嗎？ | Clarify |
+| Do you want me to mention duplicate-value variant briefly? | 需要我簡述重複值變體嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(n) from source. | 來源暴力時間約 O(n)。 | Approach |
-| Brute space is about O(\log n) from source. | 來源暴力空間約 O(\log n)。 | Approach |
+| Baseline scans array linearly for target. | 基線是線性掃描找 target。 | Approach |
+| Return index when matched, otherwise minus one. | 匹配就回傳索引，否則回傳 -1。 | Approach |
+| Time is O(n), not enough for requirement. | 時間 O(n)，不符合要求。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses One-pass Binary Search. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(\log n) from source. | 來源優化時間為 O(\log n)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| At each mid, one side must be sorted. | 每個 mid 至少有一側一定有序。 | Approach |
+| If left side is sorted, check whether target lies in that range. | 若左側有序，就判斷 target 是否在範圍內。 | Approach |
+| If yes, move right inward; otherwise move left outward. | 在範圍內縮 right，否則推進 left。 | Approach |
+| If right side is sorted, do symmetric range check. | 若右側有序，做對稱範圍判斷。 | Approach |
+| This keeps O(log n) time and O(1) space. | 這可維持 O(log n) 時間與 O(1) 空間。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I set low and high boundaries. | 依來源步驟執行。 | Coding |
-| Next, I loop while low is not greater than high. | 依來源步驟執行。 | Coding |
-| Then, I compute mid from low and high. | 依來源步驟執行。 | Coding |
-| Next, I check mid value against target condition. | 依來源步驟執行。 | Coding |
-| Then, I move low or high by condition result. | 依來源步驟執行。 | Coding |
-| Next, I update candidate answer when needed. | 依來源步驟執行。 | Coding |
-| Then, I continue until boundaries meet. | 依來源步驟執行。 | Coding |
-| Next, I return boundary or candidate result. | 依來源步驟執行。 | Coding |
+| First, I set left to zero and right to n minus one. | 先設 left=0、right=n-1。 | Coding |
+| I loop while left is less than or equal to right. | 當 left<=right 時持續迴圈。 | Coding |
+| I compute mid and check direct hit first. | 先算 mid 並先檢查是否直接命中。 | Coding |
+| If left half is sorted, I test target within [left, mid). | 若左半有序，判斷 target 是否在 [left,mid)。 | Coding |
+| If inside, move right to mid minus one; otherwise move left up. | 在範圍內就 right=mid-1，否則提升 left。 | Coding |
+| Else right half is sorted, test target within (mid, right]. | 否則右半有序，判斷 target 是否在 (mid,right]。 | Coding |
+| If inside, move left to mid plus one; else move right down. | 在範圍內就 left=mid+1，否則降低 right。 | Coding |
+| End loop and return minus one when not found. | 迴圈結束仍未找到就回傳 -1。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: nums = [4,5,6,7,0,1,2], target = 0. | 範例輸入：nums = [4,5,6,7,0,1,2], target = 0。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 4. | 預期輸出：4。 | Dry-run |
+| Let me dry-run nums [4,5,6,7,0,1,2] and target 0. | 我手跑 nums=[4,5,6,7,0,1,2]、target=0。 | Dry-run |
+| left 0, right 6, mid 3 gives value 7. | left=0、right=6、mid=3，值是 7。 | Dry-run |
+| Left half [4,5,6,7] is sorted, target not in it. | 左半 [4,5,6,7] 有序，但 target 不在裡面。 | Dry-run |
+| So move left to 4. | 所以 left 移到 4。 | Dry-run |
+| Now left 4, right 6, mid 5 gives value 1. | 現在 left=4、right=6、mid=5，值是 1。 | Dry-run |
+| Left half [0,1] is sorted and target is inside, move right to 4. | 左半 [0,1] 有序且 target 在內，right 移到 4。 | Dry-run |
+| Mid becomes 4, value is 0, return index 4. | mid 變成 4，值是 0，回傳索引 4。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single element hit. | 案例一：單元素命中。 | Edge test |
+| Case two: single element miss. | 案例二：單元素未命中。 | Edge test |
+| Case three: no rotation, behaves like normal binary search. | 案例三：未旋轉，等同一般二分。 | Edge test |
+| Case four: target at pivot position minimum value. | 案例四：target 在 pivot 最小值位置。 | Edge test |
+| Case five: target absent between value gaps. | 案例五：target 落在值間隙且不存在。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(\log n). | 時間複雜度是 O(\log n)。 | Complexity |
+| Time complexity is O(log n). | 時間複雜度是 O(log n)。 | Complexity |
 | Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(\log n). | 來源主要時間為 O(\log n)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Each iteration discards one half of current search interval. | 每輪都會捨棄當前區間的一半。 | Complexity |
+| Sorted-half detection keeps decision deterministic. | 有序半邊判斷讓決策保持確定性。 | Complexity |
+| Pointer updates are constant-time operations. | 指標更新是常數時間操作。 | Complexity |
+| No extra containers are needed. | 不需要任何額外容器。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me identify which half is sorted first. | 我先判斷哪一半有序。 | If stuck |
+| I compare nums[left] and nums[mid] for that. | 我用 nums[left] 與 nums[mid] 比較。 | If stuck |
+| If left half is sorted, I do range check there. | 若左半有序，就先做左半範圍檢查。 | If stuck |
+| Otherwise I switch to right-half range check. | 否則切到右半範圍檢查。 | If stuck |
+| I should use strict and non-strict bounds carefully. | 我要小心使用嚴格/非嚴格邊界。 | If stuck |
+| Mid equality case is already handled at top. | mid 相等情況已在前面先處理。 | If stuck |
+| Let me rerun sample after fixing boundary signs. | 我修正邊界號號後重跑範例。 | If stuck |
+| Now pivot-side decisions are consistent. | 現在 pivot 側判斷一致。 | If stuck |
+| The loop converges correctly. | 迴圈能正確收斂。 | If stuck |
+| Great, final index is correct now. | 很好，最終索引正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(\log n), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I completed one-pass rotated binary search. | 我完成了一次旋轉二分搜尋。 | Wrap-up |
+| I validated pivot and non-pivot scenarios. | 我驗證了含 pivot 與無 pivot 情況。 | Wrap-up |
+| Runtime is O(log n). | 時間複雜度是 O(log n)。 | Wrap-up |
+| Extra memory is O(1). | 額外記憶體是 O(1)。 | Wrap-up |
+| I can also explain duplicate version trade-offs. | 我也可補充重複值版本取捨。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(\log n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Search target in rotated sorted unique array. | 在旋轉排序唯一陣列找 target。 | Cheat sheet |
+| Need index or -1. | 需要回傳 index 或 -1。 | Cheat sheet |
+| Baseline linear scan O(n). | 基線線掃 O(n)。 | Cheat sheet |
+| Required method O(log n). | 要求方法 O(log n)。 | Cheat sheet |
+| Use binary search with sorted-half detection. | 用二分加有序半邊判斷。 | Cheat sheet |
+| left=0, right=n-1. | left=0，right=n-1。 | Cheat sheet |
+| Loop while left<=right. | 迴圈條件 left<=right。 | Cheat sheet |
+| Check nums[mid]==target first. | 先檢查 nums[mid]==target。 | Cheat sheet |
+| If nums[left]<=nums[mid], left half sorted. | 若 nums[left]<=nums[mid]，左半有序。 | Cheat sheet |
+| Range-hit then move right, else move left. | 範圍命中移 right，否則移 left。 | Cheat sheet |
+| Else right half is sorted. | 否則右半有序。 | Cheat sheet |
+| Range-hit then move left, else move right. | 範圍命中移 left，否則移 right。 | Cheat sheet |
+| End loop means not found. | 迴圈結束表示找不到。 | Cheat sheet |
+| Return -1 then. | 此時回傳 -1。 | Cheat sheet |
+| Test single-element hit/miss. | 測單元素命中/未命中。 | Cheat sheet |
+| Test non-rotated normal case. | 測未旋轉一般情況。 | Cheat sheet |
+| Test pivot-target case. | 測 pivot 目標案例。 | Cheat sheet |
+| Time O(log n). | 時間 O(log n)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Common bug: wrong inequality boundaries. | 常見 bug：不等號邊界寫錯。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ One-pass sorted-half binary search is preserved.
+- No hallucinated constraints: ✅ Uses source unique-elements assumption.
+- Language simplicity: ✅ Concise spoken lines suitable for interview delivery.

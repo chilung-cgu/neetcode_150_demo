@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Remove Nth Node From End of List. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use One Pass with Two Pointers as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate this linked-list deletion problem. | 我先重述這題刪除節點問題。 | Restatement |
+| We must remove the nth node counting from the end. | 我們要刪除倒數第 n 個節點。 | Restatement |
+| Return the head of the updated list. | 回傳更新後串列的 head。 | Restatement |
+| A one-pass approach is expected by follow-up. | follow-up 通常希望一次掃描完成。 | Restatement |
+| I will use two pointers with a dummy node. | 我會用兩指標配 dummy 節點。 | Restatement |
+| This handles deleting the original head safely. | 這可安全處理刪除原本 head 的情況。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume n is always valid within list length? | 我可以假設 n 一定不超過串列長度嗎？ | Clarify |
+| Should deleting head be handled in same function path? | 刪 head 是否要在同一路徑處理？ | Clarify |
+| Do you prefer one-pass method over two-pass length method? | 你偏好 one-pass 而不是先算長度嗎？ | Clarify |
+| Is list length at least one in constraints? | 限制是否保證串列至少一個節點？ | Clarify |
+| Should node memory cleanup be mentioned in C++ context? | C++ 版本要不要口頭提到記憶體釋放？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(2L) from source. | 來源暴力時間約 O(2L)。 | Approach |
-| Brute space is about O(L) from source. | 來源暴力空間約 O(L)。 | Approach |
+| Baseline does two passes: first for length, second for deletion index. | 基線兩趟：先算長度，再找刪除位置。 | Approach |
+| Delete at position length minus n from start. | 從頭數到 length-n 的位置執行刪除。 | Approach |
+| Time O(L), space O(1), but not one-pass. | 時間 O(L)、空間 O(1)，但非一趟。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses One Pass with Two Pointers. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(L) from source. | 來源優化時間為 O(L)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Add dummy before head, set fast and slow at dummy. | 在 head 前加 dummy，fast/slow 都在 dummy。 | Approach |
+| Move fast ahead by n steps first. | 先讓 fast 前進 n 步。 | Approach |
+| Move both pointers until fast reaches list tail. | 再同步移動直到 fast 到尾端。 | Approach |
+| Then slow is right before target node to remove. | 此時 slow 正好在待刪節點前一個。 | Approach |
+| Bypass slow next and return dummy next. | 讓 slow 跳過下一節點，回傳 dummy->next。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize pointers and helper nodes. | 依來源步驟執行。 | Coding |
-| Next, I traverse list using pointer updates. | 依來源步驟執行。 | Coding |
-| Then, I keep node links valid at each step. | 依來源步驟執行。 | Coding |
-| Next, I use fast and slow pointers when required. | 依來源步驟執行。 | Coding |
-| Then, I reconnect nodes based on source logic. | 依來源步驟執行。 | Coding |
-| Next, I handle head or tail edge transitions. | 依來源步驟執行。 | Coding |
-| Then, I return final linked list head. | 依來源步驟執行。 | Coding |
+| First, I create a dummy node pointing to head. | 先建立指向 head 的 dummy 節點。 | Coding |
+| I initialize fast and slow pointers at dummy. | fast 與 slow 都從 dummy 出發。 | Coding |
+| I move fast forward by n steps. | 讓 fast 先前進 n 步。 | Coding |
+| Then I move fast and slow together until fast next is null. | 再同步前進直到 fast->next 為 null。 | Coding |
+| Now slow next is the node we need to delete. | 此時 slow->next 就是待刪節點。 | Coding |
+| I rewire slow next to skip that node. | 重新連接 slow->next 跳過該節點。 | Coding |
+| Optionally free removed node in C++ implementation. | 在 C++ 可選擇釋放被刪節點記憶體。 | Coding |
+| Finally I return dummy next as new head. | 最後回傳 dummy->next 作為新 head。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: head = [1,2,3,4,5], n = 2. | 範例輸入：head = [1,2,3,4,5], n = 2。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [1,2,3,5]. | 預期輸出：[1,2,3,5]。 | Dry-run |
+| Let me dry-run head [1,2,3,4,5] with n equals 2. | 我手跑 head=[1,2,3,4,5]、n=2。 | Dry-run |
+| Fast moves two steps to node 2. | fast 先走兩步到節點 2。 | Dry-run |
+| Move both pointers together until fast reaches node 5. | 接著雙指標同走直到 fast 到節點 5。 | Dry-run |
+| Slow stops at node 3. | slow 最後停在節點 3。 | Dry-run |
+| Slow next is node 4, which is nth from end. | slow 的 next 是節點 4，即倒數第 2 個。 | Dry-run |
+| Bypass node 4, list becomes [1,2,3,5]. | 跳過節點 4 後，串列變 [1,2,3,5]。 | Dry-run |
+| Return updated head from dummy next. | 從 dummy->next 回傳更新後 head。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single node with n equals 1. | 案例一：單節點且 n=1。 | Edge test |
+| Case two: deleting original head in multi-node list. | 案例二：多節點中刪掉原 head。 | Edge test |
+| Case three: deleting last node with n equals 1. | 案例三：n=1 刪除尾節點。 | Edge test |
+| Case four: deleting middle node. | 案例四：刪除中間節點。 | Edge test |
+| Case five: two-node list deleting first or second. | 案例五：雙節點刪第一或第二個。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,71 +87,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(L). | 時間複雜度是 O(L)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Extra space is O(1). | 額外空間是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(L). | 來源主要時間為 O(L)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Fast pointer advances at most list length steps. | fast 指標最多走過整個串列一次。 | Complexity |
+| Slow pointer also advances linearly. | slow 指標同樣是線性前進。 | Complexity |
+| Pointer rewiring is constant-time after traversal. | 走訪後的指標重接是常數時間。 | Complexity |
+| No extra list-sized storage is used. | 不需要與串列長度同級的額外儲存。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me verify fast-gap invariant first. | 我先確認 fast 與 slow 的間距不變量。 | If stuck |
+| Gap between fast and slow should stay n nodes. | fast 與 slow 應維持 n 節點間距。 | If stuck |
+| I should move fast n steps before joint movement. | 共同移動前要先讓 fast 走 n 步。 | If stuck |
+| Dummy node helps when deleting the original head. | dummy 節點可處理刪 head。 | If stuck |
+| I may have stopped at fast null instead of fast next null. | 我可能把停止條件寫成 fast==null。 | If stuck |
+| Let me correct that boundary condition. | 我修正這個邊界條件。 | If stuck |
+| I rerun head-removal and tail-removal cases. | 我重跑刪 head 與刪尾案例。 | If stuck |
+| Now deletion position is accurate. | 現在刪除位置正確。 | If stuck |
+| Returned head is also correct. | 回傳 head 也正確。 | If stuck |
+| Great, one-pass logic is stable. | 很好，一趟解法穩定。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(L), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I completed one-pass remove-nth-from-end solution. | 我完成了 one-pass 刪倒數第 n 節點解法。 | Wrap-up |
+| I validated head, middle, and tail deletions. | 我驗證了刪頭、刪中、刪尾三類情況。 | Wrap-up |
+| Runtime is O(L). | 時間複雜度是 O(L)。 | Wrap-up |
+| Extra space is O(1). | 額外空間是 O(1)。 | Wrap-up |
+| I can compare with two-pass approach if needed. | 若需要我可比較兩趟解法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(L). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Remove nth node from end. | 刪除倒數第 n 個節點。 | Cheat sheet |
+| Return updated head. | 回傳更新後 head。 | Cheat sheet |
+| Baseline two-pass uses length first. | 基線兩趟先算長度。 | Cheat sheet |
+| Better one-pass with two pointers. | 更好是一趟雙指標。 | Cheat sheet |
+| Add dummy before head. | 在 head 前加 dummy。 | Cheat sheet |
+| fast and slow start at dummy. | fast/slow 都從 dummy 出發。 | Cheat sheet |
+| Move fast by n steps. | 先讓 fast 走 n 步。 | Cheat sheet |
+| Move both while fast->next exists. | fast->next 存在時雙指標同走。 | Cheat sheet |
+| slow->next is target node. | slow->next 就是待刪節點。 | Cheat sheet |
+| Rewire slow->next = slow->next->next. | 重接 slow->next 跳過目標。 | Cheat sheet |
+| Return dummy->next. | 回傳 dummy->next。 | Cheat sheet |
+| Test single-node n=1. | 測單節點 n=1。 | Cheat sheet |
+| Test deleting head case. | 測刪 head 案例。 | Cheat sheet |
+| Test deleting tail case. | 測刪尾節點案例。 | Cheat sheet |
+| Test deleting middle case. | 測刪中間節點案例。 | Cheat sheet |
+| Time O(L). | 時間 O(L)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Bug risk: wrong fast stop condition. | 風險：fast 停止條件錯。 | Cheat sheet |
+| Bug risk: forgetting dummy node. | 風險：忘記使用 dummy。 | Cheat sheet |
+| Explain gap invariant clearly. | 口述清楚間距不變量。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ One-pass fast/slow with dummy logic is preserved.
+- No hallucinated constraints: ✅ Uses source-linked-list deletion semantics.
+- Language simplicity: ✅ Interview-oriented concise spoken lines.

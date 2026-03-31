@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Coin Change II. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use DP (Space Optimized) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate coin change two. | 我先重述 Coin Change II。 | Restatement |
+| We are given amount and coin denominations. | 題目給目標金額與硬幣面額。 | Restatement |
+| We need number of combinations to form amount. | 要求湊成 amount 的組合數量。 | Restatement |
+| Each coin can be used unlimited times. | 每種硬幣都可無限使用。 | Restatement |
+| Different order of same coins counts as one combination. | 同組硬幣不同順序算同一組合。 | Restatement |
+| I will solve it using unbounded knapsack DP. | 我會用完全背包 DP 解。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Do we return count only, not the actual combinations? | 是否只回數量，不回實際組合？ | Clarify |
+| Can amount be zero in this problem? | 這題 amount 可能是 0 嗎？ | Clarify |
+| Are coin values positive integers? | 硬幣面額都是正整數嗎？ | Clarify |
+| Should we count combinations instead of permutations? | 這裡是算組合不是排列，對嗎？ | Clarify |
+| Is O(amount times coinCount) expected? | O(amount*硬幣種類數) 是否預期？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about [CHECK] from source. | 來源暴力時間約 [CHECK]。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force recursively chooses take or skip per coin. | 暴力遞迴對每個硬幣做取或不取。 | Approach |
+| It re-explores the same remaining amount states. | 會重複探索相同剩餘金額狀態。 | Approach |
+| Complexity is exponential without memoization. | 不做記憶化會是指數時間。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses DP (Space Optimized). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(A \times C) from source. | 來源優化時間為 O(A \times C)。 | Approach |
-| Optimized space is O(A) from source. | 來源優化空間為 O(A)。 | Approach |
+| Let dp[a] be number of ways to make amount a. | 定義 dp[a] 為湊出金額 a 的方法數。 | Approach |
+| Base case dp[0] equals one, choose nothing. | 基底 dp[0]=1，代表什麼都不選。 | Approach |
+| Iterate coins in outer loop to avoid permutation overcount. | 外層遍歷硬幣，避免排列重複計數。 | Approach |
+| For each coin, iterate a from coin to amount. | 每個硬幣下，a 從 coin 到 amount。 | Approach |
+| Transition is dp[a] plus equals dp[a-coin]. | 轉移為 dp[a]+=dp[a-coin]。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define two-dimensional dp table. | 依來源步驟執行。 | Coding |
-| Next, I initialize row and column base cases. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I iterate table in valid dependency order. | 依來源步驟執行。 | Coding |
-| Then, I compute transition from neighbor states. | 依來源步驟執行。 | Coding |
-| Next, I update current cell with source formula. | 依來源步驟執行。 | Coding |
-| Then, I track global optimum if required. | 依來源步驟執行。 | Coding |
-| Next, I return dp destination answer. | 依來源步驟執行。 | Coding |
+| I create dp array of size amount plus one with zeros. | 我建立 amount+1 的 dp 並設為 0。 | Coding |
+| I set dp[0] to one as base. | 我把 dp[0] 設為 1 當基底。 | Coding |
+| I loop each coin in coins first. | 我先外層遍歷每個 coin。 | Coding |
+| For current coin, I loop a from coin to amount. | 對當前 coin，a 從 coin 到 amount。 | Coding |
+| I add dp[a-coin] into dp[a]. | 我把 dp[a-coin] 加到 dp[a]。 | Coding |
+| This represents using current coin at least once. | 這代表至少使用一次當前硬幣。 | Coding |
+| After all coins, dp[amount] is total combinations. | 全部硬幣處理後，dp[amount] 即總組合數。 | Coding |
+| I return dp[amount]. | 我回傳 dp[amount]。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: amount = 5, coins = [1, 2, 5]. | 範例輸入：amount = 5, coins = [1, 2, 5]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 4. | 預期輸出：4。 | Dry-run |
+| Let me dry-run amount five and coins [1,2,5]. | 我手跑 amount=5、coins=[1,2,5]。 | Dry-run |
+| Start with dp[0]=1 and others zero. | 起始 dp[0]=1，其餘為 0。 | Dry-run |
+| After coin one, every dp[a] from one to five becomes one. | coin=1 後，dp[1..5] 都變 1。 | Dry-run |
+| After coin two, dp[5] becomes three via added combinations. | coin=2 後，dp[5] 變 3。 | Dry-run |
+| After coin five, dp[5] increases to four. | coin=5 後，dp[5] 增為 4。 | Dry-run |
+| Final answer is four combinations. | 最終答案是 4 種組合。 | Dry-run |
+| That matches the sample output. | 與範例輸出一致。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: amount zero should return one. | 案例一：amount=0 應回 1。 | Edge test |
+| Case two: no coin can fit target amount. | 案例二：沒有任何硬幣能湊目標。 | Edge test |
+| Case three: single coin exactly divides amount. | 案例三：單一硬幣可整除目標。 | Edge test |
+| Case four: coin set where order should not duplicate counts. | 案例四：檢查不同順序不重複計數。 | Edge test |
+| Case five: large amount with many coin types. | 案例五：大金額與多面額。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(A \times C). | 時間複雜度是 O(A \times C)。 | Complexity |
-| Space complexity is O(A). | 空間複雜度是 O(A)。 | Complexity |
+| Time complexity is O(amount times number of coins). | 時間複雜度是 O(amount*硬幣種類數)。 | Complexity |
+| Space complexity is O(amount). | 空間複雜度是 O(amount)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(A \times C). | 來源主要時間為 O(A \times C)。 | Complexity |
-| Extra memory from source is O(A). | 來源額外空間為 O(A)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Outer loop goes through each coin denomination once. | 外層對每種面額跑一次。 | Complexity |
+| Inner loop scans amounts from coin value to target. | 內層從 coin 掃到 target。 | Complexity |
+| Total operations are O(C times A). | 總操作量是 O(C*A)。 | Complexity |
+| DP array length is A plus one, so memory is O(A). | dp 長度 A+1，所以記憶體 O(A)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me confirm this is combination counting. | 我先確認這題是算組合數。 | If stuck |
+| So loop order matters a lot. | 所以迴圈順序非常關鍵。 | If stuck |
+| Coins must be outer loop to avoid permutations. | 硬幣必須放外層避免排列重複。 | If stuck |
+| dp[a] means number of ways to make a. | dp[a] 代表湊成 a 的方法數。 | If stuck |
+| Base dp[0]=1 is mandatory. | 基底 dp[0]=1 必不可少。 | If stuck |
+| Transition is dp[a]+=dp[a-coin]. | 轉移是 dp[a]+=dp[a-coin]。 | If stuck |
+| Let me test quickly with amount three and coin two. | 我快速測 amount=3、coin=2。 | If stuck |
+| dp[3] stays zero if no valid combination exists. | 若無組合，dp[3] 會維持 0。 | If stuck |
+| For amount five with [1,2,5], we should get four. | amount=5、[1,2,5] 應得到 4。 | If stuck |
+| Great, the recurrence is consistent. | 很好，遞推邏輯一致。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(A \times C), space is O(A). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved coin change two with unbounded knapsack DP. | 我用完全背包 DP 解了 Coin Change II。 | Wrap-up |
+| dp[a] stores number of combinations for amount a. | dp[a] 存的是金額 a 的組合數。 | Wrap-up |
+| Using coins in outer loop prevents permutation overcount. | 以硬幣做外層可避免排列重複計數。 | Wrap-up |
+| Complexity is O(C*A) time and O(A) space. | 複雜度是 O(C*A) 時間、O(A) 空間。 | Wrap-up |
+| This aligns with interview expectations for this problem. | 這符合該題面試常見期望。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(A \times C). | 速記重點。 | Cheat sheet |
-| Report space complexity O(A). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: count combinations to form amount. | 目標：計算湊成 amount 的組合數。 | Cheat sheet |
+| Coins are reusable unlimited times. | 硬幣可無限使用。 | Cheat sheet |
+| Order does not matter. | 順序不重要。 | Cheat sheet |
+| Define dp[a] as way count for amount a. | 定義 dp[a] 為金額 a 的方法數。 | Cheat sheet |
+| Initialize dp with zeros. | dp 初值設 0。 | Cheat sheet |
+| Set dp[0]=1. | 設 dp[0]=1。 | Cheat sheet |
+| Loop coin in outer loop. | 外層迴圈跑 coin。 | Cheat sheet |
+| Loop a from coin to amount. | a 從 coin 到 amount。 | Cheat sheet |
+| Transition dp[a]+=dp[a-coin]. | 轉移 dp[a]+=dp[a-coin]。 | Cheat sheet |
+| Return dp[amount]. | 回傳 dp[amount]。 | Cheat sheet |
+| amount=0 -> 1. | amount=0 -> 1。 | Cheat sheet |
+| [1,2,5], amount 5 -> 4. | [1,2,5]、amount 5 -> 4。 | Cheat sheet |
+| No fit coin -> 0. | 沒有可用面額 -> 0。 | Cheat sheet |
+| Time O(C*A). | 時間 O(C*A)。 | Cheat sheet |
+| Space O(A). | 空間 O(A)。 | Cheat sheet |
+| Common bug: reversed loops causing permutation counts. | 常見錯誤：迴圈反了導致算到排列。 | Cheat sheet |
+| Common bug: forgetting dp[0]=1. | 常見錯誤：忘記 dp[0]=1。 | Cheat sheet |
+| Mention unbounded knapsack framing. | 可提完全背包框架。 | Cheat sheet |
+| Explain loop order clearly in interview. | 面試要清楚解釋迴圈順序。 | Cheat sheet |
+| Validate with one impossible case. | 記得加一個無解案例驗證。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Combination-count DP and loop-order rationale preserved.
+- No hallucinated constraints: ✅ Unlimited coin reuse and order-insensitive counting maintained.
+- Language simplicity: ✅ Interview-friendly lines emphasizing recurrence and loop semantics.

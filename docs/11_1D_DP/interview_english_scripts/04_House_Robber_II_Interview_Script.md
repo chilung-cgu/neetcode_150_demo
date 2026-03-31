@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve House Robber II. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Reuse DP Logic as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate House Robber Two. | 我先重述 House Robber II。 | Restatement |
+| Houses are arranged in a circle this time. | 這次房子是環狀排列。 | Restatement |
+| First and last houses are adjacent. | 第一間與最後一間相鄰。 | Restatement |
+| We still cannot rob two adjacent houses. | 仍不能同時搶相鄰房屋。 | Restatement |
+| We need the maximum total money. | 要求可搶到的最大總金額。 | Restatement |
+| I will split into two linear robber subproblems. | 我會拆成兩個線性子問題。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is array length at least one? | 陣列長度是否至少為 1？ | Clarify |
+| For one house, can we directly return that value? | 若只有一間房可直接回該值嗎？ | Clarify |
+| Is output just maximum amount, no chosen indices needed? | 是否只回最大金額，不需回索引？ | Clarify |
+| Can helper function reuse House Robber One logic? | 可否用 helper 重用 House Robber I 邏輯？ | Clarify |
+| Is O(n) time and O(1) extra space expected? | 是否期望 O(n) 時間與 O(1) 額外空間？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about [CHECK] from source. | 來源暴力時間約 [CHECK]。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force explores rob or skip for every house with circular constraint. | 暴力法在環狀限制下枚舉每間房搶或不搶。 | Approach |
+| Circular adjacency of first and last complicates direct recursion. | 首尾相鄰讓直接遞迴更複雜。 | Approach |
+| Complexity becomes exponential. | 複雜度會是指數級。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Reuse DP Logic. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N) from source. | 來源優化時間為 O(N)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Because first and last cannot both be robbed, split cases. | 因首尾不能同搶，所以拆兩種情況。 | Approach |
+| Case one robs from index zero to n minus two. | 情況一考慮範圍 0 到 n-2。 | Approach |
+| Case two robs from index one to n minus one. | 情況二考慮範圍 1 到 n-1。 | Approach |
+| Each case is standard linear House Robber DP. | 每種情況都是線性 House Robber DP。 | Approach |
+| Final answer is max of the two case results. | 最終答案取兩種結果較大者。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define one-dimensional dp array. | 依來源步驟執行。 | Coding |
-| Next, I initialize base dp conditions. | 依來源步驟執行。 | Coding |
-| Then, I iterate indices in source order. | 依來源步驟執行。 | Coding |
-| Next, I compute transition from previous states. | 依來源步驟執行。 | Coding |
-| Then, I update dp with optimal value. | 依來源步驟執行。 | Coding |
-| Next, I keep best answer variable if needed. | 依來源步驟執行。 | Coding |
-| Then, I return final dp target value. | 依來源步驟執行。 | Coding |
+| I handle n equals one separately and return nums[0]. | 我先特判 n=1 回 nums[0]。 | Coding |
+| I compute max1 using helper on range zero to n minus two. | 用 helper 算範圍 0 到 n-2 的 max1。 | Coding |
+| I compute max2 using helper on range one to n minus one. | 用 helper 算範圍 1 到 n-1 的 max2。 | Coding |
+| Helper uses rolling DP prev2 and prev1. | helper 用滾動 DP 的 prev2、prev1。 | Coding |
+| For each index in range, current is max(prev1, prev2+nums[i]). | 範圍內每點 current=max(prev1,prev2+nums[i])。 | Coding |
+| Then shift prev2 to prev1 and prev1 to current. | 然後更新 prev2=prev1、prev1=current。 | Coding |
+| Helper returns prev1 for that linear segment. | helper 回傳該線性段的 prev1。 | Coding |
+| Main function returns max(max1, max2). | 主函式回傳 max(max1,max2)。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: nums = [2,3,2]. | 範例輸入：nums = [2,3,2]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 3. | 預期輸出：3。 | Dry-run |
+| Let me dry-run nums [2,3,2]. | 我手跑 nums=[2,3,2]。 | Dry-run |
+| n is three, so not single-house edge case. | n=3，不是單房邊界。 | Dry-run |
+| Case one range [2,3] gives three. | 情況一範圍 [2,3] 給 3。 | Dry-run |
+| Case two range [3,2] also gives three. | 情況二範圍 [3,2] 也給 3。 | Dry-run |
+| Max of both cases is three. | 兩者取大為 3。 | Dry-run |
+| That matches expected output. | 與預期輸出一致。 | Dry-run |
+| Circular conflict is handled by split strategy. | 環狀衝突由拆分策略正確處理。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: n equals one returns nums[0]. | 案例一：n=1 回 nums[0]。 | Edge test |
+| Case two: n equals two returns max of two values. | 案例二：n=2 回兩值較大者。 | Edge test |
+| Case three: all equal values in a circle. | 案例三：環狀全相同值。 | Edge test |
+| Case four: high values at both ends cannot both be taken. | 案例四：首尾都高值但不可同取。 | Edge test |
+| Case five: zeros mixed with positive values. | 案例五：0 與正值混合。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N). | 時間複雜度是 O(N)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
+| Extra space complexity is O(1). | 額外空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N). | 來源主要時間為 O(N)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We run linear robber helper twice on two ranges. | 我們在兩個範圍各跑一次線性 helper。 | Complexity |
+| Each helper scans its range once with constant work per step. | 每個 helper 單次掃描，步驟工作量為常數。 | Complexity |
+| Total runtime is proportional to n, so O(n). | 總時間與 n 成正比，因此 O(n)。 | Complexity |
+| Helpers keep only rolling variables, so extra space is O(1). | helper 只用滾動變數，額外空間 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me isolate the circular part first. | 我先隔離環狀帶來的差異。 | If stuck |
+| The only new constraint is first-last adjacency. | 唯一新增限制是首尾相鄰。 | If stuck |
+| So both ends cannot be chosen together. | 所以首尾不可能同時被選。 | If stuck |
+| That naturally yields two linear scenarios. | 這自然形成兩個線性情境。 | If stuck |
+| Scenario A excludes last, scenario B excludes first. | 情境 A 排除尾端，情境 B 排除首端。 | If stuck |
+| Each scenario is plain House Robber One. | 每個情境都可用 House Robber I。 | If stuck |
+| Then take max of both scenario results. | 最後取兩情境結果較大者。 | If stuck |
+| Let me verify with [1,2,3,1]. | 我用 [1,2,3,1] 驗證。 | If stuck |
+| I get four, matching sample answer. | 得到 4，符合範例答案。 | If stuck |
+| Great, circular handling is now clear and correct. | 很好，環狀處理已清楚且正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved House Robber Two by reducing it to two linear runs. | 我把 House Robber II 化成兩次線性求解。 | Wrap-up |
+| This avoids direct circular-state complexity. | 這可避免直接處理環狀狀態複雜度。 | Wrap-up |
+| Both runs reuse the standard rolling DP helper. | 兩次都重用標準滾動 DP helper。 | Wrap-up |
+| Final answer is max of excluding first or excluding last. | 最終答案是排除首端與排除尾端兩者取大。 | Wrap-up |
+| Runtime remains O(n) with O(1) extra space. | 複雜度維持 O(n) 時間、O(1) 空間。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Problem type: circular House Robber. | 題型：環狀 House Robber。 | Cheat sheet |
+| First and last are adjacent. | 首尾相鄰。 | Cheat sheet |
+| Cannot take both ends together. | 首尾不可同時取。 | Cheat sheet |
+| Split into two linear cases. | 拆成兩個線性情境。 | Cheat sheet |
+| Case A: range [0, n-2]. | 情境 A：範圍 [0,n-2]。 | Cheat sheet |
+| Case B: range [1, n-1]. | 情境 B：範圍 [1,n-1]。 | Cheat sheet |
+| Solve each by House Robber I helper. | 各自用 House Robber I helper。 | Cheat sheet |
+| Helper uses prev1 and prev2. | helper 使用 prev1、prev2。 | Cheat sheet |
+| current = max(prev1, prev2+nums[i]). | current=max(prev1,prev2+nums[i])。 | Cheat sheet |
+| Shift states each iteration. | 每次迭代更新狀態。 | Cheat sheet |
+| Helper returns segment max loot. | helper 回傳區段最大值。 | Cheat sheet |
+| Final answer = max(caseA, caseB). | 最終答案=max(情境A,情境B)。 | Cheat sheet |
+| n=1 special case first. | 先處理 n=1 特例。 | Cheat sheet |
+| n=2 answer is max of two. | n=2 答案是兩者 max。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Validate [2,3,2] -> 3. | 驗證 [2,3,2] 得 3。 | Cheat sheet |
+| Validate [1,2,3,1] -> 4. | 驗證 [1,2,3,1] 得 4。 | Cheat sheet |
+| Common bug: forgetting n=1 edge. | 常見錯誤：漏掉 n=1。 | Cheat sheet |
+| Common bug: running helper on wrong ranges. | 常見錯誤：helper 範圍寫錯。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Two-range reduction plus linear helper preserved.
+- No hallucinated constraints: ✅ Correct circular adjacency interpretation.
+- Language simplicity: ✅ Concise interview delivery with clear split strategy.

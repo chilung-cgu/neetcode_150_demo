@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Construct Binary Tree from Preorder and Inorder Traversal. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Hash Map + Recursion as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the tree-construction problem. | 我先重述建樹題目。 | Restatement |
+| We are given preorder and inorder arrays of the same tree. | 題目給同一棵樹的 preorder 與 inorder。 | Restatement |
+| We need to reconstruct and return the binary-tree root. | 我們要重建並回傳該樹 root。 | Restatement |
+| Preorder gives root first; inorder splits left and right subtrees. | preorder 先給 root；inorder 可切左右子樹。 | Restatement |
+| Values are unique, so root index in inorder is unambiguous. | 值唯一，所以 root 在 inorder 的位置唯一。 | Restatement |
+| I will use hash map plus recursion with index ranges. | 我會用 hash map 加遞迴索引範圍。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Are preorder and inorder lengths always equal? | preorder 與 inorder 長度總是相等嗎？ | Clarify |
+| Are all values guaranteed unique? | 所有值都保證唯一嗎？ | Clarify |
+| Can I assume inputs are always valid representations? | 我可假設輸入一定可構成合法樹嗎？ | Clarify |
+| Should I avoid array slicing for performance? | 是否要避免陣列切片以提升效能？ | Clarify |
+| Is O(n) hashmap solution the expected target? | 目標是否是 O(n) 的 hashmap 解法？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,55 +31,56 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N^2) from source. | 來源暴力時間約 O(N^2)。 | Approach |
-| Brute space is about O(N^2) from source. | 來源暴力空間約 O(N^2)。 | Approach |
+| Brute force finds root index in inorder by linear search every recursion. | 暴力法每層遞迴都線性搜尋 root 在 inorder 位置。 | Approach |
+| It may also create sliced subarrays repeatedly. | 也常會反覆建立切片子陣列。 | Approach |
+| This leads to O(n^2) time and extra copying overhead. | 會導致 O(n^2) 時間與拷貝成本。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Hash Map + Recursion. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(n) from source. | 來源優化空間為 O(n)。 | Approach |
+| Build value-to-index hashmap for inorder first. | 先建立 inorder 的 value-to-index hashmap。 | Approach |
+| Recursive function takes preorder start and inorder range. | 遞迴函式帶 preorder 起點與 inorder 範圍。 | Approach |
+| Current preorder start gives root value directly. | 當前 preorder 起點直接就是 root 值。 | Approach |
+| Inorder index gives left subtree size immediately. | 由 inorder 索引可立即得左子樹大小。 | Approach |
+| Recurse left then right with adjusted indices, total O(n). | 依序遞迴左右並調整索引，總體 O(n)。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define traversal order based on source method. | 依來源步驟執行。 | Coding |
-| Next, I initialize recursion or queue structures. | 依來源步驟執行。 | Coding |
-| Then, I use unordered_map for constant-time lookup. | 依來源步驟執行。 | Coding |
-| Next, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Then, I process current node value and state. | 依來源步驟執行。 | Coding |
-| Next, I visit left and right children by rule. | 依來源步驟執行。 | Coding |
-| Then, I update answer during traversal. | 依來源步驟執行。 | Coding |
-| Next, I handle null node base case carefully. | 依來源步驟執行。 | Coding |
-| Finally, I return final aggregated tree result. | 依來源步驟執行。 | Coding |
+| I first fill hashmap from inorder value to index. | 我先把 inorder 值映射到索引。 | Coding |
+| I call build helper with preorder start zero and full inorder range. | 以 preorder 起點 0、完整 inorder 範圍呼叫 helper。 | Coding |
+| Base case: if inorder start exceeds inorder end, return null. | base case：inStart 超過 inEnd 時回傳 null。 | Coding |
+| Root value is preorder at preStart. | root 值是 preorder[preStart]。 | Coding |
+| I create root node from that value. | 我用該值建立 root 節點。 | Coding |
+| I find root index in inorder using hashmap. | 用 hashmap 找 root 在 inorder 的索引。 | Coding |
+| Left subtree size is inIndex minus inStart. | 左子樹大小為 inIndex-inStart。 | Coding |
+| I recurse left with preStart plus one and left inorder range. | 左遞迴用 preStart+1 與左側 inorder 範圍。 | Coding |
+| I recurse right with shifted preStart and right inorder range. | 右遞迴用位移後 preStart 與右側 inorder 範圍。 | Coding |
+| Return root after linking both subtrees. | 連接完左右子樹後回傳 root。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: preorder = [3,9,20,15,7], inorder = [9,3,15,20,7]. | 範例輸入：preorder = [3,9,20,15,7], inorder = [9,3,15,20,7]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [3,9,20,null,null,15,7]. | 預期輸出：[3,9,20,null,null,15,7]。 | Dry-run |
+| Let me dry-run preorder [3,9,20,15,7] and inorder [9,3,15,20,7]. | 我手跑 preorder [3,9,20,15,7] 與 inorder [9,3,15,20,7]。 | Dry-run |
+| preStart zero gives root value 3. | preStart=0 得 root 值 3。 | Dry-run |
+| Inorder index of 3 is one, so left subtree size is one. | 3 在 inorder 的索引是 1，左子樹大小為 1。 | Dry-run |
+| Left call builds node 9 from preorder index one. | 左遞迴從 preorder 索引 1 建出節點 9。 | Dry-run |
+| Right call starts at preorder index two and builds node 20. | 右遞迴從 preorder 索引 2 建出節點 20。 | Dry-run |
+| Node 20 then builds left 15 and right 7 similarly. | 節點 20 再以同邏輯建立左 15 右 7。 | Dry-run |
+| Final tree matches expected [3,9,20,null,null,15,7]. | 最終樹符合預期 [3,9,20,null,null,15,7]。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single-node arrays should build one-node tree. | 案例一：單元素陣列應建出單節點樹。 | Edge test |
+| Case two: all-left skewed traversal pair. | 案例二：全左斜的遍歷配對。 | Edge test |
+| Case three: all-right skewed traversal pair. | 案例三：全右斜的遍歷配對。 | Edge test |
+| Case four: balanced tree with both subtrees non-empty. | 案例四：左右子樹都非空的平衡樹。 | Edge test |
+| Case five: maximum-size input checks recursion depth risk. | 案例五：大輸入需注意遞迴深度風險。 | Edge test |
 
 ## 7) Complexity script
 
@@ -88,71 +89,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(n). | 空間複雜度是 O(n)。 | Complexity |
+| Space complexity is O(n) for map plus recursion stack. | 空間複雜度是 O(n)（map+遞迴堆疊）。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(n). | 來源額外空間為 O(n)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We create each node once and process each value once. | 每個值只建立一次節點並處理一次。 | Complexity |
+| Hashmap gives O(1) average lookup for inorder index. | hashmap 可 O(1) 平均查找 inorder 索引。 | Complexity |
+| So total construction time is O(n). | 因此總建構時間為 O(n)。 | Complexity |
+| Extra memory is hashmap O(n) plus recursion O(h). | 額外記憶體是 hashmap O(n) 加遞迴 O(h)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me anchor on traversal definitions first. | 我先回到遍歷定義本身。 | If stuck |
+| Preorder first element of subtree is always its root. | 每棵子樹的 preorder 首值永遠是 root。 | If stuck |
+| Inorder root position splits left and right regions. | inorder 的 root 位置可切左右區間。 | If stuck |
+| I might have miscomputed right-subtree preStart offset. | 我可能算錯右子樹 preStart 位移。 | If stuck |
+| Let me recompute it as preStart plus one plus leftSize. | 我改成 preStart+1+leftSize 重新計算。 | If stuck |
+| I will rerun the [3,9,20,15,7] sample. | 我重跑 [3,9,20,15,7] 範例。 | If stuck |
+| Left and right subtrees now align correctly. | 現在左右子樹切分正確。 | If stuck |
+| I will also test single-node input. | 我再測單節點輸入。 | If stuck |
+| Base case handling works properly. | base case 處理正常。 | If stuck |
+| Great, index arithmetic is now stable. | 很好，索引運算已穩定。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(n). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I completed tree reconstruction from preorder and inorder. | 我完成了從 preorder/inorder 重建樹。 | Wrap-up |
+| Hashmap lookup removes repeated inorder scans. | hashmap 查找消除了重複 inorder 掃描。 | Wrap-up |
+| Runtime is O(n). | 時間複雜度是 O(n)。 | Wrap-up |
+| Space is O(n) including map and recursion stack. | 空間包含 map 與遞迴為 O(n)。 | Wrap-up |
+| I can also discuss preIndex-global-pointer variant if needed. | 若需要我可補 preIndex 全域指標版本。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(n). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Build tree from preorder and inorder. | 由 preorder/inorder 建樹。 | Cheat sheet |
+| Preorder gives root first. | preorder 先給 root。 | Cheat sheet |
+| Inorder splits left and right subtrees. | inorder 切分左右子樹。 | Cheat sheet |
+| Precompute inorder index hashmap. | 預先建 inorder 索引 map。 | Cheat sheet |
+| Use recursive helper with index ranges. | 遞迴 helper 帶索引範圍。 | Cheat sheet |
+| Base: inStart > inEnd returns null. | base：inStart>inEnd 回 null。 | Cheat sheet |
+| rootVal = preorder[preStart]. | rootVal = preorder[preStart]。 | Cheat sheet |
+| inIndex = map[rootVal]. | inIndex = map[rootVal]。 | Cheat sheet |
+| leftSize = inIndex - inStart. | leftSize = inIndex-inStart。 | Cheat sheet |
+| Build left with preStart + 1. | 左子樹用 preStart+1。 | Cheat sheet |
+| Build right with preStart + 1 + leftSize. | 右子樹用 preStart+1+leftSize。 | Cheat sheet |
+| Link root->left and root->right. | 連接 root 左右子樹。 | Cheat sheet |
+| Return root. | 回傳 root。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(n). | 空間 O(n)。 | Cheat sheet |
+| Test single-node arrays. | 測單節點陣列。 | Cheat sheet |
+| Test skewed tree arrays. | 測斜樹陣列。 | Cheat sheet |
+| Common bug: right preStart offset wrong. | 常見錯誤：右子樹 preStart 位移錯。 | Cheat sheet |
+| Common bug: slicing arrays unnecessarily. | 常見錯誤：不必要陣列切片。 | Cheat sheet |
+| Mention global preIndex alternative. | 可提 global preIndex 替代法。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Hashmap + recursive range split is preserved.
+- No hallucinated constraints: ✅ Complexity and unique-value assumption align with source.
+- Language simplicity: ✅ Concise interview-spoken script lines.

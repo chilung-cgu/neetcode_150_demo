@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Meeting Rooms. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Sort & Scan as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate meeting rooms. | 我先重述 Meeting Rooms。 | Restatement |
+| We are given meeting intervals with start and end times. | 題目給會議區間的開始與結束時間。 | Restatement |
+| We need to check if one person can attend all meetings. | 要判斷一個人是否可參加全部會議。 | Restatement |
+| That means no two meetings can overlap in time. | 也就是任兩場會議不能時間重疊。 | Restatement |
+| If any overlap exists, answer is false. | 只要有重疊，答案就是 false。 | Restatement |
+| I will sort by start and scan neighbors. | 我會先按起點排序，再掃相鄰區間。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is intervals length possibly zero? | intervals 長度是否可能為 0？ | Clarify |
+| Are intervals guaranteed valid with start less than end? | 區間是否保證 start 小於 end？ | Clarify |
+| Is boundary touch allowed, like end equals next start? | 邊界相接是否可接受，如 end==nextStart？ | Clarify |
+| Should I return boolean only, not conflict pair indices? | 是否只回布林值，不需回衝突索引？ | Clarify |
+| Is O(n log n) sorting approach acceptable? | O(n log n) 排序法是否可接受？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N^2) from source. | 來源暴力時間約 O(N^2)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force checks every pair of meetings. | 暴力法比較每一對會議。 | Approach |
+| If any pair overlaps, return false. | 若任一對重疊就回 false。 | Approach |
+| This costs O(n squared). | 此作法成本是 O(n²)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Sort & Scan. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N \log N) from source. | 來源優化時間為 O(N \log N)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Sort intervals by start time. | 先按起始時間排序。 | Approach |
+| Then only adjacent intervals can create first visible conflict in order. | 排序後只需看相鄰區間是否衝突。 | Approach |
+| For each i, if intervals[i].end is greater than intervals[i+1].start, overlap exists. | 對每個 i，若 end[i] > start[i+1] 則重疊。 | Approach |
+| In that case return false immediately. | 發生時可立即回 false。 | Approach |
+| If scan completes, return true. | 掃描完沒有衝突就回 true。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I sort intervals by start time first. | 依來源步驟執行。 | Coding |
-| Next, I initialize result with first interval. | 依來源步驟執行。 | Coding |
-| Then, I iterate remaining intervals one by one. | 依來源步驟執行。 | Coding |
-| Next, I merge when current start overlaps last end. | 依來源步驟執行。 | Coding |
-| Then, I append interval when no overlap exists. | 依來源步驟執行。 | Coding |
-| Next, I update end boundary with max value. | 依來源步驟執行。 | Coding |
-| Then, I return merged or selected intervals. | 依來源步驟執行。 | Coding |
+| If intervals is empty, I return true. | 若 intervals 為空，我回傳 true。 | Coding |
+| I sort intervals in ascending order by start. | 我先把 intervals 依起點遞增排序。 | Coding |
+| I loop i from zero to size minus two. | 我讓 i 從 0 走到 size-2。 | Coding |
+| I compare current end with next start. | 比較目前區間終點與下一段起點。 | Coding |
+| If current end is greater, meetings overlap. | 若目前終點較大，表示會議重疊。 | Coding |
+| I return false as soon as overlap appears. | 一旦重疊立刻回傳 false。 | Coding |
+| Otherwise continue checking next pair. | 否則繼續檢查下一對。 | Coding |
+| After loop, I return true. | 迴圈結束後回傳 true。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: intervals = [[0,30],[5,10],[15,20]]. | 範例輸入：intervals = [[0,30],[5,10],[15,20]]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: false. | 預期輸出：false。 | Dry-run |
+| Let me dry-run [[0,30],[5,10],[15,20]]. | 我手跑 [[0,30],[5,10],[15,20]]。 | Dry-run |
+| Sorted order is unchanged. | 排序後順序不變。 | Dry-run |
+| Compare [0,30] and [5,10]. | 先比 [0,30] 與 [5,10]。 | Dry-run |
+| Since thirty is greater than five, overlap exists. | 因為 30 > 5，出現重疊。 | Dry-run |
+| So function returns false immediately. | 因此函式立即回傳 false。 | Dry-run |
+| We do not need to check further pairs. | 後面配對就不必再檢查。 | Dry-run |
+| Final answer is false. | 最終答案是 false。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: empty intervals returns true. | 案例一：空 intervals 回 true。 | Edge test |
+| Case two: single meeting always returns true. | 案例二：單一會議必為 true。 | Edge test |
+| Case three: boundary touch [2,4] then [4,7] should return true. | 案例三：邊界相接 [2,4]、[4,7] 應回 true。 | Edge test |
+| Case four: exact overlap should return false. | 案例四：明顯重疊應回 false。 | Edge test |
+| Case five: unsorted input still works after sorting. | 案例五：未排序輸入經排序後仍正確。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N \log N). | 時間複雜度是 O(N \log N)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time complexity is O(n log n). | 時間複雜度是 O(n log n)。 | Complexity |
+| Space complexity is O(1) extra excluding sort stack details. | 額外空間約 O(1)，不含排序堆疊細節。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N \log N). | 來源主要時間為 O(N \log N)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Sorting by start dominates at O(n log n). | 依起點排序主導成本，為 O(n log n)。 | Complexity |
+| Neighbor scan is linear O(n). | 相鄰掃描為線性 O(n)。 | Complexity |
+| Total runtime is O(n log n). | 總時間複雜度是 O(n log n)。 | Complexity |
+| Additional variables are constant space. | 附加變數為常數空間。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me simplify to overlap detection after sorting. | 我先簡化成排序後的重疊檢測。 | If stuck |
+| I only need to compare adjacent meetings. | 我只要比較相鄰會議。 | If stuck |
+| Overlap condition is prev end greater than next start. | 重疊條件是前段 end > 後段 start。 | If stuck |
+| If overlap occurs, answer is immediately false. | 一旦重疊，答案立即是 false。 | If stuck |
+| If no pair overlaps, answer is true. | 若沒有任何重疊配對，答案是 true。 | If stuck |
+| Let me validate with [7,10] and [2,4]. | 我用 [7,10] 與 [2,4] 快速驗證。 | If stuck |
+| After sorting, [2,4] then [7,10] has no overlap. | 排序後 [2,4] 再 [7,10]，沒有重疊。 | If stuck |
+| So that case returns true. | 所以該案例回 true。 | If stuck |
+| Boundary touch should also be okay. | 邊界相接也應視為可排。 | If stuck |
+| Great, logic is stable now. | 很好，邏輯已穩定。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N \log N), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it by sorting and checking adjacent overlaps. | 我用排序加相鄰重疊檢查解題。 | Wrap-up |
+| Early return false handles conflicts efficiently. | 提早回 false 可高效處理衝突。 | Wrap-up |
+| If no conflict appears, return true. | 若未出現衝突，就回 true。 | Wrap-up |
+| Complexity is O(n log n) time and O(1) extra space. | 複雜度是 O(n log n) 時間、O(1) 額外空間。 | Wrap-up |
+| This is the standard interview solution. | 這是面試的標準解法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N \log N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: check if one person can attend all meetings. | 目標：判斷是否可參加所有會議。 | Cheat sheet |
+| Input is intervals [start,end]. | 輸入是區間 [start,end]。 | Cheat sheet |
+| Need no overlaps. | 需要不存在重疊。 | Cheat sheet |
+| Sort by start time first. | 先依起點排序。 | Cheat sheet |
+| Scan adjacent pairs. | 掃描相鄰配對。 | Cheat sheet |
+| Overlap if end[i] > start[i+1]. | 若 end[i] > start[i+1] 即重疊。 | Cheat sheet |
+| On overlap return false. | 有重疊就回 false。 | Cheat sheet |
+| If scan ends return true. | 掃描結束就回 true。 | Cheat sheet |
+| Empty input returns true. | 空輸入回 true。 | Cheat sheet |
+| Single interval returns true. | 單一區間回 true。 | Cheat sheet |
+| Boundary touch is allowed. | 邊界相接可接受。 | Cheat sheet |
+| Brute force is O(n^2). | 暴力法是 O(n²)。 | Cheat sheet |
+| Optimized is O(n log n). | 優化法是 O(n log n)。 | Cheat sheet |
+| Neighbor scan is O(n). | 相鄰掃描是 O(n)。 | Cheat sheet |
+| Extra space O(1). | 額外空間 O(1)。 | Cheat sheet |
+| Common bug: using >= instead of >. | 常見錯誤：把 > 寫成 >=。 | Cheat sheet |
+| Common bug: forgetting to sort first. | 常見錯誤：忘記先排序。 | Cheat sheet |
+| Example [0,30],[5,10] conflicts. | 例 [0,30],[5,10] 有衝突。 | Cheat sheet |
+| Return type is boolean. | 回傳型別是布林值。 | Cheat sheet |
+| Explain with one quick dry run. | 用一個快手跑說明。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Sort + adjacent conflict scan preserved.
+- No hallucinated constraints: ✅ Boundary-touch interpretation follows source.
+- Language simplicity: ✅ Concise interview-safe wording.

@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Reverse Bits. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Iteration as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate Reverse Bits. | 我先重述 Reverse Bits。 | Restatement |
+| Input is a 32-bit unsigned integer n. | 輸入是 32 位無號整數 n。 | Restatement |
+| We need to reverse its bit order and return the new value. | 要把位元順序完全反轉後回傳。 | Restatement |
+| I will build result bit by bit from least significant side of n. | 我會從 n 的低位逐步建立結果。 | Restatement |
+| Loop runs exactly 32 rounds. | 迴圈固定跑 32 輪。 | Restatement |
+| This gives constant time and constant space. | 這可得到常數時間與常數空間。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Should input be treated strictly as uint32_t? | 輸入是否嚴格當作 uint32_t？ | Clarify |
+| Is fixed 32-iteration solution preferred? | 是否偏好固定 32 輪解法？ | Clarify |
+| Can I use shift and bitwise or operators directly? | 可直接使用位移與 OR 運算嗎？ | Clarify |
+| Should complexity be reported as O(1) due to fixed word size? | 複雜度是否以固定字長記為 O(1)？ | Clarify |
+| Do you want mention of divide-and-conquer bit-mask variant too? | 是否要補充分治遮罩版本？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,53 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(1) from source. | 來源暴力時間約 O(1)。 | Approach |
-| Brute space is about O(1) from source. | 來源暴力空間約 O(1)。 | Approach |
+| There is no meaningful brute force beyond direct 32-bit simulation. | 這題其實沒有更笨的暴力法，核心就是 32 位模擬。 | Approach |
+| A string-conversion approach is possible but unnecessary overhead. | 可轉字串反轉，但有不必要負擔。 | Approach |
+| Bitwise simulation is clearer and faster. | 位運算模擬更直觀也更快。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Iteration. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(1) from source. | 來源優化時間為 O(1)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Initialize result to zero. | 先把 result 設為 0。 | Approach |
+| For each of 32 rounds, shift result left by one. | 每輪先把 result 左移一位。 | Approach |
+| Extract lowest bit of n with n and one. | 用 n&1 取出 n 的最低位。 | Approach |
+| OR that bit into result, then shift n right by one. | 把該 bit OR 進 result，再把 n 右移一位。 | Approach |
+| After 32 rounds, all bits are reversed. | 32 輪後位元就完全反轉。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize result and bit variables. | 依來源步驟執行。 | Coding |
-| Next, I apply bitwise operators from source logic. | 依來源步驟執行。 | Coding |
-| Then, I shift bits to inspect each position. | 依來源步驟執行。 | Coding |
-| Next, I update result using xor or masks. | 依來源步驟執行。 | Coding |
-| Then, I loop until all relevant bits are processed. | 依來源步驟執行。 | Coding |
-| Next, I handle sign or overflow case when needed. | 依來源步驟執行。 | Coding |
-| Then, I return final computed integer result. | 依來源步驟執行。 | Coding |
+| I declare uint32_t result equals zero. | 我宣告 uint32_t result=0。 | Coding |
+| I start loop from i zero to thirty-one. | 我讓 i 從 0 跑到 31。 | Coding |
+| Each round, shift result left by one. | 每輪把 result 左移一位。 | Coding |
+| Read current bit as n and one. | 取目前位元 bit=n&1。 | Coding |
+| Merge bit into result using OR. | 用 OR 把 bit 合併到 result。 | Coding |
+| Shift n right by one to expose next bit. | n 右移一位準備下一輪。 | Coding |
+| After loop, return result. | 迴圈後回傳 result。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: n = 00000010100101000001111010011100. | 範例輸入：n = 00000010100101000001111010011100。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 964176192. | 預期輸出：964176192。 | Dry-run |
+| Let me dry-run a short conceptual example with binary one-zero-one. | 我先用簡短概念例 101 手跑。 | Dry-run |
+| Round one takes last one and appends to result. | 第一輪取末位 1 放進 result。 | Dry-run |
+| Round two takes zero and appends. | 第二輪取 0 放進去。 | Dry-run |
+| Round three takes one and appends. | 第三輪取 1 放進去。 | Dry-run |
+| Bit sequence becomes reversed order one-zero-one in this symmetric toy case. | 這個對稱小例下反轉後仍是 101。 | Dry-run |
+| In real 32-bit input, same mechanism runs full 32 rounds. | 真實 32 位輸入同理跑滿 32 輪。 | Dry-run |
+| Final integer corresponds to reversed 32-bit pattern. | 最終整數即對應反轉後 32 位模式。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: n equals zero should return zero. | 案例一：n=0 應回 0。 | Edge test |
+| Case two: n equals one should return highest-bit-only value. | 案例二：n=1 應回最高位為 1 的值。 | Edge test |
+| Case three: input with alternating bits. | 案例三：位元交錯模式輸入。 | Edge test |
+| Case four: input with highest bit already set. | 案例四：原本最高位就為 1。 | Edge test |
+| Case five: all ones should stay all ones after reverse. | 案例五：全 1 反轉後仍全 1。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +85,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(1). | 時間複雜度是 O(1)。 | Complexity |
+| Time complexity is O(1) because loop count is fixed at 32. | 時間複雜度是 O(1)，因迴圈固定 32 次。 | Complexity |
 | Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(1). | 來源主要時間為 O(1)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We always execute exactly 32 iterations for uint32 input. | 對 uint32 我們固定執行 32 次。 | Complexity |
+| Each iteration does constant-time bit operations. | 每輪都是常數級位元操作。 | Complexity |
+| So runtime is O(1) under fixed word size model. | 在固定字長模型下時間是 O(1)。 | Complexity |
+| We use only a few scalar variables, so extra memory is O(1). | 只用少量純量變數，額外空間 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me think in terms of consuming bits from right to left. | 我用從右到左消耗位元的角度思考。 | If stuck |
+| Every round I take one bit from n. | 每輪我從 n 取一個 bit。 | If stuck |
+| I shift result first to make room. | 先左移 result 騰出空間。 | If stuck |
+| Then append extracted bit. | 再把取出的 bit 補上。 | If stuck |
+| This naturally builds reversed order. | 這會自然形成反向順序。 | If stuck |
+| I must run full 32 rounds even if n becomes zero early. | 就算 n 提早變 0，也必須跑滿 32 輪。 | If stuck |
+| Otherwise leading zeros would be mishandled. | 否則前導零會處理錯。 | If stuck |
+| Let me verify with n equals one quickly. | 我快速驗證 n=1。 | If stuck |
+| Result should be one shifted to top bit. | 結果應是 1 被移到最高位。 | If stuck |
+| Great, loop structure is correct. | 很好，迴圈結構正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(1), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it with fixed-length bit simulation. | 我用固定長度位元模擬解題。 | Wrap-up |
+| We consume one bit from n and append to result each round. | 每輪從 n 取一位並附加到 result。 | Wrap-up |
+| Running all 32 rounds guarantees correctness. | 跑滿 32 輪可保證正確。 | Wrap-up |
+| Complexity is O(1) time and O(1) space. | 複雜度是 O(1) 時間、O(1) 空間。 | Wrap-up |
+| This is the standard interview implementation. | 這是標準面試寫法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(1). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: reverse 32-bit pattern. | 目標：反轉 32 位元模式。 | Cheat sheet |
+| Use uint32_t for clarity. | 用 uint32_t 比較清楚。 | Cheat sheet |
+| res = 0 initially. | 初始 res=0。 | Cheat sheet |
+| Repeat 32 times. | 重複 32 次。 | Cheat sheet |
+| res <<= 1. | res 左移一位。 | Cheat sheet |
+| bit = n & 1. | bit=n&1。 | Cheat sheet |
+| res |= bit. | res|=bit。 | Cheat sheet |
+| n >>= 1. | n 右移一位。 | Cheat sheet |
+| Return res. | 回傳 res。 | Cheat sheet |
+| n=0 => 0. | n=0 => 0。 | Cheat sheet |
+| n=1 => top bit set. | n=1 => 最高位為 1。 | Cheat sheet |
+| all ones stays all ones. | 全 1 反轉仍全 1。 | Cheat sheet |
+| Time O(1) fixed rounds. | 時間 O(1)（固定輪數）。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Common bug: early break when n==0. | 常見錯誤：n==0 就提早停止。 | Cheat sheet |
+| Common bug: wrong shift direction. | 常見錯誤：位移方向寫反。 | Cheat sheet |
+| Keep operations unsigned-safe. | 保持無號位元語義。 | Cheat sheet |
+| Explain room-making then append bit. | 解釋成「先騰位再塞 bit」。 | Cheat sheet |
+| Verify with known LeetCode sample. | 用 LeetCode 範例驗證。 | Cheat sheet |
+| Small, robust, interview-ready. | 小巧穩定，面試友善。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ 32-iteration bit reversal.
+- Constraint alignment: ✅ Unsigned fixed-width handling.
+- Language simplicity: ✅ Concise spoken format.

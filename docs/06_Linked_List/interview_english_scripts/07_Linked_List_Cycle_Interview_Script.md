@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Linked List Cycle. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Fast & Slow Pointers (Floyd's Algorithm) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate this cycle-detection problem. | 我先重述偵測環的題目。 | Restatement |
+| We are given the head of a linked list. | 我們拿到 linked list 的 head。 | Restatement |
+| We only need to return whether a cycle exists. | 我們只要回傳是否有環。 | Restatement |
+| We are asked to use constant extra memory if possible. | 題目希望用常數額外空間。 | Restatement |
+| I will use Floyd slow-fast pointer method. | 我會用 Floyd 快慢指標法。 | Restatement |
+| If slow meets fast, the list has a cycle. | 若 slow 與 fast 相遇，就代表有環。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can the input head be null? | 輸入 head 可能是 null 嗎？ | Clarify |
+| Is returning boolean enough with no extra metadata? | 只回傳布林值即可，不需其他資訊嗎？ | Clarify |
+| Should I prioritize O(1) space over hash-set approach? | 我應優先 O(1) 空間解法嗎？ | Clarify |
+| Are node values irrelevant to cycle detection logic? | 節點值是否與偵測邏輯無關？ | Clarify |
+| Do you want follow-up discussion for finding cycle entry? | 要不要延伸討論環入口定位？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(n) from source. | 來源暴力時間約 O(n)。 | Approach |
-| Brute space is about O(n) from source. | 來源暴力空間約 O(n)。 | Approach |
+| Baseline stores visited node addresses in a hash set. | 基線是用 hash set 記錄走過的節點位址。 | Approach |
+| If current node already exists in set, cycle is found. | 若當前節點已在 set 內，就有環。 | Approach |
+| Time O(n), space O(n). | 時間 O(n)，空間 O(n)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Fast & Slow Pointers (Floyd's Algorithm). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Slow moves one step, fast moves two steps each round. | slow 每輪走一步，fast 每輪走兩步。 | Approach |
+| If no cycle exists, fast hits null first. | 無環時 fast 會先碰到 null。 | Approach |
+| If cycle exists, fast eventually laps and meets slow. | 有環時 fast 會追上 slow。 | Approach |
+| Meeting condition directly proves cycle existence. | 相遇條件可直接證明存在環。 | Approach |
+| This gives O(n) time and O(1) extra space. | 可達 O(n) 時間與 O(1) 額外空間。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize pointers and helper nodes. | 依來源步驟執行。 | Coding |
-| Next, I traverse list using pointer updates. | 依來源步驟執行。 | Coding |
-| Then, I keep node links valid at each step. | 依來源步驟執行。 | Coding |
-| Next, I use fast and slow pointers when required. | 依來源步驟執行。 | Coding |
-| Then, I reconnect nodes based on source logic. | 依來源步驟執行。 | Coding |
-| Next, I handle head or tail edge transitions. | 依來源步驟執行。 | Coding |
-| Then, I return final linked list head. | 依來源步驟執行。 | Coding |
+| First, I return false if head is null. | 先判斷 head 為 null 就回傳 false。 | Coding |
+| I initialize slow and fast to head. | 將 slow 與 fast 都設在 head。 | Coding |
+| I loop while fast and fast next are not null. | 當 fast 與 fast->next 都非 null 時迴圈。 | Coding |
+| I move slow by one and fast by two. | slow 前進一步，fast 前進兩步。 | Coding |
+| After movement I compare slow and fast pointers. | 移動後比較 slow 與 fast 指標。 | Coding |
+| If they meet, I return true immediately. | 若相遇就立即回傳 true。 | Coding |
+| If loop exits, fast reached tail and no cycle exists. | 若迴圈退出，代表 fast 到尾端且無環。 | Coding |
+| Finally I return false. | 最後回傳 false。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: head = [3,2,0,-4], pos = 1. | 範例輸入：head = [3,2,0,-4], pos = 1。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: true. | 預期輸出：true。 | Dry-run |
+| Let me dry-run head [3,2,0,-4] with tail linking to index one. | 我手跑 [3,2,0,-4] 且尾巴連回索引 1。 | Dry-run |
+| Start slow and fast both at node 3. | 起始 slow 與 fast 都在節點 3。 | Dry-run |
+| Round one: slow at 2, fast at 0. | 第一輪後 slow 在 2，fast 在 0。 | Dry-run |
+| Round two: slow at 0, fast at 2. | 第二輪後 slow 在 0，fast 在 2。 | Dry-run |
+| Round three: slow at -4, fast at -4. | 第三輪後 slow 在 -4，fast 也在 -4。 | Dry-run |
+| Pointers meet, so cycle exists. | 指標相遇，因此存在環。 | Dry-run |
+| Return true as expected. | 依預期回傳 true。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: empty list. | 案例一：空串列。 | Edge test |
+| Case two: single node without self-loop. | 案例二：單節點且不自環。 | Edge test |
+| Case three: single node with self-loop. | 案例三：單節點且自環。 | Edge test |
+| Case four: multi-node list without cycle. | 案例四：多節點但無環。 | Edge test |
+| Case five: cycle starts near tail or near head. | 案例五：環入口靠近尾端或頭端。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,71 +87,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Extra space is O(1). | 額外空間是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| In non-cycle case, fast reaches null after linear traversal. | 無環時 fast 會在線性步數內到達 null。 | Complexity |
+| In cycle case, pointers meet after at most linear total steps. | 有環時兩指標也會在線性步數內相遇。 | Complexity |
+| Each round only updates two pointers. | 每輪只更新兩個指標。 | Complexity |
+| No hash set or extra container is allocated. | 不需要 hash set 或其他額外容器。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me check loop guards for fast pointer safety. | 我先確認 fast 的安全迴圈條件。 | If stuck |
+| I must require both fast and fast next non-null. | 必須同時檢查 fast 與 fast->next 非 null。 | If stuck |
+| Comparison should happen after moving pointers. | 指標移動後才做相遇比較。 | If stuck |
+| If I compare before move, I may get false positive at start. | 若先比對，起點可能誤判。 | If stuck |
+| I might have used fast one-step by mistake. | 我可能把 fast 寫成只走一步。 | If stuck |
+| Fast must move two steps to guarantee detection logic. | fast 必須走兩步才能保證邏輯。 | If stuck |
+| Let me rerun cycle and non-cycle samples. | 我重跑有環與無環樣本。 | If stuck |
+| Now one returns true and the other returns false. | 現在一個回 true、另一個回 false。 | If stuck |
+| Edge cases also pass. | 邊界案例也都通過。 | If stuck |
+| Great, implementation is correct now. | 很好，實作現在正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished Floyd cycle-detection implementation. | 我完成了 Floyd 環偵測實作。 | Wrap-up |
+| I validated empty, single-node, and cyclic cases. | 我驗證了空串列、單節點與有環案例。 | Wrap-up |
+| Runtime is O(n). | 時間複雜度是 O(n)。 | Wrap-up |
+| Extra space is O(1). | 額外空間是 O(1)。 | Wrap-up |
+| I can extend this to find cycle entry if needed. | 若需要我可延伸到環入口定位。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Detect whether linked list has cycle. | 判斷 linked list 是否有環。 | Cheat sheet |
+| Return boolean only. | 只需回傳布林值。 | Cheat sheet |
+| Baseline hash set is O(n) space. | 基線 hash set 是 O(n) 空間。 | Cheat sheet |
+| Better use slow-fast pointers. | 更好是快慢指標。 | Cheat sheet |
+| slow moves one step. | slow 每輪走一步。 | Cheat sheet |
+| fast moves two steps. | fast 每輪走兩步。 | Cheat sheet |
+| Loop guard: fast && fast->next. | 迴圈條件：fast 與 fast->next。 | Cheat sheet |
+| Move pointers then compare. | 先移動再比較。 | Cheat sheet |
+| Meeting means cycle exists. | 相遇代表有環。 | Cheat sheet |
+| Hitting null means no cycle. | 碰到 null 代表無環。 | Cheat sheet |
+| Return false after loop end. | 迴圈結束回傳 false。 | Cheat sheet |
+| Test empty list. | 測空串列。 | Cheat sheet |
+| Test single node no cycle. | 測單節點無環。 | Cheat sheet |
+| Test single node self-cycle. | 測單節點自環。 | Cheat sheet |
+| Test normal multi-node cycle. | 測一般多節點有環。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Bug risk: missing fast->next guard. | 風險：漏檢 fast->next。 | Cheat sheet |
+| Bug risk: comparing before movement. | 風險：移動前先比較。 | Cheat sheet |
+| Mention cycle-entry follow-up if asked. | 若被問可延伸環入口題。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Floyd fast/slow cycle detection is preserved.
+- No hallucinated constraints: ✅ Uses source cycle semantics and constraints.
+- Language simplicity: ✅ Short lines for smooth interview delivery.

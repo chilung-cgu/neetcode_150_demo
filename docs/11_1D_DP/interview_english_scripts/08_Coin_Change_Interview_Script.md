@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Coin Change. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use DP (Bottom-Up) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the coin change problem. | 我先重述 Coin Change。 | Restatement |
+| We have coin denominations and a target amount. | 題目給硬幣面額與目標金額。 | Restatement |
+| We need minimum number of coins to make that amount. | 要求湊出該金額的最少硬幣數。 | Restatement |
+| We can use each coin denomination unlimited times. | 每種硬幣可無限使用。 | Restatement |
+| If impossible to form amount, return minus one. | 若無法湊出就回傳 -1。 | Restatement |
+| I will use bottom-up DP over amount values. | 我會用自底向上 DP 依金額推進。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is amount allowed to be zero? | amount 是否可能為 0？ | Clarify |
+| Are all coin values positive integers? | 硬幣面額是否皆為正整數？ | Clarify |
+| Should I return minimum count only, not actual combination? | 是否只回最少數量，不回具體組合？ | Clarify |
+| Can we treat amount plus one as infinity sentinel? | 可用 amount+1 當作無限大哨兵嗎？ | Clarify |
+| Is O(amount times coinTypes) acceptable? | O(amount*硬幣種類數) 是否可接受？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(S^n) from source. | 來源暴力時間約 O(S^n)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force recursively tries subtracting each coin. | 暴力遞迴嘗試減去每一種硬幣。 | Approach |
+| Many states like amount five are recomputed repeatedly. | 像 amount=5 的狀態會重複計算。 | Approach |
+| Runtime is exponential in worst cases. | 最壞情況時間為指數級。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses DP (Bottom-Up). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(A \times C) from source. | 來源優化時間為 O(A \times C)。 | Approach |
-| Optimized space is O(A) from source. | 來源優化空間為 O(A)。 | Approach |
+| Define dp[a] as minimum coins to make amount a. | 定義 dp[a] 為湊成 a 的最少硬幣數。 | Approach |
+| Base case dp[0] equals zero. | 基底是 dp[0]=0。 | Approach |
+| Initialize others to amount plus one as impossible sentinel. | 其餘初始化為 amount+1 當不可能哨兵。 | Approach |
+| Transition is dp[a] equals min(dp[a], one plus dp[a-c]). | 轉移為 dp[a]=min(dp[a],1+dp[a-c])。 | Approach |
+| Final answer is dp[amount] unless still sentinel. | 最後看 dp[amount] 是否仍為哨兵。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define one-dimensional dp array. | 依來源步驟執行。 | Coding |
-| Next, I initialize base dp conditions. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I iterate indices in source order. | 依來源步驟執行。 | Coding |
-| Then, I compute transition from previous states. | 依來源步驟執行。 | Coding |
-| Next, I update dp with optimal value. | 依來源步驟執行。 | Coding |
-| Then, I keep best answer variable if needed. | 依來源步驟執行。 | Coding |
-| Next, I return final dp target value. | 依來源步驟執行。 | Coding |
+| I create dp array of size amount plus one. | 我建立大小 amount+1 的 dp 陣列。 | Coding |
+| I fill with amount plus one and set dp zero to zero. | 先填 amount+1，再設 dp[0]=0。 | Coding |
+| I loop a from one to amount. | a 從 1 迭代到 amount。 | Coding |
+| For each coin c, if a minus c is non-negative I can transition. | 對每個 coin c，若 a-c>=0 就可轉移。 | Coding |
+| I update dp[a] with min of current and one plus dp[a-c]. | 用目前值與 1+dp[a-c] 取 min 更新 dp[a]。 | Coding |
+| After loops, dp[amount] is optimal or impossible sentinel. | 迴圈後 dp[amount] 會是最優值或哨兵。 | Coding |
+| If dp[amount] greater than amount, return minus one. | 若 dp[amount]>amount，回 -1。 | Coding |
+| Otherwise return dp[amount]. | 否則回 dp[amount]。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: coins = [1, 2, 5], amount = 11. | 範例輸入：coins = [1, 2, 5], amount = 11。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 3. | 預期輸出：3。 | Dry-run |
+| Let me dry-run coins [1,2,5] and amount eleven. | 我手跑 coins=[1,2,5]、amount=11。 | Dry-run |
+| dp zero is zero, others start as twelve sentinel. | dp[0]=0，其餘起始為 12 哨兵。 | Dry-run |
+| For amount one, best becomes one using coin one. | amount=1 時用 coin1 得最小值 1。 | Dry-run |
+| Progressively dp values improve by transitions. | 隨著轉移 dp 值逐步改善。 | Dry-run |
+| At amount ten, dp is two via five plus five. | 到 amount=10，dp=2（5+5）。 | Dry-run |
+| At amount eleven, dp becomes three via five five one. | 到 amount=11，dp=3（5+5+1）。 | Dry-run |
+| Final answer is three, matching expected output. | 最終答案 3，符合預期。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: amount zero should return zero. | 案例一：amount=0 應回 0。 | Edge test |
+| Case two: no combination possible like coins [2] amount three. | 案例二：如 [2],3 無解應回 -1。 | Edge test |
+| Case three: single coin exactly matches amount. | 案例三：單一硬幣剛好等於 amount。 | Edge test |
+| Case four: one-value coin always allows solution. | 案例四：有面額 1 時一定可解。 | Edge test |
+| Case five: large amount with sparse coin set. | 案例五：大金額且面額稀疏。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(A \times C). | 時間複雜度是 O(A \times C)。 | Complexity |
-| Space complexity is O(A). | 空間複雜度是 O(A)。 | Complexity |
+| Time complexity is O(amount times number of coins). | 時間複雜度是 O(amount*硬幣種類數)。 | Complexity |
+| Space complexity is O(amount). | 空間複雜度是 O(amount)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(A \times C). | 來源主要時間為 O(A \times C)。 | Complexity |
-| Extra memory from source is O(A). | 來源額外空間為 O(A)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Outer loop iterates each amount from one to target. | 外層迴圈遍歷 1 到 target 各金額。 | Complexity |
+| Inner loop checks every coin denomination for transition. | 內層迴圈對每種面額嘗試轉移。 | Complexity |
+| Thus runtime is O(A times C), where A is amount and C is coin types. | 因此時間是 O(A*C)，A 為 amount、C 為種類數。 | Complexity |
+| DP array length is A plus one, so memory is O(A). | DP 陣列長度 A+1，故記憶體 O(A)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me define dp state first to avoid confusion. | 我先定義 dp 狀態避免混亂。 | If stuck |
+| dp[a] means minimum coins for amount a. | dp[a] 表示湊 a 的最少硬幣數。 | If stuck |
+| Base dp[0] must be zero. | 基底 dp[0] 必須是 0。 | If stuck |
+| Impossible states should start from big sentinel value. | 不可能狀態先設大哨兵值。 | If stuck |
+| Transition is one plus dp[a-c] if a-c is valid. | 轉移是 1+dp[a-c]（若 a-c 合法）。 | If stuck |
+| We take min across all coin choices. | 對所有硬幣選擇取最小。 | If stuck |
+| Let me verify quickly with amount three and coin two. | 我快速驗證 amount=3、coin=2。 | If stuck |
+| dp[3] remains sentinel, so answer is minus one. | dp[3] 仍是哨兵，因此答案 -1。 | If stuck |
+| For [1,2,5], eleven gives three. | 對 [1,2,5]，11 得 3。 | If stuck |
+| Great, recurrence and sentinel logic are consistent. | 很好，遞推與哨兵邏輯一致。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(A \times C), space is O(A). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved coin change with bottom-up DP. | 我用自底向上 DP 解出 Coin Change。 | Wrap-up |
+| State dp[a] stores minimum coins for amount a. | 狀態 dp[a] 存金額 a 的最少硬幣數。 | Wrap-up |
+| We relax transitions using every coin denomination. | 我們用每個面額做轉移鬆弛。 | Wrap-up |
+| Sentinel value handles impossible states cleanly. | 哨兵值可乾淨處理無解狀態。 | Wrap-up |
+| Complexity is O(A*C) time and O(A) space. | 複雜度是 O(A*C) 時間、O(A) 空間。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(A \times C). | 速記重點。 | Cheat sheet |
-| Report space complexity O(A). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Problem: minimum coins for target amount. | 題目：湊目標金額的最少硬幣。 | Cheat sheet |
+| Coins can be reused unlimited times. | 硬幣可無限重用。 | Cheat sheet |
+| Return -1 if impossible. | 無解回 -1。 | Cheat sheet |
+| Define dp[a] minimum coins for a. | 定義 dp[a] 為 a 的最少硬幣。 | Cheat sheet |
+| Initialize dp with amount+1. | dp 初值設 amount+1。 | Cheat sheet |
+| Set dp[0] = 0. | 設 dp[0]=0。 | Cheat sheet |
+| Loop a from 1 to amount. | a 從 1 到 amount。 | Cheat sheet |
+| For each coin c try transition. | 每個 coin c 嘗試轉移。 | Cheat sheet |
+| If a-c>=0, candidate=1+dp[a-c]. | 若 a-c>=0，候選值=1+dp[a-c]。 | Cheat sheet |
+| dp[a]=min(dp[a], candidate). | dp[a]=min(dp[a],候選值)。 | Cheat sheet |
+| After fill, inspect dp[amount]. | 填完後檢查 dp[amount]。 | Cheat sheet |
+| If > amount then impossible. | 若 > amount 代表無解。 | Cheat sheet |
+| Else return dp[amount]. | 否則回 dp[amount]。 | Cheat sheet |
+| amount=0 returns 0. | amount=0 回 0。 | Cheat sheet |
+| [2],3 returns -1. | [2],3 回 -1。 | Cheat sheet |
+| [1,2,5],11 returns 3. | [1,2,5],11 回 3。 | Cheat sheet |
+| Time O(A*C). | 時間 O(A*C)。 | Cheat sheet |
+| Space O(A). | 空間 O(A)。 | Cheat sheet |
+| Common bug: forgetting dp[0]=0. | 常見錯誤：忘記 dp[0]=0。 | Cheat sheet |
+| Common bug: using bad infinity sentinel. | 常見錯誤：無限大哨兵設錯。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Bottom-up DP recurrence and sentinel pattern preserved.
+- No hallucinated constraints: ✅ Correct impossible handling and unlimited coin usage.
+- Language simplicity: ✅ Interview-ready concise lines with explicit state meaning.

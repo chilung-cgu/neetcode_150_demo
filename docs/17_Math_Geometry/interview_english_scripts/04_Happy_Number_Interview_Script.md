@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Happy Number. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Fast & Slow Pointers as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate Happy Number. | 我先重述 Happy Number。 | Restatement |
+| Starting from n, we repeatedly replace it by sum of squared digits. | 從 n 開始，反覆改成各位平方和。 | Restatement |
+| If the process reaches one, it is happy. | 若最後到 1，就是快樂數。 | Restatement |
+| If it enters a cycle not containing one, it is not happy. | 若進入不含 1 的循環，就不是快樂數。 | Restatement |
+| I will detect the cycle using fast and slow pointers. | 我會用快慢指標偵測循環。 | Restatement |
+| This avoids hash set and keeps O(1) extra space. | 這可避免 HashSet，維持 O(1) 額外空間。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is input guaranteed to be a positive integer? | 輸入是否保證為正整數？ | Clarify |
+| Should n equals one return true immediately? | n=1 是否應立即回 true？ | Clarify |
+| Do you prefer Floyd cycle detection over hash set? | 你偏好 Floyd 檢測而非 HashSet 嗎？ | Clarify |
+| Any constraints that affect integer overflow here? | 這題是否有整數溢位顧慮？ | Clarify |
+| Is helper function for digit-square-sum acceptable? | 可以用輔助函式算各位平方和嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about [CHECK] from source. | 來源暴力時間約 [CHECK]。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force uses a hash set to record seen numbers. | 暴力法用 HashSet 記錄已出現數字。 | Approach |
+| If we hit one, return true; if number repeats, return false. | 若到 1 回 true，若重複則回 false。 | Approach |
+| Time is acceptable, but space is O(k) for visited states. | 時間可接受，但空間要 O(k) 儲存狀態。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Fast & Slow Pointers. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(\log N) from source. | 來源優化時間為 O(\log N)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Model each value as a node pointing to next sum-of-squares value. | 把每個值視為節點，連到下一個平方和。 | Approach |
+| Then the process is a linked-list style walk with possible cycle. | 於是流程像鏈結串列，可能有環。 | Approach |
+| Use slow pointer moving one step and fast pointer moving two steps. | slow 每次一步，fast 每次兩步。 | Approach |
+| If fast reaches one, it is happy; if slow meets fast, there is a non-one cycle. | fast 到 1 則快樂；slow 與 fast 相遇則是非 1 循環。 | Approach |
+| Complexity is O(log n) per step work with O(1) extra space overall. | 每步計算約 O(log n)，整體額外空間 O(1)。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I identify core math relation from source. | 依來源步驟執行。 | Coding |
-| Next, I initialize variables for formula updates. | 依來源步驟執行。 | Coding |
-| Then, I use unordered_set for membership checks. | 依來源步驟執行。 | Coding |
-| Next, I iterate input values in required order. | 依來源步驟執行。 | Coding |
-| Then, I apply arithmetic or geometric transformation. | 依來源步驟執行。 | Coding |
-| Next, I handle sign and boundary cases. | 依來源步驟執行。 | Coding |
-| Then, I update best or cumulative answer. | 依來源步驟執行。 | Coding |
-| Next, I return final computed value. | 依來源步驟執行。 | Coding |
+| I write helper sumOfSquares that processes digits by modulo and division. | 我先寫 sumOfSquares，用取餘與除法處理每位。 | Coding |
+| In main function, set slow to n. | 主函式先令 slow=n。 | Coding |
+| Set fast to sumOfSquares of n. | 令 fast=sumOfSquares(n)。 | Coding |
+| While fast is not one and slow is not fast, continue loop. | 當 fast!=1 且 slow!=fast 持續迴圈。 | Coding |
+| Move slow by one application of sumOfSquares. | slow 每輪走一步 sumOfSquares。 | Coding |
+| Move fast by two applications of sumOfSquares. | fast 每輪走兩步 sumOfSquares。 | Coding |
+| Loop ends either by reaching one or by cycle collision. | 迴圈結束要嘛到 1，要嘛碰撞成環。 | Coding |
+| Return whether fast equals one. | 回傳 fast 是否等於 1。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: n = 19. | 範例輸入：n = 19。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: true. | 預期輸出：true。 | Dry-run |
+| Let me dry-run n equals nineteen. | 我用 n=19 手跑。 | Dry-run |
+| Nineteen goes to eighty-two, then sixty-eight, then one hundred, then one. | 19 會到 82，再到 68，再到 100，再到 1。 | Dry-run |
+| Fast pointer reaches one during iterations. | fast 指標在迭代中到達 1。 | Dry-run |
+| So loop exits with success condition. | 因此以成功條件離開迴圈。 | Dry-run |
+| Return true for nineteen. | 19 回傳 true。 | Dry-run |
+| For n equals two, pointers eventually meet in cycle without one. | 若 n=2，指標會在不含 1 的循環中相遇。 | Dry-run |
+| That correctly returns false. | 這會正確回傳 false。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: n equals one should return true. | 案例一：n=1 應回 true。 | Edge test |
+| Case two: n equals two should return false. | 案例二：n=2 應回 false。 | Edge test |
+| Case three: numbers with many digits. | 案例三：位數很多的整數。 | Edge test |
+| Case four: known happy number like seven. | 案例四：已知快樂數如 7。 | Edge test |
+| Case five: known unhappy cycle members like four. | 案例五：已知不快樂循環成員如 4。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(\log N). | 時間複雜度是 O(\log N)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time complexity is effectively O(log n) per transition with bounded cycle behavior. | 時間可視為每次轉移 O(log n)，且循環範圍有界。 | Complexity |
+| Extra space complexity is O(1). | 額外空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(\log N). | 來源主要時間為 O(\log N)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Computing next value scans decimal digits, which is O(log n). | 計算下一值需掃十進位位數，為 O(log n)。 | Complexity |
+| The sequence quickly falls into a small bounded range. | 序列很快會落到一個小且有界的範圍。 | Complexity |
+| Floyd cycle detection uses constant number of integers. | Floyd 檢測只用固定數量整數變數。 | Complexity |
+| So memory is O(1) and practical runtime is very small. | 因此記憶體 O(1)，實務時間也很小。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me treat each number as a node in a functional graph. | 我把每個數字視為函數圖節點。 | If stuck |
+| Next state is sum of squared digits. | 下一狀態是各位平方和。 | If stuck |
+| This is cycle detection, so Floyd fits naturally. | 這本質是找環，所以 Floyd 很適合。 | If stuck |
+| Slow moves one step, fast moves two steps. | slow 一步、fast 兩步。 | If stuck |
+| If fast reaches one, we are done with true. | 若 fast 到 1，就回 true。 | If stuck |
+| If slow meets fast before one, we found unhappy cycle. | 若先相遇，表示是不快樂循環。 | If stuck |
+| I will write helper first to avoid arithmetic mistakes. | 我先寫輔助函式避免算術錯誤。 | If stuck |
+| Let me verify with nineteen and two quickly. | 我快速驗證 19 與 2。 | If stuck |
+| Both examples validate opposite outcomes clearly. | 兩例可清楚驗證正反結果。 | If stuck |
+| Great, the logic is stable now. | 很好，邏輯現在穩定。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(\log N), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it by Floyd cycle detection on digit-square transitions. | 我用 Floyd 在平方和轉移上做循環檢測。 | Wrap-up |
+| This removes need for extra visited set memory. | 這不需要額外 visited 集合空間。 | Wrap-up |
+| Helper function keeps digit processing clear and testable. | 輔助函式讓位數處理更清楚可測。 | Wrap-up |
+| Complexity is O(1) extra space with small practical runtime. | 複雜度是 O(1) 額外空間，實務速度很快。 | Wrap-up |
+| I can also show the hash-set variant for comparison. | 若需要我也可補充 HashSet 對照版本。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(\log N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: decide if repeated digit-square process reaches one. | 目標：判斷反覆平方和是否到 1。 | Cheat sheet |
+| Happy if reaches one. | 到 1 就是快樂數。 | Cheat sheet |
+| Unhappy if falls into non-one cycle. | 掉進非 1 循環就不是。 | Cheat sheet |
+| Helper: sum of squares of digits. | 輔助：計算各位平方和。 | Cheat sheet |
+| Build with n%10 and n/=10 loop. | 用 n%10 與 n/=10 迴圈實作。 | Cheat sheet |
+| Use Floyd cycle detection. | 使用 Floyd 快慢指標。 | Cheat sheet |
+| slow = n, fast = next(n). | slow=n，fast=next(n)。 | Cheat sheet |
+| slow moves one step each round. | slow 每輪走一步。 | Cheat sheet |
+| fast moves two steps each round. | fast 每輪走兩步。 | Cheat sheet |
+| Stop if fast == 1. | fast==1 即停止。 | Cheat sheet |
+| Stop if slow == fast before one. | 若先 slow==fast 也停止。 | Cheat sheet |
+| Return fast == 1. | 回傳 fast==1。 | Cheat sheet |
+| Test n=19 should be true. | 測 n=19 應為 true。 | Cheat sheet |
+| Test n=2 should be false. | 測 n=2 應為 false。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Per transition digit work is O(log n). | 每次轉移位數運算 O(log n)。 | Cheat sheet |
+| Common bug: forgetting fast starts one step ahead. | 常見錯誤：忘記 fast 先走一步。 | Cheat sheet |
+| Common bug: wrong digit-square helper. | 常見錯誤：輔助函式位數平方算錯。 | Cheat sheet |
+| Keep loop condition fast!=1 and slow!=fast. | 迴圈條件維持 fast!=1 且 slow!=fast。 | Cheat sheet |
+| Clear, interview-ready cycle framing. | 用循環檢測框架講解很面試友善。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Floyd fast/slow method.
+- Constraint alignment: ✅ O(1) extra space maintained.
+- Language simplicity: ✅ Compact and spoken-interview oriented.

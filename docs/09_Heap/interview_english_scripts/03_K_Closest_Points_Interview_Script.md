@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve K Closest Points to Origin. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Max-Heap (Standard Top-K) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the K closest points problem. | 我先重述 K 個最近點這題。 | Restatement |
+| We are given points on a 2D plane and an integer k. | 題目給 2D 點座標與整數 k。 | Restatement |
+| We must return any k points closest to the origin. | 要回傳距原點最近的任意 k 點。 | Restatement |
+| Distance comparison can use x squared plus y squared. | 比較距離可用 x²+y²，不必開根號。 | Restatement |
+| Output order is not important for this problem. | 這題輸出順序不重要。 | Restatement |
+| I will use a size-k max-heap to keep current best points. | 我會用 size-k max-heap 維護當前最佳點。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I return points in any order? | 回傳點的順序是否可任意？ | Clarify |
+| Is comparing squared distance fully acceptable? | 只比距離平方是否可接受？ | Clarify |
+| Are duplicate points possible and should be treated normally? | 可能有重複點且正常處理嗎？ | Clarify |
+| Do we always have one less than or equal k less than or equal n? | 是否保證 1 <= k <= n？ | Clarify |
+| Should I prioritize heap solution over full sorting? | 是否優先希望 heap 解法而非全排序？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N \log N) from source. | 來源暴力時間約 O(N \log N)。 | Approach |
-| Brute space is about O(N) from source. | 來源暴力空間約 O(N)。 | Approach |
+| Brute force computes all distances and sorts all points. | 暴力法先算全部距離再整體排序。 | Approach |
+| Then we return the first k points in sorted order. | 然後取排序後前 k 個點。 | Approach |
+| This takes O(n log n), which is unnecessary when k is small. | 這要 O(n log n)，k 小時不划算。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Max-Heap (Standard Top-K). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N \log k) from source. | 來源優化時間為 O(N \log k)。 | Approach |
-| Optimized space is O(k) from source. | 來源優化空間為 O(k)。 | Approach |
+| Keep a max-heap containing at most k points. | 維持最多 k 個點的 max-heap。 | Approach |
+| Heap key is squared distance to origin. | heap 鍵值是到原點的距離平方。 | Approach |
+| Push each point, and if size exceeds k, pop once. | 每讀一點先 push，超過 k 就 pop。 | Approach |
+| Max-heap top is the farthest among kept points. | max-heap top 是保留集合中最遠點。 | Approach |
+| So after scanning all points, heap stores exactly k closest. | 掃描完成後 heap 正好是最近的 k 點。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize priority_queue with source ordering. | 依來源步驟執行。 | Coding |
-| Next, I push initial items into heap structure. | 依來源步驟執行。 | Coding |
-| Then, I pop or push by problem condition. | 依來源步驟執行。 | Coding |
-| Next, I keep heap size or priority invariant. | 依來源步驟執行。 | Coding |
-| Then, I update answer when top element changes. | 依來源步驟執行。 | Coding |
-| Next, I continue until all operations finish. | 依來源步驟執行。 | Coding |
-| Then, I return result built from heap state. | 依來源步驟執行。 | Coding |
+| I create a max-heap of pair distance and index. | 我建立存距離與索引的 max-heap。 | Coding |
+| For each point, I compute x squared plus y squared. | 對每個點計算 x²+y²。 | Coding |
+| I push distance and index into heap. | 我把距離與索引推入 heap。 | Coding |
+| If heap size is greater than k, I pop top. | 若 heap 大於 k，就彈出 top。 | Coding |
+| This removes the farthest point among current candidates. | 這會移除目前候選中的最遠點。 | Coding |
+| After loop, heap contains the k closest point indices. | 迴圈結束後 heap 留下 k 個最近點索引。 | Coding |
+| I extract those indices and build answer points array. | 我取出索引並組成答案陣列。 | Coding |
+| Returning in any order is acceptable by problem statement. | 題目允許任意順序回傳。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: points = [[1,3],[-2,2]], k = 1. | 範例輸入：points = [[1,3],[-2,2]], k = 1。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [[-2,2]]. | 預期輸出：[[-2,2]]。 | Dry-run |
+| Let me dry-run points [[1,3],[-2,2]] with k equals 1. | 我手跑 points [[1,3],[-2,2]]、k=1。 | Dry-run |
+| First point distance is ten, heap keeps it. | 第一點距離是 10，heap 先保留。 | Dry-run |
+| Second point distance is eight, push into heap. | 第二點距離是 8，推入 heap。 | Dry-run |
+| Heap size becomes two, so I pop the farthest distance ten. | heap 變 2，彈出最遠的 10。 | Dry-run |
+| Remaining point is [-2,2], which is the answer. | 剩下 [-2,2]，即為答案。 | Dry-run |
+| This matches expected output for the sample. | 與範例預期輸出一致。 | Dry-run |
+| Order is trivial here since only one point is returned. | 只回傳一點時順序不影響。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: k equals one returns single nearest point. | 案例一：k=1 回傳單一最近點。 | Edge test |
+| Case two: k equals n should return all points. | 案例二：k=n 時應回傳全部點。 | Edge test |
+| Case three: points with same distance tie should still work. | 案例三：同距離平手情況仍要正確。 | Edge test |
+| Case four: negative coordinates should behave the same. | 案例四：負座標情況行為應一致。 | Edge test |
+| Case five: duplicate points should be handled naturally. | 案例五：重複點應自然被處理。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N \log k). | 時間複雜度是 O(N \log k)。 | Complexity |
-| Space complexity is O(k). | 空間複雜度是 O(k)。 | Complexity |
+| Time complexity is O(n log k). | 時間複雜度是 O(n log k)。 | Complexity |
+| Extra space is O(k). | 額外空間複雜度是 O(k)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N \log k). | 來源主要時間為 O(N \log k)。 | Complexity |
-| Extra memory from source is O(k). | 來源額外空間為 O(k)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We scan all n points once and do heap operations per point. | 我們掃描 n 個點，每點做 heap 操作。 | Complexity |
+| Heap size is capped at k, so push or pop is O(log k). | heap 大小上限 k，push/pop 是 O(log k)。 | Complexity |
+| Total runtime becomes O(n log k). | 總時間因此是 O(n log k)。 | Complexity |
+| Heap stores at most k entries, so space is O(k). | heap 最多存 k 筆，所以空間 O(k)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me simplify: this is a top-k distance problem. | 我先簡化：這是 top-k 距離問題。 | If stuck |
+| I do not need full ordering of all points. | 我不需要所有點的完整排序。 | If stuck |
+| A max-heap of size k is enough. | 用 size-k max-heap 就夠了。 | If stuck |
+| If size exceeds k, remove current farthest. | 若 size 超過 k，移除當前最遠。 | If stuck |
+| I should compare squared distance, not sqrt distance. | 我應比較距離平方，不必算根號。 | If stuck |
+| Let me rerun the two-point sample quickly. | 我快速重跑兩點範例。 | If stuck |
+| Distances ten and eight leave only eight in heap. | 距離 10 與 8 最後只留 8。 | If stuck |
+| So answer is [-2,2], confirmed. | 所以答案是 [-2,2]，已確認。 | If stuck |
+| I will also test tie distances to confirm stability. | 我再測同距離平手確保穩定。 | If stuck |
+| Great, heap invariant now looks correct. | 很好，heap 不變量看起來正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N \log k), space is O(k). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it with a max-heap of fixed size k. | 我用固定 size-k 的 max-heap 解出。 | Wrap-up |
+| The heap always keeps the currently best k points. | heap 會持續保留當前最佳 k 點。 | Wrap-up |
+| Comparing squared distances avoids unnecessary sqrt operations. | 用距離平方比較可避免多餘根號運算。 | Wrap-up |
+| Runtime is O(n log k) with O(k) space. | 時間 O(n log k)，空間 O(k)。 | Wrap-up |
+| I can also discuss quick-select as an alternative. | 我也可補充 quick-select 替代法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N \log k). | 速記重點。 | Cheat sheet |
-| Report space complexity O(k). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Problem type: top-k by distance. | 題型：依距離取 top-k。 | Cheat sheet |
+| Use squared distance x2 plus y2. | 用距離平方 x2+y2。 | Cheat sheet |
+| Avoid sqrt for comparison. | 比較時不必開根號。 | Cheat sheet |
+| Keep max-heap size exactly k. | 維持 max-heap 大小為 k。 | Cheat sheet |
+| Heap stores distance and index. | heap 存距離與索引。 | Cheat sheet |
+| Push each incoming point. | 每個點都先 push。 | Cheat sheet |
+| If size > k, pop top. | 若 size>k，pop top。 | Cheat sheet |
+| Top means farthest among kept points. | top 是保留集合中最遠點。 | Cheat sheet |
+| After scan, heap is answer set. | 掃描完 heap 即答案集合。 | Cheat sheet |
+| Output order can be arbitrary. | 輸出順序可任意。 | Cheat sheet |
+| Brute force: full sort all points. | 暴力法：全部點排序。 | Cheat sheet |
+| Brute force cost O(n log n). | 暴力成本 O(n log n)。 | Cheat sheet |
+| Optimized cost O(n log k). | 優化成本 O(n log k)。 | Cheat sheet |
+| Space is O(k). | 空間是 O(k)。 | Cheat sheet |
+| k equals n returns all points. | k=n 會回傳全部點。 | Cheat sheet |
+| Handle ties naturally. | 平手距離可自然處理。 | Cheat sheet |
+| Handle negative coordinates too. | 負座標也能正常處理。 | Cheat sheet |
+| Common bug: using min-heap incorrectly. | 常見錯誤：min-heap 用錯方向。 | Cheat sheet |
+| Common bug: forgetting size cap pop. | 常見錯誤：忘記超量時 pop。 | Cheat sheet |
+| Final invariant: heap holds k closest. | 最終不變量：heap 存 k 個最近點。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Max-heap top-k approach is preserved.
+- No hallucinated constraints: ✅ Matches source assumptions and sample behavior.
+- Language simplicity: ✅ Natural, interview-spoken, concise lines.

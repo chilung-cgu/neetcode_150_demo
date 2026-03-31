@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Alien Dictionary. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Kahn's Algorithm (BFS) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate alien dictionary. | 我先重述 Alien Dictionary。 | Restatement |
+| We are given words already sorted in alien language order. | 題目給外星語已排序好的單字列表。 | Restatement |
+| We need recover one valid character order. | 我們要推導一個合法字母順序。 | Restatement |
+| If input is invalid or has cycle constraints, return empty string. | 若輸入不合法或約束成環，要回空字串。 | Restatement |
+| First differing chars between adjacent words create precedence edges. | 相鄰單字首個不同字元會產生先後邊。 | Restatement |
+| I will build graph then run topological BFS. | 我會建圖後跑拓撲 BFS。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Should every distinct character in words appear in output? | words 裡所有出現字元都要出現在輸出嗎？ | Clarify |
+| If multiple valid orders exist, any one is acceptable? | 若有多個合法順序，任意一個可接受嗎？ | Clarify |
+| Prefix invalid case like abc before ab should return empty, right? | 前綴違規如 abc 在 ab 前是否要回空？ | Clarify |
+| Are letters limited to lowercase English? | 字元是否限定小寫英文？ | Clarify |
+| Is output empty when cycle is detected in precedence graph? | 若先後圖有環是否輸出空字串？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,56 +31,56 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about [CHECK] from source. | 來源暴力時間約 [CHECK]。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force trying all permutations of letters is infeasible. | 暴力試所有字母排列不可行。 | Approach |
+| We need graph constraints extracted from sorted words. | 我們要先從排序字串抽圖約束。 | Approach |
+| Then solve with topological ordering. | 再用拓撲排序求解。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Kahn's Algorithm (BFS). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(C) from source. | 來源優化時間為 O(C)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Initialize indegree for all unique characters to zero. | 先把所有唯一字元 indegree 初始化為 0。 | Approach |
+| Compare each adjacent word pair and find first differing character. | 比較每組相鄰單字，找第一個差異字元。 | Approach |
+| Add directed edge c1 to c2 if not already added. | 若邊尚未存在，加入 c1->c2。 | Approach |
+| Use queue with indegree-zero chars for Kahn BFS topological sort. | 用 indegree=0 字元 queue 做 Kahn BFS 拓撲排序。 | Approach |
+| If result length less than unique chars count, cycle exists so return empty. | 若結果長度小於唯一字元數，代表有環回空字串。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I build graph adjacency structure first. | 依來源步驟執行。 | Coding |
-| Next, I initialize distance array and min heap. | 依來源步驟執行。 | Coding |
-| Then, I use unordered_map for constant-time lookup. | 依來源步驟執行。 | Coding |
-| Next, I use unordered_set for membership checks. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process nodes level by level with queue. | 依來源步驟執行。 | Coding |
-| Then, I pop smallest distance node from heap. | 依來源步驟執行。 | Coding |
-| Next, I skip stale states when needed. | 依來源步驟執行。 | Coding |
-| Finally, I relax outgoing edges and update distances. | 依來源步驟執行。 | Coding |
-| I push improved states into heap. | 依來源步驟執行。 | Coding |
+| I create adjacency map char to set of neighbors. | 我建立 char 到鄰居集合的 adjacency map。 | Coding |
+| I create indegree map and add all characters with zero. | 我建立 indegree map 並把所有字元設為 0。 | Coding |
+| For each adjacent words w1 and w2, check prefix invalid case first. | 對每組相鄰 w1,w2，先檢查前綴違規。 | Coding |
+| If w1 longer and starts with w2, return empty string. | 若 w1 較長且前綴等於 w2，直接回空字串。 | Coding |
+| Then scan characters until first mismatch. | 接著掃描字元直到第一個不相同。 | Coding |
+| On mismatch c1 and c2, add edge c1 to c2 if new and indegree[c2]++. | 差異 c1,c2 時，若新邊就加 c1->c2 並 indegree[c2]++。 | Coding |
+| Break after first mismatch only. | 第一個差異後就停止該對比較。 | Coding |
+| Initialize queue with all chars whose indegree is zero. | 把所有 indegree=0 字元加入 queue。 | Coding |
+| BFS pop char, append to result, decrease neighbors indegree. | BFS 出隊字元加到結果，再遞減鄰居 indegree。 | Coding |
+| If final result size differs from unique char count, return empty else return result. | 若最終長度不等於唯一字元數回空，否則回結果。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: ["wrt", "wrf", "er", "ett", "rftt"]. | 範例輸入：["wrt", "wrf", "er", "ett", "rftt"]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: "wertf". | 預期輸出："wertf"。 | Dry-run |
+| Let me dry-run words wrt wrf er ett rftt. | 我手跑 words: wrt, wrf, er, ett, rftt。 | Dry-run |
+| Compare wrt and wrf gives edge t to f. | 比較 wrt 與 wrf 得到邊 t->f。 | Dry-run |
+| Compare wrf and er gives edge w to e. | 比較 wrf 與 er 得到邊 w->e。 | Dry-run |
+| Compare er and ett gives edge r to t. | 比較 er 與 ett 得到邊 r->t。 | Dry-run |
+| Compare ett and rftt gives edge e to r. | 比較 ett 與 rftt 得到邊 e->r。 | Dry-run |
+| Topological BFS produces one order w e r t f. | 拓撲 BFS 會得到一種順序 w e r t f。 | Dry-run |
+| Output string can be wertf. | 輸出字串可為 wertf。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single word, output all its unique chars. | 案例一：單字輸入，輸出其唯一字元。 | Edge test |
+| Case two: invalid prefix order abc then ab returns empty. | 案例二：前綴違規 abc 在 ab 前時回空。 | Edge test |
+| Case three: cycle constraints like z before x and x before z returns empty. | 案例三：z<x 且 x<z 成環時回空。 | Edge test |
+| Case four: disconnected character groups still appear in output. | 案例四：不連通字元群也要出現在輸出。 | Edge test |
+| Case five: duplicate edge inference should not double-increase indegree. | 案例五：重複推導同邊不能重複加 indegree。 | Edge test |
 
 ## 7) Complexity script
 
@@ -88,72 +88,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(C). | 時間複雜度是 O(C)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time complexity is O(C) plus topological part O(V plus E). | 時間是 O(C)+拓撲 O(V+E)。 | Complexity |
+| Space complexity is O(V plus E). | 空間複雜度是 O(V+E)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(C). | 來源主要時間為 O(C)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Let C be total characters across all words. | 設 C 為所有單字總字元數。 | Complexity |
+| Building constraints from adjacent pairs is linear in compared characters. | 從相鄰字對建約束，成本與比較字元數線性相關。 | Complexity |
+| Topological BFS over character graph costs O(V plus E). | 字元圖拓撲 BFS 成本是 O(V+E)。 | Complexity |
+| Adjacency sets and indegree maps store O(V plus E) information. | 鄰接集合與 indegree map 儲存 O(V+E) 資訊。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me derive constraints only from first mismatch. | 我只從第一個不匹配字元推導約束。 | If stuck |
+| Later mismatches in same pair are irrelevant. | 同一對單字後續差異都不重要。 | If stuck |
+| Prefix invalid case must be checked before edge extraction. | 取邊前必須先檢查前綴違規。 | If stuck |
+| Graph nodes are all unique letters, even isolated ones. | 圖節點是所有唯一字母，含孤立字母。 | If stuck |
+| Kahn BFS handles ordering and cycle detection together. | Kahn BFS 可同時做排序與環檢測。 | If stuck |
+| If result misses nodes, cycle exists. | 若結果缺節點，代表有環。 | If stuck |
+| Let me test quickly with z x z. | 我快速測 z, x, z。 | If stuck |
+| Constraints become z before x and x before z. | 約束會變成 z<x 與 x<z。 | If stuck |
+| That should return empty string. | 該情況應回空字串。 | If stuck |
+| Great, now failure conditions are clear. | 很好，失敗條件已清楚。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(C), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it by building precedence graph then topological sorting. | 我先建字元先後圖，再做拓撲排序解題。 | Wrap-up |
+| First mismatch between adjacent words gives valid directed constraint. | 相鄰單字首個差異給出有效有向約束。 | Wrap-up |
+| Prefix invalid case is handled explicitly. | 前綴違規情況有明確處理。 | Wrap-up |
+| Cycle or contradiction returns empty string. | 有環或矛盾時回空字串。 | Wrap-up |
+| Complexity is linear in input parsing plus graph topo cost. | 複雜度是輸入解析線性加圖拓撲成本。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(C). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: infer alien letter order from sorted words. | 目標：從排序單字推導外星字母順序。 | Cheat sheet |
+| Build nodes from all unique letters. | 用所有唯一字母建節點。 | Cheat sheet |
+| Compare adjacent words only. | 只比較相鄰單字。 | Cheat sheet |
+| Check invalid prefix first. | 先檢查前綴違規。 | Cheat sheet |
+| If longer word before its prefix => empty. | 長字在其前綴前面 => 回空。 | Cheat sheet |
+| Find first mismatch c1 c2. | 找第一個差異 c1,c2。 | Cheat sheet |
+| Add edge c1 -> c2 once. | 只加一次邊 c1->c2。 | Cheat sheet |
+| Increase indegree of c2 when new edge added. | 新邊加入時遞增 c2 indegree。 | Cheat sheet |
+| Kahn queue starts with indegree zero chars. | Kahn queue 從 indegree 0 字元開始。 | Cheat sheet |
+| Pop char, append to result. | 出隊字元並加入結果。 | Cheat sheet |
+| Decrease indegree of neighbors. | 遞減鄰居 indegree。 | Cheat sheet |
+| Push neighbor when indegree reaches zero. | 鄰居 indegree 到 0 就入隊。 | Cheat sheet |
+| End with result length check. | 最後檢查結果長度。 | Cheat sheet |
+| If length != unique count => cycle => empty. | 長度不符唯一數 => 有環 => 空字串。 | Cheat sheet |
+| Return result string otherwise. | 否則回傳結果字串。 | Cheat sheet |
+| Time parse O(C) plus topo O(V+E). | 時間 O(C)+O(V+E)。 | Cheat sheet |
+| Space O(V+E). | 空間 O(V+E)。 | Cheat sheet |
+| Common bug: using second mismatch edge. | 常見錯誤：誤用第二個差異建邊。 | Cheat sheet |
+| Common bug: forgetting isolated letters. | 常見錯誤：漏掉孤立字母。 | Cheat sheet |
+| Explain with wrt wrf er ett rftt sample. | 用 wrt/wrf/er/ett/rftt 範例說明。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ first-difference edge extraction + Kahn topo preserved.
+- No hallucinated constraints: ✅ prefix-invalid and cycle-empty semantics maintained.
+- Language simplicity: ✅ concise interview speaking style.

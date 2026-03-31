@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Copy List with Random Pointer. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Hash Map `O(n)` Space as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate this deep-copy linked-list problem. | 我先重述這題深拷貝串列問題。 | Restatement |
+| Each node has next and random pointers. | 每個節點有 next 與 random 指標。 | Restatement |
+| I need a completely new list with identical structure. | 我要建立全新但結構完全相同的串列。 | Restatement |
+| New nodes must not share addresses with original nodes. | 新舊節點記憶體位址不能共享。 | Restatement |
+| Random links must point to copied targets, not old targets. | random 必須指向複製節點，不是舊節點。 | Restatement |
+| I will use hash map old-node to new-node mapping first. | 我先用 hash map 做舊節點到新節點映射。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can input head be null? | 輸入 head 可能是 null 嗎？ | Clarify |
+| Is O(n) extra space acceptable for main solution? | 主要解法可接受 O(n) 額外空間嗎？ | Clarify |
+| Should random pointer possibly be null on any node? | 任一節點的 random 可能是 null 嗎？ | Clarify |
+| Do we need to preserve exact node ordering by next chain? | next 鏈的節點順序需完全保留嗎？ | Clarify |
+| Should I mention O(1) interleaving alternative as follow-up? | 要不要補充 O(1) 交錯法當延伸？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(n^2) from source. | 來源暴力時間約 O(n^2)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Baseline is trying to resolve random targets by repeated scans. | 基線是每次用重掃方式找 random 目標。 | Approach |
+| That means for each node we may walk list again. | 代表每個節點都可能再掃一次串列。 | Approach |
+| Time can degrade to O(n^2). | 時間可能退化到 O(n^2)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Hash Map `O(n)` Space. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(n) from source. | 來源優化空間為 O(n)。 | Approach |
+| First pass creates copy nodes and map entries. | 第一趟建立複製節點與映射。 | Approach |
+| Map key is original node pointer, value is copied node pointer. | map 的 key 是舊節點指標，value 是新節點指標。 | Approach |
+| Second pass assigns copied next and random via map lookups. | 第二趟透過 map 查表設定 next 與 random。 | Approach |
+| Null pointers are handled by mapping null to null logic. | null 指標可用查表或條件判斷處理。 | Approach |
+| Overall complexity is O(n) time and O(n) space. | 整體複雜度是 O(n) 時間、O(n) 空間。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize pointers and helper nodes. | 依來源步驟執行。 | Coding |
-| Next, I traverse list using pointer updates. | 依來源步驟執行。 | Coding |
-| Then, I use unordered_map for constant-time lookup. | 依來源步驟執行。 | Coding |
-| Next, I keep node links valid at each step. | 依來源步驟執行。 | Coding |
-| Then, I use fast and slow pointers when required. | 依來源步驟執行。 | Coding |
-| Next, I reconnect nodes based on source logic. | 依來源步驟執行。 | Coding |
-| Then, I handle head or tail edge transitions. | 依來源步驟執行。 | Coding |
-| Next, I return final linked list head. | 依來源步驟執行。 | Coding |
+| First, return null immediately if head is null. | 先判斷 head 為 null 就直接回傳 null。 | Coding |
+| I create an unordered_map from old node to new node. | 建立 old node 到 new node 的 unordered_map。 | Coding |
+| In first pass, for each old node I create a new node copy. | 第一趟對每個舊節點建立新節點副本。 | Coding |
+| I store map[old] equals new copy. | 把 map[old] 設成對應新節點。 | Coding |
+| In second pass, I set copy next to map[old next]. | 第二趟設定 copy->next = map[old->next]。 | Coding |
+| I also set copy random to map[old random]. | 同時設定 copy->random = map[old->random]。 | Coding |
+| This links copied graph without touching original links. | 這可連好新圖且不改動舊串列。 | Coding |
+| Finally return map[head] as copied list head. | 最後回傳 map[head] 作為新 head。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: [[7,null],[13,0],[11,4],[10,2],[1,0]]. | 範例輸入：[[7,null],[13,0],[11,4],[10,2],[1,0]]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: same structure, new addresses.. | 預期輸出：same structure, new addresses.。 | Dry-run |
+| Let me dry-run sample [[7,null],[13,0],[11,4],[10,2],[1,0]]. | 我手跑範例 [[7,null],[13,0],[11,4],[10,2],[1,0]]。 | Dry-run |
+| First pass creates five copied nodes and map pairs. | 第一趟建立五個複製節點與 map 配對。 | Dry-run |
+| For old node 13, random points to old node 7. | 舊節點 13 的 random 指向舊節點 7。 | Dry-run |
+| So copied 13 random should point to copied 7 through map. | 所以新 13 的 random 要透過 map 指向新 7。 | Dry-run |
+| For old node 11, random points to old node 1. | 舊節點 11 的 random 指向舊節點 1。 | Dry-run |
+| Copied 11 random becomes copied 1 similarly. | 新 11 的 random 同理會指向新 1。 | Dry-run |
+| Final copied structure matches original topology exactly. | 最終新串列拓樸與原串列完全一致。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: empty list input. | 案例一：空串列輸入。 | Edge test |
+| Case two: single node with random null. | 案例二：單節點且 random 為 null。 | Edge test |
+| Case three: single node random points to itself. | 案例三：單節點 random 指向自己。 | Edge test |
+| Case four: multiple nodes with cross random pointers. | 案例四：多節點且 random 交叉指向。 | Edge test |
+| Case five: all random pointers are null. | 案例五：所有 random 都是 null。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,71 +87,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(n). | 空間複雜度是 O(n)。 | Complexity |
+| Extra space is O(n) for node mapping. | 節點映射需要 O(n) 額外空間。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(n). | 來源額外空間為 O(n)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We traverse list twice, each pass is linear. | 我們遍歷兩趟串列，每趟都是線性。 | Complexity |
+| Hash map operations are average O(1) each. | hash map 每次操作平均 O(1)。 | Complexity |
+| One map entry is stored for every original node. | 每個舊節點都對應一個 map 項目。 | Complexity |
+| Hence runtime O(n) and extra memory O(n). | 因此時間 O(n)、額外空間 O(n)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me separate node creation and pointer wiring phases. | 我先分離建節點與連指標兩階段。 | If stuck |
+| First phase only builds map from old to new nodes. | 第一階段只建立 old->new map。 | If stuck |
+| Second phase fills next and random using that map. | 第二階段再填 next 與 random。 | If stuck |
+| I should never point new random to old nodes. | 新 random 絕不能指回舊節點。 | If stuck |
+| I might have missed null handling in lookups. | 我可能漏處理 null 查表。 | If stuck |
+| Let me guard null before map access. | 我在查表前先處理 null。 | If stuck |
+| I rerun self-random and cross-random cases. | 我重跑自指與交叉 random 案例。 | If stuck |
+| Now deep-copy addresses are fully separated. | 現在深拷貝位址已完全分離。 | If stuck |
+| Structure and random topology both match. | 結構與 random 拓樸都匹配。 | If stuck |
+| Great, solution is correct now. | 很好，解法現在正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(n). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished deep-copy implementation with hash map. | 我完成了 hash map 深拷貝實作。 | Wrap-up |
+| I validated null, self-random, and cross-random cases. | 我驗證了 null、自指、交叉 random 案例。 | Wrap-up |
+| Runtime is O(n). | 時間複雜度是 O(n)。 | Wrap-up |
+| Extra space is O(n). | 額外空間是 O(n)。 | Wrap-up |
+| I can explain O(1) interleaving optimization if needed. | 若需要我可補充 O(1) 交錯優化法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(n). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Deep-copy list with next and random pointers. | 深拷貝含 next/random 的串列。 | Cheat sheet |
+| New nodes must be independent addresses. | 新節點位址必須獨立。 | Cheat sheet |
+| Baseline repeated-scan can be O(n^2). | 基線重掃可能是 O(n^2)。 | Cheat sheet |
+| Better use old->new hash map. | 更好是 old->new hash map。 | Cheat sheet |
+| Pass one: create all copied nodes. | 第一趟：建立全部新節點。 | Cheat sheet |
+| Store mapping for each original node. | 存每個舊節點對應。 | Cheat sheet |
+| Pass two: assign copy->next. | 第二趟：設定 copy->next。 | Cheat sheet |
+| Pass two: assign copy->random. | 第二趟：設定 copy->random。 | Cheat sheet |
+| Use map lookup for target copied node. | 用 map 查表找到目標新節點。 | Cheat sheet |
+| Handle null pointers safely. | 安全處理 null 指標。 | Cheat sheet |
+| Return map[head]. | 回傳 map[head]。 | Cheat sheet |
+| Test empty input case. | 測空輸入案例。 | Cheat sheet |
+| Test self-random case. | 測 random 指向自己的案例。 | Cheat sheet |
+| Test cross-random case. | 測 random 交叉指向案例。 | Cheat sheet |
+| Test all-random-null case. | 測全部 random 為 null。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(n). | 空間 O(n)。 | Cheat sheet |
+| Bug risk: linking new node to old random. | 風險：新節點誤指舊 random。 | Cheat sheet |
+| Bug risk: missing null handling. | 風險：漏掉 null 處理。 | Cheat sheet |
+| Follow-up: interleaving O(1) extra space. | 延伸：交錯法可 O(1) 額外空間。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Hash-map deep-copy flow is preserved.
+- No hallucinated constraints: ✅ Uses source random-pointer semantics.
+- Language simplicity: ✅ Natural short lines for interview speaking.

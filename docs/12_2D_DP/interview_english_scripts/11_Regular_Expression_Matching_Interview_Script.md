@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Regular Expression Matching. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use 2D DP as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate regular expression matching. | 我先重述正規表示式匹配題。 | Restatement |
+| We are given string s and pattern p. | 題目給字串 s 與模式 p。 | Restatement |
+| Pattern supports dot and star only. | 模式只支援 `.` 與 `*`。 | Restatement |
+| Dot matches any single character. | `.` 可匹配任意單一字元。 | Restatement |
+| Star means zero or more of the preceding element. | `*` 代表前一元素重複零次或多次。 | Restatement |
+| I will solve it using two-dimensional DP. | 我會用二維 DP 解。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Should the whole string match the whole pattern? | 是否要求整個字串完整匹配整個模式？ | Clarify |
+| Can we assume pattern is valid, for example no leading star? | 可否假設模式合法，例如不會以 `*` 開頭？ | Clarify |
+| Are there only dot and star special operators? | 特殊符號是否只有 `.` 與 `*`？ | Clarify |
+| Do we return boolean only? | 是否只回傳布林值？ | Clarify |
+| Is O(m times n) DP acceptable? | O(m*n) DP 是否可接受？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(2^{N+M}) from source. | 來源暴力時間約 O(2^{N+M})。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force recursion branches heavily when star appears. | 暴力遞迴遇到 `*` 會大量分支。 | Approach |
+| Same suffix pairs are revisited repeatedly. | 相同後綴配對會被反覆訪問。 | Approach |
+| Complexity grows exponentially in worst cases. | 最壞情況複雜度呈指數成長。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses 2D DP. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(M \times N) from source. | 來源優化時間為 O(M \times N)。 | Approach |
-| Optimized space is O(M \times N) from source. | 來源優化空間為 O(M \times N)。 | Approach |
+| Let dp[i][j] mean s prefix length i matches p prefix length j. | 定義 dp[i][j]：s 前 i 是否匹配 p 前 j。 | Approach |
+| Base dp[0][0] is true. | 基底 dp[0][0]=true。 | Approach |
+| If p[j-1] is normal char or dot, check char match and diagonal state. | 若 p[j-1] 是一般字元或 `.`, 看字元匹配與左上狀態。 | Approach |
+| If p[j-1] is star, combine zero-occurrence and multi-occurrence transitions. | 若 p[j-1] 是 `*`, 合併零次與多次轉移。 | Approach |
+| Final answer is dp[m][n]. | 最終答案是 dp[m][n]。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define recursive backtracking function. | 依來源步驟執行。 | Coding |
-| Next, I check base case and append answer. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I iterate choices for current position. | 依來源步驟執行。 | Coding |
-| Then, I choose one option and update state. | 依來源步驟執行。 | Coding |
-| Next, I recurse to next decision level. | 依來源步驟執行。 | Coding |
-| Then, I undo choice to restore state. | 依來源步驟執行。 | Coding |
-| Next, I return all collected combinations. | 依來源步驟執行。 | Coding |
+| I allocate dp table of size m plus one by n plus one initialized false. | 建立 (m+1)*(n+1) 的 false 初始化 dp 表。 | Coding |
+| I set dp[0][0] to true. | 設 dp[0][0]=true。 | Coding |
+| I initialize first row for patterns like a star b star matching empty string. | 初始化首列，處理像 a* b* 可匹配空字串。 | Coding |
+| I iterate i from one to m and j from one to n. | i 從 1..m，j 從 1..n。 | Coding |
+| If p[j-1] is not star, match char or dot then use dp[i-1][j-1]. | 若 p[j-1] 非 `*`, 字元或 `.` 匹配時看 dp[i-1][j-1]。 | Coding |
+| If p[j-1] is star, zero case is dp[i][j-2]. | 若 p[j-1] 是 `*`, 零次情況看 dp[i][j-2]。 | Coding |
+| For star one-plus case, s[i-1] must match p[j-2], then use dp[i-1][j]. | `*` 一次以上需 s[i-1] 匹配 p[j-2]，再看 dp[i-1][j]。 | Coding |
+| I combine those cases and return dp[m][n]. | 合併兩情況後回傳 dp[m][n]。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: s = "aa", p = "a*". | 範例輸入：s = "aa", p = "a*"。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: true. | 預期輸出：true。 | Dry-run |
+| Let me dry-run s aa and p a star. | 我手跑 s=aa、p=a*。 | Dry-run |
+| dp[0][0] is true and dp[0][2] becomes true by star zero-case initialization. | dp[0][0] 為真，且首列由 `*` 零次規則讓 dp[0][2] 成真。 | Dry-run |
+| At i one and j two, star one-plus case matches first a. | i=1,j=2 時 `*` 多次規則可匹配第一個 a。 | Dry-run |
+| At i two and j two, same rule extends match to second a. | i=2,j=2 時同規則可延伸匹配第二個 a。 | Dry-run |
+| Final dp[2][2] is true. | 最終 dp[2][2] 為 true。 | Dry-run |
+| So pattern matches the string. | 所以模式可匹配字串。 | Dry-run |
+| This matches expected output. | 與預期輸出一致。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: empty string against patterns like a star b star. | 案例一：空字串對 a*b* 類模式。 | Edge test |
+| Case two: single char with dot pattern. | 案例二：單字元對 `.` 模式。 | Edge test |
+| Case three: star needs to consume multiple characters. | 案例三：`*` 需要匹配多個字元。 | Edge test |
+| Case four: star used as zero occurrence. | 案例四：`*` 走零次匹配路徑。 | Edge test |
+| Case five: near-match but full-string mismatch at end. | 案例五：前面近似但尾端整體不匹配。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(M \times N). | 時間複雜度是 O(M \times N)。 | Complexity |
-| Space complexity is O(M \times N). | 空間複雜度是 O(M \times N)。 | Complexity |
+| Time complexity is O(m times n). | 時間複雜度是 O(m*n)。 | Complexity |
+| Space complexity is O(m times n). | 空間複雜度是 O(m*n)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(M \times N). | 來源主要時間為 O(M \times N)。 | Complexity |
-| Extra memory from source is O(M \times N). | 來源額外空間為 O(M \times N)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We fill each state in an m by n DP table once. | m*n 的 DP 狀態各填一次。 | Complexity |
+| Each state computes constant number of checks. | 每個狀態只做常數次檢查。 | Complexity |
+| Therefore runtime is O(m*n). | 因此時間是 O(m*n)。 | Complexity |
+| Boolean table storage costs O(m*n) memory. | 布林表格空間成本是 O(m*n)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me separate star and non-star cases first. | 我先把 `*` 與非 `*` 情況分開。 | If stuck |
+| State dp[i][j] means prefix match status. | 狀態 dp[i][j] 表示前綴匹配狀態。 | If stuck |
+| Non-star case uses diagonal when chars match. | 非 `*` 情況在字元匹配時看左上。 | If stuck |
+| Star zero-case drops previous element and star. | `*` 零次情況是略過前一元素與 `*`。 | If stuck |
+| Star one-plus needs char match with p[j-2]. | `*` 一次以上需與 p[j-2] 字元匹配。 | If stuck |
+| Then we stay in same pattern column using dp[i-1][j]. | 接著沿同一模式欄位看 dp[i-1][j]。 | If stuck |
+| I should initialize dp[0][j] for star pairs. | 我應初始化 dp[0][j] 的星號配對。 | If stuck |
+| Let me verify quickly with aa and a star. | 我快速驗證 aa 對 a*。 | If stuck |
+| It ends true, confirming star transitions. | 結果為 true，證明星號轉移正確。 | If stuck |
+| Great, I can finalize implementation. | 很好，我可完成實作。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(M \times N), space is O(M \times N). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved regex matching using 2D DP. | 我用二維 DP 解了正規表示式匹配。 | Wrap-up |
+| The core is handling star zero-case and one-plus case correctly. | 核心是正確處理 `*` 的零次與多次情況。 | Wrap-up |
+| Dot is treated as single-character wildcard. | `.` 視為單字元萬用符。 | Wrap-up |
+| Complexity is O(m*n) time and O(m*n) space. | 複雜度是 O(m*n) 時間、O(m*n) 空間。 | Wrap-up |
+| This is the standard robust interview solution. | 這是面試常見且穩健的標準解法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: full-string match with pattern containing dot and star. | 目標：以含 `.`、`*` 的模式完整匹配字串。 | Cheat sheet |
+| Define dp[i][j] on prefixes. | 在前綴上定義 dp[i][j]。 | Cheat sheet |
+| dp[0][0]=true. | dp[0][0]=true。 | Cheat sheet |
+| Init dp[0][j] for star-skippable patterns. | 初始化 dp[0][j] 處理可被 `*` 略過的模式。 | Cheat sheet |
+| If p[j-1] not star and chars match, use diag. | 若 p[j-1] 非 `*` 且字元匹配，取左上。 | Cheat sheet |
+| Char match means same char or dot. | 字元匹配指相同字元或 `.`。 | Cheat sheet |
+| If p[j-1] is star, zero-case uses dp[i][j-2]. | 若 p[j-1] 是 `*`，零次看 dp[i][j-2]。 | Cheat sheet |
+| Star one-plus requires s[i-1] match p[j-2]. | `*` 多次需 s[i-1] 匹配 p[j-2]。 | Cheat sheet |
+| Then one-plus uses dp[i-1][j]. | 然後多次情況看 dp[i-1][j]。 | Cheat sheet |
+| Combine star cases with OR. | `*` 兩情況以 OR 合併。 | Cheat sheet |
+| Return dp[m][n]. | 回傳 dp[m][n]。 | Cheat sheet |
+| aa vs a* -> true. | aa 對 a* -> true。 | Cheat sheet |
+| ab vs .* -> true. | ab 對 .* -> true。 | Cheat sheet |
+| aab vs c*a*b -> true. | aab 對 c*a*b -> true。 | Cheat sheet |
+| Time O(m*n). | 時間 O(m*n)。 | Cheat sheet |
+| Space O(m*n). | 空間 O(m*n)。 | Cheat sheet |
+| Common bug: forgetting dp[0][j] initialization. | 常見錯誤：忘記初始化 dp[0][j]。 | Cheat sheet |
+| Common bug: using j-1 instead of j-2 in star zero-case. | 常見錯誤：`*` 零次誤用 j-1 非 j-2。 | Cheat sheet |
+| Keep star logic separated for clarity. | 把 `*` 邏輯拆開講會更清楚。 | Cheat sheet |
+| Validate both zero and multi occurrence behavior. | 記得同時驗證零次與多次行為。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Dot/star DP transitions and empty-prefix initialization preserved.
+- No hallucinated constraints: ✅ Full-match semantics and operator scope kept correct.
+- Language simplicity: ✅ Interview-focused wording for tricky star handling.

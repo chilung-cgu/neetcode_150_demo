@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Count Good Nodes in Binary Tree. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Recursive DFS (Top-down) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the good-nodes problem. | 我先重述好節點計數題。 | Restatement |
+| A node is good if no earlier node on root-to-node path is greater. | 若 root 到該點路徑上沒有更大值，該點是好節點。 | Restatement |
+| So each node is compared against path maximum so far. | 所以每節點都要比對目前路徑最大值。 | Restatement |
+| We need total count of such nodes. | 我們要回傳這類節點總數。 | Restatement |
+| Empty tree should return zero. | 空樹應回傳 0。 | Restatement |
+| I will use top-down DFS carrying maxSoFar state. | 我會用 top-down DFS 傳遞 maxSoFar。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can root be null, and should that return zero? | root 可能為 null 嗎？若是要回傳 0？ | Clarify |
+| Is equality allowed, meaning node value equal to maxSoFar is still good? | 若值等於 maxSoFar 仍算 good 嗎？ | Clarify |
+| Should I use recursive DFS as primary solution? | 主解法要用遞迴 DFS 嗎？ | Clarify |
+| Is integer range safe for direct comparisons only? | 整數範圍只做比較就安全嗎？ | Clarify |
+| Do you want discussion of iterative stack alternative? | 需要補充迭代 stack 替代法嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N \times L) from source. | 來源暴力時間約 O(N \times L)。 | Approach |
-| Brute space is about O(N^2) from source. | 來源暴力空間約 O(N^2)。 | Approach |
+| Brute force checks each node against all ancestors on its path. | 暴力法讓每節點逐一比較所有祖先。 | Approach |
+| This repeats path scans many times. | 這會重複掃描大量路徑。 | Approach |
+| Worst-case skewed tree can degrade to O(n^2). | 最壞斜樹情況會退化到 O(n^2)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Recursive DFS (Top-down). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(h) from source. | 來源優化空間為 O(h)。 | Approach |
+| Use DFS from root while carrying maxSoFar on current path. | 從 root DFS，同步攜帶路徑最大值 maxSoFar。 | Approach |
+| If node value is at least maxSoFar, count it as good. | 若節點值 >= maxSoFar，就計為 good。 | Approach |
+| Update path max to max(maxSoFar, node value). | 路徑最大值更新為 max(maxSoFar, node值)。 | Approach |
+| Recurse left and right with updated max. | 用更新後最大值遞迴左右子樹。 | Approach |
+| Sum current count plus child counts for final answer. | 當前計數加左右子樹計數即為答案。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define traversal order based on source method. | 依來源步驟執行。 | Coding |
-| Next, I initialize recursion or queue structures. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process current node value and state. | 依來源步驟執行。 | Coding |
-| Then, I visit left and right children by rule. | 依來源步驟執行。 | Coding |
-| Next, I update answer during traversal. | 依來源步驟執行。 | Coding |
-| Then, I handle null node base case carefully. | 依來源步驟執行。 | Coding |
-| Next, I return final aggregated tree result. | 依來源步驟執行。 | Coding |
+| In goodNodes, if root is null, return zero. | 在 goodNodes 中，root 為 null 回傳 0。 | Coding |
+| Otherwise call dfs with root and root value as maxSoFar. | 否則呼叫 dfs(root, root值)。 | Coding |
+| In dfs, null node returns zero. | dfs 中 null 節點回傳 0。 | Coding |
+| I initialize count to zero for current node. | 我先把當前節點 count 設為 0。 | Coding |
+| If node value is greater than or equal to maxSoFar, count becomes one. | 若節點值 >= maxSoFar，count 變成 1。 | Coding |
+| I update maxSoFar accordingly. | 接著更新 maxSoFar。 | Coding |
+| I add dfs of left child and dfs of right child. | 我加上左子樹與右子樹 dfs 結果。 | Coding |
+| Return total count for this subtree. | 回傳此子樹的總 good 節點數。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: root = [3,1,4,3,null,1,5]. | 範例輸入：root = [3,1,4,3,null,1,5]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 4 (Nodes: 3, 3, 4, 5). | 預期輸出：4 (Nodes: 3, 3, 4, 5)。 | Dry-run |
+| Let me dry-run root [3,1,4,3,null,1,5]. | 我手跑 root [3,1,4,3,null,1,5]。 | Dry-run |
+| Start at root 3 with maxSoFar 3, so root is good. | 從 root 3、maxSoFar=3 開始，root 是 good。 | Dry-run |
+| Go left to 1, maxSoFar remains 3, so 1 is not good. | 往左到 1，maxSoFar 仍 3，所以 1 非 good。 | Dry-run |
+| Left child 3 equals maxSoFar 3, so it is good. | 左子節點 3 等於 maxSoFar 3，算 good。 | Dry-run |
+| Go right to 4, 4 >= 3, so 4 is good and max becomes 4. | 往右到 4，4>=3，4 是 good 並更新 max=4。 | Dry-run |
+| Node 1 under 4 is not good, node 5 is good. | 4 底下的 1 非 good，5 是 good。 | Dry-run |
+| Total good nodes are 4, matching expected output. | good 節點總數為 4，符合預期。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: empty tree should return zero. | 案例一：空樹應回傳 0。 | Edge test |
+| Case two: single-node tree should return one. | 案例二：單節點樹應回傳 1。 | Edge test |
+| Case three: strictly increasing root-to-leaf path makes all nodes good. | 案例三：路徑嚴格遞增時全部都是 good。 | Edge test |
+| Case four: strictly decreasing path makes only root good. | 案例四：路徑嚴格遞減時通常只有 root 是 good。 | Edge test |
+| Case five: repeated values equal to max should still count good. | 案例五：值等於目前最大值仍應計入 good。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,71 +87,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(h). | 空間複雜度是 O(h)。 | Complexity |
+| Space complexity is O(h) recursion stack. | 空間複雜度是 O(h) 遞迴堆疊。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(h). | 來源額外空間為 O(h)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| DFS visits each node exactly once. | DFS 對每節點只訪問一次。 | Complexity |
+| Per node work is constant-time compare and max update. | 每節點僅做常數時間比較與 max 更新。 | Complexity |
+| Stack depth equals tree height h. | 呼叫堆疊深度等於樹高 h。 | Complexity |
+| Worst skew gives O(n) stack, balanced tree gives O(log n). | 最壞斜樹 O(n)，平衡樹 O(log n)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me focus on what state to carry downward. | 我先聚焦要往下傳的狀態。 | If stuck |
+| The key state is maxSoFar on current path. | 核心狀態就是目前路徑最大值 maxSoFar。 | If stuck |
+| I should compare current value with maxSoFar before children. | 我應先比當前值與 maxSoFar，再進子節點。 | If stuck |
+| I might have updated max too late. | 我可能太晚更新 max。 | If stuck |
+| Let me update max right after current-node check. | 我改成當前節點判定後立刻更新 max。 | If stuck |
+| I will rerun sample [3,1,4,3,null,1,5]. | 我重跑範例 [3,1,4,3,null,1,5]。 | If stuck |
+| Count now returns four correctly. | 現在計數能正確回傳 4。 | If stuck |
+| I will test decreasing chain next. | 我再測遞減長鏈。 | If stuck |
+| Only root counted, which is expected. | 只算到 root，符合預期。 | If stuck |
+| Great, top-down state passing is fixed. | 很好，top-down 狀態傳遞已修正。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(h). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I completed top-down DFS good-node counting. | 我完成 top-down DFS 的 good 節點計數。 | Wrap-up |
+| The path maximum is propagated as the core state. | 以路徑最大值作為核心傳遞狀態。 | Wrap-up |
+| Runtime is O(n). | 時間複雜度是 O(n)。 | Wrap-up |
+| Space is O(h). | 空間複雜度是 O(h)。 | Wrap-up |
+| I can provide iterative stack version if needed. | 若需要我可補充迭代 stack 版本。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(h). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Count nodes that are path-maximum candidates. | 計算路徑最大值候選節點數。 | Cheat sheet |
+| Good means no bigger ancestor on root path. | good 代表 root 路徑上無更大祖先。 | Cheat sheet |
+| Use top-down DFS. | 使用 top-down DFS。 | Cheat sheet |
+| Carry maxSoFar parameter. | 傳遞 maxSoFar 參數。 | Cheat sheet |
+| Null node returns 0. | null 節點回傳 0。 | Cheat sheet |
+| If node.val >= maxSoFar, count current node. | 若 node.val>=maxSoFar，計入當前節點。 | Cheat sheet |
+| Update maxSoFar = max(maxSoFar, node.val). | 更新 maxSoFar=max(maxSoFar,node.val)。 | Cheat sheet |
+| Recurse left with updated max. | 用更新 max 遞迴左子樹。 | Cheat sheet |
+| Recurse right with updated max. | 用更新 max 遞迴右子樹。 | Cheat sheet |
+| Return current + left + right counts. | 回傳 current+left+right 計數。 | Cheat sheet |
+| Root-only tree returns 1. | 只有 root 的樹回傳 1。 | Cheat sheet |
+| Empty tree returns 0. | 空樹回傳 0。 | Cheat sheet |
+| Increasing path -> many good nodes. | 遞增路徑 -> 很多 good 節點。 | Cheat sheet |
+| Decreasing path -> mostly root only. | 遞減路徑 -> 多半只有 root。 | Cheat sheet |
+| Equality with max still counts good. | 等於 max 仍算 good。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(h). | 空間 O(h)。 | Cheat sheet |
+| Bug risk: wrong initial maxSoFar. | 風險：maxSoFar 初值錯。 | Cheat sheet |
+| Bug risk: updating max after child recursion. | 風險：遞迴後才更新 max。 | Cheat sheet |
+| Mention iterative DFS alternative. | 可提迭代 DFS 替代法。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Top-down DFS with path maximum propagation is preserved.
+- No hallucinated constraints: ✅ Matches source examples and complexity.
+- Language simplicity: ✅ Spoken concise lines for interview delivery.

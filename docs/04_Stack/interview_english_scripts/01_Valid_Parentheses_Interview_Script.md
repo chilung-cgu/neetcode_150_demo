@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve 01. Valid Parentheses. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Stack as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the problem first. | 我先重述題目。 | Restatement |
+| We are given a string of bracket characters. | 我們拿到一個由括號字元組成的字串。 | Restatement |
+| We must check whether it is valid. | 我們要判斷它是否有效。 | Restatement |
+| Valid means correct type and correct closing order. | 有效代表類型正確且關閉順序正確。 | Restatement |
+| I will use a stack for open brackets. | 我會用 stack 存左括號。 | Restatement |
+| Final stack must be empty for a valid string. | 最後 stack 必須為空才算有效。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can input contain only these six bracket symbols? | 輸入是否只含六種括號符號？ | Clarify |
+| Is string length at least one by constraints? | 根據限制，長度是否至少 1？ | Clarify |
+| Should unmatched closing bracket return false immediately? | 遇到無對應右括號可立即 false 嗎？ | Clarify |
+| Do we return only boolean, no error detail? | 是否只需回傳布林值，不要錯誤細節？ | Clarify |
+| Is O(n) expected for this validation? | 這題是否預期 O(n) 驗證？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(n^2) from source. | 來源暴力時間約 O(n^2)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Baseline repeatedly removes pairs like () [] {}. | 基線是不斷刪除 () [] {} 配對。 | Approach |
+| If no reduction is possible and string remains, invalid. | 若無法再刪除且字串仍存在，就無效。 | Approach |
+| This is roughly O(n^2) due to repeated scans. | 因反覆掃描，時間大約 O(n^2)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Stack. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(n) from source. | 來源優化空間為 O(n)。 | Approach |
+| Push every opening bracket onto stack. | 每個左括號都 push 到 stack。 | Approach |
+| On closing bracket, stack top must match its type. | 遇到右括號時，top 必須同類型配對。 | Approach |
+| If stack is empty or mismatch, return false. | 若 stack 空或型別不合，直接 false。 | Approach |
+| After full scan, stack must be empty. | 全部掃描後 stack 必須為空。 | Approach |
+| This gives O(n) time and O(n) space worst-case. | 最差可達 O(n) 時間與 O(n) 空間。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize stack for state tracking. | 依來源步驟執行。 | Coding |
-| Next, I iterate input in required order. | 依來源步驟執行。 | Coding |
-| Then, I use unordered_map for constant-time lookup. | 依來源步驟執行。 | Coding |
-| Next, I pop stack while rule is violated. | 依來源步驟執行。 | Coding |
-| Then, I compute result during pop operations. | 依來源步驟執行。 | Coding |
-| Next, I push current item after processing. | 依來源步驟執行。 | Coding |
-| Then, I repeat until all items are processed. | 依來源步驟執行。 | Coding |
-| Next, I finalize answer from stack and result. | 依來源步驟執行。 | Coding |
+| First, I create an empty stack of chars. | 先建立空的 char stack。 | Coding |
+| Then I scan the string from left to right. | 然後由左到右掃描字串。 | Coding |
+| If current char is opening bracket, I push it. | 若當前是左括號，就 push。 | Coding |
+| Otherwise it is closing bracket, so I check stack top. | 否則是右括號，要檢查 stack top。 | Coding |
+| If stack is empty, return false immediately. | 若 stack 為空，立即回傳 false。 | Coding |
+| If types match, pop; else return false. | 型別匹配就 pop，不匹配就 false。 | Coding |
+| Continue until all characters are processed. | 持續直到所有字元處理完。 | Coding |
+| Return whether stack is empty at the end. | 最後回傳 stack 是否為空。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: s = "()". | 範例輸入：s = "()"。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: true. | 預期輸出：true。 | Dry-run |
+| Let me dry-run the sample string (). | 我手跑範例字串 ()。 | Dry-run |
+| Read left parenthesis, push it to stack. | 讀到左括號，push 到 stack。 | Dry-run |
+| Read right parenthesis, top is matching left one. | 讀到右括號，top 剛好是對應左括號。 | Dry-run |
+| Pop that opening bracket. | 把那個左括號 pop 掉。 | Dry-run |
+| End of scan with empty stack. | 掃描結束且 stack 為空。 | Dry-run |
+| So the string is valid. | 因此字串有效。 | Dry-run |
+| Final answer is true. | 最終答案是 true。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single opening bracket like (. | 案例一：只有一個左括號如 (。 | Edge test |
+| Case two: single closing bracket like ). | 案例二：只有一個右括號如 )。 | Edge test |
+| Case three: nested valid pattern like {[()]}. | 案例三：巢狀合法如 {[()]}。 | Edge test |
+| Case four: wrong order pattern like ([)]. | 案例四：順序錯誤如 ([)]。 | Edge test |
+| Case five: leftover opening brackets like (() . | 案例五：有殘留左括號如 (()。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(n). | 空間複雜度是 O(n)。 | Complexity |
+| Time is O(n). | 時間是 O(n)。 | Complexity |
+| Extra space is O(n) in worst case. | 最差額外空間是 O(n)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(n). | 來源額外空間為 O(n)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Each character is pushed at most once. | 每個字元最多只會被 push 一次。 | Complexity |
+| Each pushed bracket is popped at most once. | 每個進 stack 的括號最多 pop 一次。 | Complexity |
+| So total stack operations are linear. | 因此 stack 總操作是線性的。 | Complexity |
+| Worst case all openings keeps stack size n. | 最差全是左括號時，stack 大小為 n。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| May I take fifteen seconds to think? | 可以給我十五秒想一下嗎？ | If stuck |
+| Let me restate matching rule first. | 我先重述括號匹配規則。 | If stuck |
+| Closing bracket must match latest opening bracket. | 右括號要配最近的左括號。 | If stuck |
+| If stack is empty on closing, it is invalid. | 若遇右括號時 stack 為空，就無效。 | If stuck |
+| I can show brute force idea briefly. | 我可先簡述暴力想法。 | If stuck |
+| Then I switch back to stack method. | 再切回 stack 方法。 | If stuck |
+| Thanks, I found my mismatch condition bug. | 謝謝，我找到型別比對 bug。 | If stuck |
+| Let me rerun one invalid sample. | 我重跑一個無效範例。 | If stuck |
+| Now wrong-order case fails correctly. | 現在順序錯誤案例可正確失敗。 | If stuck |
+| Final logic is consistent now. | 現在整體邏輯一致了。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(n). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished the implementation. | 我完成實作了。 | Wrap-up |
+| I verified normal and edge test patterns. | 我驗證了常見與邊界測試型態。 | Wrap-up |
+| Time is O(n). | 時間是 O(n)。 | Wrap-up |
+| Extra space is O(n) worst case. | 最差額外空間是 O(n)。 | Wrap-up |
+| I can discuss map-based matching variant if needed. | 若需要我可補充 map 配對版本。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(n). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Restate bracket-validity goal. | 重述括號有效性目標。 | Cheat sheet |
+| Mention type and order both matter. | 提到類型與順序都重要。 | Cheat sheet |
+| Brute force repeatedly removes pairs. | 暴力法反覆刪配對。 | Cheat sheet |
+| Better method uses stack. | 更好方法是 stack。 | Cheat sheet |
+| Push opening brackets. | 左括號就 push。 | Cheat sheet |
+| On closing, stack must be non-empty. | 右括號時 stack 不能空。 | Cheat sheet |
+| Top type must match current closing. | top 型別要與當前右括號匹配。 | Cheat sheet |
+| Match then pop, otherwise false. | 匹配就 pop，不然 false。 | Cheat sheet |
+| End scan and check stack empty. | 掃描結束後檢查 stack 是否為空。 | Cheat sheet |
+| Dry-run sample (). | 手跑範例 ()。 | Cheat sheet |
+| Dry-run invalid sample ([)]. | 手跑無效範例 ([)]。 | Cheat sheet |
+| Test single opening bracket. | 測只有左括號案例。 | Cheat sheet |
+| Test single closing bracket. | 測只有右括號案例。 | Cheat sheet |
+| Test nested valid case. | 測巢狀合法案例。 | Cheat sheet |
+| Report O(n) runtime. | 報告 O(n) 時間。 | Cheat sheet |
+| Report O(n) worst-case space. | 報告 O(n) 最差空間。 | Cheat sheet |
+| Mention early return on mismatch. | 提到不匹配可提前返回。 | Cheat sheet |
+| If stuck, recheck match table. | 卡住時重檢配對表。 | Cheat sheet |
+| Re-run dry-run after fix. | 修正後重新手跑。 | Cheat sheet |
+| End with concise boolean result. | 以精簡布林結果收尾。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Stack matching logic and empty-stack check are preserved.
+- No hallucinated constraints: ✅ Assumptions are surfaced via clarification lines.
+- Language simplicity: ✅ Short spoken lines suitable for interview delivery.

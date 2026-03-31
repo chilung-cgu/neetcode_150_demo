@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Search a 2D Matrix. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Virtual 1D Array Binary Search as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the matrix search problem. | 我先重述矩陣搜尋題。 | Restatement |
+| Each row is sorted from left to right. | 每一列都由左到右遞增。 | Restatement |
+| First value of each row is larger than previous row end. | 每列首值都大於上一列末值。 | Restatement |
+| So the whole matrix is like one sorted 1D array. | 所以整體可視為一個排序 1D 陣列。 | Restatement |
+| I only need to return true or false for target existence. | 我只要回傳 target 是否存在。 | Restatement |
+| I will use binary search with index mapping. | 我會用二分搜尋加索引映射。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume matrix dimensions are both at least one? | 我可以假設矩陣列數與行數都至少 1 嗎？ | Clarify |
+| Is target always an integer in valid range? | target 是否一定是合法整數？ | Clarify |
+| Should I avoid extra matrix flattening space? | 是否希望我避免額外展平空間？ | Clarify |
+| Is O(log(m*n)) the target complexity expectation? | 預期複雜度是 O(log(m*n)) 嗎？ | Clarify |
+| Are duplicate numbers impossible by matrix property? | 依題目性質可視為不會跨列重複嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(m \cdot n) from source. | 來源暴力時間約 O(m \cdot n)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Baseline scans every element in all rows. | 基線作法是掃描所有元素。 | Approach |
+| Compare each cell with target directly. | 逐格與 target 比較。 | Approach |
+| Time is O(m*n), space is O(1). | 時間 O(m*n)，空間 O(1)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Virtual 1D Array Binary Search. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(\log(m \cdot n) from source. | 來源優化時間為 O(\log(m \cdot n)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Treat index range as 0 to m*n minus one. | 把索引範圍視為 0 到 m*n-1。 | Approach |
+| Mid index maps to row equals mid divided by n. | mid 對應列是 mid/n。 | Approach |
+| Column maps to mid modulo n. | 欄位對應是 mid%n。 | Approach |
+| Compare mapped value and shrink search interval normally. | 比較映射值後正常收縮區間。 | Approach |
+| This gives O(log(m*n)) time and O(1) space. | 可達 O(log(m*n)) 時間與 O(1) 空間。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I set low and high boundaries. | 依來源步驟執行。 | Coding |
-| Next, I loop while low is not greater than high. | 依來源步驟執行。 | Coding |
-| Then, I compute mid from low and high. | 依來源步驟執行。 | Coding |
-| Next, I check mid value against target condition. | 依來源步驟執行。 | Coding |
-| Then, I move low or high by condition result. | 依來源步驟執行。 | Coding |
-| Next, I update candidate answer when needed. | 依來源步驟執行。 | Coding |
-| Then, I continue until boundaries meet. | 依來源步驟執行。 | Coding |
-| Next, I return boundary or candidate result. | 依來源步驟執行。 | Coding |
+| First, I read row count m and column count n. | 先讀出列數 m 與欄數 n。 | Coding |
+| I set left to zero and right to m times n minus one. | left 設 0，right 設 m*n-1。 | Coding |
+| I loop while left is less than or equal to right. | 當 left<=right 持續迴圈。 | Coding |
+| I compute mid with overflow-safe formula. | 用防溢位公式計算 mid。 | Coding |
+| I map mid to row and column indices. | 把 mid 映射成 row 與 col。 | Coding |
+| I read matrix[row][col] and compare with target. | 讀取 matrix[row][col] 與 target 比較。 | Coding |
+| I move left or right just like standard binary search. | 像標準二分一樣更新 left/right。 | Coding |
+| If found return true, otherwise return false after loop. | 找到回傳 true，否則回傳 false。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 3. | 範例輸入：matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 3。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: true. | 預期輸出：true。 | Dry-run |
+| Let me dry-run matrix [[1,3,5,7],[10,11,16,20],[23,30,34,60]] with target 3. | 我手跑 matrix=[[1,3,5,7],[10,11,16,20],[23,30,34,60]]、target=3。 | Dry-run |
+| m is 3, n is 4, so right starts at 11. | m=3、n=4，所以 right 起始為 11。 | Dry-run |
+| First mid is 5, mapped value is 11, too large. | 第一次 mid=5，映射值 11，太大。 | Dry-run |
+| Move right to 4, then mid is 2, mapped value is 5. | right 移到 4，接著 mid=2，值是 5。 | Dry-run |
+| Five is still too large, move right to 1. | 5 還是太大，right 移到 1。 | Dry-run |
+| Mid becomes 0 then 1, and value at 1 is 3. | mid 變 0 再變 1，索引 1 的值是 3。 | Dry-run |
+| Target found, return true. | 找到 target，回傳 true。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: one cell matrix where value equals target. | 案例一：單格矩陣且值等於 target。 | Edge test |
+| Case two: one cell matrix where value differs. | 案例二：單格矩陣且值不等於 target。 | Edge test |
+| Case three: target smaller than global minimum. | 案例三：target 小於全域最小值。 | Edge test |
+| Case four: target larger than global maximum. | 案例四：target 大於全域最大值。 | Edge test |
+| Case five: target is first or last matrix element. | 案例五：target 是首元素或尾元素。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(\log(m \cdot n). | 時間複雜度是 O(\log(m \cdot n)。 | Complexity |
+| Time complexity is O(log(m*n)). | 時間複雜度是 O(log(m*n))。 | Complexity |
 | Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(\log(m \cdot n). | 來源主要時間為 O(\log(m \cdot n)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Search space size is exactly m times n elements. | 搜尋空間大小正好是 m*n 個元素。 | Complexity |
+| Binary search halves that space each iteration. | 二分搜尋每輪都把空間砍半。 | Complexity |
+| Index mapping uses only arithmetic operations. | 索引映射只用算術運算。 | Complexity |
+| No extra array or hash structure is allocated. | 沒有建立額外陣列或雜湊結構。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| May I verify the row and column mapping formula? | 我可以先確認 row/col 映射公式嗎？ | If stuck |
+| Row should be mid divided by number of columns. | row 應該是 mid 除以欄數。 | If stuck |
+| Column should be mid modulo number of columns. | col 應該是 mid 對欄數取餘。 | If stuck |
+| I will test mapping with one concrete mid value. | 我用一個 mid 實值測試映射。 | If stuck |
+| Let me also check left and right updates. | 我再檢查 left/right 更新。 | If stuck |
+| If value is smaller, I must move left to mid plus one. | 值較小時，left 必須到 mid+1。 | If stuck |
+| If value is larger, I must move right to mid minus one. | 值較大時，right 必須到 mid-1。 | If stuck |
+| I think I fixed the index conversion bug. | 我想我修好了索引轉換 bug。 | If stuck |
+| Let me rerun the sample once. | 我再重跑一次範例。 | If stuck |
+| Great, the boolean result is now correct. | 很好，布林結果現在正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(\log(m \cdot n), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I completed the virtual-1D binary search solution. | 我完成了虛擬 1D 二分解法。 | Wrap-up |
+| I verified mapping and boundary conditions. | 我驗證了索引映射與邊界條件。 | Wrap-up |
+| Runtime is O(log(m*n)). | 時間複雜度是 O(log(m*n))。 | Wrap-up |
+| Extra memory is O(1). | 額外記憶體是 O(1)。 | Wrap-up |
+| I can also explain two-phase row-plus-column search. | 我也可補充先找列再找欄的作法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(\log(m \cdot n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Matrix has global sorted order by row rule. | 矩陣依規則具全域排序性。 | Cheat sheet |
+| Need boolean existence for target. | 目標是回傳 target 是否存在。 | Cheat sheet |
+| Brute force scans all cells O(m*n). | 暴力掃全部格子 O(m*n)。 | Cheat sheet |
+| Better use binary search on virtual index. | 改用虛擬索引做二分。 | Cheat sheet |
+| left = 0, right = m*n-1. | left=0，right=m*n-1。 | Cheat sheet |
+| mid = left + (right-left)/2. | mid=left+(right-left)/2。 | Cheat sheet |
+| row = mid / n. | row=mid/n。 | Cheat sheet |
+| col = mid % n. | col=mid%n。 | Cheat sheet |
+| value = matrix[row][col]. | value=matrix[row][col]。 | Cheat sheet |
+| If equal, return true. | 相等就回傳 true。 | Cheat sheet |
+| If value < target, move left. | value<target 就移動 left。 | Cheat sheet |
+| Else move right. | 否則移動 right。 | Cheat sheet |
+| End loop means not found. | 迴圈結束代表沒找到。 | Cheat sheet |
+| Return false then. | 那時回傳 false。 | Cheat sheet |
+| Test one-cell hit and miss. | 測單格命中與未命中。 | Cheat sheet |
+| Test smaller-than-min and larger-than-max. | 測小於最小與大於最大。 | Cheat sheet |
+| Time O(log(m*n)). | 時間 O(log(m*n))。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Common bug: wrong row/col mapping. | 常見 bug：row/col 映射寫錯。 | Cheat sheet |
+| Common bug: wrong boundary update. | 常見 bug：邊界更新寫錯。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Virtual 1D mapping binary search is preserved.
+- No hallucinated constraints: ✅ Script follows source matrix properties.
+- Language simplicity: ✅ Short interview-safe spoken lines.

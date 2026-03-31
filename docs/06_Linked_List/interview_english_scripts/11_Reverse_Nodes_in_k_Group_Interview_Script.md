@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Reverse Nodes in k-Group. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Iterative (O(1) Space) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the k-group reversal problem. | 我先重述 k 組反轉題。 | Restatement |
+| We reverse list nodes in groups of size k. | 我們要每 k 個節點做一組反轉。 | Restatement |
+| If remaining nodes are fewer than k, keep them unchanged. | 若剩餘節點不足 k，保持原樣。 | Restatement |
+| Node values stay unchanged; only links can be rewired. | 節點值不變，只能重接鏈結。 | Restatement |
+| Follow-up expects O(1) extra space. | follow-up 希望 O(1) 額外空間。 | Restatement |
+| I will implement iterative group-by-group pointer reversal. | 我會用逐組迭代的指標反轉實作。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is k guaranteed to be at least one? | k 是否保證至少為 1？ | Clarify |
+| Should k equals one return original list immediately? | k=1 是否直接回傳原串列？ | Clarify |
+| Can input list be empty? | 輸入串列可能為空嗎？ | Clarify |
+| Do you prefer iterative in-place over recursive style? | 你偏好迭代原地而非遞迴嗎？ | Clarify |
+| Should I mention stack-based O(k) alternative briefly? | 要不要簡述 O(k) stack 替代法？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(n) from source. | 來源暴力時間約 O(n)。 | Approach |
-| Brute space is about O(k) from source. | 來源暴力空間約 O(k)。 | Approach |
+| Baseline can push each k-group into stack then pop to reverse. | 基線可把每組 k 節點放 stack 再彈出反轉。 | Approach |
+| This works but uses extra stack memory per group. | 這可行但每組需要額外堆疊空間。 | Approach |
+| Time O(n), space O(k). | 時間 O(n)，空間 O(k)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Iterative (O(1) Space). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Use dummy node and groupPrev pointer to anchor each segment. | 用 dummy 與 groupPrev 作每組錨點。 | Approach |
+| Find kth node from groupPrev to ensure enough nodes. | 從 groupPrev 找 kth 以確認節點數足夠。 | Approach |
+| If kth is null, stop and keep rest unchanged. | 若 kth 為 null，就停止並保留尾段。 | Approach |
+| Reverse pointers within current group using groupNext boundary. | 用 groupNext 邊界反轉當前組內指標。 | Approach |
+| Reconnect reversed group and advance groupPrev. | 重新接回反轉組並推進 groupPrev。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize pointers and helper nodes. | 依來源步驟執行。 | Coding |
-| Next, I traverse list using pointer updates. | 依來源步驟執行。 | Coding |
-| Then, I keep node links valid at each step. | 依來源步驟執行。 | Coding |
-| Next, I use fast and slow pointers when required. | 依來源步驟執行。 | Coding |
-| Then, I reconnect nodes based on source logic. | 依來源步驟執行。 | Coding |
-| Next, I handle head or tail edge transitions. | 依來源步驟執行。 | Coding |
-| Then, I return final linked list head. | 依來源步驟執行。 | Coding |
+| First, I create dummy next pointing to head. | 先建立 dummy，dummy->next 指向 head。 | Coding |
+| I set groupPrev to dummy as starting anchor. | groupPrev 起始設為 dummy。 | Coding |
+| I find kth node by moving k steps from groupPrev. | 從 groupPrev 往前走 k 步找 kth。 | Coding |
+| If kth is missing, I break because nodes are fewer than k. | 若找不到 kth，就停止反轉。 | Coding |
+| I store groupNext equals kth next for boundary control. | 存下 groupNext=kth->next 當邊界。 | Coding |
+| I reverse nodes from groupPrev next to kth. | 反轉 groupPrev->next 到 kth 這段。 | Coding |
+| I reconnect groupPrev next to new group head. | 把 groupPrev->next 接到新組頭。 | Coding |
+| I move groupPrev to old group head for next round. | groupPrev 移到舊組頭，準備下一輪。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: head = [1,2,3,4,5], k = 2. | 範例輸入：head = [1,2,3,4,5], k = 2。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [2,1,4,3,5]. | 預期輸出：[2,1,4,3,5]。 | Dry-run |
+| Let me dry-run head [1,2,3,4,5] with k equals 2. | 我手跑 head=[1,2,3,4,5], k=2。 | Dry-run |
+| First group [1,2] reverses to [2,1]. | 第一組 [1,2] 反轉為 [2,1]。 | Dry-run |
+| Current list becomes [2,1,3,4,5]. | 目前串列變成 [2,1,3,4,5]。 | Dry-run |
+| Second group [3,4] reverses to [4,3]. | 第二組 [3,4] 反轉為 [4,3]。 | Dry-run |
+| Current list becomes [2,1,4,3,5]. | 目前串列變成 [2,1,4,3,5]。 | Dry-run |
+| Last node [5] has fewer than k, so keep it. | 最後 [5] 不足 k，保持不動。 | Dry-run |
+| Final output is [2,1,4,3,5]. | 最終輸出是 [2,1,4,3,5]。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: empty list input. | 案例一：空串列輸入。 | Edge test |
+| Case two: k equals one. | 案例二：k 等於 1。 | Edge test |
+| Case three: list length smaller than k. | 案例三：串列長度小於 k。 | Edge test |
+| Case four: list length exactly multiple of k. | 案例四：長度剛好是 k 的倍數。 | Edge test |
+| Case five: list length not multiple of k. | 案例五：長度不是 k 的倍數。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,71 +87,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Extra space is O(1). | 額外空間是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Every node participates in at most one reversal operation. | 每節點至多參與一次組內反轉。 | Complexity |
+| Group boundary scans and rewiring together remain linear. | 找邊界與重接總成本維持線性。 | Complexity |
+| No recursion stack or auxiliary container is used. | 不使用遞迴堆疊或額外容器。 | Complexity |
+| Therefore runtime is O(n) and extra memory is O(1). | 因此時間 O(n)、額外空間 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me isolate one group and verify pointer transitions. | 我先隔離一組檢查指標轉移。 | If stuck |
+| groupPrev anchors before current group. | groupPrev 要錨在當前組前一個。 | If stuck |
+| kth confirms this group has enough nodes. | kth 用來確認本組節點足夠。 | If stuck |
+| groupNext marks the stop boundary for reversal loop. | groupNext 是反轉迴圈停止邊界。 | If stuck |
+| I might have forgotten to reconnect old head to groupNext. | 我可能忘了把舊組頭接回 groupNext。 | If stuck |
+| Let me patch reconnection order carefully. | 我仔細修正重接順序。 | If stuck |
+| I will rerun k=2 and k=3 samples. | 我重跑 k=2 與 k=3 範例。 | If stuck |
+| Remaining nodes under k are now preserved correctly. | 不足 k 的尾段現在正確保留。 | If stuck |
+| No cycles appear after rewiring. | 重接後沒有形成環。 | If stuck |
+| Great, implementation is now consistent. | 很好，實作現在一致。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I completed iterative k-group reversal in-place. | 我完成了原地迭代的 k 組反轉。 | Wrap-up |
+| I validated divisible and non-divisible length cases. | 我驗證了可整除與不可整除長度案例。 | Wrap-up |
+| Runtime is O(n). | 時間複雜度是 O(n)。 | Wrap-up |
+| Extra space is O(1). | 額外空間是 O(1)。 | Wrap-up |
+| I can compare recursion or stack alternatives if needed. | 若需要我可比較遞迴或 stack 解法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Reverse linked list nodes in groups of k. | 以 k 為一組反轉 linked list。 | Cheat sheet |
+| Keep leftover nodes unchanged when size < k. | 剩餘不足 k 的節點保持不變。 | Cheat sheet |
+| Baseline stack method uses O(k) space. | 基線 stack 法需要 O(k) 空間。 | Cheat sheet |
+| Better iterative in-place pointer reversal. | 更好是迭代原地反轉指標。 | Cheat sheet |
+| Create dummy before head. | 在 head 前建立 dummy。 | Cheat sheet |
+| groupPrev starts at dummy. | groupPrev 起始在 dummy。 | Cheat sheet |
+| Find kth node from groupPrev. | 從 groupPrev 找 kth。 | Cheat sheet |
+| If kth null, stop loop. | kth 為 null 就停止。 | Cheat sheet |
+| groupNext = kth->next as boundary. | groupNext=kth->next 當邊界。 | Cheat sheet |
+| Reverse group pointers up to groupNext. | 反轉直到 groupNext 為止。 | Cheat sheet |
+| Reconnect groupPrev to new head. | 把 groupPrev 接到新組頭。 | Cheat sheet |
+| Move groupPrev to old group head. | groupPrev 移到舊組頭。 | Cheat sheet |
+| Repeat for next group. | 重複處理下一組。 | Cheat sheet |
+| Test k=1 case. | 測 k=1 案例。 | Cheat sheet |
+| Test length<k case. | 測長度<k 案例。 | Cheat sheet |
+| Test divisible/non-divisible lengths. | 測可整除/不可整除長度。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Bug risk: wrong group reconnection. | 風險：組間重接順序錯。 | Cheat sheet |
+| Bug risk: boundary stop condition error. | 風險：邊界停止條件錯。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Iterative O(1)-space group reversal is preserved.
+- No hallucinated constraints: ✅ Uses source k-group semantics and edge rules.
+- Language simplicity: ✅ Interview-friendly concise lines.

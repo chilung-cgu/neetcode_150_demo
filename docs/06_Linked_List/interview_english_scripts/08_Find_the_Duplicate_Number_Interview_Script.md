@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Find the Duplicate Number. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Floyd's Cycle Detection as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the duplicate-number problem. | 我先重述找重複數字題。 | Restatement |
+| Array length is n plus one, values are in range one to n. | 陣列長度是 n+1，值域在 1 到 n。 | Restatement |
+| Exactly one value repeats at least twice. | 恰有一個值重複出現至少兩次。 | Restatement |
+| We cannot modify the input array. | 我們不能修改輸入陣列。 | Restatement |
+| Extra space must stay O(1). | 額外空間必須是 O(1)。 | Restatement |
+| I will map it to cycle detection and use Floyd algorithm. | 我會映射成環偵測並用 Floyd 演算法。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume there is always at least one duplicate? | 我可假設一定至少有一個重複值嗎？ | Clarify |
+| Are values guaranteed within closed interval one to n? | 值是否保證落在 1 到 n 區間？ | Clarify |
+| Is input strictly read-only in interview expectation? | 面試預期是否視為唯讀輸入？ | Clarify |
+| Should I avoid sorting because it mutates array? | 是否應避免排序，因為會改動陣列？ | Clarify |
+| Do you want binary-search-on-value as alternative discussion? | 要不要補充值域二分替代法？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,55 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(n^2) from source. | 來源暴力時間約 O(n^2)。 | Approach |
-| Brute space is about O(n^2) from source. | 來源暴力空間約 O(n^2)。 | Approach |
+| Baseline counts occurrences for each candidate value. | 基線是對每個候選值統計出現次數。 | Approach |
+| That needs nested scanning over values and array. | 這需要對值域與陣列做巢狀掃描。 | Approach |
+| Time O(n^2), space O(1), but too slow. | 時間 O(n^2)、空間 O(1)，但太慢。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Floyd's Cycle Detection. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Treat index as node and nums[index] as next pointer. | 把索引視為節點，nums[index] 視為 next。 | Approach |
+| This forms a functional graph with a cycle. | 這會形成函數圖且必有環。 | Approach |
+| Repeated number corresponds to cycle entry. | 重複數字對應環入口。 | Approach |
+| Phase one finds intersection of slow and fast pointers. | 第一階段找 slow 與 fast 的相遇點。 | Approach |
+| Phase two finds entry, which is duplicate value. | 第二階段找入口，入口就是重複值。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize pointers and helper nodes. | 依來源步驟執行。 | Coding |
-| Next, I traverse list using pointer updates. | 依來源步驟執行。 | Coding |
-| Then, I use unordered_set for membership checks. | 依來源步驟執行。 | Coding |
-| Next, I sort data where source method requires ordering. | 依來源步驟執行。 | Coding |
-| Then, I keep node links valid at each step. | 依來源步驟執行。 | Coding |
-| Next, I use fast and slow pointers when required. | 依來源步驟執行。 | Coding |
-| Then, I reconnect nodes based on source logic. | 依來源步驟執行。 | Coding |
-| Next, I handle head or tail edge transitions. | 依來源步驟執行。 | Coding |
-| Finally, I return final linked list head. | 依來源步驟執行。 | Coding |
+| First, I initialize slow and fast to index zero. | 先把 slow 與 fast 都設在索引 0。 | Coding |
+| I run do-while: slow moves one step, fast moves two steps. | 用 do-while：slow 一步、fast 兩步。 | Coding |
+| Loop until slow equals fast at intersection. | 直到 slow 與 fast 在相遇點重合。 | Coding |
+| Then I set a second pointer to index zero. | 接著把第二指標設回索引 0。 | Coding |
+| I move both pointers one step each time. | 讓兩個指標每次都走一步。 | Coding |
+| Their meeting point is cycle entry. | 再次相遇點就是環入口。 | Coding |
+| That entry value is the duplicate number. | 該入口值即為重複數字。 | Coding |
+| Return that value directly. | 直接回傳該值。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: [CHECK]. | 範例輸入：[CHECK]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [CHECK]. | 預期輸出：[CHECK]。 | Dry-run |
+| Let me dry-run nums [1,3,4,2,2]. | 我手跑 nums=[1,3,4,2,2]。 | Dry-run |
+| Start slow and fast at index zero. | 起始 slow 與 fast 在索引 0。 | Dry-run |
+| Phase one eventually meets at index value 2 cycle region. | 第一階段最終會在值為 2 的環區域相遇。 | Dry-run |
+| Reset second pointer to zero for phase two. | 第二階段把另一指標重設到 0。 | Dry-run |
+| Move both one step each; they meet at value 2. | 兩者同步一步前進後在值 2 相遇。 | Dry-run |
+| So duplicate number is 2. | 所以重複數字是 2。 | Dry-run |
+| Result matches expected output. | 結果符合預期輸出。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: smallest valid n with one duplicate. | 案例一：最小合法 n 且有一個重複值。 | Edge test |
+| Case two: duplicate appears many times. | 案例二：同一重複值出現多次。 | Edge test |
+| Case three: duplicate equals lower bound one. | 案例三：重複值是下界 1。 | Edge test |
+| Case four: duplicate equals upper bound n. | 案例四：重複值是上界 n。 | Edge test |
+| Case five: duplicate appears near end positions. | 案例五：重複值出現在靠尾端位置。 | Edge test |
 
 ## 7) Complexity script
 
@@ -88,71 +87,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Extra space is O(1). | 額外空間是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Floyd phase one reaches intersection in linear steps. | Floyd 第一階段在線性步數內到達相遇點。 | Complexity |
+| Phase two reaches cycle entry also in linear bound. | 第二階段也在線性上界內到達入口。 | Complexity |
+| Only fixed pointers are maintained. | 全程只維護固定數量指標。 | Complexity |
+| No array modification and no extra containers are needed. | 不改陣列，也不需額外容器。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me re-explain the index-to-pointer mapping first. | 我先重講索引到指標的映射。 | If stuck |
+| Node i points to node nums[i]. | 節點 i 指向節點 nums[i]。 | If stuck |
+| Because values are one to n, mapping is always valid. | 因值域 1 到 n，映射一定有效。 | If stuck |
+| Duplicate value creates converging edges and a cycle entry. | 重複值會造成匯入邊與環入口。 | If stuck |
+| I might have mixed index and value in pointer updates. | 我可能把索引與值更新混淆了。 | If stuck |
+| Let me use slow = nums[slow], fast = nums[nums[fast]]. | 我改回 slow=nums[slow]、fast=nums[nums[fast]]。 | If stuck |
+| Then reset second pointer to zero for phase two. | 然後第二階段把另一指標重設為 0。 | If stuck |
+| Move both one step to find entry. | 兩者同速前進找入口。 | If stuck |
+| Now sample returns expected duplicate. | 現在範例回傳預期重複值。 | If stuck |
+| Great, logic is correct now. | 很好，邏輯現在正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I completed the Floyd-cycle duplicate finder. | 我完成了 Floyd 環偵測找重複值解法。 | Wrap-up |
+| I validated bounds and repeated-occurrence patterns. | 我驗證了邊界與重複次數模式。 | Wrap-up |
+| Runtime is O(n). | 時間複雜度是 O(n)。 | Wrap-up |
+| Extra space is O(1). | 額外空間是 O(1)。 | Wrap-up |
+| I can discuss value-domain binary search alternative if needed. | 若需要我可補充值域二分替代法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Find one duplicate in read-only array. | 在唯讀陣列找唯一重複值。 | Cheat sheet |
+| Values range from 1 to n. | 值域是 1 到 n。 | Cheat sheet |
+| Need O(1) extra space. | 需要 O(1) 額外空間。 | Cheat sheet |
+| Baseline counting is O(n^2). | 基線計數法是 O(n^2)。 | Cheat sheet |
+| Map index i to next nums[i]. | 把索引 i 映射到 nums[i]。 | Cheat sheet |
+| This creates a cycle in functional graph. | 這會形成函數圖中的環。 | Cheat sheet |
+| Duplicate is cycle entry. | 重複值就是環入口。 | Cheat sheet |
+| Floyd phase 1 finds intersection. | Floyd 第一階段找相遇點。 | Cheat sheet |
+| slow moves one step. | slow 每次一步。 | Cheat sheet |
+| fast moves two steps. | fast 每次兩步。 | Cheat sheet |
+| Floyd phase 2 finds entry. | Floyd 第二階段找入口。 | Cheat sheet |
+| Reset pointer to zero. | 重設一個指標到 0。 | Cheat sheet |
+| Move both one step until they meet. | 兩者同速前進直到相遇。 | Cheat sheet |
+| Return meeting value. | 回傳相遇值。 | Cheat sheet |
+| Test duplicate at lower bound. | 測重複值在下界。 | Cheat sheet |
+| Test duplicate at upper bound. | 測重複值在上界。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Bug risk: wrong pointer update formula. | 風險：指標更新公式寫錯。 | Cheat sheet |
+| Bug risk: mixing index and value semantics. | 風險：索引與值語意混淆。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Floyd cycle-entry mapping approach is preserved.
+- No hallucinated constraints: ✅ Uses source read-only/O(1)-space requirements.
+- Language simplicity: ✅ Short interview-speaking lines.

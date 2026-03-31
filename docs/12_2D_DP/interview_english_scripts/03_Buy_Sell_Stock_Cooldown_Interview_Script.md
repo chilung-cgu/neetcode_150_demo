@@ -1,4 +1,4 @@
-# 03 Best Time to Buy and Sell Stock with Cooldown — Interview English Script (C++)
+# 03 Buy Sell Stock Cooldown — Interview English Script (C++)
 
 > Source aligned with: `docs/12_2D_DP/03_Buy_Sell_Stock_Cooldown.md`
 
@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Best Time to Buy and Sell Stock with Cooldown. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use State Machine DP as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate stock trading with cooldown. | 我先重述冷凍期股票交易題。 | Restatement |
+| We are given daily prices and can trade multiple times. | 題目給每日股價，可多次交易。 | Restatement |
+| We can hold at most one stock at a time. | 同一時間最多持有一股。 | Restatement |
+| After selling, we must cooldown for one day before buying again. | 賣出後必須冷凍一天才能再買。 | Restatement |
+| We need the maximum achievable profit. | 目標是最大總利潤。 | Restatement |
+| I will model it with state-machine DP. | 我會用狀態機 DP 建模。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Do we start with no stock and zero profit? | 初始是否為空手且利潤 0？ | Clarify |
+| Is transaction fee absent in this variant? | 這版沒有手續費對嗎？ | Clarify |
+| Can we buy and sell on the same day? | 是否允許同一天買又賣？ | Clarify |
+| Is one-day cooldown exactly after each sell? | 冷凍期是否固定只一天？ | Clarify |
+| Is O(n) time and O(1) space expected? | O(n) 時間 O(1) 空間是否預期？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(2^N) from source. | 來源暴力時間約 O(2^N)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force tries buy, sell, or wait decisions recursively. | 暴力遞迴嘗試買、賣、等待。 | Approach |
+| Cooldown introduces branching with day jumps. | 冷凍期讓分支與日期跳躍更複雜。 | Approach |
+| Without memoization, complexity is exponential. | 不做記憶化時複雜度是指數級。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses State Machine DP. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N) from source. | 來源優化時間為 O(N)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| I track three states per day: hold, sold, rest. | 我每天追蹤 hold、sold、rest 三狀態。 | Approach |
+| hold means we currently own a stock. | hold 表示目前持股。 | Approach |
+| sold means we sold today. | sold 表示今天剛賣出。 | Approach |
+| rest means no stock and not sold today. | rest 表示空手且今天沒賣。 | Approach |
+| Transition rules give O(n) time and O(1) memory. | 轉移規則可達 O(n) 時間與 O(1) 記憶體。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define recursive backtracking function. | 依來源步驟執行。 | Coding |
-| Next, I check base case and append answer. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I iterate choices for current position. | 依來源步驟執行。 | Coding |
-| Then, I choose one option and update state. | 依來源步驟執行。 | Coding |
-| Next, I recurse to next decision level. | 依來源步驟執行。 | Coding |
-| Then, I undo choice to restore state. | 依來源步驟執行。 | Coding |
-| Next, I return all collected combinations. | 依來源步驟執行。 | Coding |
+| I initialize hold to negative infinity, sold to zero, rest to zero. | 我初始化 hold=-無限大、sold=0、rest=0。 | Coding |
+| For each price, I store previous hold sold rest first. | 每個 price 先暫存前一日三狀態。 | Coding |
+| New hold is max of keeping hold or buying from rest. | 新 hold 取續抱或從 rest 買入的最大值。 | Coding |
+| New sold equals previous hold plus current price. | 新 sold 等於前一日 hold 加今日價。 | Coding |
+| New rest is max of previous rest and previous sold. | 新 rest 是前一日 rest 與 sold 的最大。 | Coding |
+| This enforces cooldown because buy uses previous rest only. | 買入只從舊 rest 轉移，因此自動滿足冷凍期。 | Coding |
+| After loop, answer is max of sold and rest. | 迴圈後答案是 max(sold,rest)。 | Coding |
+| Ending in hold is not optimal realized profit. | 以 hold 結束不代表實現利潤。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: prices = [1,2,3,0,2]. | 範例輸入：prices = [1,2,3,0,2]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 3. | 預期輸出：3。 | Dry-run |
+| Let me dry-run prices [1,2,3,0,2]. | 我手跑 prices=[1,2,3,0,2]。 | Dry-run |
+| Day zero sets hold to minus one after optional buy. | 第 0 天選買後 hold 變 -1。 | Dry-run |
+| Day one can sell, so sold becomes one. | 第 1 天可賣，sold 變 1。 | Dry-run |
+| Day two sold can reach two, while rest becomes one. | 第 2 天 sold 可到 2，rest 變 1。 | Dry-run |
+| Day three buying from rest gives hold one at price zero. | 第 3 天從 rest 買入，hold 變 1（價 0）。 | Dry-run |
+| Day four sell makes sold three. | 第 4 天賣出讓 sold 變 3。 | Dry-run |
+| Final max of sold and rest is three. | 最終 max(sold,rest)=3。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single day should return zero. | 案例一：只有一天應回 0。 | Edge test |
+| Case two: strictly decreasing prices should return zero. | 案例二：持續下跌應回 0。 | Edge test |
+| Case three: alternating peaks validates cooldown handling. | 案例三：高低交替可驗證冷凍期處理。 | Edge test |
+| Case four: long flat prices should produce zero profit. | 案例四：長期平盤應為 0 利潤。 | Edge test |
+| Case five: immediate re-buy temptation after sell. | 案例五：賣後隔天想再買的情境。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N). | 時間複雜度是 O(N)。 | Complexity |
+| Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
 | Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N). | 來源主要時間為 O(N)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We scan prices array once from left to right. | 我們對價格陣列做一次線性掃描。 | Complexity |
+| Each day updates only three scalar states. | 每天只更新三個純量狀態。 | Complexity |
+| Therefore runtime is linear O(n). | 因此總時間是線性 O(n)。 | Complexity |
+| No DP table is used, so extra memory is O(1). | 不需要 DP 表，額外記憶體是 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me switch to state-machine thinking. | 我改用狀態機思考。 | If stuck |
+| I need three states: hold sold rest. | 我需要三個狀態：hold、sold、rest。 | If stuck |
+| hold means I have stock at day end. | hold 是收盤時手上有股。 | If stuck |
+| sold means I sold today. | sold 是今天剛賣。 | If stuck |
+| rest means no stock and no sell today. | rest 是空手且今天沒賣。 | If stuck |
+| Buying must come from previous rest only. | 買入只能從前一天 rest 來。 | If stuck |
+| That is exactly how cooldown is enforced. | 這正是冷凍期約束。 | If stuck |
+| Let me test [1,2,3,0,2] quickly. | 我快速測 [1,2,3,0,2]。 | If stuck |
+| It gives three profit as expected. | 會得到預期利潤 3。 | If stuck |
+| Great, transitions are validated. | 很好，轉移已驗證。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved this with constant-space state DP. | 我用常數空間狀態 DP 解此題。 | Wrap-up |
+| The three states are hold sold and rest. | 三個狀態是 hold、sold、rest。 | Wrap-up |
+| Cooldown is naturally encoded in transition rules. | 冷凍期已自然內建於轉移規則。 | Wrap-up |
+| Complexity is O(n) time and O(1) space. | 複雜度是 O(n) 時間、O(1) 空間。 | Wrap-up |
+| This is concise and interview-friendly to explain. | 這解法簡潔且面試易說明。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: maximize stock profit with one-day cooldown. | 目標：含一天冷凍期下最大化利潤。 | Cheat sheet |
+| One stock at most can be held. | 最多持有一股。 | Cheat sheet |
+| Define states hold sold rest. | 定義狀態 hold、sold、rest。 | Cheat sheet |
+| hold: own stock at end of day. | hold：收盤時持股。 | Cheat sheet |
+| sold: sold today. | sold：今天賣出。 | Cheat sheet |
+| rest: no stock and no sell today. | rest：空手且今天沒賣。 | Cheat sheet |
+| Initialize hold=-inf sold=0 rest=0. | 初始化 hold=-inf、sold=0、rest=0。 | Cheat sheet |
+| Save previous states each iteration. | 每輪先保存前一日狀態。 | Cheat sheet |
+| hold=max(prevHold, prevRest-price). | hold=max(prevHold,prevRest-price)。 | Cheat sheet |
+| sold=prevHold+price. | sold=prevHold+price。 | Cheat sheet |
+| rest=max(prevRest, prevSold). | rest=max(prevRest,prevSold)。 | Cheat sheet |
+| Answer=max(sold, rest). | 答案=max(sold,rest)。 | Cheat sheet |
+| Example [1,2,3,0,2] -> 3. | 範例 [1,2,3,0,2] -> 3。 | Cheat sheet |
+| Single day -> 0. | 單日 -> 0。 | Cheat sheet |
+| Decreasing prices -> 0. | 遞減價格 -> 0。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Common bug: buying from prevSold (invalid). | 常見錯誤：從 prevSold 買入（不合法）。 | Cheat sheet |
+| Common bug: overwriting states without temp vars. | 常見錯誤：未用暫存導致覆寫錯誤。 | Cheat sheet |
+| Explain cooldown through transition source. | 用轉移來源解釋冷凍期。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ hold/sold/rest transitions and cooldown semantics preserved.
+- No hallucinated constraints: ✅ One-share constraint and one-day cooldown correctly captured.
+- Language simplicity: ✅ State-machine explanation is concise and interview-ready.

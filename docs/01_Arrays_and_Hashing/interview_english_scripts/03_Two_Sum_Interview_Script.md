@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Two Sum. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use One-pass Hash Map as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the problem first. | 我先重述題目。 | Restatement |
+| We have nums and a target value. | 我們有 nums 和 target。 | Restatement |
+| We need two different indices. | 我們要找兩個不同索引。 | Restatement |
+| Their values must sum to target. | 這兩個位置的值相加要等於 target。 | Restatement |
+| I will use one-pass hash map. | 我會用一次遍歷 hash map。 | Restatement |
+| Then I will test edge cases. | 然後我會測邊界案例。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume exactly one valid answer? | 可以假設剛好一組解嗎？ | Clarify |
+| Can nums contain duplicate values? | nums 會有重複值嗎？ | Clarify |
+| Can numbers be negative? | 數字可能是負數嗎？ | Clarify |
+| Does return order of indices matter? | 回傳索引順序有要求嗎？ | Clarify |
+| If no solution exists, return empty list? | 如果無解，回傳空陣列嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(n^2) from source. | 來源暴力時間約 O(n^2)。 | Approach |
-| Brute space is about O(1) from source. | 來源暴力空間約 O(1)。 | Approach |
+| Baseline checks every pair i and j. | 基線是檢查每一對 i 與 j。 | Approach |
+| If nums[i] plus nums[j] equals target, return them. | 若兩者和等於 target 就回傳。 | Approach |
+| Time O(n^2), space O(1). | 時間 O(n^2)、空間 O(1)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses One-pass Hash Map. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(n) from source. | 來源優化空間為 O(n)。 | Approach |
+| I store value to index in a hash map. | 我用 hash map 存值到索引。 | Approach |
+| For each value, need equals target minus value. | 每個值對應的 need 是 target 減它。 | Approach |
+| If need already exists, I return two indices. | 若 need 已存在，就回傳兩個索引。 | Approach |
+| Otherwise I store current value and index. | 否則先存目前值與索引。 | Approach |
+| Average time O(n), extra space O(n). | 平均時間 O(n)，額外空間 O(n)。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize left and right pointers. | 依來源步驟執行。 | Coding |
-| Next, I move pointers by source condition. | 依來源步驟執行。 | Coding |
-| Then, I use unordered_map for constant-time lookup. | 依來源步驟執行。 | Coding |
-| Next, I compare values at both pointers. | 依來源步驟執行。 | Coding |
-| Then, I update answer or state by comparison. | 依來源步驟執行。 | Coding |
-| Next, I continue until pointers cross. | 依來源步驟執行。 | Coding |
-| Then, I verify pointer updates avoid missing cases. | 依來源步驟執行。 | Coding |
-| Next, I return final result after loop. | 依來源步驟執行。 | Coding |
+| First, I create unordered_map<int,int> seen. | 先建立 unordered_map<int,int> seen。 | Coding |
+| Then I loop i from zero to nums size. | 然後 i 從 0 走到 nums 長度。 | Coding |
+| Current is nums[i], and need is target minus current. | current 是 nums[i]，need 是 target-current。 | Coding |
+| I check whether need exists in seen. | 我檢查 seen 裡是否有 need。 | Coding |
+| If found, I return seen[need] and i. | 若找到，就回傳 seen[need] 和 i。 | Coding |
+| If not found, I store seen[current] equals i. | 若找不到，就存 seen[current]=i。 | Coding |
+| This keeps one pass and correct index order. | 這樣維持一次遍歷與正確索引。 | Coding |
+| At end, return empty as defensive fallback. | 最後回傳空陣列作保底。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: [CHECK]. | 範例輸入：[CHECK]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [CHECK]. | 預期輸出：[CHECK]。 | Dry-run |
+| Let me dry-run nums two, seven, eleven, fifteen. | 我手跑 nums = 2,7,11,15。 | Dry-run |
+| Target is nine. | target 是 9。 | Dry-run |
+| i zero: current two, need seven, not found. | i=0：current=2，need=7，未找到。 | Dry-run |
+| Store value two at index zero. | 儲存數值 2 在索引 0。 | Dry-run |
+| i one: current seven, need two, found. | i=1：current=7，need=2，已找到。 | Dry-run |
+| Return indices zero and one. | 回傳索引 0 和 1。 | Dry-run |
+| Output matches expected answer. | 輸出符合預期答案。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: [3,3], target 6, expect [0,1]. | 案例一：[3,3], target 6，預期 [0,1]。 | Edge test |
+| Case two: [0,4,3,0], target 0, expect [0,3]. | 案例二：[0,4,3,0], target 0，預期 [0,3]。 | Edge test |
+| Case three: negatives like [-1,-2,-3,-4], target -6. | 案例三：負數如 [-1,-2,-3,-4], target -6。 | Edge test |
+| Case four: ensure same index is never reused. | 案例四：確認不會重用同一索引。 | Edge test |
+| Case five: if no-solution allowed, return empty. | 案例五：若允許無解，回傳空陣列。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(n). | 空間複雜度是 O(n)。 | Complexity |
+| Average time is O(n). | 平均時間是 O(n)。 | Complexity |
+| Space is O(n) for stored values. | 空間是 O(n)，用來存已看過值。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(n). | 來源額外空間為 O(n)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We iterate through nums exactly one time. | 我們剛好把 nums 走訪一次。 | Complexity |
+| Each map lookup and insert is average O(1). | 每次 map 查找與插入平均 O(1)。 | Complexity |
+| So total average time is O(n). | 所以總平均時間是 O(n)。 | Complexity |
+| Map can hold up to n elements, so space O(n). | map 最多存 n 個元素，所以空間 O(n)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| May I take fifteen seconds to think? | 可以給我十五秒想一下嗎？ | If stuck |
+| Let me confirm one requirement first. | 我先確認一個需求。 | If stuck |
+| I can explain brute force quickly. | 我可以快速說明暴力法。 | If stuck |
+| Then I will optimize to hash map. | 然後我會優化成 hash map。 | If stuck |
+| I forgot one syntax detail only. | 我只是一時忘了語法細節。 | If stuck |
+| The core logic is still correct. | 但核心邏輯仍是正確的。 | If stuck |
+| Thanks for the hint, I will adjust. | 謝謝提示，我會調整。 | If stuck |
+| I found the bug and fixed it. | 我找到 bug 並修好了。 | If stuck |
+| Let me rerun the sample now. | 我現在重跑範例。 | If stuck |
+| The result is consistent now. | 現在結果一致了。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(n). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished the implementation. | 我完成實作了。 | Wrap-up |
+| I verified both normal and edge cases. | 我驗證了正常與邊界案例。 | Wrap-up |
+| One-pass hash map gives O(n) average time. | 一次遍歷 hash map 可達 O(n) 平均時間。 | Wrap-up |
+| Space is O(n), which is acceptable here. | 空間是 O(n)，在這題可接受。 | Wrap-up |
+| I can discuss sorted-array variant if needed. | 若需要我可補充排序陣列變體。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(n). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Restate nums, target, and index output. | 重述 nums、target 與索引輸出。 | Cheat sheet |
+| Ask if exactly one answer exists. | 問是否保證唯一解。 | Cheat sheet |
+| Mention brute force O(n^2). | 提到暴力法 O(n^2)。 | Cheat sheet |
+| Introduce one-pass hash map. | 引入一次遍歷 hash map。 | Cheat sheet |
+| Store value to index mapping. | 儲存數值到索引映射。 | Cheat sheet |
+| Need equals target minus current. | need = target - current。 | Cheat sheet |
+| Check need before storing current. | 先檢查 need 再儲存 current。 | Cheat sheet |
+| Found need, return two indices. | 找到 need 就回傳兩索引。 | Cheat sheet |
+| Never reuse same index. | 絕不重用同一索引。 | Cheat sheet |
+| Dry-run [2,7,11,15], target 9. | 手跑 [2,7,11,15], target 9。 | Cheat sheet |
+| Verify duplicate value case [3,3]. | 驗證重複值案例 [3,3]。 | Cheat sheet |
+| Verify zero case [0,4,3,0]. | 驗證含零案例 [0,4,3,0]。 | Cheat sheet |
+| Verify negative-number case. | 驗證負數案例。 | Cheat sheet |
+| Average lookup is O(1). | 平均查找是 O(1)。 | Cheat sheet |
+| Total average time is O(n). | 總平均時間是 O(n)。 | Cheat sheet |
+| Space usage is O(n). | 空間使用是 O(n)。 | Cheat sheet |
+| If stuck, restate invariant. | 卡住就重述不變量。 | Cheat sheet |
+| If needed, explain fallback return. | 需要時說明保底回傳。 | Cheat sheet |
+| End with complexity summary. | 以複雜度總結收尾。 | Cheat sheet |
+| Offer follow-up discussion. | 主動提供後續討論。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ One-pass hash map logic is preserved.
+- No hallucinated constraints: ✅ Uncertain behaviors are asked in clarification lines.
+- Language simplicity: ✅ Short, spoken, interview-safe lines.

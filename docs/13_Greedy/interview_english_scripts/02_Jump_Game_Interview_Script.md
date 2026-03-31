@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Jump Game. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Greedy (Shift Goal Post Backward) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate jump game. | 我先重述 Jump Game。 | Restatement |
+| We start at index zero in array nums. | 我們從陣列 nums 的索引 0 出發。 | Restatement |
+| nums[i] is maximum jump length from i. | nums[i] 代表從 i 可跳的最遠長度。 | Restatement |
+| We need to decide if last index is reachable. | 要判斷是否能到達最後一格。 | Restatement |
+| Return true if reachable, otherwise false. | 可達回 true，不可達回 false。 | Restatement |
+| I will use greedy goal-shifting from right to left. | 我會用由右往左的貪心目標回推。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is nums guaranteed non-empty? | nums 是否保證非空？ | Clarify |
+| Are all values non-negative? | 所有值是否都是非負？ | Clarify |
+| Do we only return reachability boolean? | 是否只回可達性的布林值？ | Clarify |
+| Can we assume indices fit in integer arithmetic safely? | 索引運算可安全放在整數內嗎？ | Clarify |
+| Is O(n) greedy expected over O(n squared) DP? | 是否期望 O(n) 貪心而非 O(n²) DP？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(2^N) from source. | 來源暴力時間約 O(2^N)。 | Approach |
-| Brute space is about O(N^2) from source. | 來源暴力空間約 O(N^2)。 | Approach |
+| Brute force tries all jump choices recursively. | 暴力遞迴嘗試所有跳躍選擇。 | Approach |
+| Many positions are revisited across branches. | 許多位置會在不同分支重複訪問。 | Approach |
+| This can degrade to exponential behavior. | 這可能退化成指數行為。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Greedy (Shift Goal Post Backward). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N) from source. | 來源優化時間為 O(N)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Set goal as last index initially. | 一開始把 goal 設為最後索引。 | Approach |
+| Traverse i from right to left. | 從右往左掃描每個 i。 | Approach |
+| If i plus nums[i] reaches goal, shift goal to i. | 若 i+nums[i] 可達 goal，就把 goal 移到 i。 | Approach |
+| Intuition: now we only need to reach this new closer goal. | 直覺上只要能到新 goal 就等價可達終點。 | Approach |
+| Finally, return whether goal becomes zero. | 最後看 goal 是否回推到 0。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define recursive backtracking function. | 依來源步驟執行。 | Coding |
-| Next, I check base case and append answer. | 依來源步驟執行。 | Coding |
-| Then, I iterate choices for current position. | 依來源步驟執行。 | Coding |
-| Next, I choose one option and update state. | 依來源步驟執行。 | Coding |
-| Then, I recurse to next decision level. | 依來源步驟執行。 | Coding |
-| Next, I undo choice to restore state. | 依來源步驟執行。 | Coding |
-| Then, I return all collected combinations. | 依來源步驟執行。 | Coding |
+| I initialize goal as nums.size minus one. | 我先把 goal 初始化為 nums.size-1。 | Coding |
+| I loop i from second last index down to zero. | i 從倒數第二格往左到 0。 | Coding |
+| For each i, I check if i plus nums[i] is at least goal. | 每個 i 檢查 i+nums[i] 是否至少到 goal。 | Coding |
+| If yes, I update goal to i. | 若可達，我就把 goal 更新為 i。 | Coding |
+| This means index i can reach previous goal position. | 這表示 i 可到達先前的目標位置。 | Coding |
+| Loop continues until index zero. | 迴圈持續到索引 0。 | Coding |
+| After loop, I return goal equals zero. | 迴圈後回傳 goal==0。 | Coding |
+| That gives final reachability decision. | 這就是最終可達性判定。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: nums = [2,3,1,1,4]. | 範例輸入：nums = [2,3,1,1,4]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: true. | 預期輸出：true。 | Dry-run |
+| Let me dry-run nums [2,3,1,1,4]. | 我手跑 nums=[2,3,1,1,4]。 | Dry-run |
+| Initial goal is index four. | 初始 goal 是索引 4。 | Dry-run |
+| At i three, three plus one reaches four, so goal becomes three. | i=3 時 3+1 可到 4，goal 變 3。 | Dry-run |
+| At i two, two plus one reaches three, so goal becomes two. | i=2 時 2+1 可到 3，goal 變 2。 | Dry-run |
+| At i one, one plus three reaches four, so goal becomes one. | i=1 時 1+3 可到 4，goal 變 1。 | Dry-run |
+| At i zero, zero plus two reaches two, so goal becomes zero. | i=0 時 0+2 可到 2，goal 變 0。 | Dry-run |
+| Goal is zero, so answer is true. | goal 最終為 0，所以答案 true。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single element array should be true. | 案例一：單元素陣列應為 true。 | Edge test |
+| Case two: zero trap like [3,2,1,0,4] should be false. | 案例二：0 陷阱如 [3,2,1,0,4] 應 false。 | Edge test |
+| Case three: first jump already reaches end. | 案例三：第一跳就能到終點。 | Edge test |
+| Case four: many zeros but still reachable path. | 案例四：含多個 0 但仍有可達路徑。 | Edge test |
+| Case five: long array with late failure point. | 案例五：長陣列在後段才失敗。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N). | 時間複雜度是 O(N)。 | Complexity |
+| Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
 | Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N). | 來源主要時間為 O(N)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We scan the array once from right to left. | 我們由右往左只掃描一次陣列。 | Complexity |
+| Each index does constant-time reachability check. | 每個索引只做常數時間判斷。 | Complexity |
+| So total runtime is O(n). | 因此總時間為 O(n)。 | Complexity |
+| We store only one goal variable, so memory is O(1). | 只儲存一個 goal 變數，空間為 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me switch to backward greedy perspective. | 我改用反向貪心視角。 | If stuck |
+| Goal starts at the last index. | goal 一開始在最後索引。 | If stuck |
+| If an index can reach goal, move goal back. | 若某索引可達 goal，就把 goal 往前移。 | If stuck |
+| This compresses the problem gradually. | 這會逐步壓縮問題範圍。 | If stuck |
+| I only need one pass from right to left. | 我只需要一次由右往左掃描。 | If stuck |
+| Let me test quickly with [3,2,1,0,4]. | 我快速測 [3,2,1,0,4]。 | If stuck |
+| Goal cannot cross index four backward to zero there. | 在該例中 goal 無法回推到 0。 | If stuck |
+| So result should be false. | 因此結果應為 false。 | If stuck |
+| That confirms trap-zero behavior. | 這確認了 0 陷阱的行為。 | If stuck |
+| Great, logic is now solid. | 很好，邏輯已穩定。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved jump game with backward greedy goal shifting. | 我用反向目標回推貪心解了 Jump Game。 | Wrap-up |
+| We keep shrinking required reachable index. | 我們持續縮小必要可達目標索引。 | Wrap-up |
+| If goal reaches zero, start can reach end. | 若 goal 回到 0，代表起點可達終點。 | Wrap-up |
+| Complexity is O(n) time and O(1) space. | 複雜度是 O(n) 時間與 O(1) 空間。 | Wrap-up |
+| This is the standard optimal interview solution. | 這是面試常見最優解。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: decide if last index is reachable. | 目標：判斷最後索引是否可達。 | Cheat sheet |
+| nums[i] is max jump from i. | nums[i] 是從 i 可跳最大步數。 | Cheat sheet |
+| Use backward greedy. | 使用反向貪心。 | Cheat sheet |
+| Initialize goal = n-1. | 初始化 goal=n-1。 | Cheat sheet |
+| Iterate i from n-2 down to 0. | i 從 n-2 到 0。 | Cheat sheet |
+| If i+nums[i] >= goal, set goal=i. | 若 i+nums[i]>=goal，設 goal=i。 | Cheat sheet |
+| End condition: goal==0. | 結束條件：goal==0。 | Cheat sheet |
+| Return goal==0. | 回傳 goal==0。 | Cheat sheet |
+| [2,3,1,1,4] -> true. | [2,3,1,1,4] -> true。 | Cheat sheet |
+| [3,2,1,0,4] -> false. | [3,2,1,0,4] -> false。 | Cheat sheet |
+| Single element -> true. | 單元素 -> true。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Common bug: forward logic with wrong max handling. | 常見錯誤：前向寫法中最遠值維護錯。 | Cheat sheet |
+| Common bug: off-by-one around last index. | 常見錯誤：最後索引 off-by-one。 | Cheat sheet |
+| Backward view is easy to explain. | 反向視角很容易說明。 | Cheat sheet |
+| You can also mention forward reachable variant. | 也可補充前向 reachable 版本。 | Cheat sheet |
+| Validate with zero-trap case. | 需驗證 0 陷阱案例。 | Cheat sheet |
+| Keep condition i+nums[i]>=goal clear. | 明確強調條件 i+nums[i]>=goal。 | Cheat sheet |
+| Final decision is simple boolean. | 最終判定是簡單布林值。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Backward goal-post greedy preserved.
+- No hallucinated constraints: ✅ Reachability boolean semantics maintained.
+- Language simplicity: ✅ Short interview-safe explanation with clear condition.

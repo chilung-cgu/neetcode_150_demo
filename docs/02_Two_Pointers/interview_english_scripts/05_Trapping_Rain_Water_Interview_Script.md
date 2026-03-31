@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Trapping Rain Water. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Two Pointers (O(n) Time, O(1) Space) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the problem first. | 我先重述題目。 | Restatement |
+| The array represents bar heights of width one. | 陣列代表寬度為一的柱狀高度。 | Restatement |
+| Rain water can be trapped between higher bars. | 雨水會被較高柱子夾住。 | Restatement |
+| We need total trapped water units. | 我們要算總接水量。 | Restatement |
+| I will use two pointers with leftMax and rightMax. | 我會用雙指標搭配 leftMax、rightMax。 | Restatement |
+| Then I will justify why local side is decidable. | 接著我會說明為何可局部決策。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume height values are non-negative? | 可以假設高度都非負嗎？ | Clarify |
+| For length below three, should result be zero? | 長度小於 3 時結果是否為 0？ | Clarify |
+| Is O(n) time and O(1) space expected? | 預期要做到 O(n) 時間與 O(1) 空間嗎？ | Clarify |
+| Should I also mention DP or stack alternatives? | 需要順帶提 DP 或 stack 解法嗎？ | Clarify |
+| Can answer fit in 32-bit int under constraints? | 在限制下答案可放 32-bit int 嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(n^2) from source. | 來源暴力時間約 O(n^2)。 | Approach |
-| Brute space is about O(1) from source. | 來源暴力空間約 O(1)。 | Approach |
+| Baseline handles each index independently. | 基線是逐一處理每個位置。 | Approach |
+| For each i, scan left max and right max. | 對每個 i，掃左側最高與右側最高。 | Approach |
+| Time O(n^2), space O(1). | 時間 O(n^2)，空間 O(1)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Two Pointers (O(n) Time, O(1) Space). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Keep two pointers at both ends. | 兩個指標放在陣列兩端。 | Approach |
+| Track leftMax and rightMax as current walls. | 用 leftMax、rightMax 追蹤目前牆高。 | Approach |
+| If leftMax is smaller, left side water is decidable. | 若 leftMax 較小，左側可直接決定水量。 | Approach |
+| Otherwise right side water is decidable. | 否則可直接決定右側水量。 | Approach |
+| This gives O(n) time and O(1) extra space. | 這樣可達 O(n) 時間與 O(1) 額外空間。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize stack for state tracking. | 依來源步驟執行。 | Coding |
-| Next, I iterate input in required order. | 依來源步驟執行。 | Coding |
-| Then, I pop stack while rule is violated. | 依來源步驟執行。 | Coding |
-| Next, I compute result during pop operations. | 依來源步驟執行。 | Coding |
-| Then, I push current item after processing. | 依來源步驟執行。 | Coding |
-| Next, I repeat until all items are processed. | 依來源步驟執行。 | Coding |
-| Then, I finalize answer from stack and result. | 依來源步驟執行。 | Coding |
+| First, I set left to zero and right to n minus one. | 先設 left=0、right=n-1。 | Coding |
+| I initialize leftMax and rightMax from boundary bars. | 用邊界柱初始化 leftMax、rightMax。 | Coding |
+| While left is smaller than right, I compare both maxima. | 當 left<right，我比較兩側最大值。 | Coding |
+| If leftMax is smaller, move left one step. | 若 leftMax 較小，就把 left 右移一步。 | Coding |
+| Update leftMax and add leftMax minus height[left]. | 更新 leftMax，累加 leftMax-height[left]。 | Coding |
+| Else move right, update rightMax, add trapped water. | 否則左移 right，更新 rightMax 並累加水量。 | Coding |
+| Each step finalizes one index without revisiting. | 每一步都能定案一個索引，不需回頭。 | Coding |
+| At the end, return total water. | 最後回傳總接水量。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: [0,1,0,2,1,0,1,3,2,1,2,1]. | 範例輸入：[0,1,0,2,1,0,1,3,2,1,2,1]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 6. | 預期輸出：6。 | Dry-run |
+| Let me dry-run [0,1,0,2,1,0,1,3,2,1,2,1]. | 我手跑 [0,1,0,2,1,0,1,3,2,1,2,1]。 | Dry-run |
+| Start with left at 0, right at 11. | 起始 left=0、right=11。 | Dry-run |
+| leftMax is 0 and rightMax is 1, so process left side. | leftMax=0、rightMax=1，先處理左側。 | Dry-run |
+| Moving left, trapped water appears at low valleys. | 左指標右移時，低谷位置會累積水量。 | Dry-run |
+| Later when rightMax becomes limiting, process right side. | 後續若 rightMax 成瓶頸，就處理右側。 | Dry-run |
+| Summing all finalized positions gives 6. | 全部定案位置加總得到 6。 | Dry-run |
+| Final answer is 6. | 最終答案是 6。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: empty or very short array returns zero. | 案例一：空陣列或過短輸入回傳 0。 | Edge test |
+| Case two: monotonic increasing bars trap zero water. | 案例二：單調遞增柱高接不到水。 | Edge test |
+| Case three: monotonic decreasing bars also trap zero. | 案例三：單調遞減也接不到水。 | Edge test |
+| Case four: classic valley like [3,0,2,0,4]. | 案例四：經典低谷如 [3,0,2,0,4]。 | Edge test |
+| Case five: flat plateau segments mixed with pits. | 案例五：平臺區段混合凹槽。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time is O(n). | 時間是 O(n)。 | Complexity |
+| Extra space is O(1). | 額外空間是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Each pointer moves inward at most n times total. | 每個指標向內最多移動線性次數。 | Complexity |
+| No index is processed more than once. | 每個索引都只會被定案一次。 | Complexity |
+| So runtime is linear. | 因此執行時間是線性。 | Complexity |
+| We only keep four integers and one accumulator. | 我們只需四個整數與一個累加器。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| May I take fifteen seconds to think? | 可以給我十五秒想一下嗎？ | If stuck |
+| Let me restate water formula at one index. | 我先重述單點水量公式。 | If stuck |
+| I compare leftMax and rightMax, not raw heights. | 我比較的是 leftMax/rightMax，不是原始高度。 | If stuck |
+| Smaller max side can be finalized now. | 較小 max 那一側可立即定案。 | If stuck |
+| I can explain DP arrays first if needed. | 若需要我可先講 DP 陣列版。 | If stuck |
+| Then I compress it into O(1) pointers. | 再壓縮成 O(1) 雙指標。 | If stuck |
+| Thanks, I found the update-order bug. | 謝謝，我找到更新順序錯誤。 | If stuck |
+| Let me rerun the valley example quickly. | 我快速重跑低谷範例。 | If stuck |
+| Now trapped-water accumulation is correct. | 現在接水量累加正確。 | If stuck |
+| The final total matches expected output. | 最終總量符合預期輸出。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished the implementation. | 我完成實作了。 | Wrap-up |
+| I verified normal and edge test patterns. | 我驗證了常見與邊界測試型態。 | Wrap-up |
+| Time is O(n). | 時間是 O(n)。 | Wrap-up |
+| Extra space is O(1). | 額外空間是 O(1)。 | Wrap-up |
+| I can compare DP and stack alternatives if needed. | 若需要我可比較 DP 與 stack 方案。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Restate total trapped-water goal. | 重述總接水量目標。 | Cheat sheet |
+| Mention unit width bars. | 提到每個柱子寬度為 1。 | Cheat sheet |
+| Brute force scans left and right per index. | 暴力法每點都掃左右最高。 | Cheat sheet |
+| Brute force is O(n^2). | 暴力法是 O(n^2)。 | Cheat sheet |
+| Optimized keeps two pointers. | 優化法保留雙指標。 | Cheat sheet |
+| Track leftMax and rightMax. | 追蹤 leftMax 與 rightMax。 | Cheat sheet |
+| Compare maxima, not current heights only. | 比較兩側 max，不只看當前高度。 | Cheat sheet |
+| Finalize smaller-max side immediately. | 較小 max 那側可立即定案。 | Cheat sheet |
+| Add max minus current height. | 累加 max 減目前高度。 | Cheat sheet |
+| Move that pointer inward. | 移動該側指標往內。 | Cheat sheet |
+| Repeat until pointers meet. | 重複直到指標相遇。 | Cheat sheet |
+| Dry-run [0,1,0,2,1,0,1,3,2,1,2,1]. | 手跑 [0,1,0,2,1,0,1,3,2,1,2,1]。 | Cheat sheet |
+| Confirm result equals 6. | 確認結果是 6。 | Cheat sheet |
+| Test monotonic increasing case. | 測單調遞增案例。 | Cheat sheet |
+| Test monotonic decreasing case. | 測單調遞減案例。 | Cheat sheet |
+| Test valley-rich case. | 測多低谷案例。 | Cheat sheet |
+| Report O(n) runtime. | 報告 O(n) 時間。 | Cheat sheet |
+| Report O(1) extra space. | 報告 O(1) 額外空間。 | Cheat sheet |
+| If stuck, restate finalize rule. | 卡住時重述定案規則。 | Cheat sheet |
+| End with concise summary. | 用精簡總結收尾。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Two-pointer with leftMax/rightMax logic is preserved.
+- No hallucinated constraints: ✅ Uncertain details are handled via clarification questions.
+- Language simplicity: ✅ Short spoken lines for interview delivery.

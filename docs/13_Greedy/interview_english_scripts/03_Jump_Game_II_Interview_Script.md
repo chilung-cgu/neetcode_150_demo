@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Jump Game II. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Greedy BFS as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate jump game two. | 我先重述 Jump Game II。 | Restatement |
+| We start at index zero and each nums[i] gives max jump length. | 從索引 0 出發，nums[i] 給最大跳長。 | Restatement |
+| We are guaranteed to reach the last index. | 題目保證一定能到終點。 | Restatement |
+| We need the minimum number of jumps. | 要求最少跳躍次數。 | Restatement |
+| This is shortest-level traversal in implicit graph. | 這是隱式圖上的最短層級問題。 | Restatement |
+| I will use greedy BFS-window expansion. | 我會用貪心 BFS 視窗擴張法。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is reachability always guaranteed in this version? | 這版是否保證一定可達？ | Clarify |
+| Should we return jump count only? | 是否只回跳躍次數？ | Clarify |
+| Is n at least one? | n 是否至少為 1？ | Clarify |
+| Can we use greedy instead of explicit BFS queue? | 是否可用貪心取代顯式 BFS 佇列？ | Clarify |
+| Is O(n) expected? | O(n) 是否為預期解？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N) from source. | 來源暴力時間約 O(N)。 | Approach |
-| Brute space is about O(N^2) from source. | 來源暴力空間約 O(N^2)。 | Approach |
+| Brute force explores all jump choices recursively. | 暴力遞迴探索所有跳法。 | Approach |
+| Dynamic programming can still be O(n squared). | 動態規劃仍可能是 O(n²)。 | Approach |
+| We want linear-time level-based greedy. | 我們想要線性時間的層級貪心。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Greedy BFS. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N) from source. | 來源優化時間為 O(N)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Treat current jump count as a window [l, r] of reachable indices. | 把當前跳數可達索引視為視窗 [l,r]。 | Approach |
+| Scan this window to compute farthest index for next jump. | 掃描此視窗算出下一跳最遠 farthest。 | Approach |
+| After scanning, move to next window [r+1, farthest]. | 掃描完後切到下一視窗 [r+1,farthest]。 | Approach |
+| Each window expansion means one additional jump. | 每次視窗擴張代表多跳一次。 | Approach |
+| Continue until r reaches or passes last index. | 持續直到 r 到達或超過終點。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I build adjacency representation from input. | 依來源步驟執行。 | Coding |
-| Next, I initialize visited set or color state. | 依來源步驟執行。 | Coding |
-| Then, I process nodes level by level with queue. | 依來源步驟執行。 | Coding |
-| Next, I start DFS or BFS traversal. | 依來源步驟執行。 | Coding |
-| Then, I process current node and neighbors. | 依來源步驟執行。 | Coding |
-| Next, I mark nodes to prevent repeated work. | 依來源步驟執行。 | Coding |
-| Then, I update answer during traversal. | 依來源步驟執行。 | Coding |
-| Next, I return final graph result. | 依來源步驟執行。 | Coding |
+| I initialize jumps to zero and window l equals r equals zero. | 我初始化 jumps=0，且視窗 l=r=0。 | Coding |
+| While r is before last index, I compute next farthest reach. | 當 r 尚未到終點時，計算下一層最遠點。 | Coding |
+| I iterate i from l to r and update farthest=max(farthest,i+nums[i]). | i 從 l 到 r，更新 farthest=max(farthest,i+nums[i])。 | Coding |
+| After loop, I set l to r plus one. | 迴圈後把 l 設為 r+1。 | Coding |
+| I set r to farthest. | 把 r 設為 farthest。 | Coding |
+| I increment jumps by one. | jumps 加一。 | Coding |
+| Repeat until window covers last index. | 重複直到視窗覆蓋終點。 | Coding |
+| Return jumps as minimum count. | 回傳 jumps 作最少跳數。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: nums = [2,3,1,1,4]. | 範例輸入：nums = [2,3,1,1,4]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 2. | 預期輸出：2。 | Dry-run |
+| Let me dry-run nums [2,3,1,1,4]. | 我手跑 nums=[2,3,1,1,4]。 | Dry-run |
+| Start window is [0,0], farthest becomes two. | 起始視窗 [0,0]，farthest 變 2。 | Dry-run |
+| Move to next window [1,2], jumps now one. | 換到視窗 [1,2]，目前 jumps=1。 | Dry-run |
+| Scan indices one and two, farthest becomes four. | 掃描索引 1、2 後 farthest 變 4。 | Dry-run |
+| Move window to [3,4], jumps now two. | 視窗移到 [3,4]，jumps=2。 | Dry-run |
+| r already reaches last index, stop. | r 已到終點，停止。 | Dry-run |
+| Final answer is two. | 最終答案是 2。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single element array should return zero jumps. | 案例一：單元素陣列應回 0 跳。 | Edge test |
+| Case two: direct one jump to end. | 案例二：一次直接跳到終點。 | Edge test |
+| Case three: many small steps required. | 案例三：需要多次小步前進。 | Edge test |
+| Case four: zeros inside but still guaranteed reachable. | 案例四：中間有 0 但仍保證可達。 | Edge test |
+| Case five: long array with late maximum extension. | 案例五：長陣列在後段才擴張最遠距離。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N). | 時間複雜度是 O(N)。 | Complexity |
+| Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
 | Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N). | 來源主要時間為 O(N)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Each index is scanned at most once within some window. | 每個索引最多在某個視窗中被掃一次。 | Complexity |
+| Window boundaries only move forward. | 視窗邊界只會向前推進。 | Complexity |
+| Therefore total runtime is linear O(n). | 因此總時間是線性 O(n)。 | Complexity |
+| We use constant scalar variables, so memory is O(1). | 只用常數個變數，因此空間 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me view this as BFS by levels. | 我把它視為按層 BFS。 | If stuck |
+| Current level is the reachable index window. | 當前層就是可達索引視窗。 | If stuck |
+| One jump means moving to next level window. | 一次跳躍就是移到下一層視窗。 | If stuck |
+| I only need farthest reach from current window. | 我只需要當前視窗的最遠可達點。 | If stuck |
+| After scanning window, jump count increases by one. | 掃完視窗後跳數加一。 | If stuck |
+| Then update l and r for next window. | 再更新下一視窗的 l 與 r。 | If stuck |
+| Let me test quickly with [2,3,1,1,4]. | 我快速測 [2,3,1,1,4]。 | If stuck |
+| It should finish in two levels. | 這會在兩層內完成。 | If stuck |
+| That confirms minimum jumps equals two. | 這確認最少跳數為 2。 | If stuck |
+| Great, approach is consistent. | 很好，方法一致且穩定。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved jump game two with greedy level expansion. | 我用貪心層級擴張解了 Jump Game II。 | Wrap-up |
+| Each window represents all indices reachable with current jump count. | 每個視窗代表當前跳數可達的所有索引。 | Wrap-up |
+| Next farthest boundary gives optimal next jump decision. | 下一層最遠邊界給出最優跳躍決策。 | Wrap-up |
+| Complexity is O(n) time and O(1) space. | 複雜度是 O(n) 時間、O(1) 空間。 | Wrap-up |
+| This is the standard interview-optimal solution. | 這是面試常見最優解。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: minimum jumps to reach last index. | 目標：以最少跳數到達最後索引。 | Cheat sheet |
+| Reachability is guaranteed. | 題目保證可達。 | Cheat sheet |
+| Use greedy BFS-window idea. | 使用貪心 BFS 視窗思路。 | Cheat sheet |
+| Track l and r for current window. | 用 l、r 追蹤當前視窗。 | Cheat sheet |
+| Track farthest for next window. | 用 farthest 記錄下一層最遠點。 | Cheat sheet |
+| Initialize l=r=0, jumps=0. | 初始化 l=r=0，jumps=0。 | Cheat sheet |
+| While r < n-1, scan i in [l,r]. | 當 r<n-1，掃描 i in [l,r]。 | Cheat sheet |
+| Update farthest=max(farthest,i+nums[i]). | 更新 farthest=max(farthest,i+nums[i])。 | Cheat sheet |
+| Move window to [r+1,farthest]. | 視窗移到 [r+1,farthest]。 | Cheat sheet |
+| jumps++. | jumps 加一。 | Cheat sheet |
+| Stop when r reaches end. | r 到終點就停止。 | Cheat sheet |
+| Return jumps. | 回傳 jumps。 | Cheat sheet |
+| [2,3,1,1,4] -> 2. | [2,3,1,1,4] -> 2。 | Cheat sheet |
+| Single element -> 0. | 單元素 -> 0。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Common bug: using wrong next window start. | 常見錯誤：下一視窗起點設錯。 | Cheat sheet |
+| Common bug: forgetting to reset farthest each round. | 常見錯誤：每輪忘記重設 farthest。 | Cheat sheet |
+| Explain level interpretation to justify optimality. | 用層級解釋可證明最優性。 | Cheat sheet |
+| Keep indexing boundaries explicit. | 索引邊界要說清楚。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Greedy BFS-window expansion preserved.
+- No hallucinated constraints: ✅ Guaranteed reachability and min-jump objective maintained.
+- Language simplicity: ✅ Clear line-by-line interview narration.

@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Spiral Matrix. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Simulation as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate Spiral Matrix. | 我先重述 Spiral Matrix。 | Restatement |
+| We are given an m by n matrix. | 題目給一個 m x n 矩陣。 | Restatement |
+| We must output all elements in clockwise spiral order. | 要順時針螺旋順序輸出所有元素。 | Restatement |
+| This is a simulation problem with boundary control. | 這是一題重邊界控制的模擬題。 | Restatement |
+| I will use top, bottom, left, and right pointers. | 我會用 top、bottom、left、right 邊界。 | Restatement |
+| I will shrink boundaries after each directional pass. | 每走完一個方向就收縮邊界。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can matrix be rectangular, not necessarily square? | 矩陣可長方形，不一定方陣嗎？ | Clarify |
+| Should I return values in a one-dimensional list? | 是否回傳一維陣列結果？ | Clarify |
+| Are empty matrices possible in input? | 輸入可能是空矩陣嗎？ | Clarify |
+| If one row or one column only, same spiral rule applies? | 若只有一列或一欄，規則同樣套用嗎？ | Clarify |
+| Any preference between explicit loops and recursion? | 偏好迴圈寫法還是遞迴寫法？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,56 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about [CHECK] from source. | 來源暴力時間約 [CHECK]。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| One brute method marks visited cells in a separate matrix. | 一種暴力法是用 visited 矩陣標記已走格子。 | Approach |
+| Then we move by direction vectors and turn when blocked. | 再用方向向量移動，撞牆或已訪問就轉向。 | Approach |
+| It is O(mn) time and O(mn) extra space. | 其複雜度是 O(mn) 時間、O(mn) 額外空間。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Simulation. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(M \times N) from source. | 來源優化時間為 O(M \times N)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Use four boundaries to represent current unvisited layer. | 用四個邊界代表目前未訪問外框。 | Approach |
+| Traverse top row left to right, then increment top. | 先走上邊由左到右，再 top++。 | Approach |
+| Traverse right column top to bottom, then decrement right. | 再走右邊由上到下，再 right--。 | Approach |
+| If still valid, traverse bottom row and left column similarly. | 若邊界仍有效，再走下邊與左邊。 | Approach |
+| Each element is appended once, giving O(mn) time and O(1) extra space. | 每格只加入一次，故 O(mn) 時間、O(1) 額外空間。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I identify core math relation from source. | 依來源步驟執行。 | Coding |
-| Next, I initialize variables for formula updates. | 依來源步驟執行。 | Coding |
-| Then, I iterate input values in required order. | 依來源步驟執行。 | Coding |
-| Next, I apply arithmetic or geometric transformation. | 依來源步驟執行。 | Coding |
-| Then, I handle sign and boundary cases. | 依來源步驟執行。 | Coding |
-| Next, I update best or cumulative answer. | 依來源步驟執行。 | Coding |
-| Then, I return final computed value. | 依來源步驟執行。 | Coding |
+| I initialize result vector and four boundaries. | 我先初始化答案陣列與四個邊界。 | Coding |
+| While top is at most bottom and left is at most right, continue. | 當 top<=bottom 且 left<=right 就繼續。 | Coding |
+| I scan the top row from left to right. | 我先由左到右掃上邊。 | Coding |
+| Then I increment top to remove that row. | 接著 top++，移除已處理上邊。 | Coding |
+| I scan the right column from top to bottom. | 再由上到下掃右邊。 | Coding |
+| Then I decrement right to remove that column. | 接著 right--，移除已處理右邊。 | Coding |
+| I check boundary crossing before bottom and left scans. | 走下邊與左邊前先檢查邊界是否交錯。 | Coding |
+| If valid, I scan bottom row right to left and decrement bottom. | 若有效，我走下邊右到左並 bottom--。 | Coding |
+| Then I scan left column bottom to top and increment left. | 然後走左邊下到上並 left++。 | Coding |
+| Finally return the result vector. | 最後回傳答案陣列。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: . | 範例輸入：。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [1,2,3,6,9,8,7,4,5]. | 預期輸出：[1,2,3,6,9,8,7,4,5]。 | Dry-run |
+| Let me dry-run [[1,2,3],[4,5,6],[7,8,9]]. | 我用 [[1,2,3],[4,5,6],[7,8,9]] 手跑。 | Dry-run |
+| First pass top row adds 1,2,3. | 第一段上邊加入 1,2,3。 | Dry-run |
+| Right column adds 6,9. | 右邊再加入 6,9。 | Dry-run |
+| Bottom row reverse adds 8,7. | 下邊反向加入 8,7。 | Dry-run |
+| Left column upward adds 4. | 左邊往上加入 4。 | Dry-run |
+| Next inner layer adds remaining center 5. | 下一層內圈再加入中心 5。 | Dry-run |
+| Final order is 1,2,3,6,9,8,7,4,5. | 最終順序為 1,2,3,6,9,8,7,4,5。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single cell matrix. | 案例一：單一格矩陣。 | Edge test |
+| Case two: one row matrix. | 案例二：只有一列的矩陣。 | Edge test |
+| Case three: one column matrix. | 案例三：只有一欄的矩陣。 | Edge test |
+| Case four: non-square matrix like three by four. | 案例四：非方陣如 3x4。 | Edge test |
+| Case five: empty matrix if input allows. | 案例五：若允許則測空矩陣。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +88,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(M \times N). | 時間複雜度是 O(M \times N)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time complexity is O(m times n). | 時間複雜度是 O(m*n)。 | Complexity |
+| Extra space complexity is O(1), excluding output. | 額外空間複雜度是 O(1)，不含輸出。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(M \times N). | 來源主要時間為 O(M \times N)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Every element is visited and appended exactly once. | 每個元素都只被訪問並加入一次。 | Complexity |
+| Boundary updates are constant-time per directional pass. | 每個方向的邊界更新都是常數成本。 | Complexity |
+| So total runtime is O(m times n). | 因此總時間是 O(m*n)。 | Complexity |
+| We only keep boundaries and loop variables, so extra memory is O(1). | 僅維護邊界與索引，故額外空間 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me switch to boundary simulation, it is cleaner. | 我改用邊界模擬會更清楚。 | If stuck |
+| I keep four pointers: top, bottom, left, right. | 我維護 top、bottom、left、right 四指標。 | If stuck |
+| Order is top row, right column, bottom row, left column. | 順序是上邊、右邊、下邊、左邊。 | If stuck |
+| After each pass I shrink the corresponding boundary. | 每段走完收縮對應邊界。 | If stuck |
+| I must check crossing before bottom and left passes. | 下邊和左邊前必須檢查是否交錯。 | If stuck |
+| That prevents duplicates on single row or single column leftovers. | 這可避免單列單欄時重複加入。 | If stuck |
+| I will dry-run a three by three quickly. | 我快速手跑 3x3。 | If stuck |
+| If order matches expected, code is likely correct. | 若順序吻合預期，程式多半正確。 | If stuck |
+| Then I verify one-row and one-column cases. | 再驗證單列與單欄案例。 | If stuck |
+| Great, the control flow is now stable. | 很好，流程控制現在穩定。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(M \times N), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it with four-boundary spiral simulation. | 我用四邊界螺旋模擬解題。 | Wrap-up |
+| The approach handles square and rectangular matrices. | 這方法可處理方陣與長方陣。 | Wrap-up |
+| Boundary checks avoid duplicate traversal. | 邊界檢查可避免重複遍歷。 | Wrap-up |
+| Complexity is O(mn) time and O(1) extra space. | 複雜度是 O(mn) 時間、O(1) 額外空間。 | Wrap-up |
+| I can also provide visited-matrix variant if needed. | 若需要我也可提供 visited 版本。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: output matrix in clockwise spiral order. | 目標：順時針螺旋輸出矩陣。 | Cheat sheet |
+| Keep top, bottom, left, right. | 維護 top、bottom、left、right。 | Cheat sheet |
+| Loop while top <= bottom and left <= right. | 當 top<=bottom 且 left<=right 持續。 | Cheat sheet |
+| Traverse top row left to right. | 走上邊左到右。 | Cheat sheet |
+| top plus plus. | top++。 | Cheat sheet |
+| Traverse right column top to bottom. | 走右邊上到下。 | Cheat sheet |
+| right minus minus. | right--。 | Cheat sheet |
+| Check boundary crossing. | 檢查邊界是否交錯。 | Cheat sheet |
+| Traverse bottom row right to left. | 走下邊右到左。 | Cheat sheet |
+| bottom minus minus. | bottom--。 | Cheat sheet |
+| Traverse left column bottom to top. | 走左邊下到上。 | Cheat sheet |
+| left plus plus. | left++。 | Cheat sheet |
+| Each element appended once. | 每元素只加入一次。 | Cheat sheet |
+| Time O(mn). | 時間 O(mn)。 | Cheat sheet |
+| Extra space O(1) excluding output. | 額外空間 O(1)（不含輸出）。 | Cheat sheet |
+| Test one-row matrix. | 測單列矩陣。 | Cheat sheet |
+| Test one-column matrix. | 測單欄矩陣。 | Cheat sheet |
+| Test rectangular matrix. | 測長方矩陣。 | Cheat sheet |
+| Common bug: missing boundary check. | 常見錯誤：漏掉邊界檢查。 | Cheat sheet |
+| Explain layer-by-layer shrink idea. | 口述一層層收縮的核心概念。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Boundary simulation approach.
+- Constraint alignment: ✅ Handles matrix shapes from source discussion.
+- Language simplicity: ✅ Interview-ready concise phrasing.

@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Car Fleet. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Sorting + Linear Scan as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the problem first. | 我先重述題目。 | Restatement |
+| Cars move toward the same target on one lane. | 多台車在單車道往同一終點前進。 | Restatement |
+| Faster rear cars can catch front cars but cannot pass. | 後車可追上前車但不能超車。 | Restatement |
+| Caught cars form one fleet with same effective speed. | 追上後會形成同速車隊。 | Restatement |
+| We need final number of fleets reaching target. | 我們要算到達終點的車隊數。 | Restatement |
+| I will sort by position and scan from front to back. | 我會先按位置排序，再由前往後掃描。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume no two cars start at same position? | 可以假設起始位置互不相同嗎？ | Clarify |
+| Is passing forbidden strictly, as in one lane? | 是否嚴格禁止超車（單車道）？ | Clarify |
+| Do cars merge even if catch-up happens exactly at target? | 若剛好在終點追上，也算同車隊嗎？ | Clarify |
+| Should I use floating time-to-target values? | 我應使用浮點的到達時間嗎？ | Clarify |
+| Is O(n log n) acceptable due to sorting? | 因需排序，O(n log n) 是否可接受？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about [CHECK] from source. | 來源暴力時間約 [CHECK]。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Baseline tries time-step simulation of all cars. | 基線是逐時間步模擬所有車。 | Approach |
+| Detect catch-ups continuously during simulation. | 在模擬中持續偵測追上事件。 | Approach |
+| This is complex and inefficient for large ranges. | 這在大範圍下複雜且低效。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Sorting + Linear Scan. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n \log n) from source. | 來源優化時間為 O(n \log n)。 | Approach |
-| Optimized space is O(n) from source. | 來源優化空間為 O(n)。 | Approach |
+| Compute each car time to reach target. | 先計算每台車到終點所需時間。 | Approach |
+| Sort cars by position descending (closest first). | 按位置降冪排序（離終點近的先）。 | Approach |
+| Scan times in this order and track current fleet max time. | 依序掃時間並追蹤當前車隊瓶頸時間。 | Approach |
+| If current time is greater, it starts a new fleet. | 若當前時間更大，代表新車隊。 | Approach |
+| Otherwise it merges into fleet ahead. | 否則會併入前方車隊。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I initialize stack for state tracking. | 依來源步驟執行。 | Coding |
-| Next, I iterate input in required order. | 依來源步驟執行。 | Coding |
-| Then, I sort data where source method requires ordering. | 依來源步驟執行。 | Coding |
-| Next, I pop stack while rule is violated. | 依來源步驟執行。 | Coding |
-| Then, I compute result during pop operations. | 依來源步驟執行。 | Coding |
-| Next, I push current item after processing. | 依來源步驟執行。 | Coding |
-| Then, I repeat until all items are processed. | 依來源步驟執行。 | Coding |
-| Next, I finalize answer from stack and result. | 依來源步驟執行。 | Coding |
+| First, I pair each position with its speed. | 先把每個 position 與 speed 配對。 | Coding |
+| For each pair, compute time as (target - pos) divided by speed. | 對每對資料算 time=(target-pos)/speed。 | Coding |
+| Sort pairs by position from large to small. | 依 position 由大到小排序。 | Coding |
+| Initialize fleets count to zero and prevTime to zero. | fleets 設 0，prevTime 設 0。 | Coding |
+| Scan sorted cars in order. | 依排序順序掃描每台車。 | Coding |
+| If time is greater than prevTime, increment fleets. | 若 time>prevTime，fleets 加一。 | Coding |
+| Update prevTime to this new fleet time. | 並把 prevTime 更新為新車隊時間。 | Coding |
+| Return fleets at the end. | 最後回傳 fleets。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: target = 12, position = [10,8,0,5,3], speed = [2,4,1,1,3]. | 範例輸入：target = 12, position = [10,8,0,5,3], speed = [2,4,1,1,3]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 3. | 預期輸出：3。 | Dry-run |
+| Let me dry-run target 12 with sample cars. | 我手跑 target=12 的範例車列。 | Dry-run |
+| Times after sorting by position are 1, 1, 7, 3, 12. | 依位置排序後時間是 1、1、7、3、12。 | Dry-run |
+| First time 1 starts fleet one. | 第一個時間 1 形成第一隊。 | Dry-run |
+| Next time 1 merges, so fleet count stays one. | 下一個時間 1 會併入，因此仍一隊。 | Dry-run |
+| Time 7 is greater, so this starts fleet two. | 時間 7 較大，形成第二隊。 | Dry-run |
+| Time 3 merges into fleet two, then time 12 starts fleet three. | 時間 3 併入第二隊，之後 12 形成第三隊。 | Dry-run |
+| Final fleet count is 3. | 最終車隊數是 3。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: only one car should return one fleet. | 案例一：只有一台車應回傳一隊。 | Edge test |
+| Case two: all cars already in increasing position order. | 案例二：車已在遞增位置分布。 | Edge test |
+| Case three: all cars same speed. | 案例三：所有車速相同。 | Edge test |
+| Case four: rear cars much faster and merge heavily. | 案例四：後車極快，產生大量併隊。 | Edge test |
+| Case five: catch-up exactly at target boundary. | 案例五：剛好在終點追上的邊界情況。 | Edge test |
 
 ## 7) Complexity script
 
@@ -86,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(n \log n). | 時間複雜度是 O(n \log n)。 | Complexity |
-| Space complexity is O(n). | 空間複雜度是 O(n)。 | Complexity |
+| Time is O(n log n). | 時間是 O(n log n)。 | Complexity |
+| Extra space is O(n). | 額外空間是 O(n)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n \log n). | 來源主要時間為 O(n \log n)。 | Complexity |
-| Extra memory from source is O(n). | 來源額外空間為 O(n)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Computing times is linear over cars. | 計算時間值是線性。 | Complexity |
+| Sorting by position dominates at O(n log n). | 位置排序主導為 O(n log n)。 | Complexity |
+| Final scan is linear. | 最後掃描是線性。 | Complexity |
+| We store car pairs and times in linear memory. | 需線性記憶體儲存車對與時間。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| May I take fifteen seconds to think? | 可以給我十五秒想一下嗎？ | If stuck |
+| Let me restate no-overtake rule first. | 我先重述禁止超車規則。 | If stuck |
+| Rear car can only merge, never pass. | 後車只能併隊，不能超車。 | If stuck |
+| So scan order by position is critical. | 因此按位置掃描順序很關鍵。 | If stuck |
+| I can show simulation idea briefly. | 我可先簡述模擬想法。 | If stuck |
+| Then switch back to sorted time scan. | 再切回排序後時間掃描。 | If stuck |
+| Thanks, I found sorting-direction bug. | 謝謝，我找到排序方向 bug。 | If stuck |
+| Let me rerun the sample quickly. | 我快速重跑範例。 | If stuck |
+| Now merge decisions are correct. | 現在併隊判斷正確。 | If stuck |
+| Fleet count is consistent now. | 現在車隊數結果一致。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n \log n), space is O(n). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished the implementation. | 我完成實作了。 | Wrap-up |
+| I verified normal and edge test patterns. | 我驗證了常見與邊界測試型態。 | Wrap-up |
+| Time is O(n log n). | 時間是 O(n log n)。 | Wrap-up |
+| Space is O(n). | 空間是 O(n)。 | Wrap-up |
+| I can discuss stack-time formulation if needed. | 若需要我可補充 stack-time 表述法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n \log n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(n). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Restate car-fleet counting goal. | 重述車隊計數目標。 | Cheat sheet |
+| Mention no-overtake one-lane rule. | 提到單車道不可超車。 | Cheat sheet |
+| Compute each car time to target. | 計算每台車到終點時間。 | Cheat sheet |
+| Sort by position descending. | 依位置做降冪排序。 | Cheat sheet |
+| Scan from nearest car to farthest. | 由最近終點掃到最遠。 | Cheat sheet |
+| Keep prevTime as current fleet bottleneck. | 用 prevTime 作當前車隊瓶頸。 | Cheat sheet |
+| If time > prevTime, new fleet forms. | 若 time>prevTime，形成新車隊。 | Cheat sheet |
+| Else it merges into previous fleet. | 否則併入前方車隊。 | Cheat sheet |
+| Count fleets during scan. | 掃描時累計 fleet 數。 | Cheat sheet |
+| Dry-run target 12 sample. | 手跑 target=12 範例。 | Cheat sheet |
+| Verify result is 3 fleets. | 驗證結果為 3 隊。 | Cheat sheet |
+| Test single-car case. | 測單車案例。 | Cheat sheet |
+| Test same-speed case. | 測同速案例。 | Cheat sheet |
+| Test heavy-merge case. | 測大量併隊案例。 | Cheat sheet |
+| Report O(n log n) runtime. | 報告 O(n log n) 時間。 | Cheat sheet |
+| Report O(n) extra space. | 報告 O(n) 額外空間。 | Cheat sheet |
+| Mention sorting dominates complexity. | 提到排序主導複雜度。 | Cheat sheet |
+| If stuck, recheck sorting order. | 卡住時重檢排序方向。 | Cheat sheet |
+| Re-run sample after fix. | 修正後重跑範例。 | Cheat sheet |
+| End with concise fleet summary. | 以精簡車隊結論收尾。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Sorted time-scan fleet merge logic is preserved.
+- No hallucinated constraints: ✅ Assumptions are surfaced in clarification lines.
+- Language simplicity: ✅ Short spoken lines suitable for interview delivery.

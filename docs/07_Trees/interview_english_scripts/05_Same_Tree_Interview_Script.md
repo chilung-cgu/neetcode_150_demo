@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Same Tree. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Recursive DFS as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the same-tree problem. | 我先重述相同樹題目。 | Restatement |
+| We are given two binary trees p and q. | 題目給兩棵二元樹 p 與 q。 | Restatement |
+| We need to check whether they are exactly identical. | 要判斷它們是否完全一致。 | Restatement |
+| Identical means same structure and same node values. | 一致代表結構相同且節點值相同。 | Restatement |
+| If one side is null while the other is not, answer is false. | 一邊為 null 另一邊非 null 就是 false。 | Restatement |
+| I will use synchronized recursive DFS. | 我會使用同步遞迴 DFS。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Can I assume both roots may be null? | 我可假設兩個 root 都可能是 null 嗎？ | Clarify |
+| Is exact structural equality required at every position? | 每個位置都要完全結構相等嗎？ | Clarify |
+| Node values can be compared directly as integers, right? | 節點值可直接以整數比較對嗎？ | Clarify |
+| Do you prefer recursive DFS as the primary solution? | 主解法偏好遞迴 DFS 嗎？ | Clarify |
+| Should I mention iterative queue comparison as an alternative? | 要補充迭代 queue 比較法嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,55 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about [CHECK] from source. | 來源暴力時間約 [CHECK]。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| A straightforward way is traversing both trees level by level. | 直觀作法是兩樹同步層序遍歷。 | Approach |
+| At each pair, compare null-state and value. | 每對節點都比 null 狀態與數值。 | Approach |
+| This is valid but needs explicit queue bookkeeping. | 這可行，但要額外 queue 管理細節。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Recursive DFS. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(h) from source. | 來源優化空間為 O(h)。 | Approach |
+| Recursive DFS is cleaner for structural matching. | 遞迴 DFS 對結構比對更乾淨。 | Approach |
+| If both nodes are null, return true. | 兩節點都 null 時回傳 true。 | Approach |
+| If only one is null, return false. | 只有一邊 null 就回傳 false。 | Approach |
+| If values differ, return false immediately. | 值不同就立即回傳 false。 | Approach |
+| Otherwise recurse on left pair and right pair with AND. | 否則左右配對遞迴並用 AND 合併。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define traversal order based on source method. | 依來源步驟執行。 | Coding |
-| Next, I initialize recursion or queue structures. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process nodes level by level with queue. | 依來源步驟執行。 | Coding |
-| Then, I process current node value and state. | 依來源步驟執行。 | Coding |
-| Next, I visit left and right children by rule. | 依來源步驟執行。 | Coding |
-| Then, I update answer during traversal. | 依來源步驟執行。 | Coding |
-| Next, I handle null node base case carefully. | 依來源步驟執行。 | Coding |
-| Finally, I return final aggregated tree result. | 依來源步驟執行。 | Coding |
+| I start helper isSameTree with nodes p and q. | 我以節點 p、q 開始 helper。 | Coding |
+| If both are null, I return true. | 若兩者都 null，回傳 true。 | Coding |
+| If one is null and the other is not, I return false. | 若僅一邊 null，回傳 false。 | Coding |
+| If p value differs from q value, return false. | 若 p 值與 q 值不同，回傳 false。 | Coding |
+| I recursively compare p left with q left. | 遞迴比較 p.left 與 q.left。 | Coding |
+| I recursively compare p right with q right. | 遞迴比較 p.right 與 q.right。 | Coding |
+| I return logical AND of the two subtree checks. | 回傳兩個子樹結果的 AND。 | Coding |
+| This bubbles up to final true or false at roots. | 逐層回傳到 root 得到最終真假。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: p = [1,2,3], q = [1,2,3]. | 範例輸入：p = [1,2,3], q = [1,2,3]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: true. | 預期輸出：true。 | Dry-run |
+| Let me dry-run p=[1,2,3] and q=[1,2,3]. | 我手跑 p=[1,2,3]、q=[1,2,3]。 | Dry-run |
+| Compare roots 1 and 1, values match. | 比較根節點 1 與 1，值相同。 | Dry-run |
+| Recurse left: 2 and 2, still match. | 遞迴左側：2 與 2，仍相同。 | Dry-run |
+| Recurse right: 3 and 3, still match. | 遞迴右側：3 與 3，仍相同。 | Dry-run |
+| Children of leaves are null on both sides. | 葉節點子節點兩邊都為 null。 | Dry-run |
+| Null pairs return true all the way up. | null 配對一路回傳 true。 | Dry-run |
+| Final result is true. | 最終結果為 true。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: both trees null should return true. | 案例一：兩棵都 null 應回傳 true。 | Edge test |
+| Case two: one null and one non-null should return false. | 案例二：一棵 null 一棵非 null 應回傳 false。 | Edge test |
+| Case three: same structure but one value differs. | 案例三：結構相同但某個值不同。 | Edge test |
+| Case four: same values but different structure. | 案例四：值看似相同但結構不同。 | Edge test |
+| Case five: deep skewed trees that are identical. | 案例五：深度斜樹但兩邊完全相同。 | Edge test |
 
 ## 7) Complexity script
 
@@ -88,71 +87,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(h). | 空間複雜度是 O(h)。 | Complexity |
+| Space complexity is O(h) from recursion depth. | 空間複雜度是 O(h) 遞迴深度。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(h). | 來源額外空間為 O(h)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We compare each corresponding node pair at most once. | 每個對應節點配對最多比較一次。 | Complexity |
+| Per comparison is constant-time null and value checks. | 每次比較是常數時間 null 與值檢查。 | Complexity |
+| Recursion stack depends on tree height h. | 遞迴堆疊取決於樹高 h。 | Complexity |
+| Worst skew gives O(n) stack; balanced gives O(log n). | 最壞斜樹 O(n)，平衡樹 O(log n)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me enforce the base-case order carefully. | 我先嚴格確認 base-case 順序。 | If stuck |
+| First check both-null true condition. | 先檢查兩邊都 null 的 true。 | If stuck |
+| Then check one-null false condition. | 再檢查單邊 null 的 false。 | If stuck |
+| Then compare node values. | 接著比較節點值。 | If stuck |
+| I might have merged null checks incorrectly. | 我可能把 null 判斷合併錯了。 | If stuck |
+| Let me split them explicitly and rerun. | 我把它拆開後重跑。 | If stuck |
+| I will test structure-mismatch sample now. | 我現在測結構不一致範例。 | If stuck |
+| It now returns false correctly. | 現在可正確回傳 false。 | If stuck |
+| I will test identical sample again. | 我再測一次完全相同範例。 | If stuck |
+| Great, both outcomes are correct. | 很好，兩種結果都正確。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(h). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I completed synchronized DFS tree comparison. | 我完成同步 DFS 的樹比較。 | Wrap-up |
+| The solution validates both structure and value equality. | 解法同時驗證結構與值相等。 | Wrap-up |
+| Runtime is O(n). | 時間複雜度是 O(n)。 | Wrap-up |
+| Space is O(h). | 空間複雜度是 O(h)。 | Wrap-up |
+| I can provide iterative queue version if needed. | 若需要我可補充迭代 queue 版本。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(h). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Compare two binary trees for exact equality. | 比較兩棵樹是否完全相同。 | Cheat sheet |
+| Equality needs same structure and values. | 相同需結構與值都一致。 | Cheat sheet |
+| Use recursive synchronized DFS. | 使用同步遞迴 DFS。 | Cheat sheet |
+| Base case: both null => true. | base case：兩邊 null => true。 | Cheat sheet |
+| Base case: one null => false. | base case：單邊 null => false。 | Cheat sheet |
+| Value mismatch => false. | 值不相同 => false。 | Cheat sheet |
+| Recurse on left children pair. | 遞迴比左子節點配對。 | Cheat sheet |
+| Recurse on right children pair. | 遞迴比右子節點配對。 | Cheat sheet |
+| Return leftResult AND rightResult. | 回傳 leftResult AND rightResult。 | Cheat sheet |
+| Touch each pair once. | 每組配對只處理一次。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(h). | 空間 O(h)。 | Cheat sheet |
+| Test both-null case. | 測兩邊都 null。 | Cheat sheet |
+| Test one-null case. | 測單邊 null。 | Cheat sheet |
+| Test value mismatch case. | 測值不相同案例。 | Cheat sheet |
+| Test structure mismatch case. | 測結構不一致案例。 | Cheat sheet |
+| Common bug: wrong base-case order. | 常見錯誤：base-case 順序錯。 | Cheat sheet |
+| Common bug: forgetting one-null check. | 常見錯誤：漏單邊 null 判斷。 | Cheat sheet |
+| Mention iterative BFS alternative. | 可補充迭代 BFS 替代法。 | Cheat sheet |
+| End by stating exact-match requirement. | 收尾再強調「完全匹配」要求。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Recursive exact-structure-and-value check is preserved.
+- No hallucinated constraints: ✅ Matches source definition and constraints.
+- Language simplicity: ✅ Short spoken lines for interview delivery.

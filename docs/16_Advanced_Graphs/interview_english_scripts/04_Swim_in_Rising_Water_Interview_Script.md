@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Swim in Rising Water. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Dijkstra's Algorithm as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate swim in rising water. | 我先重述 Swim in Rising Water。 | Restatement |
+| Grid value is elevation at each cell. | 每個格子的數值是海拔高度。 | Restatement |
+| At time t, we can enter cells with height at most t. | 在時間 t 時，只能進入高度 <=t 的格子。 | Restatement |
+| We move four directions from top-left to bottom-right. | 我們四方向移動，從左上到右下。 | Restatement |
+| We need minimum t that makes this path possible. | 要找讓路徑可行的最小 t。 | Restatement |
+| I will use Dijkstra on minimax path cost. | 我會用 Dijkstra 解 minimax 路徑成本。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is grid always square n by n? | grid 是否一定是 n×n 正方形？ | Clarify |
+| Is movement limited to four directions? | 移動是否只限四方向？ | Clarify |
+| Are heights unique permutation from zero to n squared minus one? | 高度是否是 0 到 n²-1 的排列？ | Clarify |
+| Should output be minimum time integer only? | 是否只回最小時間整數？ | Clarify |
+| Is O(n squared log n) acceptable here? | O(n²logn) 在此題是否可接受？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,56 +31,56 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about [CHECK] from source. | 來源暴力時間約 [CHECK]。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force DFS over all paths is exponential. | 對所有路徑做 DFS 暴力是指數級。 | Approach |
+| Binary search plus reachability check is possible but still repeated scans. | 二分答案加可達檢查可行，但會重複掃描。 | Approach |
+| Dijkstra gives direct minimax optimization elegantly. | Dijkstra 可直接優雅地做 minimax 最佳化。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Dijkstra's Algorithm. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N^2 \log N) from source. | 來源優化時間為 O(N^2 \log N)。 | Approach |
-| Optimized space is O(N^2) from source. | 來源優化空間為 O(N^2)。 | Approach |
+| Define path cost as maximum elevation seen on that path. | 定義路徑成本為路上最大海拔。 | Approach |
+| We minimize this maximum cost to destination. | 我們要把這個最大值最小化。 | Approach |
+| Min-heap stores state maxCostSoFar and position. | 最小堆狀態存 maxCostSoFar 與座標。 | Approach |
+| Transition cost to neighbor is max(currentCost, neighborHeight). | 轉移到鄰居的成本是 max(目前成本,鄰居高度)。 | Approach |
+| First time destination is popped gives optimal answer. | 目的地首次出堆即最優答案。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I build graph adjacency structure first. | 依來源步驟執行。 | Coding |
-| Next, I initialize distance array and min heap. | 依來源步驟執行。 | Coding |
-| Then, I keep heap invariant after each operation. | 依來源步驟執行。 | Coding |
-| Next, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Then, I process nodes level by level with queue. | 依來源步驟執行。 | Coding |
-| Next, I pop smallest distance node from heap. | 依來源步驟執行。 | Coding |
-| Then, I skip stale states when needed. | 依來源步驟執行。 | Coding |
-| Next, I relax outgoing edges and update distances. | 依來源步驟執行。 | Coding |
-| Finally, I push improved states into heap. | 依來源步驟執行。 | Coding |
-| I return final shortest-path result. | 依來源步驟執行。 | Coding |
+| I initialize min-heap with state grid zero zero and position zero zero. | 我把初始狀態 (grid[0][0],0,0) 放入最小堆。 | Coding |
+| I keep visited matrix to avoid reprocessing cells. | 我用 visited 矩陣避免重複處理。 | Coding |
+| While heap not empty, pop state with smallest current max cost. | heap 非空時彈出目前最大成本最小的狀態。 | Coding |
+| If cell is destination, return its cost. | 若該格是終點，直接回傳成本。 | Coding |
+| For each valid unvisited neighbor, mark visited. | 對每個有效且未訪鄰居，先標記 visited。 | Coding |
+| Compute newCost as max(currentCost, grid neighbor). | 計算 newCost=max(currentCost,鄰居高度)。 | Coding |
+| Push new state into heap. | 把新狀態推入 heap。 | Coding |
+| Continue exploration by cost order. | 按成本順序持續探索。 | Coding |
+| Return minus one only as safety fallback. | -1 僅作理論保底。 | Coding |
+| This is Dijkstra with modified edge relaxation rule. | 這是放鬆規則改寫版 Dijkstra。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: [[0,2],[1,3]]. | 範例輸入：[[0,2],[1,3]]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 3. | 預期輸出：3。 | Dry-run |
+| Let me dry-run grid [[0,2],[1,3]]. | 我手跑 grid=[[0,2],[1,3]]。 | Dry-run |
+| Start state is cost zero at cell zero zero. | 起始狀態是成本 0 在 (0,0)。 | Dry-run |
+| Neighbor one zero gives new cost one. | 鄰居 (1,0) 的 newCost 是 1。 | Dry-run |
+| Neighbor zero one gives new cost two. | 鄰居 (0,1) 的 newCost 是 2。 | Dry-run |
+| Heap pops cost one first, then reaches destination with max three. | heap 先彈成本 1，接著到終點成本成為 3。 | Dry-run |
+| Destination popped with cost three. | 終點以成本 3 出堆。 | Dry-run |
+| Answer is three. | 答案是 3。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: n one grid returns its single value. | 案例一：n=1 時回該唯一值。 | Edge test |
+| Case two: monotonic increasing path along boundary. | 案例二：沿邊界單調上升路徑。 | Edge test |
+| Case three: local low cells with one unavoidable high barrier. | 案例三：低地形但有必經高障礙。 | Edge test |
+| Case four: multiple routes where shortest steps is not best minimax cost. | 案例四：步數短不等於 minimax 最佳路徑。 | Edge test |
+| Case five: winding path with lower maximum elevation. | 案例五：繞路但最大海拔更低。 | Edge test |
 
 ## 7) Complexity script
 
@@ -88,72 +88,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N^2 \log N). | 時間複雜度是 O(N^2 \log N)。 | Complexity |
-| Space complexity is O(N^2). | 空間複雜度是 O(N^2)。 | Complexity |
+| Time complexity is O(n squared log n). | 時間複雜度是 O(n²logn)。 | Complexity |
+| Space complexity is O(n squared). | 空間複雜度是 O(n²)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N^2 \log N). | 來源主要時間為 O(N^2 \log N)。 | Complexity |
-| Extra memory from source is O(N^2). | 來源額外空間為 O(N^2)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| There are n squared grid states. | 網格共有 n² 個狀態。 | Complexity |
+| Each state may enter heap once in visited-on-push variant. | 在 push 即標記版本下，每狀態最多入堆一次。 | Complexity |
+| Heap operations cost logarithmic factor, giving O(n squared log n). | 堆操作有對數因子，總時間 O(n²logn)。 | Complexity |
+| Visited matrix and heap storage are O(n squared). | visited 矩陣與堆儲存量為 O(n²)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me focus on minimax definition first. | 我先聚焦 minimax 定義。 | If stuck |
+| Path cost is maximum elevation on path, not sum. | 路徑成本是最大海拔，不是總和。 | If stuck |
+| Transition uses max current and neighbor height. | 轉移用 max(目前,鄰居高度)。 | If stuck |
+| Dijkstra still works with this monotone cost. | 在此單調成本下 Dijkstra 仍成立。 | If stuck |
+| Min-heap explores currently best possible max cost first. | 最小堆會先探索目前最有利的最大成本。 | If stuck |
+| Destination first pop is optimal answer. | 終點首次出堆即最優。 | If stuck |
+| Let me test quickly with two by two sample. | 我快速測 2x2 範例。 | If stuck |
+| Expected answer there is three. | 該例預期答案是 3。 | If stuck |
+| This confirms minimax relaxation rule. | 這可確認 minimax 放鬆規則。 | If stuck |
+| Great, implementation path is clear. | 很好，實作路徑已清楚。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N^2 \log N), space is O(N^2). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it with modified Dijkstra on grid states. | 我用修改版 Dijkstra 處理網格狀態解題。 | Wrap-up |
+| Cost metric is path maximum elevation. | 成本度量是路徑最大海拔。 | Wrap-up |
+| Heap order guarantees first destination pop is minimum feasible time. | 堆序可保證終點首次出堆即最小可行時間。 | Wrap-up |
+| Complexity is O(n squared log n) time and O(n squared) space. | 複雜度是 O(n²logn) 時間與 O(n²) 空間。 | Wrap-up |
+| This is a classic minimax shortest-path pattern. | 這是經典 minimax 最短路模式。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N^2 \log N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(N^2). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: minimum time to reach bottom-right. | 目標：最短時間到右下角。 | Cheat sheet |
+| Time equals max elevation along chosen path. | 時間等於路徑上最大海拔。 | Cheat sheet |
+| This is minimax path problem. | 這是 minimax 路徑問題。 | Cheat sheet |
+| Use Dijkstra with custom cost update. | 用自訂成本更新的 Dijkstra。 | Cheat sheet |
+| Heap state: (cost,r,c). | heap 狀態：(cost,r,c)。 | Cheat sheet |
+| Start cost is grid[0][0]. | 起始成本是 grid[0][0]。 | Cheat sheet |
+| Pop smallest cost state. | 彈出最小成本狀態。 | Cheat sheet |
+| If destination popped, return cost. | 終點出堆就回成本。 | Cheat sheet |
+| For each neighbor compute newCost=max(cost,height). | 鄰居新成本 newCost=max(cost,height)。 | Cheat sheet |
+| Push unvisited neighbor with newCost. | 未訪鄰居以 newCost 入堆。 | Cheat sheet |
+| Repeat until destination reached. | 重複直到到達終點。 | Cheat sheet |
+| n=1 returns grid[0][0]. | n=1 回 grid[0][0]。 | Cheat sheet |
+| Time O(n²logn). | 時間 O(n²logn)。 | Cheat sheet |
+| Space O(n²). | 空間 O(n²)。 | Cheat sheet |
+| Common bug: summing heights instead of max. | 常見錯誤：把高度相加而非取 max。 | Cheat sheet |
+| Common bug: wrong visited timing. | 常見錯誤：visited 標記時機錯。 | Cheat sheet |
+| Binary search + BFS is alternative. | 二分 + BFS 是替代方案。 | Cheat sheet |
+| Explain why minimax remains monotone. | 說明 minimax 為何保持單調。 | Cheat sheet |
+| Keep four-direction movement only. | 移動僅限四方向。 | Cheat sheet |
+| Verify with small 2x2 sample. | 用 2x2 小樣例驗證。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Dijkstra minimax transition `max(curr, neighbor)`.
+- No hallucinated constraints: ✅ grid movement and output semantics preserved.
+- Language simplicity: ✅ concise interview speaking lines.

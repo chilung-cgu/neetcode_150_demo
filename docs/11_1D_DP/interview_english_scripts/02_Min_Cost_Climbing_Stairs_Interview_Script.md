@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Min Cost Climbing Stairs. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use DP (Space Optimized) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the min-cost climbing stairs problem. | 我先重述最小成本爬樓梯題。 | Restatement |
+| cost[i] is the price to step on stair i. | cost[i] 是踩到第 i 階的花費。 | Restatement |
+| From each step we can move one or two stairs up. | 每一步可往上 1 階或 2 階。 | Restatement |
+| We may start from step zero or step one. | 可從第 0 階或第 1 階開始。 | Restatement |
+| Goal is minimum total cost to reach the top. | 目標是到達頂端的最小總花費。 | Restatement |
+| I will use rolling DP with O(1) extra space. | 我會用滾動 DP，額外空間 O(1)。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is top considered one position beyond last index? | 頂端是否是最後索引再往上一格？ | Clarify |
+| Is starting at index zero or one both free initially? | 從 0 或 1 起步都不需先額外費用嗎？ | Clarify |
+| Should we return only minimum cost, not path? | 是否只回傳最小花費，不回路徑？ | Clarify |
+| Are all costs non-negative integers? | cost 是否皆為非負整數？ | Clarify |
+| Is in-place cost mutation acceptable as alternative solution? | 可否提 in-place 修改 cost 作替代法？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,53 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(2^N) from source. | 來源暴力時間約 O(2^N)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force recursion tries both one-step and two-step moves. | 暴力遞迴會嘗試 1 階與 2 階兩分支。 | Approach |
+| It recomputes overlapping states repeatedly. | 它會重複計算重疊狀態。 | Approach |
+| That leads to exponential time. | 因此時間呈指數成長。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses DP (Space Optimized). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(N) from source. | 來源優化時間為 O(N)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Define dp[i] as min cost to reach step i. | 定義 dp[i] 為到達第 i 階的最小花費。 | Approach |
+| Transition is min of coming from i-1 or i-2. | 轉移為從 i-1 或 i-2 來的較小值。 | Approach |
+| Formula is dp[i] equals min(dp[i-1]+cost[i-1], dp[i-2]+cost[i-2]). | 公式為 dp[i]=min(dp[i-1]+cost[i-1], dp[i-2]+cost[i-2])。 | Approach |
+| Base values are dp[0]=0 and dp[1]=0. | 基底值是 dp[0]=0、dp[1]=0。 | Approach |
+| We only need previous two states, so rolling variables are enough. | 只需前兩狀態，滾動變數即可。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define recursive backtracking function. | 依來源步驟執行。 | Coding |
-| Next, I check base case and append answer. | 依來源步驟執行。 | Coding |
-| Then, I iterate choices for current position. | 依來源步驟執行。 | Coding |
-| Next, I choose one option and update state. | 依來源步驟執行。 | Coding |
-| Then, I recurse to next decision level. | 依來源步驟執行。 | Coding |
-| Next, I undo choice to restore state. | 依來源步驟執行。 | Coding |
-| Then, I return all collected combinations. | 依來源步驟執行。 | Coding |
+| I set n as cost length and initialize prev2 and prev1 to zero. | 我設 n 為 cost 長度，prev2/prev1 先設 0。 | Coding |
+| I iterate i from two up to n inclusive. | i 從 2 迭代到 n。 | Coding |
+| Option one is prev1 plus cost at i minus one. | 選項一是 prev1+cost[i-1]。 | Coding |
+| Option two is prev2 plus cost at i minus two. | 選項二是 prev2+cost[i-2]。 | Coding |
+| current is minimum of those two options. | current 取兩者較小。 | Coding |
+| Then I shift prev2 to prev1 and prev1 to current. | 然後把 prev2 更新為 prev1，prev1 更新為 current。 | Coding |
+| After loop prev1 represents dp[n]. | 迴圈結束後 prev1 就是 dp[n]。 | Coding |
+| I return prev1 as final minimum cost. | 我回傳 prev1 作最終最小花費。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: cost = [10, 15, 20]. | 範例輸入：cost = [10, 15, 20]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 15. | 預期輸出：15。 | Dry-run |
+| Let me dry-run cost [10,15,20]. | 我手跑 cost=[10,15,20]。 | Dry-run |
+| Start with prev2 zero and prev1 zero. | 起始 prev2=0、prev1=0。 | Dry-run |
+| At i equals two, current is min(15,10), so ten. | i=2 時 current=min(15,10)=10。 | Dry-run |
+| Shift gives prev2 zero and prev1 ten. | 更新後 prev2=0、prev1=10。 | Dry-run |
+| At i equals three, current is min(30,15), so fifteen. | i=3 時 current=min(30,15)=15。 | Dry-run |
+| End of loop, answer is fifteen. | 迴圈結束，答案是 15。 | Dry-run |
+| This matches expected output. | 與預期輸出一致。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: minimal length two costs array. | 案例一：最小長度 2 的 cost。 | Edge test |
+| Case two: many zeros should allow zero total cost path. | 案例二：多個 0 時可達成總花費 0。 | Edge test |
+| Case three: strictly increasing costs. | 案例三：嚴格遞增成本。 | Edge test |
+| Case four: alternating high and low costs. | 案例四：高低交錯成本。 | Edge test |
+| Case five: verify start-at-one is better than start-at-zero. | 案例五：確認從 1 開始比從 0 開始更便宜。 | Edge test |
 
 ## 7) Complexity script
 
@@ -85,72 +86,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(N). | 時間複雜度是 O(N)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
+| Extra space is O(1). | 額外空間是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(N). | 來源主要時間為 O(N)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We process each step index once from two to n. | 我們從 2 到 n 每個索引處理一次。 | Complexity |
+| Each iteration performs constant-time min and assignments. | 每次迭代只有常數時間 min 與指定。 | Complexity |
+| Therefore runtime is linear O(n). | 因此時間是線性 O(n)。 | Complexity |
+| Only prev2 prev1 and current are stored, so space is O(1). | 僅儲存 prev2/prev1/current，所以空間 O(1)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me define state clearly as min cost to reach step i. | 我先明確定義狀態為到 i 的最小成本。 | If stuck |
+| Top is step n, not index n minus one. | 頂端是 step n，不是索引 n-1。 | If stuck |
+| Transition comes from i-1 or i-2 only. | 轉移只會從 i-1 或 i-2 來。 | If stuck |
+| I pay cost when stepping from previous stair. | 成本是在從前一階踏出時累加。 | If stuck |
+| Formula uses cost[i-1] and cost[i-2]. | 公式用到 cost[i-1] 與 cost[i-2]。 | If stuck |
+| Base dp[0] and dp[1] are both zero. | 基底 dp[0]、dp[1] 都是 0。 | If stuck |
+| Rolling variables can replace full array safely. | 滾動變數可安全取代整個陣列。 | If stuck |
+| Let me verify quickly with [10,15,20]. | 我快速用 [10,15,20] 驗證。 | If stuck |
+| I get fifteen, so indexing is correct. | 得到 15，索引轉換正確。 | If stuck |
+| Great, I can present the final answer now. | 很好，我可以給出最終答案。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(N), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved this with bottom-up DP and rolling variables. | 我用自底向上 DP 與滾動變數解題。 | Wrap-up |
+| State is minimum cost to reach each step index. | 狀態是到每一階的最小成本。 | Wrap-up |
+| Transition chooses cheaper path from one-step or two-step jump. | 轉移在 1 階與 2 階來源中選較便宜者。 | Wrap-up |
+| Space is optimized to O(1). | 空間優化到 O(1)。 | Wrap-up |
+| Runtime is O(n), clean and interview-friendly. | 時間 O(n)，實作乾淨且面試友好。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Problem type: minimum path cost on stairs. | 題型：樓梯最小路徑成本。 | Cheat sheet |
+| Start can be step 0 or step 1. | 起點可在 0 或 1。 | Cheat sheet |
+| Top is step n. | 頂端是 step n。 | Cheat sheet |
+| Define dp[i] min cost to reach i. | 定義 dp[i] 為到 i 的最小成本。 | Cheat sheet |
+| Base dp[0]=0. | 基底 dp[0]=0。 | Cheat sheet |
+| Base dp[1]=0. | 基底 dp[1]=0。 | Cheat sheet |
+| Transition from i-1 and i-2. | 由 i-1 與 i-2 轉移。 | Cheat sheet |
+| Formula uses cost[i-1], cost[i-2]. | 公式用 cost[i-1]、cost[i-2]。 | Cheat sheet |
+| current = min(path1, path2). | current 取兩路徑較小。 | Cheat sheet |
+| Roll prev2 prev1 each step. | 每步更新 prev2 與 prev1。 | Cheat sheet |
+| Iterate i from 2 to n. | i 從 2 跑到 n。 | Cheat sheet |
+| Answer is dp[n]. | 答案是 dp[n]。 | Cheat sheet |
+| Rolling answer is prev1. | 滾動版本答案是 prev1。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Validate [10,15,20] -> 15. | 驗證 [10,15,20] 得 15。 | Cheat sheet |
+| Handle zeros naturally. | 可自然處理 0 成本。 | Cheat sheet |
+| Common bug: wrong top index meaning. | 常見錯誤：頂端索引定義錯。 | Cheat sheet |
+| Common bug: off-by-one in formula. | 常見錯誤：公式索引 off-by-one。 | Cheat sheet |
+| Alternative: in-place mutate cost array. | 替代法：原地修改 cost。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Bottom-up recurrence and rolling optimization preserved.
+- No hallucinated constraints: ✅ Matches source start rules and top-step definition.
+- Language simplicity: ✅ Short, clear, and interview-delivery oriented.

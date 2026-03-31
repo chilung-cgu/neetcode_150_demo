@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Diameter of Binary Tree. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Recursive DFS (Bottom-up) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the diameter-of-binary-tree problem. | 我先重述二元樹直徑題。 | Restatement |
+| We need the longest path between any two nodes. | 目標是任兩節點間最長路徑。 | Restatement |
+| Diameter is counted by number of edges, not nodes. | 直徑以邊數計算，不是節點數。 | Restatement |
+| This longest path may or may not pass through root. | 最長路徑不一定會經過 root。 | Restatement |
+| We return one integer: the maximum edge length. | 回傳一個整數：最大邊長。 | Restatement |
+| I will use one-pass bottom-up DFS. | 我會用一次遍歷的 bottom-up DFS。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Just to confirm, diameter means edge count here? | 再確認一次，直徑是算邊數嗎？ | Clarify |
+| Can the longest path start and end at any nodes? | 最長路徑端點可為任意節點嗎？ | Clarify |
+| Is empty tree possible, or at least one node guaranteed? | 會有空樹嗎，還是至少一個節點？ | Clarify |
+| Is recursion acceptable under current constraints? | 目前限制下可用遞迴嗎？ | Clarify |
+| May I keep a class-level variable for best diameter? | 我可用類別層級變數記錄最大直徑嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(N) from source. | 來源暴力時間約 O(N)。 | Approach |
-| Brute space is about O(N^2) from source. | 來源暴力空間約 O(N^2)。 | Approach |
+| Brute force treats each node as the path turning point. | 暴力法把每個節點當作路徑轉折點。 | Approach |
+| For each node, compute left height and right height separately. | 對每節點分別算左右子樹高度。 | Approach |
+| Recomputing heights repeatedly causes O(n^2) worst-case time. | 高度重算會造成最壞 O(n^2) 時間。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Recursive DFS (Bottom-up). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(h) from source. | 來源優化空間為 O(h)。 | Approach |
+| Use post-order DFS that returns subtree height. | 用後序 DFS 回傳子樹高度。 | Approach |
+| At each node, get left and right heights once. | 每個節點只取一次左右高度。 | Approach |
+| Candidate diameter through this node is left plus right. | 經過該節點的候選直徑是 left+right。 | Approach |
+| Update global best diameter during traversal. | 在遍歷中即時更新全域最佳直徑。 | Approach |
+| Return one plus max height upward, giving O(n) and O(h). | 向上回傳 1+max，高效達 O(n)、O(h)。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define traversal order based on source method. | 依來源步驟執行。 | Coding |
-| Next, I initialize recursion or queue structures. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process current node value and state. | 依來源步驟執行。 | Coding |
-| Then, I visit left and right children by rule. | 依來源步驟執行。 | Coding |
-| Next, I update answer during traversal. | 依來源步驟執行。 | Coding |
-| Then, I handle null node base case carefully. | 依來源步驟執行。 | Coding |
-| Next, I return final aggregated tree result. | 依來源步驟執行。 | Coding |
+| I initialize a global diameter variable to zero. | 我先把全域 diameter 初始化為 0。 | Coding |
+| I write helper height function for DFS. | 我寫一個 helper height 做 DFS。 | Coding |
+| Base case: null node returns zero height. | base case：null 節點回傳高度 0。 | Coding |
+| I recursively compute left subtree height. | 遞迴計算左子樹高度。 | Coding |
+| I recursively compute right subtree height. | 遞迴計算右子樹高度。 | Coding |
+| I update diameter with leftHeight plus rightHeight. | 用 leftHeight+rightHeight 更新直徑。 | Coding |
+| I return one plus max of both heights. | 回傳 1+max(左右高度)。 | Coding |
+| Main function runs helper on root and returns diameter. | 主函式呼叫 helper 後回傳 diameter。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: . | 範例輸入：。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: 3 (Path: 4-2-1-3 or 5-2-1-3). | 預期輸出：3 (Path: 4-2-1-3 or 5-2-1-3)。 | Dry-run |
+| Let me dry-run tree [1,2,3,4,5]. | 我手跑樹 [1,2,3,4,5]。 | Dry-run |
+| Node 4 and node 5 are leaves, each height is one. | 節點 4 與 5 為葉節點，高度都為 1。 | Dry-run |
+| At node 2, left and right heights are one and one. | 到節點 2，左右高度分別為 1 與 1。 | Dry-run |
+| So candidate diameter at node 2 is two edges. | 所以節點 2 的候選直徑是 2 條邊。 | Dry-run |
+| Node 3 is leaf, height one. | 節點 3 是葉節點，高度為 1。 | Dry-run |
+| At node 1, heights are two and one, candidate is three. | 在節點 1，高度是 2 與 1，候選為 3。 | Dry-run |
+| Final diameter is three edges, matching expected output. | 最終直徑是 3 條邊，符合預期。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: single-node tree should return zero. | 案例一：單節點樹應回傳 0。 | Edge test |
+| Case two: root with one child should return one. | 案例二：root 只有一個子節點回傳 1。 | Edge test |
+| Case three: skewed chain of n nodes returns n minus one. | 案例三：長鏈 n 節點回傳 n-1。 | Edge test |
+| Case four: perfect binary tree checks cross-root path. | 案例四：完美樹要驗證跨 root 路徑。 | Edge test |
+| Case five: irregular tree where max path avoids root. | 案例五：最長路徑不經 root 的不規則樹。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,71 +87,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(h). | 空間複雜度是 O(h)。 | Complexity |
+| Space complexity is O(h) for recursion stack. | 空間複雜度是 O(h) 遞迴堆疊。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(h). | 來源額外空間為 O(h)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Each node is visited once in post-order DFS. | 後序 DFS 對每個節點只訪問一次。 | Complexity |
+| Per node work is constant: two heights and one max update. | 每節點工作是常數：兩高度與一次更新。 | Complexity |
+| Stack depth equals tree height h. | 堆疊深度等於樹高 h。 | Complexity |
+| Worst skew is O(n) stack, balanced tree is O(log n). | 最壞斜樹 O(n)，平衡樹 O(log n)。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me verify the metric first: edges, not nodes. | 我先確認度量：算邊不是算節點。 | If stuck |
+| I should separate height from diameter conceptually. | 我應把高度與直徑概念分開。 | If stuck |
+| Height is what helper returns to parent. | 高度是 helper 回給父節點的值。 | If stuck |
+| Diameter is global best from left plus right. | 直徑是全域 left+right 的最大值。 | If stuck |
+| I may have forgotten global update at each node. | 我可能漏掉每節點更新全域值。 | If stuck |
+| Let me add that update before returning height. | 我先補上更新，再回傳高度。 | If stuck |
+| I will rerun sample [1,2,3,4,5]. | 我重跑範例 [1,2,3,4,5]。 | If stuck |
+| Now I get diameter three correctly. | 現在正確得到直徑 3。 | If stuck |
+| I will also test single-node returning zero. | 我再測單節點回傳 0。 | If stuck |
+| Great, logic is now consistent. | 很好，邏輯現在一致。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(h). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished one-pass DFS diameter solution. | 我完成一次遍歷 DFS 直徑解法。 | Wrap-up |
+| I validated root-crossing and non-root-crossing paths. | 我驗證了經過與不經過 root 的路徑情境。 | Wrap-up |
+| Runtime is O(n). | 時間複雜度是 O(n)。 | Wrap-up |
+| Space is O(h) from recursion stack. | 空間是 O(h) 來自遞迴堆疊。 | Wrap-up |
+| I can provide iterative discussion if you want. | 若需要我可補充迭代思路比較。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(h). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Diameter means longest path between any two nodes. | 直徑是任兩節點最長路徑。 | Cheat sheet |
+| Count diameter in edges. | 直徑以邊數計。 | Cheat sheet |
+| Path may not pass root. | 路徑不一定經過 root。 | Cheat sheet |
+| Brute force recomputes height repeatedly. | 暴力法會重算高度。 | Cheat sheet |
+| Brute force worst time O(n^2). | 暴力最壞時間 O(n^2)。 | Cheat sheet |
+| Use post-order DFS helper for height. | 用後序 DFS helper 算高度。 | Cheat sheet |
+| Base case null returns 0. | base case：null 回傳 0。 | Cheat sheet |
+| left = dfs(node->left). | left = dfs(node->left)。 | Cheat sheet |
+| right = dfs(node->right). | right = dfs(node->right)。 | Cheat sheet |
+| Update best with left + right. | 用 left+right 更新最佳值。 | Cheat sheet |
+| Return 1 + max(left, right). | 回傳 1+max(left,right)。 | Cheat sheet |
+| Initialize diameter to 0. | diameter 初始值設 0。 | Cheat sheet |
+| Run helper on root. | 對 root 執行 helper。 | Cheat sheet |
+| Return diameter at end. | 最後回傳 diameter。 | Cheat sheet |
+| Test single-node tree => 0. | 測單節點 => 0。 | Cheat sheet |
+| Test two-node tree => 1. | 測兩節點 => 1。 | Cheat sheet |
+| Test skewed tree chain. | 測斜樹長鏈。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(h). | 空間 O(h)。 | Cheat sheet |
+| Common bug: mixing edge count and node count. | 常見錯誤：邊數與節點數混淆。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Bottom-up DFS + global diameter update is preserved.
+- No hallucinated constraints: ✅ Uses source definition (edge-based diameter).
+- Language simplicity: ✅ Spoken and concise interview-ready lines.

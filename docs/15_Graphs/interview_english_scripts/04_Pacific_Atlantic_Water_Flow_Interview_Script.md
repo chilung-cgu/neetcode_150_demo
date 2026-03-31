@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Pacific Atlantic Water Flow. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use DFS Reverse Flow as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate pacific atlantic water flow. | 我先重述 Pacific Atlantic Water Flow。 | Restatement |
+| We have a height matrix. | 題目給一個高度矩陣。 | Restatement |
+| Water can flow from higher or equal cell to lower or equal cell. | 水可由高或等高流向低或等高。 | Restatement |
+| Top and left edges touch Pacific. | 上邊與左邊連到太平洋。 | Restatement |
+| Bottom and right edges touch Atlantic. | 下邊與右邊連到大西洋。 | Restatement |
+| We need cells that can reach both oceans. | 我們要找可同時到兩個海洋的格子。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is grid guaranteed non-empty? | grid 是否保證非空？ | Clarify |
+| Is movement only four directions? | 移動是否只限四方向？ | Clarify |
+| Can equal heights flow between cells? | 等高格之間是否可流動？ | Clarify |
+| Should result order matter or any order is fine? | 結果順序是否重要，還是任意即可？ | Clarify |
+| Are coordinates returned as row and column pairs? | 回傳格式是否為 row,col 座標對？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,55 +31,56 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O((M \times N) from source. | 來源暴力時間約 O((M \times N)。 | Approach |
-| Brute space is about [CHECK] from source. | 來源暴力空間約 [CHECK]。 | Approach |
+| Brute force starts DFS or BFS from every cell twice. | 暴力法對每格都做兩次 DFS/BFS。 | Approach |
+| One search checks reachability to Pacific, another to Atlantic. | 一次檢查到太平洋，一次檢查到大西洋。 | Approach |
+| This is too slow at O((mn) squared). | 這會太慢，達到 O((mn)^2)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses DFS Reverse Flow. | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(M \times N) from source. | 來源優化時間為 O(M \times N)。 | Approach |
-| Optimized space is O(M \times N) from source. | 來源優化空間為 O(M \times N)。 | Approach |
+| Reverse the thinking: start from oceans and move inward. | 反向思考：從海洋往內陸反推。 | Approach |
+| From Pacific borders, mark all cells reachable by non-decreasing heights. | 從太平洋邊界出發，標記可逆流到的格子。 | Approach |
+| From Atlantic borders, do the same marking. | 從大西洋邊界同樣標記一次。 | Approach |
+| A cell in both visited sets can flow to both oceans. | 同時在兩集合中的格子即可流向兩海。 | Approach |
+| Complexity drops to O(m times n). | 複雜度可降到 O(m*n)。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I define recursive backtracking function. | 依來源步驟執行。 | Coding |
-| Next, I check base case and append answer. | 依來源步驟執行。 | Coding |
-| Then, I maintain visited state during DFS traversal. | 依來源步驟執行。 | Coding |
-| Next, I process nodes level by level with queue. | 依來源步驟執行。 | Coding |
-| Then, I iterate choices for current position. | 依來源步驟執行。 | Coding |
-| Next, I choose one option and update state. | 依來源步驟執行。 | Coding |
-| Then, I recurse to next decision level. | 依來源步驟執行。 | Coding |
-| Next, I undo choice to restore state. | 依來源步驟執行。 | Coding |
-| Finally, I return all collected combinations. | 依來源步驟執行。 | Coding |
+| I create two visited matrices: pacific and atlantic. | 我建立兩個 visited 矩陣：pacific 與 atlantic。 | Coding |
+| I run DFS from top row and left column for Pacific. | 我從上邊與左邊做 Pacific DFS。 | Coding |
+| I run DFS from bottom row and right column for Atlantic. | 我從下邊與右邊做 Atlantic DFS。 | Coding |
+| In DFS, I only move to neighbor with height greater or equal to current. | DFS 中只走到高度大於等於當前的鄰居。 | Coding |
+| That models reverse water flow from ocean inward. | 這就是海洋逆流向內陸的模型。 | Coding |
+| I skip out-of-bound or already visited cells. | 我跳過越界或已訪問格子。 | Coding |
+| After both traversals, I scan all cells. | 兩次遍歷後我掃描全部格子。 | Coding |
+| If pacific and atlantic are both true, add coordinate to result. | 若 pacific 與 atlantic 都為 true，就加入答案。 | Coding |
+| Return result list. | 回傳結果座標列表。 | Coding |
+| This avoids per-cell repeated searches. | 這避免每格重複搜尋。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: . | 範例輸入：。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]]. | 預期輸出：[[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]]。 | Dry-run |
+| Let me dry-run the five by five sample grid. | 我手跑 5x5 範例網格。 | Dry-run |
+| Pacific DFS starts from top and left borders. | Pacific DFS 從上邊與左邊開始。 | Dry-run |
+| Atlantic DFS starts from bottom and right borders. | Atlantic DFS 從下邊與右邊開始。 | Dry-run |
+| Cell [0,4] is reachable from both sides, so it qualifies. | [0,4] 可被兩邊逆流到，因此符合。 | Dry-run |
+| Cell [2,2] also appears in both visited sets. | [2,2] 也同時出現在兩個 visited 集合。 | Dry-run |
+| Low trapped cells may appear in only one set. | 低窪受限格常只出現在單一集合。 | Dry-run |
+| Final intersection matches expected coordinates. | 最後交集會吻合預期座標。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: one cell grid can reach both oceans. | 案例一：單格網格可同時到兩海。 | Edge test |
+| Case two: flat grid where all heights are equal. | 案例二：全等高平面網格。 | Edge test |
+| Case three: strictly increasing rows and cols. | 案例三：列行都嚴格遞增。 | Edge test |
+| Case four: strictly decreasing landscape. | 案例四：嚴格遞減地形。 | Edge test |
+| Case five: long narrow grid one by n. | 案例五：狹長 1xn 網格。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,72 +88,70 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Time complexity is O(M \times N). | 時間複雜度是 O(M \times N)。 | Complexity |
-| Space complexity is O(M \times N). | 空間複雜度是 O(M \times N)。 | Complexity |
+| Time complexity is O(m times n). | 時間複雜度是 O(m*n)。 | Complexity |
+| Space complexity is O(m times n). | 空間複雜度是 O(m*n)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(M \times N). | 來源主要時間為 O(M \times N)。 | Complexity |
-| Extra memory from source is O(M \times N). | 來源額外空間為 O(M \times N)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| Each cell can be visited at most once in Pacific traversal. | 每格在 Pacific 遍歷中最多訪問一次。 | Complexity |
+| Each cell can be visited at most once in Atlantic traversal. | 每格在 Atlantic 遍歷中最多訪問一次。 | Complexity |
+| So total traversal work is linear O(mn). | 因此總遍歷工作量是線性 O(mn)。 | Complexity |
+| Two visited matrices plus recursion stack give O(mn) memory. | 兩個 visited 矩陣加遞迴堆疊為 O(mn) 記憶體。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me switch to reverse-flow viewpoint. | 我切換到逆流視角。 | If stuck |
+| From ocean to cell, height must be non-decreasing. | 從海到內陸時高度必須不下降。 | If stuck |
+| I should not start DFS from every cell. | 我不該從每個格子都起 DFS。 | If stuck |
+| Start only from four borders of two oceans. | 只要從兩海的四條邊開始。 | If stuck |
+| I maintain two visited sets separately. | 我分別維護兩個 visited 集合。 | If stuck |
+| Final answer is intersection of those sets. | 最後答案是兩集合交集。 | If stuck |
+| Let me test one-cell case quickly. | 我快速驗證單格案例。 | If stuck |
+| It should appear in both sets. | 它應該同時在兩集合。 | If stuck |
+| Equal height move must be allowed. | 等高移動必須允許。 | If stuck |
+| Great, now traversal condition is clear. | 很好，現在遍歷條件清楚了。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(M \times N), space is O(M \times N). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I solved it with two reverse DFS traversals from ocean borders. | 我用兩次從海岸逆推的 DFS 解題。 | Wrap-up |
+| Pacific and Atlantic reachability are tracked separately. | 太平洋與大西洋可達性分開追蹤。 | Wrap-up |
+| Intersection of visited sets gives final cells. | visited 交集就是最終座標。 | Wrap-up |
+| Complexity is O(mn) time and O(mn) space. | 複雜度是 O(mn) 時間與 O(mn) 空間。 | Wrap-up |
+| This is the standard reverse-thinking graph-grid pattern. | 這是經典反向思考的網格圖解法。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| Report space complexity O(M \times N). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Goal: cells flowing to both oceans. | 目標：可流向兩海的格子。 | Cheat sheet |
+| Water flow is downhill or flat forward. | 正向水流是下坡或等高。 | Cheat sheet |
+| Reverse view: move uphill or flat from ocean. | 反向看：從海往上坡或等高走。 | Cheat sheet |
+| Create pacific visited matrix. | 建立 pacific visited。 | Cheat sheet |
+| Create atlantic visited matrix. | 建立 atlantic visited。 | Cheat sheet |
+| DFS from top and left borders for Pacific. | 從上邊左邊做 Pacific DFS。 | Cheat sheet |
+| DFS from bottom and right borders for Atlantic. | 從下邊右邊做 Atlantic DFS。 | Cheat sheet |
+| DFS condition: neighbor height >= current. | DFS 條件：鄰居高>=當前。 | Cheat sheet |
+| Skip out of bound. | 跳過越界。 | Cheat sheet |
+| Skip visited cell. | 跳過已訪問。 | Cheat sheet |
+| After traversals, scan all cells. | 遍歷後掃全部格子。 | Cheat sheet |
+| If both visited true, add coordinate. | 兩邊皆 true 就加入。 | Cheat sheet |
+| Return result list. | 回傳結果列表。 | Cheat sheet |
+| One-cell grid always qualifies. | 單格網格一定符合。 | Cheat sheet |
+| Equal heights are reachable. | 等高可互達。 | Cheat sheet |
+| Time O(mn). | 時間 O(mn)。 | Cheat sheet |
+| Space O(mn). | 空間 O(mn)。 | Cheat sheet |
+| Common bug: wrong inequality direction. | 常見錯誤：不等號方向寫反。 | Cheat sheet |
+| Common bug: starting from all cells. | 常見錯誤：從所有格起跑。 | Cheat sheet |
+| Explain intersection concept clearly. | 清楚說明交集概念。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Reverse DFS/BFS from borders with set intersection.
+- No hallucinated constraints: ✅ Ocean boundaries and height rules preserved.
+- Language simplicity: ✅ Clear short interview lines.

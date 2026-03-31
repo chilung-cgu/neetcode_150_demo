@@ -8,22 +8,22 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let me restate the problem. | 我先重述題目。 | Restatement |
-| We solve Reorder List. | 我們要解這一題。 | Restatement |
-| Input and output follow the source statement. | 輸入輸出依來源敘述。 | Restatement |
-| I will use Mid + Reverse + Merge (O(1) Space) as main method. | 我會用來源主方法。 | Restatement |
-| I will verify edge cases before final answer. | 我會先驗證邊界案例。 | Restatement |
-| Missing details are marked [CHECK]. | 缺漏細節會標記 [CHECK]。 | Restatement |
+| Let me restate the reorder-list task. | 我先重述重排串列題。 | Restatement |
+| We have list order L0 to Ln and need L0, Ln, L1, Ln-1 pattern. | 原順序是 L0 到 Ln，目標是 L0,Ln,L1,Ln-1 交錯。 | Restatement |
+| Node values cannot be modified. | 不能改節點值。 | Restatement |
+| We must only rewire next pointers. | 只能重接 next 指標。 | Restatement |
+| I will do this in-place with O(1) extra space. | 我會用原地 O(1) 額外空間完成。 | Restatement |
+| Plan is find middle, reverse second half, then merge alternately. | 計畫是找中點、反轉後半、再交錯合併。 | Restatement |
 
 ## 2) Clarifying questions (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Can I use source constraints directly? | 可直接採用來源限制嗎？ | Clarify |
-| Do we have guaranteed valid input format? | 輸入格式是否保證合法？ | Clarify |
-| Can I return early when condition is met? | 條件成立可提早回傳嗎？ | Clarify |
-| Should output order matter in final answer? | 輸出順序是否有要求？ | Clarify |
-| If missing, I will mark [CHECK], right? | 若缺漏我標 [CHECK] 可以嗎？ | Clarify |
+| Is list length at least one by constraints? | 根據限制，串列長度至少一嗎？ | Clarify |
+| Should function return void with in-place mutation? | 函式是 in-place 修改且回傳 void 嗎？ | Clarify |
+| Can I split list exactly at middle for odd length? | 奇數長度可以在正中間切分嗎？ | Clarify |
+| Is O(n) time and O(1) extra space expected? | 預期是 O(n) 時間與 O(1) 空間嗎？ | Clarify |
+| Do you want safety note about restoring original list not required? | 需要註明不用還原原始順序嗎？ | Clarify |
 
 ## 3) Approach discussion
 
@@ -31,54 +31,54 @@
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Brute force follows direct exhaustive checking. | 暴力法直接全面檢查。 | Approach |
-| Brute time is about O(n) from source. | 來源暴力時間約 O(n)。 | Approach |
-| Brute space is about O(n) from source. | 來源暴力空間約 O(n)。 | Approach |
+| Baseline copies nodes into an array. | 基線是把節點存進陣列。 | Approach |
+| Then reconnect from both ends inward. | 再由兩端往中間重接。 | Approach |
+| Time O(n), extra space O(n). | 時間 O(n)，額外空間 O(n)。 | Approach |
 
 ### Optimized approach (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Optimized method uses Mid + Reverse + Merge (O(1) Space). | 優化法使用來源主方法。 | Approach |
-| I keep key invariant during updates. | 更新時維持關鍵不變量。 | Approach |
-| I apply source transitions step by step. | 依來源規則逐步轉移。 | Approach |
-| Optimized time is O(n) from source. | 來源優化時間為 O(n)。 | Approach |
-| Optimized space is O(1) from source. | 來源優化空間為 O(1)。 | Approach |
+| Step one: find middle by fast and slow pointers. | 第一步：快慢指標找中點。 | Approach |
+| Step two: reverse the second half list. | 第二步：反轉後半串列。 | Approach |
+| Step three: merge first half and reversed half alternately. | 第三步：前半與反轉後半交錯合併。 | Approach |
+| Cut at middle to avoid cycle during merge. | 在中點斷開，避免合併時成環。 | Approach |
+| Total time O(n), extra space O(1). | 總時間 O(n)，額外空間 O(1)。 | Approach |
 
 ## 4) Coding-and-speaking script (line-by-line, in coding order)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| First, I set low and high boundaries. | 依來源步驟執行。 | Coding |
-| Next, I loop while low is not greater than high. | 依來源步驟執行。 | Coding |
-| Then, I compute mid from low and high. | 依來源步驟執行。 | Coding |
-| Next, I check mid value against target condition. | 依來源步驟執行。 | Coding |
-| Then, I move low or high by condition result. | 依來源步驟執行。 | Coding |
-| Next, I update candidate answer when needed. | 依來源步驟執行。 | Coding |
-| Then, I continue until boundaries meet. | 依來源步驟執行。 | Coding |
-| Next, I return boundary or candidate result. | 依來源步驟執行。 | Coding |
+| First, I use slow and fast to find the middle node. | 先用 slow/fast 找中間節點。 | Coding |
+| I split list into two parts at middle. | 在中點把串列切成兩段。 | Coding |
+| I reverse the second half iteratively. | 以迭代方式反轉後半段。 | Coding |
+| I set p1 to first half and p2 to reversed half. | p1 指前半，p2 指反轉後半。 | Coding |
+| While p2 exists, I save next pointers from both sides. | 當 p2 存在時，先存兩側 next。 | Coding |
+| I connect p1 to p2, then p2 to saved p1-next. | 先接 p1 到 p2，再接 p2 到原 p1-next。 | Coding |
+| I advance p1 and p2 to saved next nodes. | 再把 p1/p2 前進到剛保存的位置。 | Coding |
+| This finishes in-place reorder without extra array. | 這樣可原地重排且不需額外陣列。 | Coding |
 
 ## 5) Dry-run script using one sample input
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Let us dry-run one source sample input. | 我們手跑一組來源範例。 | Dry-run |
-| Sample input: head = [1,2,3,4]. | 範例輸入：head = [1,2,3,4]。 | Dry-run |
-| First, initialize required variables and structures. | 先初始化必要變數與結構。 | Dry-run |
-| Next, execute first transition from source logic. | 接著執行第一個來源轉移。 | Dry-run |
-| Then, continue updates until termination condition. | 然後持續更新到終止條件。 | Dry-run |
-| State remains consistent with invariant. | 狀態保持符合不變量。 | Dry-run |
-| Expected output: [1,4,2,3]. | 預期輸出：[1,4,2,3]。 | Dry-run |
+| Let me dry-run head [1,2,3,4,5]. | 我手跑 head=[1,2,3,4,5]。 | Dry-run |
+| Middle is node 3, so first half is [1,2,3]. | 中點是 3，前半是 [1,2,3]。 | Dry-run |
+| Second half [4,5] is reversed to [5,4]. | 後半 [4,5] 反轉成 [5,4]。 | Dry-run |
+| Merge step one gives 1 -> 5 -> 2. | 第一步合併得到 1->5->2。 | Dry-run |
+| Merge step two gives 2 -> 4 -> 3 continuation. | 第二步合併得到 2->4->3 延續。 | Dry-run |
+| Final list becomes [1,5,2,4,3]. | 最終串列是 [1,5,2,4,3]。 | Dry-run |
+| Output matches required pattern. | 輸出符合題目要求的交錯模式。 | Dry-run |
 
 ## 6) Edge/corner test script (at least 4 cases)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Case one: smallest valid input case. | 案例一：最小合法輸入。 | Edge test |
-| Case two: empty input behavior [CHECK]. | 案例二：空輸入行為 [CHECK]。 | Edge test |
-| Case three: duplicated values or repeated pattern. | 案例三：重複值或重複模式。 | Edge test |
-| Case four: boundary values near constraints. | 案例四：接近限制邊界值。 | Edge test |
-| Case five: tricky pattern for naive solution. | 案例五：直覺解易錯模式。 | Edge test |
+| Case one: one node only. | 案例一：只有一個節點。 | Edge test |
+| Case two: two nodes only. | 案例二：只有兩個節點。 | Edge test |
+| Case three: even-length list like [1,2,3,4]. | 案例三：偶數長度如 [1,2,3,4]。 | Edge test |
+| Case four: odd-length list like [1,2,3,4,5]. | 案例四：奇數長度如 [1,2,3,4,5]。 | Edge test |
+| Case five: long list to validate no cycle introduced. | 案例五：長串列確認不會形成環。 | Edge test |
 
 ## 7) Complexity script
 
@@ -87,71 +87,69 @@
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
 | Time complexity is O(n). | 時間複雜度是 O(n)。 | Complexity |
-| Space complexity is O(1). | 空間複雜度是 O(1)。 | Complexity |
+| Extra space is O(1). | 額外空間是 O(1)。 | Complexity |
 
 ### Full version (4 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| This follows the source optimized method. | 這是依來源優化方法。 | Complexity |
-| Main runtime from source is O(n). | 來源主要時間為 O(n)。 | Complexity |
-| Extra memory from source is O(1). | 來源額外空間為 O(1)。 | Complexity |
-| Please recheck constraints if interviewer differs. | 若面試官條件不同請再確認。 | Complexity |
+| We traverse list for middle, reverse, and merge phases. | 我們會做找中點、反轉、合併三個線性階段。 | Complexity |
+| Each node is visited constant times across phases. | 每節點在各階段只被常數次處理。 | Complexity |
+| No array, stack, or map proportional to n is used. | 不使用與 n 成比例的陣列、堆疊或 map。 | Complexity |
+| So total runtime is linear with constant extra memory. | 因此總時間線性、額外空間常數。 | Complexity |
 
 ## 8) If stuck rescue lines (10 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| May I take fifteen seconds to think? | 卡住時可用這句。 | If stuck |
-| I will restate the core goal now. | 卡住時可用這句。 | If stuck |
-| I can start from brute force first. | 卡住時可用這句。 | If stuck |
-| Then I optimize with source method. | 卡住時可用這句。 | If stuck |
-| I will verify one invariant quickly. | 卡住時可用這句。 | If stuck |
-| Thanks, I will apply your hint. | 卡住時可用這句。 | If stuck |
-| I found the likely bug position. | 卡住時可用這句。 | If stuck |
-| I will patch this block first. | 卡住時可用這句。 | If stuck |
-| Let me dry-run once again. | 卡住時可用這句。 | If stuck |
-| Now I can continue coding clearly. | 卡住時可用這句。 | If stuck |
+| Let me split the process into three phases again. | 我再把流程拆成三階段。 | If stuck |
+| Phase one is finding middle with slow and fast. | 第一階段是快慢指標找中點。 | If stuck |
+| Phase two is reversing second half safely. | 第二階段是安全反轉後半。 | If stuck |
+| Phase three is alternate merge with saved next pointers. | 第三階段是保存 next 後交錯合併。 | If stuck |
+| I might have forgotten to cut middle next to null. | 我可能忘了把 middle->next 斷開。 | If stuck |
+| That can create cycles during merge. | 這會在合併時造成環。 | If stuck |
+| I will fix the split and rerun sample. | 我修正切分後重跑範例。 | If stuck |
+| Now reorder pattern looks correct. | 現在重排模式正確。 | If stuck |
+| I also checked tail ends with null. | 我也確認尾端正確指向 null。 | If stuck |
+| Great, implementation is stable. | 很好，實作已穩定。 | If stuck |
 
 ## 9) Final wrap-up lines (5 lines)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| I completed the final implementation. | 收尾時可用這句。 | Wrap-up |
-| I followed the source optimized logic. | 收尾時可用這句。 | Wrap-up |
-| I verified with normal and edge cases. | 收尾時可用這句。 | Wrap-up |
-| Time is O(n), space is O(1). | 收尾時可用這句。 | Wrap-up |
-| I can discuss trade-offs if needed. | 收尾時可用這句。 | Wrap-up |
+| I finished in-place reorder list implementation. | 我完成了原地重排串列實作。 | Wrap-up |
+| I validated odd, even, and short-list cases. | 我驗證了奇偶長度與短串列案例。 | Wrap-up |
+| Runtime is O(n). | 時間複雜度是 O(n)。 | Wrap-up |
+| Extra space is O(1). | 額外空間是 O(1)。 | Wrap-up |
+| I can discuss deque-based alternative if needed. | 若需要我可補充 deque 替代解。 | Wrap-up |
 
 ## 10) Ultra-short cheat sheet (20 lines total)
 
 | English line | Traditional Chinese meaning (short) | Interview stage |
 |---|---|---|
-| Restate problem goal clearly. | 速記重點。 | Cheat sheet |
-| Confirm constraints and assumptions. | 速記重點。 | Cheat sheet |
-| Start from brute force baseline. | 速記重點。 | Cheat sheet |
-| Explain why brute force is slower. | 速記重點。 | Cheat sheet |
-| Present source optimized approach. | 速記重點。 | Cheat sheet |
-| Keep one invariant during updates. | 速記重點。 | Cheat sheet |
-| Use data structure from source. | 速記重點。 | Cheat sheet |
-| Apply transitions in coding order. | 速記重點。 | Cheat sheet |
-| Speak while writing each block. | 速記重點。 | Cheat sheet |
-| Dry-run one representative sample. | 速記重點。 | Cheat sheet |
-| Check smallest valid input. | 速記重點。 | Cheat sheet |
-| Check empty input behavior [CHECK]. | 速記重點。 | Cheat sheet |
-| Check duplicate or repeated pattern. | 速記重點。 | Cheat sheet |
-| Check boundary limit values. | 速記重點。 | Cheat sheet |
-| Report time complexity O(n). | 速記重點。 | Cheat sheet |
-| Report space complexity O(1). | 速記重點。 | Cheat sheet |
-| State one clear trade-off point. | 速記重點。 | Cheat sheet |
-| Use hint and adjust quickly. | 速記重點。 | Cheat sheet |
-| Summarize final answer confidently. | 速記重點。 | Cheat sheet |
-| Invite follow-up questions politely. | 速記重點。 | Cheat sheet |
+| Reorder as L0, Ln, L1, Ln-1 pattern. | 重排成 L0,Ln,L1,Ln-1 模式。 | Cheat sheet |
+| Do not change node values. | 不能改節點值。 | Cheat sheet |
+| Baseline array method uses O(n) space. | 基線陣列法需 O(n) 空間。 | Cheat sheet |
+| Better in-place three-phase method. | 更好是原地三階段法。 | Cheat sheet |
+| Phase 1: find middle by slow-fast. | 第一階段：快慢指標找中點。 | Cheat sheet |
+| Cut list at middle. | 在中點斷開串列。 | Cheat sheet |
+| Phase 2: reverse second half. | 第二階段：反轉後半段。 | Cheat sheet |
+| Phase 3: merge two halves alternately. | 第三階段：兩半交錯合併。 | Cheat sheet |
+| Save next pointers before rewiring. | 重接前先保存 next 指標。 | Cheat sheet |
+| Connect p1->p2 then p2->next1. | 連接 p1->p2 再 p2->next1。 | Cheat sheet |
+| Advance both pointers. | 兩側指標同步前進。 | Cheat sheet |
+| Stop when second half is exhausted. | 後半耗盡即停止。 | Cheat sheet |
+| Test one-node case. | 測單節點案例。 | Cheat sheet |
+| Test two-node case. | 測雙節點案例。 | Cheat sheet |
+| Test odd/even lengths. | 測奇偶長度。 | Cheat sheet |
+| Confirm no cycle after merge. | 確認合併後沒有環。 | Cheat sheet |
+| Time O(n). | 時間 O(n)。 | Cheat sheet |
+| Space O(1). | 空間 O(1)。 | Cheat sheet |
+| Common bug: not cutting middle. | 常見 bug：沒在中點斷開。 | Cheat sheet |
+| Common bug: lost next pointer on merge. | 常見 bug：合併時遺失 next。 | Cheat sheet |
 
 ## Quality check
 
-- Consistency with source solution: ✅ Based on source chapter markdown.
-
-- No hallucinated constraints: ✅ Unknown details marked `[CHECK]`.
-
-- Language simplicity: ✅ Short A2-B1 lines for non-native speakers.
+- Consistency with source solution: ✅ Mid + reverse + merge pipeline is preserved.
+- No hallucinated constraints: ✅ Follows source reorder semantics and examples.
+- Language simplicity: ✅ Compact spoken lines for interview flow.
