@@ -8,7 +8,7 @@ difficulty: Easy
 
 # Number of 1 Bits (位元 1 的個數) <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">🟢 Easy</span>
 
-> 📌 **LeetCode #191** — [題目連結](https://leetcode.com/problems/number-of-1-bits/) | [NeetCode 解說](https://neetcode.io/problems/number-of-1-bits)
+> 📌 **LeetCode #191** — [題目連結](https://leetcode.com/problems/number-of-1-bits/) | [NeetCode 解說](https://neetcode.io/problems/number-of-one-bits)
 
 
 ## 1. 🧐 Problem Dissection (釐清問題)

@@ -9,7 +9,7 @@ difficulty: Medium
 
 # Product of Array Except Self (除自身以外陣列的乘積) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
-> 📌 **LeetCode #238** — [題目連結](https://leetcode.com/problems/product-of-array-except-self/) | [NeetCode 解說](https://neetcode.io/problems/product-of-array-except-self)
+> 📌 **LeetCode #238** — [題目連結](https://leetcode.com/problems/product-of-array-except-self/) | [NeetCode 解說](https://neetcode.io/problems/products-of-array-discluding-self)
 
 
 ## 1. 🧐 Problem Dissection (釐清問題)

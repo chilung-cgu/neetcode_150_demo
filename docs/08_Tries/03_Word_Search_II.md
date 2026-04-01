@@ -9,7 +9,7 @@ difficulty: Hard
 
 # Word Search II (單字搜尋 II) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
-> 📌 **LeetCode #212** — [題目連結](https://leetcode.com/problems/word-search-ii/) | [NeetCode 解說](https://neetcode.io/problems/word-search-ii)
+> 📌 **LeetCode #212** — [題目連結](https://leetcode.com/problems/word-search-ii/) | [NeetCode 解說](https://neetcode.io/problems/search-for-word-ii)
 
 
 ## 1. 🧐 Problem Dissection (釐清問題)

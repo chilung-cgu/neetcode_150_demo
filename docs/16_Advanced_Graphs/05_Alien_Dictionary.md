@@ -10,7 +10,7 @@ difficulty: Hard
 
 # Alien Dictionary (外星人字典) <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">🔴 Hard</span>
 
-> 📌 **LeetCode #269** — [題目連結](https://leetcode.com/problems/alien-dictionary/) | [NeetCode 解說](https://neetcode.io/problems/alien-dictionary)
+> 📌 **LeetCode #269** — [題目連結](https://leetcode.com/problems/alien-dictionary/) | [NeetCode 解說](https://neetcode.io/problems/foreign-dictionary)
 
 
 ## 1. 🧐 Problem Dissection (釐清問題)

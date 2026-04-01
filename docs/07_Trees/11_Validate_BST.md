@@ -10,7 +10,7 @@ difficulty: Medium
 
 # Validate Binary Search Tree (驗證二元搜尋樹) <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">🟡 Medium</span>
 
-> 📌 **LeetCode #98** — [題目連結](https://leetcode.com/problems/validate-binary-search-tree/) | [NeetCode 解說](https://neetcode.io/problems/validate-binary-search-tree)
+> 📌 **LeetCode #98** — [題目連結](https://leetcode.com/problems/validate-binary-search-tree/) | [NeetCode 解說](https://neetcode.io/problems/valid-binary-search-tree)
 
 
 ## 1. 🧐 Problem Dissection (釐清問題)
