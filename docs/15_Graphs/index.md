@@ -18,15 +18,15 @@
 | 題目 (Problem)                                                         | 難度   | 重點概念                 |
 | :--------------------------------------------------------------------- | :----- | :----------------------- |
 | [Number of Islands](01_Number_of_Islands.md)                           | Medium | DFS/BFS Grid             |
-| [Max Area of Island](02_Max_Area_of_Island.md)                         | Medium | DFS Count                |
-| [Clone Graph](03_Clone_Graph.md)                                       | Medium | Graph Deep Copy          |
-| [Walls and Gates](04_Walls_and_Gates.md)                               | Medium | Multi-source BFS         |
-| [Rotting Oranges](05_Rotting_Oranges.md)                               | Medium | BFS Level Order          |
-| [Pacific Atlantic Water Flow](06_Pacific_Atlantic_Water_Flow.md)       | Medium | Dual DFS                 |
-| [Surrounded Regions](07_Surrounded_Regions.md)                         | Medium | Boundary DFS             |
+| [Clone Graph](02_Clone_Graph.md)                                       | Medium | Graph Deep Copy          |
+| [Max Area of Island](03_Max_Area_of_Island.md)                         | Medium | DFS Count                |
+| [Pacific Atlantic Water Flow](04_Pacific_Atlantic_Water_Flow.md)       | Medium | Dual DFS                 |
+| [Surrounded Regions](05_Surrounded_Regions.md)                         | Medium | Boundary DFS             |
+| [Rotting Oranges](06_Rotting_Oranges.md)                               | Medium | BFS Level Order          |
+| [Walls and Gates](07_Walls_and_Gates.md)                               | Medium | Multi-source BFS         |
 | [Course Schedule](08_Course_Schedule.md)                               | Medium | Topological Sort (Cycle) |
 | [Course Schedule II](09_Course_Schedule_II.md)                         | Medium | Topological Order        |
-| [Graph Valid Tree](10_Graph_Valid_Tree.md)                             | Medium | Union Find / DFS         |
+| [Redundant Connection](10_Redundant_Connection.md)                     | Medium | Union Find (Cycle)       |
 | [Number of Connected Components](11_Number_of_Connected_Components.md) | Medium | Union Find               |
-| [Redundant Connection](12_Redundant_Connection.md)                     | Medium | Union Find (Cycle)       |
+| [Graph Valid Tree](12_Graph_Valid_Tree.md)                             | Medium | Union Find / DFS         |
 | [Word Ladder](13_Word_Ladder.md)                                       | Hard   | BFS Shortest Path        |

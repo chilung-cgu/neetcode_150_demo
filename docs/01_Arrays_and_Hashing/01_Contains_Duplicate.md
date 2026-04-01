@@ -153,9 +153,9 @@ class Solution:
 
         for n in nums:
             if n in hashset:
-                return true
+                return True
             hashset.add(n)
-        return false
+        return False
 ```
 
 ---

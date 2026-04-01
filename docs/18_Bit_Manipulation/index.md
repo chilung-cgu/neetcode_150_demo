@@ -1,4 +1,4 @@
-# Chapter 17: Bit Manipulation (位元運算)
+# Chapter 18: Bit Manipulation (位元運算)
 
 本章節包含 **NeetCode 150** 中的位元運算相關題目。
 利用 AND, OR, XOR 等位元操作來優化空間與時間。

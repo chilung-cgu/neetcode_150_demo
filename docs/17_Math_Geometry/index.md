@@ -1,4 +1,4 @@
-# Chapter 18: Math & Geometry (數學與幾何)
+# Chapter 17: Math & Geometry (數學與幾何)
 
 本章節包含 **NeetCode 150** 中的數學與幾何相關題目。
 涵蓋矩陣操作、大數運算及平面幾何問題。
@@ -22,6 +22,6 @@
 | [Set Matrix Zeroes](03_Set_Matrix_Zeroes.md) | Medium | In-place              |
 | [Happy Number](04_Happy_Number.md)           | Easy   | Cycle Detection       |
 | [Plus One](05_Plus_One.md)                   | Easy   | Array Carry           |
-| [Pow(x, n)](06_Pow_x_n.md)                   | Medium | Binary Exponentiation |
+| [Pow(x, n)](06_Pow.md)                       | Medium | Binary Exponentiation |
 | [Multiply Strings](07_Multiply_Strings.md)   | Medium | BigInt Sim            |
 | [Detect Squares](08_Detect_Squares.md)       | Medium | Geometry / Hash Map   |
