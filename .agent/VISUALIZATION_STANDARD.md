@@ -78,7 +78,7 @@ function render(step) {
 
 由於 Quota 限制導致任務分批：
 
-1.  **Start w/ Standards**: 新 Session 開始時，Agent **必須** 先閱讀此文檔 (`visualizer_standards.md`)。
+1.  **Start w/ Standards**: 新 Session 開始時，Agent **必須** 先閱讀此文檔 (`VISUALIZATION_STANDARD.md`)。
 2.  **Reference Implementation**: 參考 `10_Backtracking` 或 `09_Heap` 中的實作作為 Gold Standard。
 3.  **Refactoring**: 如果發現舊代碼 (06-07章) 風格不符，應建立專門的 Refactoring Task，而不是混合在其他任務中。
 

@@ -1,5 +1,7 @@
 # 全專案演算法視覺化架構計畫書 (Scalable Visualization Architecture Plan)
 
+> 注意：這是一份歷史提案文件。現行專案的共用視覺化資源位於 `docs/assets/visualizer/`，而現行的 agent 指引請以 `.agent/skills/algorithm_visualizer_standard/` 與 `.agent/skills/gemini_view_visualizer_upgrade/` 為準。
+
 ## 1. 可行性分析 (Feasibility Analysis)
 
 ### 1.1 技術相容性
@@ -12,7 +14,7 @@
 
 | 挑戰           | 解決方案                                                                                                          |
 | -------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **程式碼重複** | 建立 **Shared Core Library** (`viz-core.js`, `viz-style.css`)，封裝通用邏輯（如柱狀圖繪製、堆疊操作、動畫控制）。 |
+| **程式碼重複** | 建立 **Shared Core Library** (`docs/assets/visualizer/core.js`, `docs/assets/visualizer/style.css`)，封裝通用邏輯（如柱狀圖繪製、堆疊操作、動畫控制）。 |
 | **開發效率**   | 使用 **Antigravity Workflow** 與 **Skill** 自動生成每個題目的視覺化模板。                                         |
 | **樣式衝突**   | 採用 `iframe` 嵌入策略，確保視覺化工具的 CSS 不會與 MkDocs 主題（Material）產生衝突，且易於 RWD 調整。            |
 
@@ -25,10 +27,10 @@
 ```
 docs/
 ├── assets/
-│   ├── css/
-│   │   └── visualizer.css      # 共用樣式 (配色、RWD、控制面板)
-│   └── js/
-│       └── visualizer-core.js  # 核心引擎 (動畫佇列、圖表渲染、步驟控制)
+│   └── visualizer/
+│       ├── style.css           # 共用樣式 (配色、RWD、控制面板)
+│       ├── core.js             # 核心引擎 (動畫佇列、圖表渲染、步驟控制)
+│       └── template.html       # 樣板頁面
 ├── 01_Arrays_and_Hashing/
 │   └── ...
 ├── 04_Stack/
@@ -61,16 +63,13 @@ _備註：為保持簡易性，初期可將特定題目邏輯直接寫在該題�
 當使用者輸入 `/add-visualizer` 並指定題目時，Agent 將執行以下步驟：
 
 1.  **分析題目**：讀取 Markdown 與程式碼，理解演算法邏輯。
-2.  **生成模板**：呼叫 `generate-viz-template` Skill，在該題目同級目錄下產生 `[題目名稱]_visualizer.html`。
+2.  **生成模板**：呼叫現行的視覺化工作流，在該題目同級目錄下產生 `[題目名稱]_visualizer.html`。
 3.  **實作邏輯**：填寫演算法的 `generateSteps()` 函式，將邏輯轉換為視覺化步驟。
 4.  **嵌入文件**：自動修改 markdown，插入 `iframe` 程式碼。
 
-### 3.2 核心 Skill (`visualize_algo`)
+### 3.2 核心 Skill 與標準
 
-建立專屬 Skill 資料夾 `.agent/skills/visualize_algo/`，包含：
-
-- `template.html`: 標準化的 HTML 骨架。
-- `generator.py`: 用於生成特定題目邏輯的 Python 腳本。
+建立對應的 Skill 資料夾（例如 `.agent/skills/algorithm_visualizer_standard/`），並以現行標準與模板流程為準。
 
 ---
 
@@ -78,14 +77,14 @@ _備註：為保持簡易性，初期可將特定題目邏輯直接寫在該題�
 
 ### Phase 1: 基礎建設 (Foundation)
 
-- [ ] 提取 LeetCode 84 的共用樣式至 `docs/stylesheets/visualizer.css`。
-- [ ] 提取共用控制邏輯至 `docs/javascripts/visualizer-core.js`。
+- [ ] 提取 LeetCode 84 的共用樣式至 `docs/assets/visualizer/style.css`。
+- [ ] 提取共用控制邏輯至 `docs/assets/visualizer/core.js`。
 - [ ] 重構 LeetCode 84 v2，改用上述共用資源，驗證架構可行性。
 
 ### Phase 2: 自動化工具 (Automation)
 
 - [ ] 建立 `/add-visualizer` workflow 文件。
-- [ ] 實作 `visualize_algo` skill 模板。
+- [ ] 對齊現行視覺化技能與模板規格。
 
 ### Phase 3: 規模化 (Scaling)
 

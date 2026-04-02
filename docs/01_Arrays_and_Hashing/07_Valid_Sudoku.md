@@ -285,7 +285,7 @@ public:
 
 ---
 
-## 7. 💼 Interview Tips (面試技巧)
+## 8. 💼 Interview Tips (面試技巧)
 
 ### 🎯 Follow-up 問題
 
