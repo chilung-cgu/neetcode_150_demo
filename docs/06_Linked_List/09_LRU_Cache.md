@@ -147,7 +147,11 @@ public:
 
     void put(int key, int value) {
         if (map.find(key) != map.end()) {
-            remove(map[key]);
+            Node* node = map[key];
+            node->val = value; // 1. 更新值
+            remove(node);      // 2. 從目前位置拔除
+            insert(node);      // 3. 放到 MRU 位置 (Tail 之前)
+            return;            // 直接結束
         }
 
         Node* newNode = new Node(key, value);

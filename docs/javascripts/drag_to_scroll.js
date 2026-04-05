@@ -32,6 +32,14 @@ if (tabs) {
       const walk = (x - startX) * 2; 
       slider.scrollLeft = scrollLeft - walk;
     });
+
+    // 支援一般滑鼠滾輪直接左右滑動 (Wheel to horizontal scroll)
+    slider.addEventListener("wheel", (e) => {
+      if (e.deltaY !== 0) {
+        e.preventDefault(); // 防止畫面整個往下滑
+        slider.scrollLeft += e.deltaY;
+      }
+    });
     
     // Initial cursor style
     slider.style.cursor = "grab";
