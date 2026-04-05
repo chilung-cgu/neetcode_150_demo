@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
-
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 README_PATH = ROOT / "README.md"
@@ -23,9 +23,6 @@ README_ROW_RE = re.compile(
     r"^\|\s*(?P<left_label>[^|]+?)\s*\|\s*(?P<left_count>\d+)\s*\|\s*"
     r"(?P<right_label>[^|]+?)\s*\|\s*(?P<right_count>\d+)\s*\|$"
 )
-TOP_LEVEL_NAV_RE = re.compile(r"^  - (?P<label>[^:]+):(?:\s*(?P<path>.+))?$")
-CHILD_NAV_RE = re.compile(r"^      - (?P<label>[^:]+):\s*(?P<path>.+)$")
-CHAPTER_FOLDER_RE = re.compile(r"^\d{2}_.+")
 PROBLEM_FILE_RE = re.compile(r"^\d{2}_.+\.md$")
 
 
@@ -65,61 +62,44 @@ def parse_mkdocs_chapter_counts(text: str) -> dict[str, tuple[str, int]]:
     Returns a mapping of chapter label -> (chapter folder, number of child
     problem pages).
     """
+    config = yaml.safe_load(text)
+    nav = config.get("nav", [])
 
-    groups: dict[str, list[str]] = {}
-    in_nav = False
-    current_label: str | None = None
-    current_children: list[str] = []
+    chapter_counts = {}
 
-    for line in text.splitlines():
-        if not in_nav:
-            if line.strip() == "nav:":
-                in_nav = True
-            continue
+    def extract_dict(node):
+        if isinstance(node, list):
+            for item in node:
+                extract_dict(item)
+        elif isinstance(node, dict):
+            for k, v in node.items():
+                if k == "🗣️ 英文面試通關腳本":
+                    continue # Ignore English scripts section entirely
+                
+                if isinstance(v, list):
+                    count = 0
+                    folder = None
+                    for child in v:
+                        if isinstance(child, dict):
+                            val = list(child.values())[0]
+                            # match format like '01_Arrays_and_Hashing/01_Contains_Duplicate.md'
+                            if isinstance(val, str) and "/" in val and val.endswith(".md") and not val.endswith("index.md"):
+                                f = val.split('/')[0]
+                                if f[0].isdigit():
+                                    count += 1
+                                    folder = f
+                    if count > 0:
+                        chapter_counts[k] = (folder, count)
+                    else:
+                        extract_dict(v)
 
-        top_level = TOP_LEVEL_NAV_RE.match(line)
-        if top_level:
-            if current_label is not None:
-                groups[current_label] = current_children
-
-            label = top_level.group("label").strip()
-            path = top_level.group("path")
-            if path is None:
-                current_label = label
-                current_children = []
-            else:
-                current_label = None
-                current_children = []
-            continue
-
-        if current_label is None:
-            continue
-
-        child = CHILD_NAV_RE.match(line)
-        if child:
-            current_children.append(child.group("path").strip())
-
-    if current_label is not None:
-        groups[current_label] = current_children
-
-    chapter_counts: dict[str, tuple[str, int]] = {}
-    for label, children in groups.items():
-        prefixes = {path.split("/", 1)[0] for path in children if "/" in path}
-        if len(prefixes) != 1:
-            continue
-
-        folder = next(iter(prefixes))
-        if not CHAPTER_FOLDER_RE.match(folder):
-            continue
-
-        chapter_counts[label] = (folder, len(children))
-
+    extract_dict(nav)
     return chapter_counts
 
 
 def count_problem_pages(folder: Path) -> int:
     """Count numbered problem markdown files inside a chapter folder."""
-
+    if not folder.exists(): return 0
     return sum(
         1
         for path in folder.glob("*.md")
